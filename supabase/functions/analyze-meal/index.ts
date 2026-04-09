@@ -75,7 +75,9 @@ serve(async (req) => {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`AI error: ${aiResponse.status}`);
+      return new Response(JSON.stringify({ error: `AI分析でエラーが発生しました (${aiResponse.status})`, fallback: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiData = await aiResponse.json();

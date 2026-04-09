@@ -48,6 +48,32 @@ const CustomerMeals = () => {
     fetchMeals();
   }, []);
 
+  const convertToJpeg = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      if (file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp" || file.type === "image/gif") {
+        resolve(file);
+        return;
+      }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("Canvas not supported")); return; }
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          if (!blob) { reject(new Error("Conversion failed")); return; }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+        }, "image/jpeg", 0.9);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image load failed")); };
+      img.src = url;
+    });
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -55,11 +81,14 @@ const CustomerMeals = () => {
 
     setUploading(true);
     try {
+      // Convert to JPEG if needed (HEIC etc.)
+      const convertedFile = await convertToJpeg(file);
+
       // Upload to storage
-      const fileName = `${Date.now()}-${file.name}`;
+      const fileName = `${Date.now()}-${convertedFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from("meal-photos")
-        .upload(fileName, file);
+        .upload(fileName, convertedFile);
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
