@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 
 import BottomNav from "./BottomNav";
@@ -11,12 +11,21 @@ import CustomerSettings from "./CustomerSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
+import { useUnreadCount } from "@/hooks/useMessages";
 
 export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
   const { signOut } = useAuth();
+  const { count: unreadChat, refetch: refetchUnread } = useUnreadCount();
+
+  // Refetch unread when leaving chat
+  useEffect(() => {
+    if (tab !== "chat") {
+      refetchUnread();
+    }
+  }, [tab]);
 
   return (
     <div className="min-h-screen bg-background pb-20 max-w-lg mx-auto fade-in" translate="no">
@@ -41,7 +50,7 @@ const CustomerView = () => {
         {tab === "chat" && <CustomerChat />}
         {tab === "settings" && <CustomerSettings />}
       </div>
-      <BottomNav activeTab={tab} onTabChange={setTab} />
+      <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
     </div>
   );
 };
