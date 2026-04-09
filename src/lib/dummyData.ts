@@ -323,6 +323,7 @@ export const clientTrainingRecords: Record<string, TrainingRecord[]> = {
       { name: 'ダンベルロウ', weight: 35, reps: 10 },
     ]},
   ],
+  '6': [],
 };
 
 // Default training records (customer view = client 1)
