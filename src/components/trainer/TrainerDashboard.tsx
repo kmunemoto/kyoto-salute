@@ -74,9 +74,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
           <div className="space-y-2">
             {todaySessions.map((s) => (
               <Card key={s.id} className="card-hover cursor-pointer" onClick={() => {
-                // For now, use dummy client matching
-                const { clients } = require("@/lib/dummyData");
-                const client = clients.find((c: any) => c.name === s.clientName);
+                const client = dummyClients.find((c) => c.name === s.clientName);
                 if (client) onSelectClient(client.id);
               }}>
                 <CardContent className="p-4 flex items-center gap-4">
