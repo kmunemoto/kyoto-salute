@@ -14,6 +14,8 @@ export interface Profile {
   updated_at: string;
 }
 
+const PROFILE_UPDATED_EVENT = "profile-updated";
+
 export const useProfile = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -21,6 +23,55 @@ export const useProfile = () => {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refetch = () => setRefreshKey((k) => k + 1);
+
+  const updateDisplayName = async (nextDisplayName: string) => {
+    if (!user) {
+      return { error: new Error("ログイン情報が見つかりません") };
+    }
+
+    const trimmedName = nextDisplayName.trim();
+    if (!trimmedName) {
+      return { error: new Error("名前を入力してください") };
+    }
+
+    const { data: updatedRow, error: updateError } = await supabase
+      .from("profiles")
+      .update({ display_name: trimmedName })
+      .eq("user_id", user.id)
+      .select("*")
+      .maybeSingle();
+
+    if (updateError) {
+      return { error: updateError };
+    }
+
+    const nextProfile = updatedRow
+      ? (updatedRow as Profile)
+      : await (async () => {
+          const { data: insertedRow, error: insertError } = await supabase
+            .from("profiles")
+            .insert({
+              user_id: user.id,
+              display_name: trimmedName,
+            })
+            .select("*")
+            .single();
+
+          if (insertError) {
+            throw insertError;
+          }
+
+          return insertedRow as Profile;
+        })().catch((error) => ({ error } as const));
+
+    if ("error" in nextProfile) {
+      return { error: nextProfile.error };
+    }
+
+    setProfile(nextProfile);
+    window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, { detail: nextProfile }));
+    return { data: nextProfile, error: null };
+  };
 
   useEffect(() => {
     if (!user) {
@@ -39,18 +90,32 @@ export const useProfile = () => {
         .maybeSingle();
 
       if (!cancelled) {
-        if (!error && data) {
-          setProfile(data as Profile);
+        if (!error) {
+          setProfile((data as Profile) ?? null);
         }
         setLoading(false);
       }
     };
 
     fetchProfile();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, refreshKey]);
 
-  return { profile, loading, refetch };
+  useEffect(() => {
+    const handleProfileUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<Profile>;
+      if (customEvent.detail?.user_id === user?.id) {
+        setProfile(customEvent.detail);
+      }
+    };
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+  }, [user?.id]);
+
+  return { profile, loading, refetch, updateDisplayName };
 };
 
 export const useAllCustomerProfiles = () => {
@@ -59,7 +124,6 @@ export const useAllCustomerProfiles = () => {
 
   useEffect(() => {
     const fetchProfiles = async () => {
-      // Get all customer user_ids from user_roles
       const { data: roles } = await supabase
         .from("user_roles")
         .select("user_id")
