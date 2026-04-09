@@ -7,7 +7,7 @@ export interface Profile {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
-  plan: string;
+  plan: string | null;
   paid_this_month: boolean;
   trial_completed: boolean;
   created_at: string;

@@ -3,7 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { bodyMetrics } from "@/lib/dummyData";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { useProfile } from "@/hooks/useProfile";
+import { useMyBookings } from "@/hooks/useBookings";
 import { Loader2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ja } from "date-fns/locale";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4,
@@ -14,6 +17,7 @@ const planMaxSessions: Record<string, number> = {
 
 const CustomerHome = () => {
   const { profile, loading } = useProfile();
+  const { bookings, loading: bookingsLoading } = useMyBookings();
 
   const latestMetric = bodyMetrics[bodyMetrics.length - 1];
   const firstMetric = bodyMetrics[0];
@@ -21,19 +25,44 @@ const CustomerHome = () => {
   const fatChange = (latestMetric.bodyFat - firstMetric.bodyFat).toFixed(1);
 
   const displayName = profile?.display_name || "ゲスト";
-  const currentPlan = profile?.plan || "月4回";
+  const currentPlan = profile?.plan;
+  const hasPlan = !!currentPlan;
 
-  // Dummy: current month usage count
-  const usedSessions = 3;
-  const maxSessions = planMaxSessions[currentPlan] || 4;
+  // Filter future bookings only
+  const now = new Date();
+  const todayStr = format(now, "yyyy-MM-dd");
+  const nowTimeStr = format(now, "HH:mm");
 
-  if (loading) {
+  const futureBookings = bookings.filter((b) => {
+    if (b.status === "キャンセル済み") return false;
+    if (b.date > todayStr) return true;
+    if (b.date === todayStr && b.startTime > nowTimeStr) return true;
+    return false;
+  });
+
+  const nextBooking = futureBookings.length > 0 ? futureBookings[0] : null;
+
+  // Count this month's completed/upcoming sessions
+  const currentMonth = format(now, "yyyy-MM");
+  const monthSessions = bookings.filter(
+    (b) => b.date.startsWith(currentMonth) && b.status !== "キャンセル済み"
+  ).length;
+  const maxSessions = hasPlan ? (planMaxSessions[currentPlan] || 4) : 0;
+
+  if (loading || bookingsLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-accent" />
       </div>
     );
   }
+
+  // Format next booking date for display
+  const formatBookingDate = (b: typeof nextBooking) => {
+    if (!b) return "";
+    const d = parseISO(b.date);
+    return `${format(d, "M月d日（E）", { locale: ja })} ${b.startTime} - ${b.endTime}`;
+  };
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
@@ -47,60 +76,78 @@ const CustomerHome = () => {
           <div className="flex items-center gap-4 mt-4">
             <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-full px-3 py-1">
               <Target className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">24回達成</span>
+              <span className="text-xs font-medium">{bookings.length}回達成</span>
             </div>
             <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-full px-3 py-1">
               <Flame className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">3週連続</span>
+              <span className="text-xs font-medium">継続中</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Reminder Notification Banner (dummy) */}
-      <Card className="border-l-4 border-l-warning bg-warning/5">
-        <CardContent className="p-3 flex items-center gap-3">
-          <div className="relative">
-            <Bell className="w-4 h-4 text-warning" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive" />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold">🔔 リマインド通知</p>
-            <p className="text-[11px] text-muted-foreground">明日 10:00 からトレーニングの予約が入っています</p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Reminder Notification Banner */}
+      {nextBooking && (
+        <Card className="border-l-4 border-l-warning bg-warning/5">
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="relative">
+              <Bell className="w-4 h-4 text-warning" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-bold">🔔 リマインド通知</p>
+              <p className="text-[11px] text-muted-foreground">
+                {formatBookingDate(nextBooking)} からトレーニングの予約が入っています
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Plan badge */}
-      <Card className="border-l-4 border-l-accent bg-accent/5">
-        <CardContent className="p-3 flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-accent" />
-          <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
-        </CardContent>
-      </Card>
+      {/* Plan badge - only show if user has a plan */}
+      {hasPlan && (
+        <Card className="border-l-4 border-l-accent bg-accent/5">
+          <CardContent className="p-3 flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-accent" />
+            <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Next Booking */}
+      {/* Next Booking - real data */}
       <section>
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
           <CalendarDays className="w-3.5 h-3.5" />
           次回の予約
         </h2>
-        <Card className="card-hover border-l-4 border-l-accent">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-base">4月9日（水）10:00 - 11:00</p>
-                <p className="text-xs text-muted-foreground mt-0.5">山本 コーチ</p>
-                <p className="text-xs font-semibold text-accent mt-1.5">
-                  次回は {usedSessions + 1}/{maxSessions}回目
-                </p>
+        {nextBooking ? (
+          <Card className="card-hover border-l-4 border-l-accent">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-base">{formatBookingDate(nextBooking)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {nextBooking.booking_type === "初回体験" ? "初回無料体験" : "トレーニング"}
+                  </p>
+                  {hasPlan && maxSessions > 0 && (
+                    <p className="text-xs font-semibold text-accent mt-1.5">
+                      今月 {monthSessions}/{maxSessions}回目
+                    </p>
+                  )}
+                </div>
+                <div className="w-12 h-12 rounded-xl accent-gradient flex items-center justify-center pulse-glow">
+                  <CalendarDays className="w-5 h-5 text-accent-foreground" />
+                </div>
               </div>
-              <div className="w-12 h-12 rounded-xl accent-gradient flex items-center justify-center pulse-glow">
-                <CalendarDays className="w-5 h-5 text-accent-foreground" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-4 text-center text-sm text-muted-foreground">
+              予約はありません
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Stats Cards */}
