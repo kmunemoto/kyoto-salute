@@ -7,6 +7,7 @@ import { useAllCustomerProfiles } from "@/hooks/useProfile";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
+import { sendBookingNotification } from "@/lib/bookingNotification";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -56,7 +57,7 @@ const TrainerSchedule = () => {
     }
 
     setSubmitting(true);
-    const { error } = await createBooking(proxyClient, proxyDateKey, proxyTime, proxyBookingType);
+    const { data: bookingData, error } = await createBooking(proxyClient, proxyDateKey, proxyTime, proxyBookingType);
 
     if (error) {
       toast.error("予約の追加に失敗しました");
@@ -65,6 +66,10 @@ const TrainerSchedule = () => {
     }
 
     const client = profiles.find((p) => p.user_id === proxyClient);
+    const [hh, mm] = proxyTime.split(":").map(Number);
+    const endMin = hh * 60 + mm + 60;
+    const proxyEndTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+
     toast.success(`${client?.display_name || "顧客"}さんの予約を追加しました（${format(proxyDate, "M/d")} ${proxyTime}）`);
     setProxyDialogOpen(false);
     setProxyDate(undefined);
@@ -73,6 +78,11 @@ const TrainerSchedule = () => {
     setProxyBookingType("通常");
     setSubmitting(false);
     refetch();
+
+    // Fire-and-forget notification email
+    if (bookingData?.id) {
+      sendBookingNotification(bookingData.id, client?.display_name || "顧客", proxyDateKey, proxyTime, proxyEndTime, proxyBookingType);
+    }
   };
 
   const getDayBookings = (day: Date) => {
