@@ -70,7 +70,7 @@ interface MealRecord {
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [clientPlan, setClientPlan] = useState<PlanType>('月4回プラン');
+  const [clientPlan, setClientPlan] = useState<string>('');
   const [isPaid, setIsPaid] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
