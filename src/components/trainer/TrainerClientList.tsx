@@ -123,7 +123,7 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{c.display_name || "名前未設定"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{c.plan} · {formatPrice(c.plan)}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.plan || "未契約"} {formatPrice(c.plan || "")}</p>
                     <div className="flex items-center gap-1.5 mt-1">
                       {c.trial_completed ? (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
