@@ -1,0 +1,144 @@
+import { Users, CalendarDays, TrendingUp, Clock, BarChart3 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { sessions, clients } from "@/lib/dummyData";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
+
+const todaySessions = sessions.filter(s => s.date === '2026-04-09');
+const revenueData = [
+  { month: '1月', revenue: 680000 },
+  { month: '2月', revenue: 720000 },
+  { month: '3月', revenue: 810000 },
+  { month: '4月', revenue: 540000 },
+];
+
+const TrainerView = () => {
+  return (
+    <div className="min-h-screen bg-background pt-14 pb-8 px-4 md:px-8 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="gym-gradient rounded-2xl p-6 mb-6 text-primary-foreground">
+        <p className="text-sm opacity-80">ダッシュボード</p>
+        <h1 className="text-2xl font-bold mt-1">山本 コーチ</h1>
+        <p className="text-sm opacity-80 mt-1">2026年4月9日（水）</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: '本日のセッション', value: `${todaySessions.length}件`, icon: CalendarDays, color: 'text-accent' },
+          { label: 'アクティブ顧客', value: `${clients.length}名`, icon: Users, color: 'text-primary' },
+          { label: '月間セッション', value: '42件', icon: Clock, color: 'text-success' },
+          { label: '今月売上', value: '¥540K', icon: TrendingUp, color: 'text-warning' },
+        ].map((stat) => (
+          <Card key={stat.label} className="shadow-sm">
+            <CardContent className="p-4">
+              <stat.icon className={`w-5 h-5 ${stat.color} mb-2`} />
+              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Today's Schedule */}
+        <section>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+            <CalendarDays className="w-4 h-4" />
+            本日のスケジュール
+          </h2>
+          <div className="space-y-2">
+            {todaySessions.map((s) => (
+              <Card key={s.id} className="shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full gym-gradient flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
+                    {s.clientAvatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{s.clientName}</p>
+                    <p className="text-xs text-muted-foreground">{s.type}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-medium">{s.time}</p>
+                    <p className="text-xs text-muted-foreground">{s.duration}分</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Revenue Chart */}
+        <section>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+            <BarChart3 className="w-4 h-4" />
+            月別売上
+          </h2>
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v / 10000}万`} />
+                    <Tooltip formatter={(value: number) => [`¥${value.toLocaleString()}`, '売上']} />
+                    <Bar dataKey="revenue" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+
+      {/* Client List */}
+      <section className="mt-6">
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+          <Users className="w-4 h-4" />
+          クライアント一覧
+        </h2>
+        <Card className="shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left text-xs font-semibold text-muted-foreground p-3">名前</th>
+                  <th className="text-left text-xs font-semibold text-muted-foreground p-3">目標</th>
+                  <th className="text-left text-xs font-semibold text-muted-foreground p-3">次回予約</th>
+                  <th className="text-left text-xs font-semibold text-muted-foreground p-3">回数</th>
+                  <th className="text-left text-xs font-semibold text-muted-foreground p-3 min-w-[120px]">進捗</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clients.map((c) => (
+                  <tr key={c.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full gym-gradient flex items-center justify-center text-primary-foreground font-bold text-xs">
+                          {c.avatar}
+                        </div>
+                        <span className="font-medium text-sm">{c.name}</span>
+                      </div>
+                    </td>
+                    <td className="p-3 text-sm">{c.goal}</td>
+                    <td className="p-3 text-sm">{c.nextSession}</td>
+                    <td className="p-3 text-sm">{c.totalSessions}回</td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <Progress value={c.progress} className="h-2 flex-1" />
+                        <span className="text-xs font-medium text-muted-foreground w-8">{c.progress}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </section>
+    </div>
+  );
+};
+
+export default TrainerView;
