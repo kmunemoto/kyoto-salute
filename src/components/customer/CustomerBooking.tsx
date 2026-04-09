@@ -1,10 +1,10 @@
 import { useState, useSyncExternalStore } from "react";
-import { CalendarDays, Clock, Check, CreditCard, Trash2, ExternalLink } from "lucide-react";
+import { CalendarDays, Clock, Check, CreditCard, Trash2, ExternalLink, Sparkles } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { availableSlots, currentPlan } from "@/lib/dummyData";
+import { availableSlots, currentPlan, isTrialUser, trialPrice, trialLabel } from "@/lib/dummyData";
 import { bookingStore, Booking } from "@/stores/bookingStore";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -49,7 +49,8 @@ const CustomerBooking = () => {
       };
       bookingStore.addBooking(newBooking);
       setLastBooked(newBooking);
-      toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
+      const label = isTrialUser ? trialLabel : `${slot.time}〜${endTime}`;
+      toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${label} で予約しました！`);
       setSelectedSlot(null);
       setSelectedDate(undefined);
     }
@@ -74,20 +75,46 @@ const CustomerBooking = () => {
   return (
     <>
       <div className="px-4 py-4 space-y-5 slide-up">
-        <Card className="border-l-4 border-l-accent bg-accent/5">
-          <CardContent className="p-3 flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-accent" />
-            <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
-          </CardContent>
-        </Card>
+        {/* Trial user: special banner */}
+        {isTrialUser ? (
+          <Card className="border-2 border-accent bg-gradient-to-r from-accent/10 to-accent/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-accent-foreground" />
+                </div>
+                <div>
+                  <p className="font-bold text-base">{trialLabel}</p>
+                  <p className="text-xs text-muted-foreground">初めての方限定の体験プラン</p>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-2xl font-extrabold text-accent">¥{trialPrice.toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground">（税込）</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                カウンセリング＋パーソナルトレーニング60分の体験セッションです。下のカレンダーからご希望の日時をお選びください。
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-l-4 border-l-accent bg-accent/5">
+            <CardContent className="p-3 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-accent" />
+              <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
+            </CardContent>
+          </Card>
+        )}
 
         <div>
           <h1 className="text-lg font-bold flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-accent" />
-            予約する
+            {isTrialUser ? "初回体験を予約する" : "予約する"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            空いている日時を選んでください（1コマ60分＋休憩15分）
+            {isTrialUser
+              ? "ご希望の日時を選んでください（体験60分）"
+              : "空いている日時を選んでください（1コマ60分＋休憩15分）"}
           </p>
         </div>
 
@@ -96,7 +123,9 @@ const CustomerBooking = () => {
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-accent" />
-                <span className="font-bold text-sm">予約が完了しました！</span>
+                <span className="font-bold text-sm">
+                  {isTrialUser ? "初回体験の予約が完了しました！" : "予約が完了しました！"}
+                </span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {format(new Date(lastBooked.date), "M月d日（E）", { locale: ja })} {lastBooked.startTime}〜{lastBooked.endTime}（60分）
@@ -238,6 +267,11 @@ const CustomerBooking = () => {
             {selectedSlot && (
               <div className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
                 <p className="text-sm text-center mb-3">
+                  {isTrialUser && (
+                    <span className="block text-xs font-bold text-accent mb-1">
+                      {trialLabel} — ¥{trialPrice.toLocaleString()}
+                    </span>
+                  )}
                   <span className="font-bold">{slots.find((s) => s.id === selectedSlot)?.time}</span>
                   〜
                   <span className="font-bold">
@@ -252,7 +286,7 @@ const CustomerBooking = () => {
                   （60分）
                 </p>
                 <Button variant="accent" size="lg" className="w-full" onClick={handleBook}>
-                  この時間で予約する
+                  {isTrialUser ? "初回体験を予約する" : "この時間で予約する"}
                 </Button>
               </div>
             )}
