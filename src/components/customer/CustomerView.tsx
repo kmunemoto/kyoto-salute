@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LogOut } from "lucide-react";
+import logoSalute from "@/assets/logo-salute.png";
 import BottomNav from "./BottomNav";
 import CustomerHome from "./CustomerHome";
 import CustomerBooking from "./CustomerBooking";

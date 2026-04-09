@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LogOut } from "lucide-react";
+import logoSalute from "@/assets/logo-salute.png";
 import TrainerSidebar from "./TrainerSidebar";
 import TrainerDashboard from "./TrainerDashboard";
 import TrainerClientList from "./TrainerClientList";
