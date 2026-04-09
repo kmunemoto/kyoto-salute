@@ -85,13 +85,18 @@ const CustomerBooking = () => {
                 </div>
                 <div>
                   <p className="font-bold text-base">{trialLabel}</p>
-                  <p className="text-xs text-muted-foreground">初めての方限定の体験プラン</p>
+                  <p className="text-xs text-muted-foreground">初めての方限定</p>
                 </div>
               </div>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-2xl font-extrabold text-accent">¥{trialPrice.toLocaleString()}</span>
-                <span className="text-xs text-muted-foreground">（税込）</span>
+                <span className="text-2xl font-extrabold text-accent">無料</span>
+                <span className="text-xs text-muted-foreground">（¥0）</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                カウンセリング＋パーソナルトレーニング60分の無料体験セッションです。下のカレンダーからご希望の日時をお選びください。
+              </p>
+            </CardContent>
+          </Card>
               <p className="text-xs text-muted-foreground mt-2">
                 カウンセリング＋パーソナルトレーニング60分の体験セッションです。下のカレンダーからご希望の日時をお選びください。
               </p>
@@ -269,7 +274,7 @@ const CustomerBooking = () => {
                 <p className="text-sm text-center mb-3">
                   {isTrialUser && (
                     <span className="block text-xs font-bold text-accent mb-1">
-                      {trialLabel} — ¥{trialPrice.toLocaleString()}
+                      {trialLabel} — 無料
                     </span>
                   )}
                   <span className="font-bold">{slots.find((s) => s.id === selectedSlot)?.time}</span>
