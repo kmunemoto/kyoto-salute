@@ -44,13 +44,13 @@ const TrainerView = () => {
       <div className="pt-12">
         <div className="flex">
           <TrainerSidebar activeTab={tab} onTabChange={(t) => { setTab(t); setSelectedClientId(null); }} />
-          <main className="flex-1 ml-0 md:ml-60 p-4 md:p-8 max-w-6xl">
-            {tab === "dashboard" && <TrainerDashboard onSelectClient={handleSelectClient} />}
-            {tab === "clients" && !selectedClientId && <TrainerClientList onSelectClient={handleSelectClient} />}
-            {tab === "clients" && selectedClientId && <TrainerClientDetail clientId={selectedClientId} onBack={handleBackToList} />}
-            {tab === "schedule" && <TrainerSchedule />}
-            {tab === "messages" && <TrainerMessages />}
-          </main>
+          <main className="flex-1 ml-0 md:ml-60 p-4 md:p-8 max-w-6xl" key={`${tab}-${selectedClientId}`}>
+              {tab === "dashboard" && <TrainerDashboard onSelectClient={handleSelectClient} />}
+              {tab === "clients" && !selectedClientId && <TrainerClientList onSelectClient={handleSelectClient} />}
+              {tab === "clients" && selectedClientId && <TrainerClientDetail clientId={selectedClientId} onBack={handleBackToList} />}
+              {tab === "schedule" && <TrainerSchedule />}
+              {tab === "messages" && <TrainerMessages />}
+            </main>
         </div>
       </div>
     </div>
