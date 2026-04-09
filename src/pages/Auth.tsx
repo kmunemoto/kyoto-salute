@@ -37,7 +37,6 @@ const Auth = () => {
           options: {
             data: {
               display_name: displayName || email,
-              role: "customer",
             },
           },
         });
