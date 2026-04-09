@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, CalendarDays, MessageCircle, Dumbbell } from "lucide-react";
+import { LayoutDashboard, Users, CalendarDays, MessageCircle, Dumbbell, Settings2 } from "lucide-react";
 import type { TrainerTab } from "./TrainerView";
 
 interface TrainerSidebarProps {
@@ -13,6 +13,7 @@ const tabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard }[] = 
   { id: "schedule", label: "予約管理", icon: CalendarDays },
   { id: "messages", label: "メッセージ", icon: MessageCircle },
   { id: "exercises", label: "種目設定", icon: Dumbbell },
+  { id: "gym-settings", label: "ジム設定", icon: Settings2 },
 ];
 
 const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerSidebarProps) => {

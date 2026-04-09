@@ -10,6 +10,7 @@ import CustomerTraining from "./CustomerTraining";
 import CustomerSettings from "./CustomerSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import GymLogo from "@/components/GymLogo";
 
 export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings";
 
@@ -23,7 +24,7 @@ const CustomerView = () => {
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
         <div className="max-w-lg mx-auto flex items-center justify-between px-4 py-2">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[8px] text-muted-foreground">LOGO</div>
+            <GymLogo size="sm" />
             {/* ⚠️ DO NOT change this app name. Keep exactly as-is: "パーソナルジムSalute御所南" — never convert "Salute" to katakana */}
             <span className="text-sm font-bold">パーソナルジムSalute御所南</span>
           </div>
