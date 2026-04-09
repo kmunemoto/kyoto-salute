@@ -102,9 +102,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         .maybeSingle();
       if (data) {
         setProfile(data);
-        // Normalize plan name to match planOptions keys
-        const matchedPlan = planOptions.find(p => p === data.plan || p.startsWith(data.plan)) || planOptions[0];
-        setClientPlan(matchedPlan);
+        setClientPlan(data.plan || '初回無料体験');
         setIsPaid(data.paid_this_month);
       }
       setLoadingProfile(false);
@@ -356,7 +354,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {planOptions.map((p) => (
-                    <SelectItem key={p} value={p}>{p}（¥{planPrices[p].toLocaleString()}）</SelectItem>
+                    <SelectItem key={p} value={p}>{p}（¥{planPrices[p as PlanType]?.toLocaleString() ?? 0}）</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
