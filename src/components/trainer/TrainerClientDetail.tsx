@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   clients, clientBodyMetrics, clientTrainingRecords, clientBookings, clientChatMessages,
-  planOptions, PlanType, ChatMessage,
+  planOptions, planPrices, clientPaymentStatus, PlanType, ChatMessage,
 } from "@/lib/dummyData";
+import { Switch } from "@/components/ui/switch";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -35,6 +36,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<ExerciseEntry[]>([{ name: "", weight: "", reps: "" }]);
   const [memo, setMemo] = useState("");
+  const [isPaid, setIsPaid] = useState(clientPaymentStatus[clientId] || false);
 
   if (!client) return null;
 
@@ -90,16 +92,43 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           契約プラン
         </h2>
         <Card>
-          <CardContent className="p-4">
-            <Select value={clientPlan} onValueChange={(v) => {
-              setClientPlan(v as PlanType);
-              toast.success(`${client.name}さんのプランを「${v}」に変更しました`);
-            }}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {planOptions.map((p) => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
-              </SelectContent>
-            </Select>
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <Select value={clientPlan} onValueChange={(v) => {
+                setClientPlan(v as PlanType);
+                toast.success(`${client.name}さんのプランを「${v}」に変更しました`);
+              }}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {planOptions.map((p) => (
+                    <SelectItem key={p} value={p}>{p}（¥{planPrices[p].toLocaleString()}）</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm font-bold mt-2">月額: ¥{planPrices[clientPlan].toLocaleString()}</p>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className={`w-4 h-4 ${isPaid ? 'text-success' : 'text-muted-foreground'}`} />
+                <span className="text-sm font-medium">今月分 支払い状況</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold ${isPaid ? 'text-success' : 'text-destructive'}`}>
+                  {isPaid ? '支払済' : '未払い'}
+                </span>
+                <Switch
+                  checked={isPaid}
+                  onCheckedChange={(checked) => {
+                    setIsPaid(checked);
+                    toast.success(checked
+                      ? `${client.name}さんの今月分を「支払済」にしました`
+                      : `${client.name}さんの今月分を「未払い」に戻しました`
+                    );
+                  }}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </section>

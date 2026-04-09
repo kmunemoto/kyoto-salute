@@ -1,14 +1,15 @@
 import { Users, CalendarDays, TrendingUp, Clock, BarChart3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { sessions, clients } from "@/lib/dummyData";
+import { sessions, clients, planPrices } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 const todaySessions = sessions.filter(s => s.date === '2026-04-09');
+const currentMonthRevenue = clients.reduce((sum, c) => sum + planPrices[c.plan], 0);
 const revenueData = [
   { month: '1月', revenue: 680000 },
   { month: '2月', revenue: 720000 },
   { month: '3月', revenue: 810000 },
-  { month: '4月', revenue: 540000 },
+  { month: '4月', revenue: currentMonthRevenue },
 ];
 
 interface TrainerDashboardProps {
@@ -34,7 +35,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
           { label: '本日のセッション', value: `${todaySessions.length}件`, icon: CalendarDays, color: 'text-accent' },
           { label: 'アクティブ顧客', value: `${clients.length}名`, icon: Users, color: 'text-info' },
           { label: '月間セッション', value: '42件', icon: Clock, color: 'text-success' },
-          { label: '今月売上', value: '¥540K', icon: TrendingUp, color: 'text-warning' },
+          { label: '今月売上', value: `¥${(currentMonthRevenue / 1000).toFixed(0)}K`, icon: TrendingUp, color: 'text-warning' },
         ].map((stat) => (
           <Card key={stat.label} className="card-hover">
             <CardContent className="p-4">
