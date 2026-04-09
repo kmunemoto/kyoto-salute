@@ -128,9 +128,9 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
               <div className="h-44 sm:h-52">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(225, 12%, 90%)" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 10000}万`} width={40} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(30, 10%, 92%)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 10000}万`} width={40} />
                     <Tooltip
                       formatter={(value: number) => [`¥${value.toLocaleString()}`, '売上']}
                       contentStyle={{
@@ -141,7 +141,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                         fontSize: '12px',
                       }}
                     />
-                    <Bar dataKey="revenue" fill="hsl(18, 90%, 55%)" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="revenue" fill="hsl(36, 50%, 55%)" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
