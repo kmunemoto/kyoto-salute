@@ -60,7 +60,7 @@ const Unsubscribe = () => {
           )}
           {status === "success" && (
             <>
-              <CheckCircle className="w-10 h-10 mx-auto text-green-500" />
+              <CheckCircle className="w-10 h-10 mx-auto text-success" />
               <h1 className="text-lg font-bold">配信を停止しました</h1>
               <p className="text-sm text-muted-foreground">今後メール通知は届きません。</p>
             </>
