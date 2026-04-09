@@ -1,78 +1,106 @@
-import { useState, useRef } from "react";
-import { Plus, Camera, Clock, Utensils } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Camera, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Meal {
   id: string;
-  type: "朝食" | "昼食" | "夕食" | "間食";
-  imageUrl: string;
-  note: string;
-  time: string;
-  date: string;
+  image_url: string;
+  meal_type: string;
+  calories: number | null;
+  protein: number | null;
+  fat: number | null;
+  carbs: number | null;
+  fiber: number | null;
+  feedback: string | null;
+  analyzed: boolean;
+  created_at: string;
 }
-
-const dummyMeals: Meal[] = [
-  { id: "1", type: "朝食", imageUrl: "", note: "オートミール、プロテイン、バナナ", time: "07:30", date: "4月9日" },
-  { id: "2", type: "昼食", imageUrl: "", note: "鶏むね肉のサラダ、玄米おにぎり", time: "12:00", date: "4月9日" },
-  { id: "3", type: "朝食", imageUrl: "", note: "卵焼き、味噌汁、ご飯", time: "07:15", date: "4月8日" },
-  { id: "4", type: "昼食", imageUrl: "", note: "サーモン定食", time: "12:30", date: "4月8日" },
-  { id: "5", type: "夕食", imageUrl: "", note: "ささみとブロッコリーの炒め物", time: "19:00", date: "4月8日" },
-];
-
-const mealTypeColors: Record<string, string> = {
-  "朝食": "from-warning/20 to-accent/10",
-  "昼食": "from-success/20 to-info/10",
-  "夕食": "from-info/20 to-primary/10",
-  "間食": "from-accent/20 to-warning/10",
-};
 
 const mealTypeEmoji: Record<string, string> = {
   "朝食": "🌅",
   "昼食": "☀️",
   "夕食": "🌙",
   "間食": "🍎",
+  "食事": "🍽️",
 };
 
 const CustomerMeals = () => {
-  const [meals, setMeals] = useState<Meal[]>(dummyMeals);
-  const [selectedType, setSelectedType] = useState<Meal["type"]>("朝食");
-  const [note, setNote] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fetchMeals = async () => {
+    const { data, error } = await supabase
+      .from("meals")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setMeals(data as Meal[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchMeals();
+  }, []);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setPreviewUrl(URL.createObjectURL(file));
-    }
+    if (!file) return;
     e.target.value = "";
+
+    setUploading(true);
+    try {
+      // Upload to storage
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("meal-photos")
+        .upload(fileName, file);
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("meal-photos")
+        .getPublicUrl(fileName);
+      const imageUrl = urlData.publicUrl;
+
+      // Insert meal record
+      const { data: mealData, error: insertError } = await supabase
+        .from("meals")
+        .insert({ image_url: imageUrl })
+        .select()
+        .single();
+      if (insertError) throw insertError;
+
+      const newMeal = mealData as Meal;
+      setMeals((prev) => [newMeal, ...prev]);
+      toast.success("写真をアップロードしました。AI分析中...");
+
+      // Trigger AI analysis
+      const { error: fnError } = await supabase.functions.invoke("analyze-meal", {
+        body: { mealId: newMeal.id, imageUrl },
+      });
+
+      if (fnError) {
+        console.error("Analysis error:", fnError);
+        toast.error("AI分析に失敗しました");
+      } else {
+        toast.success("AI分析が完了しました！");
+        fetchMeals();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("アップロードに失敗しました");
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleSubmit = () => {
-    const newMeal: Meal = {
-      id: String(Date.now()),
-      type: selectedType,
-      imageUrl: previewUrl || "",
-      note: note || "（メモなし）",
-      time: new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }),
-      date: "4月9日",
-    };
-    setMeals((prev) => [newMeal, ...prev]);
-    setNote("");
-    setPreviewUrl(null);
-    setShowForm(false);
-    toast.success("食事を記録しました！");
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   };
-
-  // Group by date
-  const grouped = meals.reduce<Record<string, Meal[]>>((acc, meal) => {
-    if (!acc[meal.date]) acc[meal.date] = [];
-    acc[meal.date].push(meal);
-    return acc;
-  }, {});
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
@@ -82,118 +110,113 @@ const CustomerMeals = () => {
             <Utensils className="w-5 h-5 text-accent" />
             食事管理
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">食事を写真で記録しましょう</p>
+          <p className="text-sm text-muted-foreground mt-1">写真を撮るだけでAIが自動分析</p>
         </div>
-        <Button variant="accent" size="sm" onClick={() => setShowForm(true)}>
-          <Plus className="w-4 h-4" />
-          記録する
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+          {uploading ? "分析中..." : "写真を撮る"}
         </Button>
       </div>
 
-      {/* Add Meal Form */}
-      {showForm && (
-        <Card className="border-accent/30 slide-up">
-          <CardContent className="p-4 space-y-4">
-            <p className="font-bold text-sm">食事を記録</p>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
-            {/* Meal Type Selector */}
-            <div className="flex gap-2">
-              {(["朝食", "昼食", "夕食", "間食"] as Meal["type"][]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
-                    selectedType === type
-                      ? "accent-gradient text-accent-foreground shadow-md"
-                      : "bg-secondary text-muted-foreground"
-                  }`}
-                >
-                  {mealTypeEmoji[type]} {type}
-                </button>
-              ))}
-            </div>
-
-            {/* Photo Upload */}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            {previewUrl ? (
-              <div className="relative rounded-xl overflow-hidden">
-                <img src={previewUrl} alt="食事写真" className="w-full h-48 object-cover" />
-                <button
-                  onClick={() => { setPreviewUrl(null); }}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-foreground/60 text-primary-foreground flex items-center justify-center text-xs font-bold"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-32 rounded-xl border-2 border-dashed border-border hover:border-accent flex flex-col items-center justify-center gap-2 transition-colors"
-              >
-                <Camera className="w-8 h-8 text-muted-foreground/40" />
-                <span className="text-xs text-muted-foreground font-medium">写真を撮る / 選ぶ</span>
-              </button>
-            )}
-
-            {/* Note */}
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="メニュー内容をメモ（例: 鶏むね肉のサラダ）"
-              className="w-full bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-muted-foreground"
-            />
-
-            {/* Buttons */}
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" className="flex-1" onClick={() => { setShowForm(false); setPreviewUrl(null); setNote(""); }}>
-                キャンセル
-              </Button>
-              <Button variant="accent" size="sm" className="flex-1" onClick={handleSubmit}>
-                記録する
-              </Button>
-            </div>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : meals.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Camera className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+            <p className="text-sm text-muted-foreground">食事の写真を撮って記録を始めましょう</p>
           </CardContent>
         </Card>
-      )}
+      ) : (
+        <div className="space-y-4">
+          {meals.map((meal) => (
+            <Card key={meal.id} className="overflow-hidden card-hover">
+              <CardContent className="p-0">
+                {/* Photo */}
+                <div className="relative">
+                  <img
+                    src={meal.image_url}
+                    alt="食事写真"
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
+                    {mealTypeEmoji[meal.meal_type] || "🍽️"} {meal.meal_type}
+                  </div>
+                  <div className="absolute top-2 right-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs backdrop-blur-sm">
+                    {formatDate(meal.created_at)}
+                  </div>
+                </div>
 
-      {/* Meal Timeline */}
-      {Object.entries(grouped).map(([date, dateMeals]) => (
-        <section key={date}>
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">{date}</h2>
-          <div className="space-y-2">
-            {dateMeals.map((meal) => (
-              <Card key={meal.id} className="card-hover overflow-hidden">
-                <CardContent className="p-0 flex">
-                  {/* Image */}
-                  <div className="w-20 h-20 shrink-0">
-                    {meal.imageUrl ? (
-                      <img src={meal.imageUrl} alt={meal.note} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${mealTypeColors[meal.type]} flex items-center justify-center`}>
-                        <span className="text-2xl">{mealTypeEmoji[meal.type]}</span>
+                {/* Analysis Results */}
+                {meal.analyzed ? (
+                  <div className="p-4 space-y-3">
+                    {/* Nutrient Grid */}
+                    <div className="grid grid-cols-5 gap-2">
+                      <NutrientBadge icon={Flame} label="カロリー" value={`${meal.calories ?? 0}`} unit="kcal" color="text-destructive" />
+                      <NutrientBadge icon={Beef} label="タンパク質" value={`${meal.protein ?? 0}`} unit="g" color="text-accent" />
+                      <NutrientBadge icon={Droplets} label="脂質" value={`${meal.fat ?? 0}`} unit="g" color="text-warning" />
+                      <NutrientBadge icon={Wheat} label="炭水化物" value={`${meal.carbs ?? 0}`} unit="g" color="text-info" />
+                      <NutrientBadge icon={Leaf} label="食物繊維" value={`${meal.fiber ?? 0}`} unit="g" color="text-success" />
+                    </div>
+
+                    {/* AI Feedback */}
+                    {meal.feedback && (
+                      <div className="bg-accent/10 rounded-xl p-3">
+                        <p className="text-xs font-bold text-accent mb-1">🤖 AIアドバイス</p>
+                        <p className="text-sm text-foreground leading-relaxed">{meal.feedback}</p>
                       </div>
                     )}
                   </div>
-                  {/* Info */}
-                  <div className="flex-1 p-3 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-accent">{meal.type}</span>
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                        <Clock className="w-2.5 h-2.5" />
-                        {meal.time}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium mt-1 truncate">{meal.note}</p>
+                ) : (
+                  <div className="p-4 flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">AI分析中...</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      ))}
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
+
+const NutrientBadge = ({
+  icon: Icon,
+  label,
+  value,
+  unit,
+  color,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  unit: string;
+  color: string;
+}) => (
+  <div className="text-center">
+    <Icon className={`w-4 h-4 mx-auto mb-1 ${color}`} />
+    <p className="text-xs text-muted-foreground leading-none mb-0.5">{label}</p>
+    <p className="text-sm font-bold">{value}</p>
+    <p className="text-[10px] text-muted-foreground">{unit}</p>
+  </div>
+);
 
 export default CustomerMeals;
