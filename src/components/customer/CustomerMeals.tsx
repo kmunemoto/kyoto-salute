@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Meal {
   id: string;
@@ -28,6 +29,7 @@ const mealTypeEmoji: Record<string, string> = {
 };
 
 const CustomerMeals = () => {
+  const { user } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ const CustomerMeals = () => {
       // Insert meal record
       const { data: mealData, error: insertError } = await supabase
         .from("meals")
-        .insert({ image_url: imageUrl })
+        .insert({ image_url: imageUrl, user_id: user?.id })
         .select()
         .single();
       if (insertError) throw insertError;
