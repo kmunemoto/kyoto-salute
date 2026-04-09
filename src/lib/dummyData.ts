@@ -348,9 +348,8 @@ export const clientBookings: Record<string, CustomerBookingEntry[]> = {
   '5': [
     { id: 'b5-1', date: '2026-04-10', startTime: '10:00', endTime: '11:00' },
   ],
+  '6': [],
 };
-
-// Per-client chat messages
 export const clientChatMessages: Record<string, ChatMessage[]> = {
   '1': chatMessages,
   '2': [
