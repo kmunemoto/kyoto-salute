@@ -83,6 +83,31 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         </div>
       </div>
 
+      {/* Plan setting */}
+      <section className="mb-6">
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <CreditCard className="w-3.5 h-3.5" />
+          契約プラン
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <Select value={clientPlan} onValueChange={(v) => {
+              setClientPlan(v as PlanType);
+              toast.success(`${client.name}さんのプランを「${v}」に変更しました`);
+            }}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {planOptions.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      </section>
+
       <div className="grid md:grid-cols-2 gap-6">
         {/* Body metrics chart */}
         <section>
