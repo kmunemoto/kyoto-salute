@@ -1,26 +1,39 @@
 import { TrendingDown, CalendarDays, Flame, Target, CreditCard, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { bodyMetrics, currentPlan, myBookings } from "@/lib/dummyData";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
+import { bodyMetrics } from "@/lib/dummyData";
+import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
+import { useProfile } from "@/hooks/useProfile";
+import { Loader2 } from "lucide-react";
 
 const planMaxSessions: Record<string, number> = {
-  '月4回プラン': 4,
-  '月6回プラン': 6,
-  '月8回プラン': 8,
-  '通い放題プラン (月15回まで)': 15,
+  '月4回': 4,
+  '月6回': 6,
+  '月8回': 8,
+  '通い放題': 15,
 };
 
 const CustomerHome = () => {
+  const { profile, loading } = useProfile();
+
   const latestMetric = bodyMetrics[bodyMetrics.length - 1];
   const firstMetric = bodyMetrics[0];
   const weightChange = (latestMetric.weight - firstMetric.weight).toFixed(1);
   const fatChange = (latestMetric.bodyFat - firstMetric.bodyFat).toFixed(1);
 
+  const displayName = profile?.display_name || "ゲスト";
+  const currentPlan = profile?.plan || "月4回";
+
   // Dummy: current month usage count
   const usedSessions = 3;
   const maxSessions = planMaxSessions[currentPlan] || 4;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
@@ -30,7 +43,7 @@ const CustomerHome = () => {
         <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-accent/5 translate-y-6 -translate-x-4" />
         <div className="relative">
           <p className="text-sm opacity-75">Good Morning 🔥</p>
-          <h1 className="text-xl font-bold mt-1">田中 太郎さん</h1>
+          <h1 className="text-xl font-bold mt-1">{displayName}さん</h1>
           <div className="flex items-center gap-4 mt-4">
             <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-full px-3 py-1">
               <Target className="w-3.5 h-3.5" />

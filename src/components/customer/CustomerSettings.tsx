@@ -2,10 +2,23 @@ import { useState } from "react";
 import { Bell, BellOff, Settings, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { currentPlan } from "@/lib/dummyData";
+import { useProfile } from "@/hooks/useProfile";
+import { Loader2 } from "lucide-react";
 
 const CustomerSettings = () => {
+  const { profile, loading } = useProfile();
   const [reminderEnabled, setReminderEnabled] = useState(true);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  const displayName = profile?.display_name || "ゲスト";
+  const currentPlan = profile?.plan || "月4回";
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
@@ -24,7 +37,7 @@ const CustomerSettings = () => {
           <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">名前</span>
-              <span className="text-sm font-bold">田中 太郎</span>
+              <span className="text-sm font-bold">{displayName}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">プラン</span>
