@@ -18,9 +18,9 @@ export const useProfile = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [trigger, setTrigger] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const refetch = () => setTrigger((t) => t + 1);
+  const refetch = () => setRefreshKey((k) => k + 1);
 
   useEffect(() => {
     if (!user) {
@@ -29,21 +29,26 @@ export const useProfile = () => {
       return;
     }
 
+    let cancelled = false;
     const fetchProfile = async () => {
+      setLoading(true);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (!error && data) {
-        setProfile(data as Profile);
+      if (!cancelled) {
+        if (!error && data) {
+          setProfile(data as Profile);
+        }
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchProfile();
-  }, [user, trigger]);
+    return () => { cancelled = true; };
+  }, [user, refreshKey]);
 
   return { profile, loading, refetch };
 };
