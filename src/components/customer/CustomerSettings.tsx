@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const CustomerSettings = () => {
-  const { profile, loading, refetch } = useProfile();
+  const { profile, loading, updateDisplayName } = useProfile();
   const { user, signOut } = useAuth();
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -32,25 +32,22 @@ const CustomerSettings = () => {
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    if (profile?.display_name) {
-      setDisplayName(profile.display_name);
-    }
+    setDisplayName(profile?.display_name || "");
   }, [profile?.display_name]);
 
   const handleSaveName = async () => {
     if (!user || !displayName.trim()) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ display_name: displayName.trim() })
-      .eq("user_id", user.id);
+
+    const { error } = await updateDisplayName(displayName);
+
     if (error) {
-      toast.error("プロフィールの更新に失敗しました");
+      toast.error("保存に失敗しました");
     } else {
       toast.success("プロフィールを更新しました");
       setEditing(false);
-      refetch();
     }
+
     setSaving(false);
   };
 
