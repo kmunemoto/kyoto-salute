@@ -1,5 +1,6 @@
 import { Users, CalendarDays, TrendingUp, Clock, BarChart3, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { useAllCustomerProfiles, useProfile } from "@/hooks/useProfile";
@@ -104,9 +105,9 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm truncate">{b.clientName}</p>
-                        {b.booking_type === "初回体験" && (
-                          <span className="text-[10px] text-accent font-bold">初回体験</span>
-                        )}
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 mt-0.5">
+                          {b.booking_type}
+                        </Badge>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold">{b.startTime}</p>
