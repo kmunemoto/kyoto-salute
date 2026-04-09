@@ -592,12 +592,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       <p className="text-xs font-bold text-muted-foreground mb-1.5">
                         {format(new Date(date), "yyyy年M月d日（E）", { locale: ja })}
                       </p>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {groupedRecords[date].map((r) => (
-                          <div key={r.id} className="flex items-center gap-2 text-sm flex-wrap">
+                          <div key={r.id} className="flex items-center gap-2 text-sm">
                             <Dumbbell className="w-3 h-3 text-accent shrink-0" />
-                            <span className="font-medium">{r.exercise_name}</span>
-                            <span className="text-muted-foreground">{r.weight}kg × {r.reps}rep</span>
+                            <span className="font-medium truncate">{r.exercise_name}</span>
+                            <span className="text-muted-foreground whitespace-nowrap">{r.weight}kg × {r.reps}rep</span>
+                            <div className="ml-auto flex items-center gap-0.5 shrink-0">
+                              <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="編集">
+                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                              </button>
+                              <button onClick={() => setDeleteTarget(r)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors" title="削除">
+                                <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
