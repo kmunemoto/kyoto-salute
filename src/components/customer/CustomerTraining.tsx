@@ -1,5 +1,12 @@
 import { useState, useMemo } from "react";
 import { Dumbbell, TrendingUp, Calendar } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { trainingRecords } from "@/lib/dummyData";
 import {
