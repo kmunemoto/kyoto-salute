@@ -109,13 +109,28 @@ const CustomerMeals = () => {
       toast.success("写真をアップロードしました。AI分析中...");
 
       // Trigger AI analysis
-      const { error: fnError } = await supabase.functions.invoke("analyze-meal", {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke("analyze-meal", {
         body: { mealId: newMeal.id, imageUrl },
       });
 
-      if (fnError) {
-        console.error("Analysis error:", fnError);
-        toast.error("AI分析に失敗しました");
+      const isFallback = fnError || fnData?.fallback || fnData?.error;
+
+      if (isFallback) {
+        console.warn("AI analysis failed, using dummy data:", fnError || fnData?.error);
+        // Fallback: update with dummy data so UI doesn't stay stuck
+        const dummyAnalysis = {
+          meal_type: "食事",
+          calories: 500,
+          protein: 20.0,
+          fat: 15.0,
+          carbs: 60.0,
+          fiber: 5.0,
+          feedback: "AI分析に一時的に接続できませんでした。ダミーデータを表示しています。",
+          analyzed: true,
+        };
+        await supabase.from("meals").update(dummyAnalysis).eq("id", newMeal.id);
+        toast.info("ダミーの分析結果を表示しています");
+        fetchMeals();
       } else {
         toast.success("AI分析が完了しました！");
         fetchMeals();
