@@ -1,21 +1,54 @@
-import { useState } from "react";
-import { Send, MessageCircle } from "lucide-react";
-import { chatMessages } from "@/lib/dummyData";
+import { useState, useEffect, useRef } from "react";
+import { Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMessages } from "@/hooks/useMessages";
+import { format } from "date-fns";
 
 const CustomerChat = () => {
-  const [messages, setMessages] = useState(chatMessages);
+  const { user } = useAuth();
+  const [trainerId, setTrainerId] = useState<string | null>(null);
+  const [trainerName, setTrainerName] = useState("コーチ");
   const [input, setInput] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const newMsg = {
-      id: String(Date.now()),
-      sender: "customer" as const,
-      text: input.trim(),
-      time: new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }),
-      date: "4/9",
+  // Fetch trainer user id
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "trainer")
+        .limit(1)
+        .single();
+      if (data) {
+        setTrainerId(data.user_id);
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", data.user_id)
+          .single();
+        if (profile?.display_name) setTrainerName(profile.display_name);
+      }
     };
-    setMessages((prev) => [...prev, newMsg]);
+    fetch();
+  }, []);
+
+  const { messages, sendMessage, markAsRead } = useMessages(trainerId);
+
+  // Mark messages as read when viewing
+  useEffect(() => {
+    markAsRead();
+  }, [messages]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!input.trim() || !trainerId) return;
+    await sendMessage(input.trim(), trainerId);
     setInput("");
   };
 
@@ -26,16 +59,21 @@ const CustomerChat = () => {
     }
   };
 
+  // Group messages by date
+  const getDateLabel = (dateStr: string) => {
+    return format(new Date(dateStr), "M/d");
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)] slide-up">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full gym-gradient flex items-center justify-center text-primary-foreground font-bold text-sm">
-            Y
+            {trainerName.charAt(0)}
           </div>
           <div>
-            <p className="font-bold text-sm">山本 コーチ</p>
+            <p className="font-bold text-sm">{trainerName}</p>
             <p className="text-xs text-success font-medium flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-success rounded-full inline-block" />
               オンライン
@@ -46,36 +84,44 @@ const CustomerChat = () => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        {messages.length === 0 && (
+          <div className="text-center text-muted-foreground text-sm mt-8">
+            メッセージを送ってみましょう！
+          </div>
+        )}
         {messages.map((msg, i) => {
-          const showDate = i === 0 || messages[i - 1].date !== msg.date;
+          const dateLabel = getDateLabel(msg.created_at);
+          const prevDateLabel = i > 0 ? getDateLabel(messages[i - 1].created_at) : null;
+          const showDate = i === 0 || dateLabel !== prevDateLabel;
+          const isMe = msg.sender_id === user?.id;
+
           return (
             <div key={msg.id}>
               {showDate && (
                 <div className="text-center my-3">
                   <span className="text-[10px] text-muted-foreground bg-muted px-3 py-1 rounded-full font-medium">
-                    {msg.date}
+                    {dateLabel}
                   </span>
                 </div>
               )}
-              <div className={`flex ${msg.sender === "customer" ? "justify-end" : "justify-start"}`}>
+              <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 ${
-                    msg.sender === "customer"
+                    isMe
                       ? "accent-gradient text-accent-foreground rounded-br-md"
                       : "bg-card border border-border rounded-bl-md shadow-sm"
                   }`}
                 >
-                  <p className="text-sm leading-relaxed">{msg.text}</p>
-                  <p className={`text-[10px] mt-1 ${
-                    msg.sender === "customer" ? "text-accent-foreground/60" : "text-muted-foreground"
-                  }`}>
-                    {msg.time}
+                  <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <p className={`text-[10px] mt-1 ${isMe ? "text-accent-foreground/60" : "text-muted-foreground"}`}>
+                    {format(new Date(msg.created_at), "HH:mm")}
                   </p>
                 </div>
               </div>
             </div>
           );
         })}
+        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
