@@ -1,14 +1,19 @@
-import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle, Sparkles, UserCheck } from "lucide-react";
+import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle, Sparkles, UserCheck, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { planPrices, PlanType } from "@/lib/dummyData";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TrainerClientListProps {
   onSelectClient: (clientId: string) => void;
