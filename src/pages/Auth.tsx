@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Dumbbell, Users, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Users, Mail, Lock, User } from "lucide-react";
+import logoSalute from "@/assets/logo-salute.png";
 
 type AuthMode = "login" | "signup";
 type RoleChoice = "customer" | "trainer" | null;
@@ -63,10 +64,8 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-6 slide-up">
         {/* Logo */}
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl gym-gradient flex items-center justify-center mb-4">
-            <Dumbbell className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-black tracking-tight">パーソナルジム</h1>
+          <img src={logoSalute} alt="Salute御所南" className="w-24 h-24 mx-auto object-contain mb-2" />
+          <h1 className="text-2xl font-black tracking-tight">パーソナルジムSalute御所南</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login" ? "アカウントにログイン" : "新規アカウント作成"}
           </p>
