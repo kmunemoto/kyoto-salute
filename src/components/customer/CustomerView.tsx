@@ -8,6 +8,7 @@ import CustomerMeals from "./CustomerMeals";
 import CustomerChat from "./CustomerChat";
 import CustomerTraining from "./CustomerTraining";
 import CustomerSettings from "./CustomerSettings";
+import PwaInstallBanner from "./PwaInstallBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
@@ -51,6 +52,7 @@ const CustomerView = () => {
         {tab === "settings" && <CustomerSettings />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
+      <PwaInstallBanner />
     </div>
   );
 };
