@@ -155,6 +155,7 @@ const TrainerSchedule = () => {
                               <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs">
                                 <p className="font-bold truncate">{session.clientName}</p>
                                 <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
+                                <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
                               </div>
                             )}
                           </td>
@@ -196,6 +197,7 @@ const TrainerSchedule = () => {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold truncate">{b.clientName}</p>
                             <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
+                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{b.booking_type}</p>
                           </div>
                         </CardContent>
                       </Card>
