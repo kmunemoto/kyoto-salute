@@ -59,9 +59,9 @@ export interface CustomerBookingEntry {
 export const currentPlan: PlanType = '月4回プラン';
 
 export const myBookings: CustomerBookingEntry[] = [
-  { id: 'b1', date: '2026-04-09', startTime: '10:00', endTime: '11:15' },
-  { id: 'b2', date: '2026-04-14', startTime: '14:00', endTime: '15:15' },
-  { id: 'b3', date: '2026-04-18', startTime: '11:00', endTime: '12:15' },
+  { id: 'b1', date: '2026-04-09', startTime: '10:00', endTime: '11:00' },
+  { id: 'b2', date: '2026-04-14', startTime: '14:00', endTime: '15:00' },
+  { id: 'b3', date: '2026-04-18', startTime: '11:00', endTime: '12:00' },
 ];
 
 export interface Photo {
