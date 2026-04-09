@@ -1,5 +1,12 @@
 import { useState, useMemo } from "react";
 import { Dumbbell, TrendingUp, Calendar } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { trainingRecords } from "@/lib/dummyData";
 import {
@@ -58,25 +65,18 @@ const CustomerTraining = () => {
         </h2>
         <Card>
           <CardContent className="p-4 space-y-3">
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {exerciseNames.map((name) => {
-                const isActive = selectedExercise === name;
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => setSelectedExercise(name)}
-                    className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                      isActive
-                        ? "border-accent bg-accent text-accent-foreground"
-                        : "border-border bg-background text-foreground hover:border-accent/50"
-                    }`}
-                  >
+            <Select value={selectedExercise} onValueChange={setSelectedExercise}>
+              <SelectTrigger className="w-full h-11 text-sm font-medium">
+                <SelectValue placeholder="種目を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {exerciseNames.map((name) => (
+                  <SelectItem key={name} value={name}>
                     {name}
-                  </button>
-                );
-              })}
-            </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {chartData.length > 1 ? (
               <div className="h-52">
