@@ -26,7 +26,7 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   const [deleting, setDeleting] = useState(false);
 
   const filtered = profiles.filter(c =>
-    (c.display_name || "").includes(search) || c.plan.includes(search)
+    (c.display_name || "").includes(search) || (c.plan || "").includes(search)
   );
 
   const formatPrice = (plan: string) => {
