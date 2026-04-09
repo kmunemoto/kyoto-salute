@@ -26,7 +26,7 @@ const CustomerHome = () => {
 
   const displayName = profile?.display_name || "ゲスト";
   const currentPlan = profile?.plan;
-  const hasPlan = !!currentPlan;
+  const hasPlan = !!currentPlan && currentPlan !== '初回無料体験';
 
   // Filter future bookings only
   const now = new Date();
@@ -127,7 +127,7 @@ const CustomerHome = () => {
                 <div>
                   <p className="font-bold text-base">{formatBookingDate(nextBooking)}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {nextBooking.booking_type === "初回体験" ? "初回無料体験" : "トレーニング"}
+                    {nextBooking.booking_type === "初回無料体験" ? "初回無料体験" : "トレーニング"}
                   </p>
                   {hasPlan && maxSessions > 0 && (
                     <p className="text-xs font-semibold text-accent mt-1.5">

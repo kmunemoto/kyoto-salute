@@ -43,20 +43,22 @@ export interface TimeSlot {
   available: boolean;
 }
 
-export type PlanType = '月4回プラン' | '月6回プラン' | '月8回プラン' | '通い放題プラン (月15回まで)';
+export type PlanType = '初回無料体験' | '月4回' | '月6回' | '月8回' | '通い放題';
 
 export const planOptions: PlanType[] = [
-  '月4回プラン',
-  '月6回プラン',
-  '月8回プラン',
-  '通い放題プラン (月15回まで)',
+  '初回無料体験',
+  '月4回',
+  '月6回',
+  '月8回',
+  '通い放題',
 ];
 
 export const planPrices: Record<PlanType, number> = {
-  '月4回プラン': 20000,
-  '月6回プラン': 28500,
-  '月8回プラン': 36000,
-  '通い放題プラン (月15回まで)': 60000,
+  '初回無料体験': 0,
+  '月4回': 20000,
+  '月6回': 28500,
+  '月8回': 36000,
+  '通い放題': 60000,
 };
 
 // Trial session
