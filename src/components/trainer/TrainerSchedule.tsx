@@ -19,6 +19,7 @@ const TrainerSchedule = () => {
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
   const [proxyTime, setProxyTime] = useState<string>("");
   const [proxyClient, setProxyClient] = useState<string>("");
+  const [proxyBookingType, setProxyBookingType] = useState<string>("通常");
   const [submitting, setSubmitting] = useState(false);
 
   const { bookings, loading, refetch } = useAllBookings();
@@ -55,7 +56,7 @@ const TrainerSchedule = () => {
     }
 
     setSubmitting(true);
-    const { error } = await createBooking(proxyClient, proxyDateKey, proxyTime, "通常");
+    const { error } = await createBooking(proxyClient, proxyDateKey, proxyTime, proxyBookingType);
 
     if (error) {
       toast.error("予約の追加に失敗しました");
@@ -69,6 +70,7 @@ const TrainerSchedule = () => {
     setProxyDate(undefined);
     setProxyTime("");
     setProxyClient("");
+    setProxyBookingType("通常");
     setSubmitting(false);
     refetch();
   };
