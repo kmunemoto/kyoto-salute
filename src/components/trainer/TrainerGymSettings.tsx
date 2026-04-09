@@ -28,7 +28,7 @@ const TrainerGymSettings = () => {
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
-      const filePath = `logo.${ext}`;
+      const filePath = `logo_${Date.now()}.${ext}`;
 
       await supabase.storage.from("gym-assets").remove([filePath]);
 
