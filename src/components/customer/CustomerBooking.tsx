@@ -129,10 +129,7 @@ const CustomerBooking = () => {
     return opt?.label || type;
   };
 
-  // Filter plans: if trial user, only show trial; otherwise show all except trial
-  const availablePlans = isTrialUser
-    ? PLAN_OPTIONS.filter((p) => p.value === "初回無料体験")
-    : PLAN_OPTIONS.filter((p) => p.value !== "初回無料体験");
+  const availablePlans = PLAN_OPTIONS;
 
   return (
     <>
