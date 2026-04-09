@@ -1,0 +1,83 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  plan: string;
+  paid_this_month: boolean;
+  trial_completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const useProfile = () => {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!error && data) {
+        setProfile(data as Profile);
+      }
+      setLoading(false);
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  return { profile, loading };
+};
+
+export const useAllCustomerProfiles = () => {
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      // Get all customer user_ids from user_roles
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "customer");
+
+      if (!roles || roles.length === 0) {
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
+      const customerIds = roles.map((r) => r.user_id);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("user_id", customerIds);
+
+      if (!error && data) {
+        setProfiles(data as Profile[]);
+      }
+      setLoading(false);
+    };
+
+    fetchProfiles();
+  }, []);
+
+  return { profiles, loading, setProfiles };
+};

@@ -1,22 +1,39 @@
 import { Users, CalendarDays, TrendingUp, Clock, BarChart3, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { sessions, clients, planPrices } from "@/lib/dummyData";
+import { sessions, clients as dummyClients, planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
+import { useAllCustomerProfiles } from "@/hooks/useProfile";
+import { Loader2 } from "lucide-react";
 
 const todaySessions = sessions.filter(s => s.date === '2026-04-09');
-const currentMonthRevenue = clients.reduce((sum, c) => sum + planPrices[c.plan], 0);
-const revenueData = [
-  { month: '1月', revenue: 680000 },
-  { month: '2月', revenue: 720000 },
-  { month: '3月', revenue: 810000 },
-  { month: '4月', revenue: currentMonthRevenue },
-];
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
 }
 
 const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
+  const { profiles, loading } = useAllCustomerProfiles();
+
+  const currentMonthRevenue = profiles.reduce((sum, p) => {
+    const plan = p.plan as PlanType;
+    return sum + (planPrices[plan] || 0);
+  }, 0);
+
+  const revenueData = [
+    { month: '1月', revenue: 680000 },
+    { month: '2月', revenue: 720000 },
+    { month: '3月', revenue: 810000 },
+    { month: '4月', revenue: currentMonthRevenue },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
+
   return (
     <div className="pb-8 md:pb-0">
       {/* Header */}
@@ -33,7 +50,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
           { label: '本日のセッション', value: `${todaySessions.length}件`, icon: CalendarDays, color: 'text-accent' },
-          { label: 'アクティブ顧客', value: `${clients.length}名`, icon: Users, color: 'text-info' },
+          { label: 'アクティブ顧客', value: `${profiles.length}名`, icon: Users, color: 'text-info' },
           { label: '月間セッション', value: '42件', icon: Clock, color: 'text-success' },
           { label: '今月売上', value: `¥${currentMonthRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-warning' },
         ].map((stat) => (
@@ -57,7 +74,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
           <div className="space-y-2">
             {todaySessions.map((s) => (
               <Card key={s.id} className="card-hover cursor-pointer" onClick={() => {
-                const client = clients.find(c => c.name === s.clientName);
+                const client = dummyClients.find((c) => c.name === s.clientName);
                 if (client) onSelectClient(client.id);
               }}>
                 <CardContent className="p-4 flex items-center gap-4">
@@ -125,7 +142,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                 <p>予約の前日に各顧客へリマインド通知が自動送信されます。</p>
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <span>通知オン中の顧客</span>
-                  <span className="font-bold text-foreground">{clients.length}名 / {clients.length}名</span>
+                  <span className="font-bold text-foreground">{profiles.length}名 / {profiles.length}名</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>本日送信済みリマインド</span>
