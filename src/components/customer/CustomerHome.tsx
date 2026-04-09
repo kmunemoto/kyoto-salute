@@ -5,11 +5,22 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area, Area
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
+const planMaxSessions: Record<string, number> = {
+  '月4回プラン': 4,
+  '月6回プラン': 6,
+  '月8回プラン': 8,
+  '通い放題プラン (月15回まで)': 15,
+};
+
 const CustomerHome = () => {
   const latestMetric = bodyMetrics[bodyMetrics.length - 1];
   const firstMetric = bodyMetrics[0];
   const weightChange = (latestMetric.weight - firstMetric.weight).toFixed(1);
   const fatChange = (latestMetric.bodyFat - firstMetric.bodyFat).toFixed(1);
+
+  // Dummy: current month usage count
+  const usedSessions = 3;
+  const maxSessions = planMaxSessions[currentPlan] || 4;
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
