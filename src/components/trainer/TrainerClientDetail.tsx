@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil } from "lucide-react";
 import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   clientBodyMetrics, clientBookings, clientChatMessages,
   planOptions, planPrices, PlanType, ChatMessage,
@@ -78,6 +85,12 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [saving, setSaving] = useState(false);
   const [clientMeals, setClientMeals] = useState<MealRecord[]>([]);
   const [loadingMeals, setLoadingMeals] = useState(true);
+  const [editRecord, setEditRecord] = useState<WorkoutRecord | null>(null);
+  const [editWeight, setEditWeight] = useState("");
+  const [editReps, setEditReps] = useState("");
+  const [editExerciseId, setEditExerciseId] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
 
   // Fetch profile
   useEffect(() => {
@@ -267,8 +280,42 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     setIsPaid(checked);
     toast.success(checked ? `${displayName}さんの今月分を「支払済」にしました` : `${displayName}さんの今月分を「未払い」に戻しました`);
   };
+  const openEdit = (r: WorkoutRecord) => {
+    setEditRecord(r);
+    setEditExerciseId(r.exercise_id);
+    setEditWeight(r.weight?.toString() || "");
+    setEditReps(r.reps?.toString() || "");
+  };
 
-  // Group workout records by date for display
+  const handleEditSave = async () => {
+    if (!editRecord) return;
+    setEditSaving(true);
+    const { error } = await supabase.from("workouts").update({
+      exercise_id: editExerciseId,
+      weight: parseFloat(editWeight),
+      reps: parseInt(editReps, 10),
+    }).eq("id", editRecord.id);
+    if (error) { toast.error("更新に失敗しました"); setEditSaving(false); return; }
+    const master = exerciseMasters.find(e => e.id === editExerciseId);
+    setWorkoutRecords(prev => prev.map(r => r.id === editRecord.id ? {
+      ...r, exercise_id: editExerciseId, weight: parseFloat(editWeight), reps: parseInt(editReps, 10),
+      exercise_name: master?.name || r.exercise_name,
+    } : r));
+    setEditRecord(null);
+    setEditSaving(false);
+    toast.success("記録を更新しました");
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("workouts").delete().eq("id", deleteTarget.id);
+    if (error) { toast.error("削除に失敗しました"); return; }
+    setWorkoutRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    toast.success("記録を削除しました");
+  };
+
+
   const groupedRecords = workoutRecords.reduce((acc, r) => {
     const dateKey = r.workout_date;
     if (!acc[dateKey]) acc[dateKey] = [];
@@ -545,12 +592,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       <p className="text-xs font-bold text-muted-foreground mb-1.5">
                         {format(new Date(date), "yyyy年M月d日（E）", { locale: ja })}
                       </p>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {groupedRecords[date].map((r) => (
-                          <div key={r.id} className="flex items-center gap-2 text-sm flex-wrap">
+                          <div key={r.id} className="flex items-center gap-2 text-sm">
                             <Dumbbell className="w-3 h-3 text-accent shrink-0" />
-                            <span className="font-medium">{r.exercise_name}</span>
-                            <span className="text-muted-foreground">{r.weight}kg × {r.reps}rep</span>
+                            <span className="font-medium truncate">{r.exercise_name}</span>
+                            <span className="text-muted-foreground whitespace-nowrap">{r.weight}kg × {r.reps}rep</span>
+                            <div className="ml-auto flex items-center gap-0.5 shrink-0">
+                              <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="編集">
+                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                              </button>
+                              <button onClick={() => setDeleteTarget(r)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors" title="削除">
+                                <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -670,6 +725,61 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Edit workout dialog */}
+      <Dialog open={!!editRecord} onOpenChange={(open) => { if (!open) setEditRecord(null); }}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>記録を編集</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-1 block">種目</label>
+              <Select value={editExerciseId} onValueChange={setEditExerciseId}>
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {exerciseMasters.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">重量 (kg)</label>
+                <Input type="number" step="0.5" value={editWeight} onChange={(e) => setEditWeight(e.target.value)} className="h-11" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">回数 (rep)</label>
+                <Input type="number" value={editReps} onChange={(e) => setEditReps(e.target.value)} className="h-11" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setEditRecord(null)} className="w-full sm:w-auto">キャンセル</Button>
+            <Button variant="accent" onClick={handleEditSave} disabled={editSaving || !editExerciseId || !editWeight || !editReps} className="w-full sm:w-auto">
+              {editSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>この記録を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && `${deleteTarget.exercise_name} ${deleteTarget.weight}kg × ${deleteTarget.reps}rep の記録を削除します。この操作は取り消せません。`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">削除する</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
