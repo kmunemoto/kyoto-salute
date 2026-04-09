@@ -1,5 +1,6 @@
 import { useState, useSyncExternalStore } from "react";
-import { CalendarDays, Clock, Check, CreditCard, Trash2 } from "lucide-react";
+import { CalendarDays, Clock, Check, CreditCard, Trash2, ExternalLink } from "lucide-react";
+import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ const CustomerBooking = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+  const [lastBooked, setLastBooked] = useState<Booking | null>(null);
 
   const bookings = useSyncExternalStore(bookingStore.subscribe, bookingStore.getBookings);
   const myBookings = bookings.filter((b) => b.clientName === "田中 太郎");
@@ -38,13 +40,15 @@ const CustomerBooking = () => {
       const endMin = h * 60 + m + 60;
       const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
 
-      bookingStore.addBooking({
+      const newBooking: Booking = {
         id: `b-${Date.now()}`,
         date: dateKey,
         startTime: slot.time,
         endTime,
         clientName: "田中 太郎",
-      });
+      };
+      bookingStore.addBooking(newBooking);
+      setLastBooked(newBooking);
       toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
       setSelectedSlot(null);
       setSelectedDate(undefined);
@@ -87,6 +91,36 @@ const CustomerBooking = () => {
           </p>
         </div>
 
+        {lastBooked && (
+          <Card className="border-l-4 border-l-accent bg-accent/5 slide-up">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-accent" />
+                <span className="font-bold text-sm">予約が完了しました！</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(lastBooked.date), "M月d日（E）", { locale: ja })} {lastBooked.startTime}〜{lastBooked.endTime}（60分）
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    window.open(buildGoogleCalendarUrl(lastBooked.date, lastBooked.startTime, lastBooked.endTime), "_blank");
+                  }}
+                >
+                  <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                  Googleカレンダーに追加
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setLastBooked(null)}>
+                  閉じる
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {myBookings.length > 0 && (
           <section>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">
@@ -111,13 +145,25 @@ const CustomerBooking = () => {
                           </p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setCancelTarget(b)}
-                        className="text-destructive hover:text-destructive/80 transition-colors p-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.open(buildGoogleCalendarUrl(b.date, b.startTime, b.endTime), "_blank");
+                          }}
+                          className="text-muted-foreground hover:text-accent transition-colors p-2"
+                          title="Googleカレンダーに追加"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCancelTarget(b)}
+                          className="text-destructive hover:text-destructive/80 transition-colors p-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
