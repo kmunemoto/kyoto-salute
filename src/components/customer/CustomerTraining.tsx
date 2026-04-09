@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Dumbbell, TrendingUp, Calendar, ChevronDown } from "lucide-react";
+import { Dumbbell, TrendingUp, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { trainingRecords } from "@/lib/dummyData";
 import {
@@ -11,13 +11,6 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const CustomerTraining = () => {
   // Extract all unique exercise names for the filter
@@ -65,18 +58,25 @@ const CustomerTraining = () => {
         </h2>
         <Card>
           <CardContent className="p-4 space-y-3">
-            <Select value={selectedExercise} onValueChange={setSelectedExercise}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {exerciseNames.map((name) => (
-                  <SelectItem key={name} value={name}>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {exerciseNames.map((name) => {
+                const isActive = selectedExercise === name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setSelectedExercise(name)}
+                    className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "border-accent bg-accent text-accent-foreground"
+                        : "border-border bg-background text-foreground hover:border-accent/50"
+                    }`}
+                  >
                     {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </button>
+                );
+              })}
+            </div>
 
             {chartData.length > 1 ? (
               <div className="h-52">
@@ -126,11 +126,13 @@ const CustomerTraining = () => {
                       }}
                     />
                     <Line
+                      key={`${selectedExercise}-weight`}
                       yAxisId="w"
                       type="monotone"
                       dataKey="weight"
                       stroke="hsl(18, 90%, 55%)"
                       strokeWidth={2.5}
+                      isAnimationActive={false}
                       dot={{
                         r: 5,
                         fill: "hsl(18, 90%, 55%)",
@@ -141,12 +143,14 @@ const CustomerTraining = () => {
                       name="重量(kg)"
                     />
                     <Line
+                      key={`${selectedExercise}-reps`}
                       yAxisId="r"
                       type="monotone"
                       dataKey="reps"
                       stroke="hsl(210, 80%, 55%)"
                       strokeWidth={2}
                       strokeDasharray="5 5"
+                      isAnimationActive={false}
                       dot={{
                         r: 4,
                         fill: "hsl(210, 80%, 55%)",

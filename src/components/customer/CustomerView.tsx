@@ -17,7 +17,7 @@ const CustomerView = () => {
   const { signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background pb-20 max-w-lg mx-auto fade-in">
+    <div className="min-h-screen bg-background pb-20 max-w-lg mx-auto fade-in" translate="no">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
         <div className="max-w-lg mx-auto flex items-center justify-between px-4 py-2">
