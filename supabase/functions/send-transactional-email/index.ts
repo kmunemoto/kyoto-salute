@@ -108,9 +108,24 @@ Deno.serve(async (req) => {
   // Resolve effective recipient: template-level `to` takes precedence over
   // the caller-provided recipientEmail. This allows notification templates
   // to always send to a fixed address (e.g., site owner from env var).
-  const effectiveRecipient = template.to || recipientEmail
+  let effectiveRecipient = template.to || recipientEmail
 
-  if (!effectiveRecipient) {
+  // Special: resolve trainer email from DB when placeholder is used
+  if (effectiveRecipient === '_resolve_trainer_' && templateData.trainerUserId) {
+    const supabaseForAuth = createClient(supabaseUrl, supabaseServiceKey)
+    const { data: authUser } = await supabaseForAuth.auth.admin.getUserById(templateData.trainerUserId)
+    if (authUser?.user?.email) {
+      effectiveRecipient = authUser.user.email
+    } else {
+      console.error('Could not resolve trainer email', { trainerUserId: templateData.trainerUserId })
+      return new Response(
+        JSON.stringify({ error: 'Could not resolve trainer email' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+  }
+
+  if (!effectiveRecipient || effectiveRecipient === '_resolve_trainer_') {
     return new Response(
       JSON.stringify({
         error: 'recipientEmail is required (unless the template defines a fixed recipient)',
