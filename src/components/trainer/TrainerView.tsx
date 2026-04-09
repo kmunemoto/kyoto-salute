@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LogOut } from "lucide-react";
+import logoSalute from "@/assets/logo-salute.png";
 import TrainerSidebar from "./TrainerSidebar";
 import TrainerDashboard from "./TrainerDashboard";
 import TrainerClientList from "./TrainerClientList";
@@ -30,7 +31,10 @@ const TrainerView = () => {
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
         <div className="flex items-center justify-between px-4 py-2">
-          <span className="text-sm font-bold">パーソナルジム 管理画面</span>
+          <div className="flex items-center gap-2">
+            <img src={logoSalute} alt="Salute御所南" className="h-8 w-8 object-contain" />
+            <span className="text-sm font-bold">Salute御所南 管理画面</span>
+          </div>
           <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground">
             <LogOut className="w-4 h-4 mr-1" />
             ログアウト
