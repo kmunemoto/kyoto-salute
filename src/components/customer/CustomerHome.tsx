@@ -5,11 +5,22 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area, Area
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
+const planMaxSessions: Record<string, number> = {
+  '月4回プラン': 4,
+  '月6回プラン': 6,
+  '月8回プラン': 8,
+  '通い放題プラン (月15回まで)': 15,
+};
+
 const CustomerHome = () => {
   const latestMetric = bodyMetrics[bodyMetrics.length - 1];
   const firstMetric = bodyMetrics[0];
   const weightChange = (latestMetric.weight - firstMetric.weight).toFixed(1);
   const fatChange = (latestMetric.bodyFat - firstMetric.bodyFat).toFixed(1);
+
+  // Dummy: current month usage count
+  const usedSessions = 3;
+  const maxSessions = planMaxSessions[currentPlan] || 4;
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
@@ -51,9 +62,11 @@ const CustomerHome = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-bold text-base">上半身トレーニング</p>
-                <p className="text-sm text-muted-foreground mt-1">4月9日（水）10:00 - 11:00</p>
+                <p className="font-bold text-base">4月9日（水）10:00 - 11:00</p>
                 <p className="text-xs text-muted-foreground mt-0.5">山本 コーチ</p>
+                <p className="text-xs font-semibold text-accent mt-1.5">
+                  次回は {usedSessions + 1}/{maxSessions}回目
+                </p>
               </div>
               <div className="w-12 h-12 rounded-xl accent-gradient flex items-center justify-center pulse-glow">
                 <CalendarDays className="w-5 h-5 text-accent-foreground" />
