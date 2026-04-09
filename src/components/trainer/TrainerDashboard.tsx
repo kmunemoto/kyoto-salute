@@ -35,7 +35,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
           { label: '本日のセッション', value: `${todaySessions.length}件`, icon: CalendarDays, color: 'text-accent' },
           { label: 'アクティブ顧客', value: `${clients.length}名`, icon: Users, color: 'text-info' },
           { label: '月間セッション', value: '42件', icon: Clock, color: 'text-success' },
-          { label: '今月売上', value: `¥${(currentMonthRevenue / 1000).toFixed(0)}K`, icon: TrendingUp, color: 'text-warning' },
+          { label: '今月売上', value: `¥${currentMonthRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-warning' },
         ].map((stat) => (
           <Card key={stat.label} className="card-hover">
             <CardContent className="p-4">
