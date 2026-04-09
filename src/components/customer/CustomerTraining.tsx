@@ -58,8 +58,7 @@ const CustomerTraining = () => {
         </h2>
         <Card>
           <CardContent className="p-4 space-y-3">
-            {/* Horizontal scrollable chips - hide scrollbar for cleaner look */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div className="flex gap-2 overflow-x-auto pb-1">
               {exerciseNames.map((name) => {
                 const isActive = selectedExercise === name;
                 return (
@@ -67,18 +66,17 @@ const CustomerTraining = () => {
                     key={name}
                     type="button"
                     onClick={() => setSelectedExercise(name)}
-                    className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                    className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                       isActive
-                        ? "bg-accent text-accent-foreground shadow-md scale-105"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80 active:scale-95"
+                        ? "border-accent bg-accent text-accent-foreground"
+                        : "border-border bg-background text-foreground hover:border-accent/50"
                     }`}
                   >
-                    {isActive && "● "}{name}
+                    {name}
                   </button>
                 );
               })}
             </div>
-            <p className="text-[11px] text-muted-foreground text-center">← スワイプで種目を切り替え →</p>
 
             {chartData.length > 1 ? (
               <div className="h-52">
