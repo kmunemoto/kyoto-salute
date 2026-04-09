@@ -3,13 +3,6 @@ import { Plus, Pencil, Trash2, Check, X, Dumbbell, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { exerciseCategories } from "@/lib/dummyData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,18 +139,15 @@ const TrainerExerciseManager = () => {
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               className="flex-1 h-11"
             />
-            <Select value={newCategory} onValueChange={setNewCategory}>
-              <SelectTrigger className="w-full sm:w-36 h-11">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {exerciseCategories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="w-full sm:w-36 h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              {exerciseCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
             <Button onClick={handleAdd} className="gap-1.5 shrink-0 w-full sm:w-auto h-11">
               <Plus className="w-4 h-4" />
               追加
@@ -213,18 +203,15 @@ const TrainerExerciseManager = () => {
                         onKeyDown={(e) => e.key === "Enter" && saveEdit()}
                       />
                       <div className="flex gap-2">
-                        <Select value={editCategory} onValueChange={setEditCategory}>
-                          <SelectTrigger className="w-full sm:w-28 h-10 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {exerciseCategories.map((c) => (
-                              <SelectItem key={c} value={c}>
-                                {c}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <select
+                          value={editCategory}
+                          onChange={(e) => setEditCategory(e.target.value)}
+                          className="w-full sm:w-28 h-10 rounded-md border border-input bg-background px-2 text-xs ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          {exerciseCategories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
                         <button onClick={saveEdit} className="text-success hover:text-success/80 p-2">
                           <Check className="w-4 h-4" />
                         </button>
