@@ -96,12 +96,6 @@ const CustomerBooking = () => {
                 カウンセリング＋パーソナルトレーニング60分の無料体験セッションです。下のカレンダーからご希望の日時をお選びください。
               </p>
             </CardContent>
-          </Card>
-              <p className="text-xs text-muted-foreground mt-2">
-                カウンセリング＋パーソナルトレーニング60分の体験セッションです。下のカレンダーからご希望の日時をお選びください。
-              </p>
-            </CardContent>
-          </Card>
         ) : (
           <Card className="border-l-4 border-l-accent bg-accent/5">
             <CardContent className="p-3 flex items-center gap-2">
