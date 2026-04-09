@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,24 +16,24 @@ interface TrainerClientDetailProps {
 
 interface ExerciseEntry {
   name: string;
-  sets: string;
-  reps: string;
   weight: string;
+  reps: string;
 }
 
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const client = clients.find(c => c.id === clientId);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
+  const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<ExerciseEntry[]>([
-    { name: "", sets: "", reps: "", weight: "" },
+    { name: "", weight: "", reps: "" },
   ]);
   const [memo, setMemo] = useState("");
 
   if (!client) return null;
 
   const addExercise = () => {
-    setExercises([...exercises, { name: "", sets: "", reps: "", weight: "" }]);
+    setExercises([...exercises, { name: "", weight: "", reps: "" }]);
   };
 
   const updateExercise = (index: number, field: keyof ExerciseEntry, value: string) => {
@@ -156,50 +156,71 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       <section className="mt-6">
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
           <Dumbbell className="w-3.5 h-3.5" />
-          今日のトレーニング内容
+          トレーニング記録
         </h2>
         <Card>
-          <CardContent className="p-4 space-y-3">
-            {exercises.map((ex, i) => (
-              <div key={i} className="flex gap-2 items-start">
-                <div className="flex-1 grid grid-cols-4 gap-2">
+          <CardContent className="p-4 space-y-4">
+            {/* Date picker */}
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-1 block flex items-center gap-1">
+                <CalendarDays className="w-3 h-3" /> 日付
+              </label>
+              <Input
+                type="date"
+                value={trainingDate}
+                onChange={(e) => setTrainingDate(e.target.value)}
+                className="w-48"
+              />
+            </div>
+
+            {/* Exercise entries */}
+            <div className="space-y-3">
+              {exercises.map((ex, i) => (
+                <div key={i} className="rounded-xl border border-border p-3 bg-muted/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted-foreground">種目 {i + 1}</span>
+                    {exercises.length > 1 && (
+                      <button
+                        onClick={() => removeExercise(i)}
+                        className="text-destructive hover:text-destructive/80 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                   <Input
-                    placeholder="種目名"
+                    placeholder="種目名（例：ベンチプレス）"
                     value={ex.name}
                     onChange={(e) => updateExercise(i, "name", e.target.value)}
-                    className="col-span-4 md:col-span-1"
                   />
-                  <Input
-                    type="number"
-                    placeholder="セット"
-                    value={ex.sets}
-                    onChange={(e) => updateExercise(i, "sets", e.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="回数"
-                    value={ex.reps}
-                    onChange={(e) => updateExercise(i, "reps", e.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="重量kg"
-                    value={ex.weight}
-                    onChange={(e) => updateExercise(i, "weight", e.target.value)}
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">重量 (kg)</label>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        placeholder="60"
+                        value={ex.weight}
+                        onChange={(e) => updateExercise(i, "weight", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">回数 (rep)</label>
+                      <Input
+                        type="number"
+                        placeholder="10"
+                        value={ex.reps}
+                        onChange={(e) => updateExercise(i, "reps", e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
-                {exercises.length > 1 && (
-                  <button
-                    onClick={() => removeExercise(i)}
-                    className="text-xs text-destructive hover:text-destructive/80 mt-2.5 shrink-0"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={addExercise} className="w-full">
-              + 種目を追加
+              ))}
+            </div>
+
+            <Button variant="outline" size="sm" onClick={addExercise} className="w-full gap-1.5">
+              <Plus className="w-3.5 h-3.5" />
+              種目を追加する
             </Button>
 
             <div>

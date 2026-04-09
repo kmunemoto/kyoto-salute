@@ -123,3 +123,80 @@ export const photos: Photo[] = [
   { id: '3', url: '', date: '2026-03-15', note: '2ヶ月目' },
   { id: '4', url: '', date: '2026-04-07', note: '3ヶ月目' },
 ];
+
+export interface TrainingExercise {
+  name: string;
+  weight: number;
+  reps: number;
+}
+
+export interface TrainingRecord {
+  id: string;
+  date: string;
+  exercises: TrainingExercise[];
+}
+
+export const trainingRecords: TrainingRecord[] = [
+  {
+    id: 'tr1', date: '2026-04-07',
+    exercises: [
+      { name: 'ベンチプレス', weight: 60, reps: 10 },
+      { name: 'インクラインダンベルプレス', weight: 22, reps: 12 },
+      { name: 'ケーブルフライ', weight: 15, reps: 15 },
+    ],
+  },
+  {
+    id: 'tr2', date: '2026-04-02',
+    exercises: [
+      { name: 'スクワット', weight: 80, reps: 8 },
+      { name: 'レッグプレス', weight: 120, reps: 10 },
+      { name: 'レッグカール', weight: 35, reps: 12 },
+    ],
+  },
+  {
+    id: 'tr3', date: '2026-03-28',
+    exercises: [
+      { name: 'ベンチプレス', weight: 57.5, reps: 10 },
+      { name: 'ダンベルフライ', weight: 14, reps: 12 },
+      { name: 'トライセプスプッシュダウン', weight: 25, reps: 15 },
+    ],
+  },
+  {
+    id: 'tr4', date: '2026-03-24',
+    exercises: [
+      { name: 'デッドリフト', weight: 100, reps: 5 },
+      { name: 'ベントオーバーロウ', weight: 50, reps: 10 },
+      { name: 'ラットプルダウン', weight: 45, reps: 12 },
+    ],
+  },
+  {
+    id: 'tr5', date: '2026-03-19',
+    exercises: [
+      { name: 'ベンチプレス', weight: 55, reps: 10 },
+      { name: 'ショルダープレス', weight: 30, reps: 10 },
+      { name: 'サイドレイズ', weight: 8, reps: 15 },
+    ],
+  },
+  {
+    id: 'tr6', date: '2026-03-14',
+    exercises: [
+      { name: 'スクワット', weight: 75, reps: 8 },
+      { name: 'ベンチプレス', weight: 52.5, reps: 10 },
+      { name: 'ラットプルダウン', weight: 40, reps: 12 },
+    ],
+  },
+  {
+    id: 'tr7', date: '2026-03-07',
+    exercises: [
+      { name: 'ベンチプレス', weight: 50, reps: 10 },
+      { name: 'スクワット', weight: 70, reps: 8 },
+    ],
+  },
+  {
+    id: 'tr8', date: '2026-02-28',
+    exercises: [
+      { name: 'ベンチプレス', weight: 47.5, reps: 10 },
+      { name: 'デッドリフト', weight: 90, reps: 5 },
+    ],
+  },
+];
