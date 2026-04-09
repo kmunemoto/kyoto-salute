@@ -1,6 +1,6 @@
 import { Users, CalendarDays, TrendingUp, Clock, BarChart3, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { sessions, planPrices, PlanType } from "@/lib/dummyData";
+import { sessions, clients as dummyClients, planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
 import { Loader2 } from "lucide-react";
