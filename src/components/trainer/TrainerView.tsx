@@ -35,27 +35,43 @@ const TrainerView = () => {
     setSelectedClientId(null);
   };
 
-  // Simulate an incoming message toast after 5 seconds
+  // Realtime toast for incoming messages
   useEffect(() => {
-    const timer = setTimeout(() => {
-      toast("田中 太郎 様から新着メッセージがあります", {
-        description: "「明日のトレーニング楽しみです！」",
-        action: {
-          label: "確認する",
-          onClick: () => {
-            setTab("messages");
-          },
-        },
-      });
-      setUnreadMessages((prev) => prev + 1);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!user) return;
+    const channel = supabase
+      .channel("trainer-msg-toast")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        async (payload) => {
+          const msg = payload.new as { sender_id: string; receiver_id: string; content: string };
+          if (msg.receiver_id === user.id) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("user_id", msg.sender_id)
+              .single();
+            const name = profile?.display_name || "顧客";
+            toast(`${name} 様から新着メッセージがあります`, {
+              description: `「${msg.content.substring(0, 30)}${msg.content.length > 30 ? "…" : ""}」`,
+              action: {
+                label: "確認する",
+                onClick: () => setTab("messages"),
+              },
+            });
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
-  // Clear unread when viewing messages
+  // Refetch unread when leaving messages tab
   useEffect(() => {
-    if (tab === "messages") {
-      setUnreadMessages(0);
+    if (tab !== "messages") {
+      refetchUnread();
     }
   }, [tab]);
 
