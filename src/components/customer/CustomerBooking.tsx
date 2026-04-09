@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
+import { sendBookingNotification } from "@/lib/bookingNotification";
 
 const PLAN_OPTIONS = [
   { value: "初回無料体験", label: "初回無料体験", desc: "カウンセリング＋60分トレーニング", price: "¥0", icon: Sparkles, accent: true },
@@ -95,6 +96,9 @@ const CustomerBooking = () => {
     setSubmitting(false);
     refetch();
     refetchAll();
+
+    // Fire-and-forget notification email to trainer
+    sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
   };
 
   const handleCancel = async () => {
