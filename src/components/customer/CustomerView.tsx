@@ -3,10 +3,9 @@ import BottomNav from "./BottomNav";
 import CustomerHome from "./CustomerHome";
 import CustomerBooking from "./CustomerBooking";
 import CustomerMeals from "./CustomerMeals";
-import CustomerPhotos from "./CustomerPhotos";
 import CustomerChat from "./CustomerChat";
 
-export type CustomerTab = "home" | "booking" | "meals" | "photos" | "chat";
+export type CustomerTab = "home" | "booking" | "meals" | "chat";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
@@ -16,7 +15,6 @@ const CustomerView = () => {
       {tab === "home" && <CustomerHome />}
       {tab === "booking" && <CustomerBooking />}
       {tab === "meals" && <CustomerMeals />}
-      {tab === "photos" && <CustomerPhotos />}
       {tab === "chat" && <CustomerChat />}
       <BottomNav activeTab={tab} onTabChange={setTab} />
     </div>
