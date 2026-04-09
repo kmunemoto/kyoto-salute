@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf } from "lucide-react";
 import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,20 @@ interface WorkoutRecord {
   weight: number | null;
   reps: number | null;
   exercise_name?: string;
+}
+
+interface MealRecord {
+  id: string;
+  image_url: string;
+  meal_type: string;
+  calories: number | null;
+  protein: number | null;
+  fat: number | null;
+  carbs: number | null;
+  fiber: number | null;
+  feedback: string | null;
+  analyzed: boolean;
+  created_at: string;
 }
 
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
