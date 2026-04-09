@@ -22,6 +22,8 @@ interface TrainerClientListProps {
 const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   const { profiles, loading, setProfiles } = useAllCustomerProfiles();
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = profiles.filter(c =>
     (c.display_name || "").includes(search) || c.plan.includes(search)
