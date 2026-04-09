@@ -134,6 +134,13 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const displayName = profile.display_name || "名前未設定";
   const initial = displayName[0];
 
+  const getPrice = (plan: string): number => {
+    if (planPrices[plan as PlanType] !== undefined) return planPrices[plan as PlanType];
+    const match = planOptions.find(p => p.startsWith(plan));
+    if (match) return planPrices[match];
+    return 0;
+  };
+
   // Dummy data for non-DB features
   const metrics = clientBodyMetrics[clientId] || [];
   const bookings = clientBookings[clientId] || [];
