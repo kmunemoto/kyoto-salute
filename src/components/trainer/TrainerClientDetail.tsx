@@ -73,7 +73,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         .maybeSingle();
       if (data) {
         setProfile(data);
-        setClientPlan(data.plan as PlanType);
+        // Normalize plan name to match planOptions keys
+        const matchedPlan = planOptions.find(p => p === data.plan || p.startsWith(data.plan)) || planOptions[0];
+        setClientPlan(matchedPlan);
         setIsPaid(data.paid_this_month);
       }
       setLoadingProfile(false);
@@ -133,6 +135,13 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
   const displayName = profile.display_name || "名前未設定";
   const initial = displayName[0];
+
+  const getPrice = (plan: string): number => {
+    if (planPrices[plan as PlanType] !== undefined) return planPrices[plan as PlanType];
+    const match = planOptions.find(p => p.startsWith(plan));
+    if (match) return planPrices[match];
+    return 0;
+  };
 
   // Dummy data for non-DB features
   const metrics = clientBodyMetrics[clientId] || [];
@@ -274,7 +283,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-sm font-bold mt-2">月額: ¥{planPrices[clientPlan].toLocaleString()}</p>
+              <p className="text-sm font-bold mt-2">月額: ¥{getPrice(clientPlan).toLocaleString()}</p>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
