@@ -8,11 +8,12 @@ import TrainerClientDetail from "./TrainerClientDetail";
 import TrainerSchedule from "./TrainerSchedule";
 import TrainerMessages from "./TrainerMessages";
 import TrainerNotificationSettings from "./TrainerNotificationSettings";
+import TrainerExerciseManager from "./TrainerExerciseManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "settings";
+export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "settings" | "exercises";
 
 // Dummy unread count
 const DUMMY_UNREAD = 3;
@@ -89,6 +90,7 @@ const TrainerView = () => {
               {tab === "clients" && selectedClientId && <TrainerClientDetail clientId={selectedClientId} onBack={handleBackToList} />}
               {tab === "schedule" && <TrainerSchedule />}
               {tab === "messages" && <TrainerMessages />}
+              {tab === "exercises" && <TrainerExerciseManager />}
               {tab === "settings" && <TrainerNotificationSettings />}
             </main>
         </div>
