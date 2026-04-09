@@ -161,6 +161,9 @@ export const clientBodyMetrics: Record<string, BodyMetric[]> = {
     { date: '2月', weight: 79.5, bodyFat: 19.0 },
     { date: '4月', weight: 77.0, bodyFat: 17.5 },
   ],
+  '6': [
+    { date: '4月', weight: 58.0, bodyFat: 26.0 },
+  ],
 };
 
 // Customer-facing data (default = client 1)
