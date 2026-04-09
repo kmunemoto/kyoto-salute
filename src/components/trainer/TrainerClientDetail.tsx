@@ -73,7 +73,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         .maybeSingle();
       if (data) {
         setProfile(data);
-        setClientPlan(data.plan as PlanType);
+        // Normalize plan name to match planOptions keys
+        const matchedPlan = planOptions.find(p => p === data.plan || p.startsWith(data.plan)) || planOptions[0];
+        setClientPlan(matchedPlan);
         setIsPaid(data.paid_this_month);
       }
       setLoadingProfile(false);
