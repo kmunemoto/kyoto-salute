@@ -65,44 +65,44 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   };
 
   return (
-    <div className="pb-20 md:pb-0">
+    <div className="pb-24 md:pb-0">
       {/* Header */}
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px]">
         <ArrowLeft className="w-4 h-4" />
         顧客一覧に戻る
       </button>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-2xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-lg">
+      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-base sm:text-lg shrink-0">
           {client.avatar}
         </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold">{client.name}</h1>
-          <p className="text-sm text-muted-foreground">{client.goal} · 入会 {client.memberSince}</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold truncate">{client.name}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">{client.goal} · 入会 {client.memberSince}</p>
         </div>
-        <div className="text-right">
-          <p className="text-lg font-extrabold">{client.totalSessions}<span className="text-xs text-muted-foreground ml-0.5">回</span></p>
+        <div className="text-right shrink-0">
+          <p className="text-base sm:text-lg font-extrabold">{client.totalSessions}<span className="text-[10px] text-muted-foreground ml-0.5">回</span></p>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <Progress value={client.progress} className="h-1.5 w-16" />
+            <Progress value={client.progress} className="h-1.5 w-12 sm:w-16" />
             <span className="text-[10px] font-bold text-muted-foreground">{client.progress}%</span>
           </div>
         </div>
       </div>
 
       {/* Plan */}
-      <section className="mb-6">
+      <section className="mb-4 sm:mb-6">
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
           <CreditCard className="w-3.5 h-3.5" />
           契約プラン
         </h2>
         <Card>
-          <CardContent className="p-4 space-y-4">
+          <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             <div>
               <Select value={clientPlan} onValueChange={(v) => {
                 setClientPlan(v as PlanType);
                 toast.success(`${client.name}さんのプランを「${v}」に変更しました`);
               }}>
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {planOptions.map((p) => (
                     <SelectItem key={p} value={p}>{p}（¥{planPrices[p].toLocaleString()}）</SelectItem>
@@ -140,24 +140,24 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       {/* Tabbed sections */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="overview" className="text-xs">概要</TabsTrigger>
-          <TabsTrigger value="training" className="text-xs">トレーニング</TabsTrigger>
-          <TabsTrigger value="bookings" className="text-xs">予約</TabsTrigger>
-          <TabsTrigger value="chat" className="text-xs">チャット</TabsTrigger>
+          <TabsTrigger value="overview" className="text-[10px] sm:text-xs px-1">概要</TabsTrigger>
+          <TabsTrigger value="training" className="text-[10px] sm:text-xs px-1">記録</TabsTrigger>
+          <TabsTrigger value="bookings" className="text-[10px] sm:text-xs px-1">予約</TabsTrigger>
+          <TabsTrigger value="chat" className="text-[10px] sm:text-xs px-1">チャット</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <section>
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5" />
                 体重・体脂肪率推移
               </h2>
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   {metrics.length > 0 ? (
-                    <div className="h-48">
+                    <div className="h-40 sm:h-48">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={metrics}>
                           <defs>
@@ -171,10 +171,10 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(225, 12%, 90%)" />
-                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
-                          <YAxis yAxisId="w" tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="kg" />
-                          <YAxis yAxisId="f" orientation="right" tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="%" />
-                          <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '12px' }} />
+                          <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
+                          <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="kg" width={38} />
+                          <YAxis yAxisId="f" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="%" width={38} />
+                          <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }} />
                           <Area yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(18, 90%, 55%)" fill={`url(#wg-${clientId})`} strokeWidth={2} name="体重(kg)" />
                           <Area yAxisId="f" type="monotone" dataKey="bodyFat" stroke="hsl(210, 80%, 55%)" fill={`url(#fg-${clientId})`} strokeWidth={2} name="体脂肪率(%)" />
                         </AreaChart>
@@ -193,15 +193,15 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 今日の計測
               </h2>
               <Card>
-                <CardContent className="p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                <CardContent className="p-3 sm:p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
                     <div>
                       <label className="text-xs font-semibold text-muted-foreground mb-1 block">体重 (kg)</label>
-                      <Input type="number" step="0.1" placeholder="73.5" value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} />
+                      <Input type="number" step="0.1" placeholder="73.5" value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} className="h-11" />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-muted-foreground mb-1 block">体脂肪率 (%)</label>
-                      <Input type="number" step="0.1" placeholder="18.0" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} />
+                      <Input type="number" step="0.1" placeholder="18.0" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} className="h-11" />
                     </div>
                   </div>
                 </CardContent>
@@ -223,7 +223,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       <p className="text-xs font-bold text-muted-foreground mb-1">
                         {format(new Date(r.date), "M月d日（E）", { locale: ja })}
                       </p>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {r.exercises.map((ex, i) => (
                           <span key={i} className="text-xs bg-muted rounded-lg px-2 py-1">
                             {ex.name} {ex.weight}kg×{ex.reps}
@@ -243,12 +243,12 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         {/* Training input */}
         <TabsContent value="training" className="space-y-4">
           <Card>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-3 sm:p-4 space-y-4">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground mb-1 block flex items-center gap-1">
                   <CalendarDays className="w-3 h-3" /> 日付
                 </label>
-                <Input type="date" value={trainingDate} onChange={(e) => setTrainingDate(e.target.value)} className="w-48" />
+                <Input type="date" value={trainingDate} onChange={(e) => setTrainingDate(e.target.value)} className="w-full sm:w-48 h-11" />
               </div>
 
               <div className="space-y-3">
@@ -257,43 +257,41 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-muted-foreground">種目 {i + 1}</span>
                       {exercises.length > 1 && (
-                        <button onClick={() => removeExercise(i)} className="text-destructive hover:text-destructive/80 transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
+                        <button onClick={() => removeExercise(i)} className="text-destructive hover:text-destructive/80 transition-colors p-1">
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <Select
-                        value={ex.name}
-                        onValueChange={(v) => {
-                          if (v === "__new__") {
-                            setShowNewExercise(i);
-                            setNewExName("");
-                          } else {
-                            updateExercise(i, "name", v);
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="flex-1 h-11">
-                          <SelectValue placeholder="種目を選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {exerciseCategories.map((cat) => {
-                            const catExercises = exerciseMasters.filter((e) => e.category === cat);
-                            if (catExercises.length === 0) return null;
-                            return (
-                              <div key={cat}>
-                                <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{cat}</div>
-                                {catExercises.map((e) => (
-                                  <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
-                                ))}
-                              </div>
-                            );
-                          })}
-                          <SelectItem value="__new__" className="text-accent font-semibold">＋ 新しい種目を追加</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Select
+                      value={ex.name}
+                      onValueChange={(v) => {
+                        if (v === "__new__") {
+                          setShowNewExercise(i);
+                          setNewExName("");
+                        } else {
+                          updateExercise(i, "name", v);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full h-11">
+                        <SelectValue placeholder="種目を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {exerciseCategories.map((cat) => {
+                          const catExercises = exerciseMasters.filter((e) => e.category === cat);
+                          if (catExercises.length === 0) return null;
+                          return (
+                            <div key={cat}>
+                              <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{cat}</div>
+                              {catExercises.map((e) => (
+                                <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
+                              ))}
+                            </div>
+                          );
+                        })}
+                        <SelectItem value="__new__" className="text-accent font-semibold">＋ 新しい種目を追加</SelectItem>
+                      </SelectContent>
+                    </Select>
                     {showNewExercise === i && (
                       <div className="flex gap-2">
                         <Input
@@ -308,12 +306,13 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                               toast.success(`「${newExName.trim()}」を設定しました`);
                             }
                           }}
-                          className="flex-1"
+                          className="flex-1 h-11"
                           autoFocus
                         />
                         <Button
                           size="sm"
                           variant="outline"
+                          className="h-11"
                           onClick={() => {
                             if (newExName.trim()) {
                               updateExercise(i, "name", newExName.trim());
@@ -325,26 +324,26 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         >
                           確定
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setShowNewExercise(null)}>
-                          <X className="w-3.5 h-3.5" />
+                        <Button size="sm" variant="ghost" className="h-11" onClick={() => setShowNewExercise(null)}>
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">重量 (kg)</label>
-                        <Input type="number" step="0.5" placeholder="60" value={ex.weight} onChange={(e) => updateExercise(i, "weight", e.target.value)} />
+                        <Input type="number" step="0.5" placeholder="60" value={ex.weight} onChange={(e) => updateExercise(i, "weight", e.target.value)} className="h-11" />
                       </div>
                       <div>
                         <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">回数 (rep)</label>
-                        <Input type="number" placeholder="10" value={ex.reps} onChange={(e) => updateExercise(i, "reps", e.target.value)} />
+                        <Input type="number" placeholder="10" value={ex.reps} onChange={(e) => updateExercise(i, "reps", e.target.value)} className="h-11" />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <Button variant="outline" size="sm" onClick={addExercise} className="w-full gap-1.5">
+              <Button variant="outline" size="sm" onClick={addExercise} className="w-full gap-1.5 h-11">
                 <Plus className="w-3.5 h-3.5" />
                 種目を追加する
               </Button>
@@ -357,7 +356,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           </Card>
 
           <div className="flex justify-end">
-            <Button variant="accent" size="lg" onClick={handleSave} className="gap-2">
+            <Button variant="accent" size="lg" onClick={handleSave} className="gap-2 w-full sm:w-auto">
               <Save className="w-4 h-4" />
               記録を保存
             </Button>
@@ -376,7 +375,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       </p>
                       <div className="space-y-1">
                         {r.exercises.map((ex, i) => (
-                          <div key={i} className="flex items-center gap-2 text-sm">
+                          <div key={i} className="flex items-center gap-2 text-sm flex-wrap">
                             <Dumbbell className="w-3 h-3 text-accent shrink-0" />
                             <span className="font-medium">{ex.name}</span>
                             <span className="text-muted-foreground">{ex.weight}kg × {ex.reps}rep</span>
@@ -402,7 +401,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
               {bookings.map((b) => (
                 <Card key={b.id}>
                   <CardContent className="p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl accent-gradient flex items-center justify-center shrink-0">
                       <CalendarDays className="w-4 h-4 text-accent-foreground" />
                     </div>
                     <div>
@@ -430,7 +429,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
             <div className="space-y-2">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === 'trainer' ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                  <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
                     msg.sender === 'trainer'
                       ? 'bg-muted text-foreground rounded-bl-md'
                       : 'accent-gradient text-accent-foreground rounded-br-md'

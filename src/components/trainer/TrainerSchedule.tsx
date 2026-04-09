@@ -64,10 +64,16 @@ const TrainerSchedule = () => {
     setProxyClient("");
   };
 
+  // Mobile: day list view
+  const getDayBookings = (day: Date) => {
+    const dateStr = format(day, "yyyy-MM-dd");
+    return bookings.filter((b) => b.date === dateStr);
+  };
+
   return (
-    <div className="pb-20 md:pb-0">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold flex items-center gap-2">
+    <div className="pb-24 md:pb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+        <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-accent" />
           予約管理
         </h1>
@@ -76,65 +82,107 @@ const TrainerSchedule = () => {
             <Plus className="w-3.5 h-3.5" />
             代理予約
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setWeekStart(addDays(weekStart, -7))}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm font-semibold min-w-[140px] text-center">
-            {format(weekStart, "M月d日", { locale: ja })} 〜 {format(addDays(weekStart, 6), "M月d日", { locale: ja })}
-          </span>
-          <Button variant="ghost" size="icon" onClick={() => setWeekStart(addDays(weekStart, 7))}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-1 ml-auto sm:ml-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-xs sm:text-sm font-semibold min-w-[120px] sm:min-w-[140px] text-center">
+              {format(weekStart, "M/d", { locale: ja })} 〜 {format(addDays(weekStart, 6), "M/d", { locale: ja })}
+            </span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px]">
-              <thead>
-                <tr className="border-b bg-muted/40">
-                  <th className="p-3 text-xs font-bold text-muted-foreground w-16">時間</th>
-                  {weekDays.map((day) => {
-                    const isToday = isSameDay(day, new Date(2026, 3, 9));
-                    return (
-                      <th key={day.toISOString()} className={`p-3 text-center ${isToday ? "bg-accent/10" : ""}`}>
-                        <p className="text-[10px] text-muted-foreground font-semibold uppercase">
-                          {format(day, "EEE", { locale: ja })}
-                        </p>
-                        <p className={`text-sm font-bold mt-0.5 ${isToday ? "text-accent" : ""}`}>
-                          {format(day, "d")}
-                        </p>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {timeSlots.map((time) => (
-                  <tr key={time} className="border-b last:border-b-0">
-                    <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
+      {/* Desktop: table view */}
+      <div className="hidden md:block">
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[700px]">
+                <thead>
+                  <tr className="border-b bg-muted/40">
+                    <th className="p-3 text-xs font-bold text-muted-foreground w-16">時間</th>
                     {weekDays.map((day) => {
-                      const session = getSession(day, time);
                       const isToday = isSameDay(day, new Date(2026, 3, 9));
                       return (
-                        <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
-                          {session && (
-                            <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs">
-                              <p className="font-bold truncate">{session.clientName}</p>
-                              <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
-                            </div>
-                          )}
-                        </td>
+                        <th key={day.toISOString()} className={`p-3 text-center ${isToday ? "bg-accent/10" : ""}`}>
+                          <p className="text-[10px] text-muted-foreground font-semibold uppercase">
+                            {format(day, "EEE", { locale: ja })}
+                          </p>
+                          <p className={`text-sm font-bold mt-0.5 ${isToday ? "text-accent" : ""}`}>
+                            {format(day, "d")}
+                          </p>
+                        </th>
                       );
                     })}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {timeSlots.map((time) => (
+                    <tr key={time} className="border-b last:border-b-0">
+                      <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
+                      {weekDays.map((day) => {
+                        const session = getSession(day, time);
+                        const isToday = isSameDay(day, new Date(2026, 3, 9));
+                        return (
+                          <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
+                            {session && (
+                              <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs">
+                                <p className="font-bold truncate">{session.clientName}</p>
+                                <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Mobile: day-based list view */}
+      <div className="md:hidden space-y-3">
+        {weekDays.map((day) => {
+          const isToday = isSameDay(day, new Date(2026, 3, 9));
+          const dayBookings = getDayBookings(day);
+          return (
+            <div key={day.toISOString()}>
+              <div className={`flex items-center gap-2 mb-1.5 ${isToday ? "text-accent" : "text-muted-foreground"}`}>
+                <span className={`text-xs font-bold uppercase`}>
+                  {format(day, "M/d（E）", { locale: ja })}
+                </span>
+                {isToday && <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full font-bold">今日</span>}
+              </div>
+              {dayBookings.length > 0 ? (
+                <div className="space-y-1.5">
+                  {dayBookings.map((b) => (
+                    <Card key={b.id} className="card-hover">
+                      <CardContent className="p-3 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
+                          {b.clientName[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold truncate">{b.clientName}</p>
+                          <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground pl-1 mb-1">予約なし</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       <div className="flex gap-4 mt-3">
         <div className="flex items-center gap-1.5">
@@ -145,7 +193,7 @@ const TrainerSchedule = () => {
 
       {/* Proxy booking dialog */}
       <Dialog open={proxyDialogOpen} onOpenChange={setProxyDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>代理予約</DialogTitle>
           </DialogHeader>
@@ -153,7 +201,7 @@ const TrainerSchedule = () => {
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">お客様</label>
               <Select value={proxyClient} onValueChange={setProxyClient}>
-                <SelectTrigger><SelectValue placeholder="選択してください" /></SelectTrigger>
+                <SelectTrigger className="h-11"><SelectValue placeholder="選択してください" /></SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -168,7 +216,7 @@ const TrainerSchedule = () => {
                 selected={proxyDate}
                 onSelect={(d) => { setProxyDate(d); setProxyTime(""); }}
                 locale={ja}
-                className="pointer-events-auto border rounded-lg"
+                className="pointer-events-auto border rounded-lg mx-auto"
               />
             </div>
             {proxyDate && (
@@ -189,7 +237,7 @@ const TrainerSchedule = () => {
                         key={s.time}
                         disabled={s.blocked}
                         onClick={() => setProxyTime(s.time)}
-                        className={`rounded-lg p-2 text-xs font-semibold transition-all ${
+                        className={`rounded-lg p-2.5 text-xs font-semibold transition-all min-h-[44px] ${
                           s.blocked
                             ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
                             : proxyTime === s.time
@@ -206,9 +254,9 @@ const TrainerSchedule = () => {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setProxyDialogOpen(false)}>キャンセル</Button>
-            <Button variant="accent" onClick={handleProxyBook} disabled={!proxyDate || !proxyTime || !proxyClient}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setProxyDialogOpen(false)} className="w-full sm:w-auto">キャンセル</Button>
+            <Button variant="accent" onClick={handleProxyBook} disabled={!proxyDate || !proxyTime || !proxyClient} className="w-full sm:w-auto">
               予約する
             </Button>
           </DialogFooter>
