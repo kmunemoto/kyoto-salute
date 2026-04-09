@@ -49,8 +49,7 @@ const CustomerBooking = () => {
       };
       bookingStore.addBooking(newBooking);
       setLastBooked(newBooking);
-      const label = isTrialUser ? trialLabel : `${slot.time}〜${endTime}`;
-      toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${label} で予約しました！`);
+      toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
       setSelectedSlot(null);
       setSelectedDate(undefined);
     }
@@ -75,7 +74,7 @@ const CustomerBooking = () => {
   return (
     <>
       <div className="px-4 py-4 space-y-5 slide-up">
-        {/* Trial user: special banner */}
+        {/* Trial user: special banner / Regular user: plan badge */}
         {isTrialUser ? (
           <Card className="border-2 border-accent bg-gradient-to-r from-accent/10 to-accent/5">
             <CardContent className="p-4">
@@ -96,6 +95,7 @@ const CustomerBooking = () => {
                 カウンセリング＋パーソナルトレーニング60分の無料体験セッションです。下のカレンダーからご希望の日時をお選びください。
               </p>
             </CardContent>
+          </Card>
         ) : (
           <Card className="border-l-4 border-l-accent bg-accent/5">
             <CardContent className="p-3 flex items-center gap-2">
@@ -108,11 +108,11 @@ const CustomerBooking = () => {
         <div>
           <h1 className="text-lg font-bold flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-accent" />
-            {isTrialUser ? "初回体験を予約する" : "予約する"}
+            {isTrialUser ? "初回無料体験を予約する" : "予約する"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isTrialUser
-              ? "ご希望の日時を選んでください（体験60分）"
+              ? "ご希望の日時を選んでください（無料体験60分）"
               : "空いている日時を選んでください（1コマ60分＋休憩15分）"}
           </p>
         </div>
@@ -123,7 +123,7 @@ const CustomerBooking = () => {
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-accent" />
                 <span className="font-bold text-sm">
-                  {isTrialUser ? "初回体験の予約が完了しました！" : "予約が完了しました！"}
+                  {isTrialUser ? "初回無料体験の予約が完了しました！" : "予約が完了しました！"}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -285,7 +285,7 @@ const CustomerBooking = () => {
                   （60分）
                 </p>
                 <Button variant="accent" size="lg" className="w-full" onClick={handleBook}>
-                  {isTrialUser ? "初回体験を予約する" : "この時間で予約する"}
+                  {isTrialUser ? "初回無料体験を予約する" : "この時間で予約する"}
                 </Button>
               </div>
             )}
