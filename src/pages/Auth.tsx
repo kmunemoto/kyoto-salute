@@ -66,7 +66,7 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-6 slide-up">
         {/* Logo & Title */}
         {/* ⚠️ DO NOT change app name. Keep exactly: "パーソナルジムSalute御所南" */}
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center gap-2">
           <GymLogo size="lg" />
           <h1 className="text-2xl font-black tracking-tight">パーソナルジムSalute御所南</h1>
           <p className="text-sm text-muted-foreground mt-1">
