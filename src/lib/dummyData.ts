@@ -50,6 +50,22 @@ export const planOptions: PlanType[] = [
   '通い放題プラン (月15回まで)',
 ];
 
+export const planPrices: Record<PlanType, number> = {
+  '月4回プラン': 20000,
+  '月6回プラン': 28500,
+  '月8回プラン': 36000,
+  '通い放題プラン (月15回まで)': 60000,
+};
+
+// Payment status for current month (dummy data)
+export const clientPaymentStatus: Record<string, boolean> = {
+  '1': true,
+  '2': true,
+  '3': false,
+  '4': false,
+  '5': true,
+};
+
 export interface CustomerBookingEntry {
   id: string;
   date: string;
