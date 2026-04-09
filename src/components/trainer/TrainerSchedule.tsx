@@ -1,10 +1,10 @@
-import { useState, useSyncExternalStore } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { sessions, clients, availableSlots } from "@/lib/dummyData";
-import { bookingStore } from "@/stores/bookingStore";
-import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
+import { useAllBookings, checkSlotBlocked, createBooking } from "@/hooks/useBookings";
+import { useAllCustomerProfiles } from "@/hooks/useProfile";
+import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import {
@@ -14,61 +14,68 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const TrainerSchedule = () => {
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(2026, 3, 9), { weekStartsOn: 1 }));
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [proxyDialogOpen, setProxyDialogOpen] = useState(false);
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
   const [proxyTime, setProxyTime] = useState<string>("");
   const [proxyClient, setProxyClient] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const bookings = useSyncExternalStore(bookingStore.subscribe, bookingStore.getBookings);
+  const { bookings, loading, refetch } = useAllBookings();
+  const { profiles } = useAllCustomerProfiles();
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const timeSlots = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
 
   const getSession = (day: Date, time: string) => {
     const dateStr = format(day, "yyyy-MM-dd");
-    return bookings.find((b) => b.date === dateStr && b.startTime === time);
+    return bookings.find((b) => b.date === dateStr && b.startTime === time && b.status !== "キャンセル済み");
   };
 
   const proxyDateKey = proxyDate ? format(proxyDate, "yyyy-MM-dd") : "";
-  const proxySlots = proxyDateKey ? (availableSlots[proxyDateKey] || []) : [];
 
-  const handleProxyBook = () => {
+  const handleProxyBook = async () => {
     if (!proxyDate || !proxyTime || !proxyClient) {
       toast.error("日付・時間・お客様を選択してください");
       return;
     }
 
-    if (bookingStore.isSlotBlocked(proxyDateKey, proxyTime)) {
+    if (checkSlotBlocked(bookings, proxyDateKey, proxyTime)) {
       toast.error("すでに予約が入っています。別の時間を選んでください。");
       return;
     }
 
-    const [h, m] = proxyTime.split(":").map(Number);
-    const endMin = h * 60 + m + 60;
-    const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
-    const client = clients.find((c) => c.id === proxyClient);
+    setSubmitting(true);
+    const { error } = await createBooking(proxyClient, proxyDateKey, proxyTime, "通常");
 
-    bookingStore.addBooking({
-      id: `proxy-${Date.now()}`,
-      date: proxyDateKey,
-      startTime: proxyTime,
-      endTime,
-      clientName: client?.name || "不明",
-    });
+    if (error) {
+      toast.error("予約の追加に失敗しました");
+      setSubmitting(false);
+      return;
+    }
 
-    toast.success(`${client?.name}さんの予約を追加しました（${format(proxyDate, "M/d")} ${proxyTime}）`);
+    const client = profiles.find((p) => p.user_id === proxyClient);
+    toast.success(`${client?.display_name || "顧客"}さんの予約を追加しました（${format(proxyDate, "M/d")} ${proxyTime}）`);
     setProxyDialogOpen(false);
     setProxyDate(undefined);
     setProxyTime("");
     setProxyClient("");
+    setSubmitting(false);
+    refetch();
   };
 
-  // Mobile: day list view
   const getDayBookings = (day: Date) => {
     const dateStr = format(day, "yyyy-MM-dd");
-    return bookings.filter((b) => b.date === dateStr);
+    return bookings.filter((b) => b.date === dateStr && b.status !== "キャンセル済み");
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-24 md:pb-0">
@@ -106,7 +113,7 @@ const TrainerSchedule = () => {
                   <tr className="border-b bg-muted/40">
                     <th className="p-3 text-xs font-bold text-muted-foreground w-16">時間</th>
                     {weekDays.map((day) => {
-                      const isToday = isSameDay(day, new Date(2026, 3, 9));
+                      const isToday = isSameDay(day, new Date());
                       return (
                         <th key={day.toISOString()} className={`p-3 text-center ${isToday ? "bg-accent/10" : ""}`}>
                           <p className="text-[10px] text-muted-foreground font-semibold uppercase">
@@ -126,7 +133,7 @@ const TrainerSchedule = () => {
                       <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
                       {weekDays.map((day) => {
                         const session = getSession(day, time);
-                        const isToday = isSameDay(day, new Date(2026, 3, 9));
+                        const isToday = isSameDay(day, new Date());
                         return (
                           <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
                             {session && (
@@ -150,31 +157,33 @@ const TrainerSchedule = () => {
       {/* Mobile: day-based list view */}
       <div className="md:hidden space-y-3">
         {weekDays.map((day) => {
-          const isToday = isSameDay(day, new Date(2026, 3, 9));
+          const isToday = isSameDay(day, new Date());
           const dayBookings = getDayBookings(day);
           return (
             <div key={day.toISOString()}>
               <div className={`flex items-center gap-2 mb-1.5 ${isToday ? "text-accent" : "text-muted-foreground"}`}>
-                <span className={`text-xs font-bold uppercase`}>
+                <span className="text-xs font-bold uppercase">
                   {format(day, "M/d（E）", { locale: ja })}
                 </span>
                 {isToday && <span className="text-[10px] bg-accent/10 text-accent px-1.5 py-0.5 rounded-full font-bold">今日</span>}
               </div>
               {dayBookings.length > 0 ? (
                 <div className="space-y-1.5">
-                  {dayBookings.map((b) => (
-                    <Card key={b.id} className="card-hover">
-                      <CardContent className="p-3 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
-                          {b.clientName[0]}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold truncate">{b.clientName}</p>
-                          <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {dayBookings
+                    .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                    .map((b) => (
+                      <Card key={b.id} className="card-hover">
+                        <CardContent className="p-3 flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
+                            {b.clientName[0]}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold truncate">{b.clientName}</p>
+                            <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground pl-1 mb-1">予約なし</p>
@@ -203,8 +212,8 @@ const TrainerSchedule = () => {
               <Select value={proxyClient} onValueChange={setProxyClient}>
                 <SelectTrigger className="h-11"><SelectValue placeholder="選択してください" /></SelectTrigger>
                 <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  {profiles.map((p) => (
+                    <SelectItem key={p.user_id} value={p.user_id}>{p.display_name || "不明"}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -229,7 +238,7 @@ const TrainerSchedule = () => {
                       const h = Math.floor(totalMin / 60);
                       const m = totalMin % 60;
                       const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                      const blocked = bookingStore.isSlotBlocked(proxyDateKey, time);
+                      const blocked = checkSlotBlocked(bookings, proxyDateKey, time);
                       slots.push({ time, blocked });
                     }
                     return slots.map((s) => (
@@ -256,7 +265,8 @@ const TrainerSchedule = () => {
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setProxyDialogOpen(false)} className="w-full sm:w-auto">キャンセル</Button>
-            <Button variant="accent" onClick={handleProxyBook} disabled={!proxyDate || !proxyTime || !proxyClient} className="w-full sm:w-auto">
+            <Button variant="accent" onClick={handleProxyBook} disabled={!proxyDate || !proxyTime || !proxyClient || submitting} className="w-full sm:w-auto">
+              {submitting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
               予約する
             </Button>
           </DialogFooter>

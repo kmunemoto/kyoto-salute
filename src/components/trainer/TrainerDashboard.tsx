@@ -1,11 +1,11 @@
 import { Users, CalendarDays, TrendingUp, Clock, BarChart3, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { sessions, clients as dummyClients, planPrices, PlanType } from "@/lib/dummyData";
+import { planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
+import { useAllBookings } from "@/hooks/useBookings";
 import { Loader2 } from "lucide-react";
-
-const todaySessions = sessions.filter(s => s.date === '2026-04-09');
+import { format } from "date-fns";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
@@ -13,11 +13,19 @@ interface TrainerDashboardProps {
 
 const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const { profiles, loading } = useAllCustomerProfiles();
+  const { bookings, loading: bookingsLoading } = useAllBookings();
+
+  const today = format(new Date(), "yyyy-MM-dd");
+  const todayBookings = bookings.filter((b) => b.date === today && b.status !== "キャンセル済み");
 
   const currentMonthRevenue = profiles.reduce((sum, p) => {
     const plan = p.plan as PlanType;
     return sum + (planPrices[plan] || 0);
   }, 0);
+
+  // Count this month's sessions
+  const currentMonth = format(new Date(), "yyyy-MM");
+  const monthBookings = bookings.filter((b) => b.date.startsWith(currentMonth) && b.status !== "キャンセル済み");
 
   const revenueData = [
     { month: '1月', revenue: 680000 },
@@ -26,7 +34,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
     { month: '4月', revenue: currentMonthRevenue },
   ];
 
-  if (loading) {
+  if (loading || bookingsLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-accent" />
@@ -42,16 +50,16 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
         <div className="relative">
           <p className="text-xs sm:text-sm opacity-75">ダッシュボード</p>
           <h1 className="text-lg sm:text-2xl font-bold mt-1">山本 コーチ</h1>
-          <p className="text-xs sm:text-sm opacity-75 mt-1">2026年4月9日（水）</p>
+          <p className="text-xs sm:text-sm opacity-75 mt-1">{format(new Date(), "yyyy年M月d日（E）")}</p>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
         {[
-          { label: '本日のセッション', value: `${todaySessions.length}件`, icon: CalendarDays, color: 'text-accent' },
+          { label: '本日のセッション', value: `${todayBookings.length}件`, icon: CalendarDays, color: 'text-accent' },
           { label: 'アクティブ顧客', value: `${profiles.length}名`, icon: Users, color: 'text-info' },
-          { label: '月間セッション', value: '42件', icon: Clock, color: 'text-success' },
+          { label: '月間セッション', value: `${monthBookings.length}件`, icon: Clock, color: 'text-success' },
           { label: '今月売上', value: `¥${currentMonthRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-warning' },
         ].map((stat) => (
           <Card key={stat.label} className="card-hover">
@@ -65,33 +73,47 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
       </div>
 
       <div className="space-y-4 sm:space-y-6">
-        {/* Today's Schedule */}
+        {/* Today's Schedule - REAL DATA */}
         <section>
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <CalendarDays className="w-3.5 h-3.5" />
             本日のスケジュール
           </h2>
-          <div className="space-y-2">
-            {todaySessions.map((s) => (
-              <Card key={s.id} className="card-hover cursor-pointer" onClick={() => {
-                const client = dummyClients.find((c) => c.name === s.clientName);
-                if (client) onSelectClient(client.id);
-              }}>
-                <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-xs sm:text-sm shrink-0">
-                    {s.clientAvatar}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm truncate">{s.clientName}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold">{s.time}</p>
-                    <p className="text-xs text-muted-foreground">{s.duration}分</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {todayBookings.length === 0 ? (
+            <Card>
+              <CardContent className="p-4 text-center text-sm text-muted-foreground">
+                本日の予約はありません
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {todayBookings
+                .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                .map((b) => (
+                  <Card key={b.id} className="card-hover cursor-pointer" onClick={() => {
+                    // Find profile by user_id for navigation
+                    const p = profiles.find((pr) => pr.user_id === b.user_id);
+                    if (p) onSelectClient(p.user_id);
+                  }}>
+                    <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-xs sm:text-sm shrink-0">
+                        {b.clientName[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate">{b.clientName}</p>
+                        {b.booking_type === "初回体験" && (
+                          <span className="text-[10px] text-accent font-bold">初回体験</span>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold">{b.startTime}</p>
+                        <p className="text-xs text-muted-foreground">60分</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          )}
         </section>
 
         {/* Revenue Chart */}
@@ -146,7 +168,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>本日送信済みリマインド</span>
-                  <span className="font-bold text-foreground">{todaySessions.length}件</span>
+                  <span className="font-bold text-foreground">{todayBookings.length}件</span>
                 </div>
               </div>
             </CardContent>
