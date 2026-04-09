@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, Bell } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import BottomNav from "./BottomNav";
 import CustomerHome from "./CustomerHome";
@@ -27,15 +27,9 @@ const CustomerView = () => {
             {/* ⚠️ DO NOT change this app name. Keep exactly as-is: "パーソナルジムSalute御所南" — never convert "Salute" to katakana */}
             <span className="text-sm font-bold">パーソナルジムSalute御所南</span>
           </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setTab("settings")} className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
-              <Bell className="w-4 h-4" />
-              <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
-            </button>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground">
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground">
+            <LogOut className="w-4 h-4" />
+          </Button>
         </div>
       </div>
       <div className="pt-12" key={tab}>
