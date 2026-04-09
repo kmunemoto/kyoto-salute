@@ -4,15 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Dumbbell, Users, Mail, Lock, User } from "lucide-react";
-
+import { Dumbbell, Users, Mail, Lock, User, Shield } from "lucide-react";
 
 type AuthMode = "login" | "signup";
-type RoleChoice = "customer" | "trainer" | null;
+type LoginTarget = "customer" | "trainer";
 
 const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("login");
-  const [roleChoice, setRoleChoice] = useState<RoleChoice>(null);
+  const [loginTarget, setLoginTarget] = useState<LoginTarget>("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -25,8 +24,9 @@ const Auth = () => {
 
     try {
       if (mode === "signup") {
-        if (!roleChoice) {
-          toast.error("アカウントの種類を選択してください");
+        // Signups are always customer — trainer is pre-registered
+        if (loginTarget === "trainer") {
+          toast.error("トレーナーアカウントは事前に登録済みです。ログインしてください。");
           setLoading(false);
           return;
         }
@@ -36,13 +36,12 @@ const Auth = () => {
           options: {
             data: {
               display_name: displayName || email,
-              role: roleChoice,
+              role: "customer",
             },
           },
         });
         if (error) throw error;
-        toast.success("アカウントを作成しました！");
-        navigate("/");
+        toast.success("アカウントを作成しました！メールを確認してください。");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -59,10 +58,13 @@ const Auth = () => {
     }
   };
 
+  const isTrainer = loginTarget === "trainer";
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6 slide-up">
-        {/* Logo */}
+        {/* Logo & Title */}
+        {/* ⚠️ DO NOT change app name. Keep exactly: "パーソナルジムSalute御所南" */}
         <div className="text-center">
           <div className="w-24 h-24 mx-auto mb-2 rounded-xl bg-muted flex items-center justify-center text-xs text-muted-foreground">LOGO</div>
           <h1 className="text-2xl font-black tracking-tight">パーソナルジムSalute御所南</h1>
@@ -71,48 +73,46 @@ const Auth = () => {
           </p>
         </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Role selection for signup */}
-              {mode === "signup" && (
-                <div className="space-y-2">
-                  <label className="text-sm font-bold">アカウントの種類</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setRoleChoice("customer")}
-                      className={`p-4 rounded-xl border-2 transition-all text-center ${
-                        roleChoice === "customer"
-                          ? "border-accent bg-accent/10"
-                          : "border-border hover:border-accent/50"
-                      }`}
-                    >
-                      <Dumbbell className={`w-6 h-6 mx-auto mb-2 ${roleChoice === "customer" ? "text-accent" : "text-muted-foreground"}`} />
-                      <p className="text-sm font-bold">お客様</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">トレーニング記録を確認</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRoleChoice("trainer")}
-                      className={`p-4 rounded-xl border-2 transition-all text-center ${
-                        roleChoice === "trainer"
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <Users className={`w-6 h-6 mx-auto mb-2 ${roleChoice === "trainer" ? "text-primary" : "text-muted-foreground"}`} />
-                      <p className="text-sm font-bold">トレーナー</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">顧客を管理</p>
-                    </button>
-                  </div>
-                </div>
-              )}
+        {/* Login target tabs */}
+        <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-xl">
+          <button
+            type="button"
+            onClick={() => { setLoginTarget("customer"); setMode("login"); }}
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+              !isTrainer ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Dumbbell className="w-4 h-4" />
+            お客様
+          </button>
+          <button
+            type="button"
+            onClick={() => { setLoginTarget("trainer"); setMode("login"); }}
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+              isTrainer ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            トレーナー
+          </button>
+        </div>
 
-              {/* Display name for signup */}
-              {mode === "signup" && (
+        <Card className={isTrainer ? "border-primary/30" : ""}>
+          <CardContent className="p-6">
+            {isTrainer && (
+              <div className="mb-4 p-3 rounded-xl bg-primary/5 border border-primary/20 text-center">
+                <p className="text-xs text-muted-foreground">
+                  <Shield className="w-3.5 h-3.5 inline mr-1" />
+                  管理者専用ログイン
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Display name for customer signup */}
+              {mode === "signup" && !isTrainer && (
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold">表示名</label>
+                  <label className="text-sm font-bold">お名前</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
@@ -157,19 +157,23 @@ const Auth = () => {
                 </div>
               </div>
 
-              <Button type="submit" variant="accent" className="w-full" disabled={loading}>
+              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading}>
                 {loading ? "処理中..." : mode === "login" ? "ログイン" : "アカウント作成"}
               </Button>
             </form>
 
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {mode === "login" ? "アカウントをお持ちでない方はこちら" : "すでにアカウントをお持ちの方はこちら"}
-              </button>
-            </div>
+            {/* Only customers can sign up */}
+            {!isTrainer && (
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {mode === "login" ? "アカウントをお持ちでない方はこちら" : "すでにアカウントをお持ちの方はこちら"}
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
