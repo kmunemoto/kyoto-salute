@@ -71,9 +71,9 @@ const TrainerExerciseManager = () => {
   }, [] as { category: string; items: ExerciseMaster[] }[]);
 
   return (
-    <div className="pb-20 md:pb-0 space-y-5 slide-up">
+    <div className="pb-24 md:pb-0 space-y-4 sm:space-y-5 slide-up">
       <div className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center shrink-0">
           <Dumbbell className="w-4.5 h-4.5 text-accent-foreground" />
         </div>
         <h1 className="text-lg font-bold">種目マスター管理</h1>
@@ -82,21 +82,21 @@ const TrainerExerciseManager = () => {
 
       {/* Add new exercise */}
       <Card>
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-3 sm:p-4 space-y-3">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             新しい種目を追加
           </h2>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="space-y-2 sm:space-y-0 sm:flex sm:gap-2">
             <Input
               placeholder="種目名（例：ラテラルレイズ）"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-              className="flex-1"
+              className="flex-1 h-11"
             />
             <Select value={newCategory} onValueChange={setNewCategory}>
-              <SelectTrigger className="w-full sm:w-36">
+              <SelectTrigger className="w-full sm:w-36 h-11">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -107,7 +107,7 @@ const TrainerExerciseManager = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleAdd} className="gap-1.5 shrink-0">
+            <Button onClick={handleAdd} className="gap-1.5 shrink-0 w-full sm:w-auto h-11">
               <Plus className="w-4 h-4" />
               追加
             </Button>
@@ -116,11 +116,11 @@ const TrainerExerciseManager = () => {
       </Card>
 
       {/* Filter by category */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
         <span className="text-xs font-bold text-muted-foreground">カテゴリ:</span>
         <button
           onClick={() => setFilterCategory("all")}
-          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all min-h-[32px] ${
             filterCategory === "all"
               ? "bg-accent text-accent-foreground"
               : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -132,7 +132,7 @@ const TrainerExerciseManager = () => {
           <button
             key={c}
             onClick={() => setFilterCategory(c)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all min-h-[32px] ${
               filterCategory === c
                 ? "bg-accent text-accent-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -152,55 +152,57 @@ const TrainerExerciseManager = () => {
           <div className="space-y-1.5">
             {items.map((ex) => (
               <Card key={ex.id} className="card-hover">
-                <CardContent className="p-3 flex items-center gap-3">
+                <CardContent className="p-3 flex items-center gap-2 sm:gap-3">
                   {editingId === ex.id ? (
-                    <>
+                    <div className="flex-1 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2">
                       <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="flex-1 h-8 text-sm"
+                        className="flex-1 h-10 text-sm"
                         onKeyDown={(e) => e.key === "Enter" && saveEdit()}
                       />
-                      <Select value={editCategory} onValueChange={setEditCategory}>
-                        <SelectTrigger className="w-28 h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {exerciseCategories.map((c) => (
-                            <SelectItem key={c} value={c}>
-                              {c}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <button onClick={saveEdit} className="text-success hover:text-success/80">
-                        <Check className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </>
+                      <div className="flex gap-2">
+                        <Select value={editCategory} onValueChange={setEditCategory}>
+                          <SelectTrigger className="w-full sm:w-28 h-10 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {exerciseCategories.map((c) => (
+                              <SelectItem key={c} value={c}>
+                                {c}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <button onClick={saveEdit} className="text-success hover:text-success/80 p-2">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="text-muted-foreground hover:text-foreground p-2"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <>
                       <Dumbbell className="w-4 h-4 text-accent shrink-0" />
-                      <span className="text-sm font-medium flex-1">{ex.name}</span>
-                      <span className="text-[10px] bg-muted text-muted-foreground rounded-full px-2 py-0.5">
+                      <span className="text-sm font-medium flex-1 truncate">{ex.name}</span>
+                      <span className="text-[10px] bg-muted text-muted-foreground rounded-full px-2 py-0.5 shrink-0 hidden sm:inline">
                         {ex.category}
                       </span>
                       <button
                         onClick={() => startEdit(ex)}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-muted-foreground hover:text-foreground transition-colors p-2"
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(ex.id)}
-                        className="text-muted-foreground hover:text-destructive transition-colors"
+                        className="text-muted-foreground hover:text-destructive transition-colors p-2"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </>
                   )}
