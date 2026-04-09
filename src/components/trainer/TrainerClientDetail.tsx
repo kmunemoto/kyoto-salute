@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X } from "lucide-react";
 import { defaultExerciseMasters, exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
