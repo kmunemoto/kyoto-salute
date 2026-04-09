@@ -59,9 +59,9 @@ export interface CustomerBookingEntry {
 export const currentPlan: PlanType = '月4回プラン';
 
 export const myBookings: CustomerBookingEntry[] = [
-  { id: 'b1', date: '2026-04-09', startTime: '10:00', endTime: '11:15' },
-  { id: 'b2', date: '2026-04-14', startTime: '14:00', endTime: '15:15' },
-  { id: 'b3', date: '2026-04-18', startTime: '11:00', endTime: '12:15' },
+  { id: 'b1', date: '2026-04-09', startTime: '10:00', endTime: '11:00' },
+  { id: 'b2', date: '2026-04-14', startTime: '14:00', endTime: '15:00' },
+  { id: 'b3', date: '2026-04-18', startTime: '11:00', endTime: '12:00' },
 ];
 
 export interface Photo {
@@ -111,25 +111,36 @@ export const bodyMetrics: BodyMetric[] = [
   { date: '4月', weight: 73.8, bodyFat: 18.0 },
 ];
 
-// Generate 15-min increment slots from 10:00 to 21:15 (last start = 20:00 for 75-min session ending 21:15)
+// Generate slots: 60-min session + 15-min break = 75-min blocks
+// A booked slot at time T blocks T and any slot whose 75-min block overlaps with it.
+// Last possible start: 20:15 (session ends 21:15)
 function generateTimeSlots(dateKey: string, bookedStarts: string[]): TimeSlot[] {
   const slots: TimeSlot[] = [];
-  for (let h = 10; h <= 20; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      if (h === 20 && m > 0) break; // last start is 20:00
-      const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-      slots.push({
-        id: `${dateKey}-${time}`,
-        time,
-        available: !bookedStarts.includes(time),
-      });
-    }
+  const bookedMinutes = bookedStarts.map((t) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  });
+
+  for (let totalMin = 600; totalMin <= 1215; totalMin += 15) {
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+    const isBlocked = bookedMinutes.some((bm) => {
+      return totalMin < bm + 75 && totalMin + 75 > bm;
+    });
+
+    slots.push({
+      id: `${dateKey}-${time}`,
+      time,
+      available: !isBlocked,
+    });
   }
   return slots;
 }
 
 export const availableSlots: Record<string, TimeSlot[]> = {
-  '2026-04-10': generateTimeSlots('2026-04-10', ['11:00', '16:00']),
+  '2026-04-10': generateTimeSlots('2026-04-10', ['10:00', '16:00']),
   '2026-04-11': generateTimeSlots('2026-04-11', ['14:00']),
   '2026-04-12': generateTimeSlots('2026-04-12', ['15:00']),
   '2026-04-14': generateTimeSlots('2026-04-14', ['10:00']),

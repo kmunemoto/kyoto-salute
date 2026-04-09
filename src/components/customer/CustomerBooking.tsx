@@ -34,9 +34,9 @@ const CustomerBooking = () => {
     if (selectedDate && selectedSlot) {
       const slot = slots.find((s) => s.id === selectedSlot);
       if (!slot) return;
-      // Calculate end time (75 min later)
+      // Calculate end time (60 min session)
       const [h, m] = slot.time.split(":").map(Number);
-      const endMin = h * 60 + m + 75;
+      const endMin = h * 60 + m + 60;
       const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
       const newBooking: CustomerBookingEntry = {
         id: `b-${Date.now()}`,
@@ -74,7 +74,7 @@ const CustomerBooking = () => {
           予約する
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          空いている日時を選んでください（1コマ75分）
+          空いている日時を選んでください（1コマ60分＋休憩15分）
         </p>
       </div>
 
@@ -196,11 +196,11 @@ const CustomerBooking = () => {
                     const t = slots.find((s) => s.id === selectedSlot)?.time;
                     if (!t) return "";
                     const [h, m] = t.split(":").map(Number);
-                    const end = h * 60 + m + 75;
+                    const end = h * 60 + m + 60;
                     return `${String(Math.floor(end / 60)).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`;
                   })()}
                 </span>
-                （75分）
+                （60分）
               </p>
               <Button
                 variant="accent"
