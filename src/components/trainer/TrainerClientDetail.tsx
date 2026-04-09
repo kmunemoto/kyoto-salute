@@ -280,8 +280,42 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     setIsPaid(checked);
     toast.success(checked ? `${displayName}さんの今月分を「支払済」にしました` : `${displayName}さんの今月分を「未払い」に戻しました`);
   };
+  const openEdit = (r: WorkoutRecord) => {
+    setEditRecord(r);
+    setEditExerciseId(r.exercise_id);
+    setEditWeight(r.weight?.toString() || "");
+    setEditReps(r.reps?.toString() || "");
+  };
 
-  // Group workout records by date for display
+  const handleEditSave = async () => {
+    if (!editRecord) return;
+    setEditSaving(true);
+    const { error } = await supabase.from("workouts").update({
+      exercise_id: editExerciseId,
+      weight: parseFloat(editWeight),
+      reps: parseInt(editReps, 10),
+    }).eq("id", editRecord.id);
+    if (error) { toast.error("更新に失敗しました"); setEditSaving(false); return; }
+    const master = exerciseMasters.find(e => e.id === editExerciseId);
+    setWorkoutRecords(prev => prev.map(r => r.id === editRecord.id ? {
+      ...r, exercise_id: editExerciseId, weight: parseFloat(editWeight), reps: parseInt(editReps, 10),
+      exercise_name: master?.name || r.exercise_name,
+    } : r));
+    setEditRecord(null);
+    setEditSaving(false);
+    toast.success("記録を更新しました");
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("workouts").delete().eq("id", deleteTarget.id);
+    if (error) { toast.error("削除に失敗しました"); return; }
+    setWorkoutRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    toast.success("記録を削除しました");
+  };
+
+
   const groupedRecords = workoutRecords.reduce((acc, r) => {
     const dateKey = r.workout_date;
     if (!acc[dateKey]) acc[dateKey] = [];
