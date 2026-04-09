@@ -18,6 +18,9 @@ export const useProfile = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [trigger, setTrigger] = useState(0);
+
+  const refetch = () => setTrigger((t) => t + 1);
 
   useEffect(() => {
     if (!user) {
@@ -40,9 +43,9 @@ export const useProfile = () => {
     };
 
     fetchProfile();
-  }, [user]);
+  }, [user, trigger]);
 
-  return { profile, loading };
+  return { profile, loading, refetch };
 };
 
 export const useAllCustomerProfiles = () => {
