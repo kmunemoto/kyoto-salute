@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Bell, BellOff, Settings, User, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Bell, BellOff, Settings, User, Trash2, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,12 +21,38 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const CustomerSettings = () => {
-  const { profile, loading } = useProfile();
+  const { profile, loading, refetch } = useProfile();
   const { user, signOut } = useAuth();
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (profile?.display_name) {
+      setDisplayName(profile.display_name);
+    }
+  }, [profile?.display_name]);
+
+  const handleSaveName = async () => {
+    if (!user || !displayName.trim()) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: displayName.trim() })
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("プロフィールの更新に失敗しました");
+    } else {
+      toast.success("プロフィールを更新しました");
+      setEditing(false);
+      refetch();
+    }
+    setSaving(false);
+  };
 
   const handleDeleteAccount = async () => {
     if (!user || !confirmed) return;
@@ -51,7 +78,6 @@ const CustomerSettings = () => {
     );
   }
 
-  const displayName = profile?.display_name || "ゲスト";
   const currentPlan = profile?.plan || "月4回";
 
   return (
@@ -68,10 +94,32 @@ const CustomerSettings = () => {
           プロフィール
         </h2>
         <Card>
-          <CardContent className="p-4 space-y-2">
+          <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">名前</span>
-              <span className="text-sm font-bold">{displayName}</span>
+              {editing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="h-8 w-40 text-sm"
+                    placeholder="名前を入力"
+                  />
+                  <Button size="sm" onClick={handleSaveName} disabled={saving || !displayName.trim()} className="h-8 text-xs">
+                    {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "保存"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setDisplayName(profile?.display_name || ""); }} className="h-8 text-xs">
+                    取消
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold">{profile?.display_name || "ゲスト"}</span>
+                  <button onClick={() => setEditing(true)} className="p-1 rounded hover:bg-muted transition-colors">
+                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">プラン</span>
