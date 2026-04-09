@@ -52,7 +52,22 @@ const Auth = () => {
         navigate("/");
       }
     } catch (err: any) {
-      toast.error(err.message || "エラーが発生しました");
+      const msg = err.message || "";
+      const jaMessage = 
+        msg.includes("Invalid login credentials")
+          ? "メールアドレスまたはパスワードが正しくありません。入力内容をご確認ください。"
+        : msg.includes("Email not confirmed")
+          ? "メールアドレスが未確認です。受信トレイをご確認ください。"
+        : msg.includes("User already registered")
+          ? "このメールアドレスは既に登録されています。"
+        : msg.includes("Password should be at least")
+          ? "パスワードは6文字以上で入力してください。"
+        : msg.includes("Unable to validate email")
+          ? "有効なメールアドレスを入力してください。"
+        : msg.includes("Email rate limit exceeded")
+          ? "送信回数の上限に達しました。しばらく時間をおいてお試しください。"
+        : "エラーが発生しました。もう一度お試しください。";
+      toast.error(jaMessage);
     } finally {
       setLoading(false);
     }
