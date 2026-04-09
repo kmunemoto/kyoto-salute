@@ -1,13 +1,47 @@
 import { useState } from "react";
-import { Bell, BellOff, Settings, User } from "lucide-react";
+import { Bell, BellOff, Settings, User, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const CustomerSettings = () => {
   const { profile, loading } = useProfile();
+  const { user, signOut } = useAuth();
   const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!user || !confirmed) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.rpc("delete_customer_cascade", {
+        _customer_id: user.id,
+      });
+      if (error) throw error;
+      toast.success("アカウントを削除しました");
+      await signOut();
+    } catch (err: any) {
+      toast.error(err.message || "アカウントの削除に失敗しました");
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -86,6 +120,64 @@ const CustomerSettings = () => {
           </CardContent>
         </Card>
       </section>
+
+      {/* Account Deletion */}
+      <section className="pt-4">
+        <Card className="border-destructive/20">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-destructive" />
+              <p className="text-sm font-bold text-destructive">アカウントの削除（退会）</p>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              退会すると、トレーニング記録・食事データ・予約履歴など、すべてのデータが完全に消去されます。この操作は元に戻すことができません。
+            </p>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={() => { setShowDeleteDialog(true); setConfirmed(false); }}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              退会する
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">本当に退会しますか？</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                これまでのトレーニング記録や食事データはすべて消去され、<strong>元に戻すことはできません。</strong>
+              </p>
+              <div className="flex items-start gap-2 pt-2">
+                <Checkbox
+                  id="confirm-delete"
+                  checked={confirmed}
+                  onCheckedChange={(v) => setConfirmed(v === true)}
+                />
+                <label htmlFor="confirm-delete" className="text-sm leading-snug cursor-pointer">
+                  上記の内容を理解した上で、退会を希望します
+                </label>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={!confirmed || deleting}
+              onClick={handleDeleteAccount}
+            >
+              {deleting ? "処理中..." : "退会を確定する"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
