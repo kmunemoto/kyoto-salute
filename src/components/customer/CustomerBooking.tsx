@@ -181,7 +181,7 @@ const CustomerBooking = () => {
                   size="sm"
                   className="flex-1"
                   onClick={() => {
-                    window.open(buildGoogleCalendarUrl(lastBooked.date, lastBooked.startTime, lastBooked.endTime, currentPlan), "_blank");
+                    window.open(buildGoogleCalendarUrl(lastBooked.date, lastBooked.startTime, lastBooked.endTime, lastBooked.booking_type === "初回体験" ? "初回無料体験" : currentPlan), "_blank");
                   }}
                 >
                   <ExternalLink className="w-3.5 h-3.5 mr-1" />
@@ -226,7 +226,7 @@ const CustomerBooking = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            window.open(buildGoogleCalendarUrl(b.date, b.startTime, b.endTime, currentPlan), "_blank");
+                            window.open(buildGoogleCalendarUrl(b.date, b.startTime, b.endTime, b.booking_type === "初回体験" ? "初回無料体験" : currentPlan), "_blank");
                           }}
                           className="text-muted-foreground hover:text-accent transition-colors p-2"
                           title="Googleカレンダーに追加"
