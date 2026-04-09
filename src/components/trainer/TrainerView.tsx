@@ -9,11 +9,13 @@ import TrainerSchedule from "./TrainerSchedule";
 import TrainerMessages from "./TrainerMessages";
 import TrainerNotificationSettings from "./TrainerNotificationSettings";
 import TrainerExerciseManager from "./TrainerExerciseManager";
+import TrainerGymSettings from "./TrainerGymSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import GymLogo from "@/components/GymLogo";
 
-export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "settings" | "exercises";
+export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "settings" | "exercises" | "gym-settings";
 
 // Dummy unread count
 const DUMMY_UNREAD = 3;
@@ -63,7 +65,7 @@ const TrainerView = () => {
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[8px] text-muted-foreground">LOGO</div>
+            <GymLogo size="sm" />
             <span className="text-sm font-bold">パーソナルジムSalute御所南 管理画面</span>
           </div>
           <div className="flex items-center gap-1">
@@ -91,6 +93,7 @@ const TrainerView = () => {
               {tab === "schedule" && <TrainerSchedule />}
               {tab === "messages" && <TrainerMessages />}
               {tab === "exercises" && <TrainerExerciseManager />}
+              {tab === "gym-settings" && <TrainerGymSettings />}
               {tab === "settings" && <TrainerNotificationSettings />}
             </main>
         </div>

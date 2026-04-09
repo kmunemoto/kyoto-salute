@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Dumbbell, Users, Mail, Lock, User, Shield } from "lucide-react";
+import GymLogo from "@/components/GymLogo";
 
 type AuthMode = "login" | "signup";
 type LoginTarget = "customer" | "trainer";
@@ -66,7 +67,7 @@ const Auth = () => {
         {/* Logo & Title */}
         {/* ⚠️ DO NOT change app name. Keep exactly: "パーソナルジムSalute御所南" */}
         <div className="text-center">
-          <div className="w-24 h-24 mx-auto mb-2 rounded-xl bg-muted flex items-center justify-center text-xs text-muted-foreground">LOGO</div>
+          <GymLogo size="lg" />
           <h1 className="text-2xl font-black tracking-tight">パーソナルジムSalute御所南</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login" ? "アカウントにログイン" : "新規アカウント作成"}
