@@ -19,6 +19,7 @@ const TrainerSchedule = () => {
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
   const [proxyTime, setProxyTime] = useState<string>("");
   const [proxyClient, setProxyClient] = useState<string>("");
+  const [proxyBookingType, setProxyBookingType] = useState<string>("通常");
   const [submitting, setSubmitting] = useState(false);
 
   const { bookings, loading, refetch } = useAllBookings();
@@ -55,7 +56,7 @@ const TrainerSchedule = () => {
     }
 
     setSubmitting(true);
-    const { error } = await createBooking(proxyClient, proxyDateKey, proxyTime, "通常");
+    const { error } = await createBooking(proxyClient, proxyDateKey, proxyTime, proxyBookingType);
 
     if (error) {
       toast.error("予約の追加に失敗しました");
@@ -69,6 +70,7 @@ const TrainerSchedule = () => {
     setProxyDate(undefined);
     setProxyTime("");
     setProxyClient("");
+    setProxyBookingType("通常");
     setSubmitting(false);
     refetch();
   };
@@ -229,6 +231,16 @@ const TrainerSchedule = () => {
                   {profiles.map((p) => (
                     <SelectItem key={p.user_id} value={p.user_id}>{p.display_name || "不明"}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-1 block">予約プラン</label>
+              <Select value={proxyBookingType} onValueChange={setProxyBookingType}>
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="初回無料体験">初回無料体験</SelectItem>
+                  <SelectItem value="通常">通常（月4回・月6回・月8回・通い放題）</SelectItem>
                 </SelectContent>
               </Select>
             </div>
