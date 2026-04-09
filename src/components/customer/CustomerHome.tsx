@@ -1,7 +1,9 @@
-import { TrendingDown, CalendarDays, Flame, Target } from "lucide-react";
+import { TrendingDown, CalendarDays, Flame, Target, CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { bodyMetrics } from "@/lib/dummyData";
+import { bodyMetrics, currentPlan, myBookings } from "@/lib/dummyData";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 const CustomerHome = () => {
   const latestMetric = bodyMetrics[bodyMetrics.length - 1];
@@ -30,6 +32,14 @@ const CustomerHome = () => {
           </div>
         </div>
       </div>
+
+      {/* Plan badge */}
+      <Card className="border-l-4 border-l-accent bg-accent/5">
+        <CardContent className="p-3 flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-accent" />
+          <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
+        </CardContent>
+      </Card>
 
       {/* Next Booking */}
       <section>
