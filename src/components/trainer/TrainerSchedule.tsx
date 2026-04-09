@@ -25,7 +25,16 @@ const TrainerSchedule = () => {
   const { profiles } = useAllCustomerProfiles();
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const timeSlots = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
+  // Generate 15-min interval slots matching booking system (10:00–20:15)
+  const timeSlots = (() => {
+    const slots: string[] = [];
+    for (let min = 600; min <= 1215; min += 15) {
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+    }
+    return slots;
+  })();
 
   const getSession = (day: Date, time: string) => {
     const dateStr = format(day, "yyyy-MM-dd");
@@ -128,7 +137,11 @@ const TrainerSchedule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {timeSlots.map((time) => (
+                  {timeSlots.map((time) => {
+                    const hasAnySession = weekDays.some((day) => getSession(day, time));
+                    // Hide empty rows to keep the table compact
+                    if (!hasAnySession) return null;
+                    return (
                     <tr key={time} className="border-b last:border-b-0">
                       <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
                       {weekDays.map((day) => {
@@ -146,7 +159,8 @@ const TrainerSchedule = () => {
                         );
                       })}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
