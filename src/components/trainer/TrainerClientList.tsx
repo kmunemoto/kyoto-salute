@@ -155,7 +155,16 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                         </span>
                       )}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex items-center gap-1">
+                      <button
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(c.user_id); }}
+                        title="削除"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -163,6 +172,24 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>顧客データの削除</AlertDialogTitle>
+            <AlertDialogDescription>
+              「{deleteTargetName}」さんのデータを完全に削除しますか？予約・トレーニング記録・食事記録・メッセージなど、すべてのデータが消去されます。この操作は元に戻せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCustomer} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
