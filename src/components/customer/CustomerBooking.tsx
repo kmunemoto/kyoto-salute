@@ -175,10 +175,8 @@ const CustomerBooking = () => {
                         : "bg-card border border-border hover:border-accent hover:shadow-sm"
                     }`}
                   >
-                    <span className={!available && isBooked ? "" : !available ? "line-through" : ""}>
-                      {slot.time}
-                    </span>
-                    {isBooked && (
+                    <span>{slot.time}</span>
+                    {!available && (
                       <span className="block text-[9px] text-destructive/70 font-medium">満枠</span>
                     )}
                     {selectedSlot === slot.id && (
