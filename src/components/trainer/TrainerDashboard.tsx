@@ -19,6 +19,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const todayBookings = bookings.filter((b) => b.date === today && b.status !== "キャンセル済み");
 
   const currentMonthRevenue = profiles.reduce((sum, p) => {
+    if (!p.plan) return sum;
     const plan = p.plan as PlanType;
     return sum + (planPrices[plan] || 0);
   }, 0);
