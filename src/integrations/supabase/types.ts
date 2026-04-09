@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          booking_date: string
+          booking_type: string
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          booking_date: string
+          booking_type?: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          booking_date?: string
+          booking_type?: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exercises: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       meals: {
         Row: {
           analyzed: boolean
@@ -59,12 +107,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          created_at: string
+          id: string
+          reminder_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reminder_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reminder_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           display_name: string | null
           id: string
+          paid_this_month: boolean
+          plan: string
+          trial_completed: boolean
           updated_at: string
           user_id: string
         }
@@ -73,6 +148,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          paid_this_month?: boolean
+          plan?: string
+          trial_completed?: boolean
           updated_at?: string
           user_id: string
         }
@@ -81,6 +159,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          paid_this_month?: boolean
+          plan?: string
+          trial_completed?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -103,6 +184,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      workouts: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          id: string
+          reps: number | null
+          user_id: string
+          weight: number | null
+          workout_date: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          id?: string
+          reps?: number | null
+          user_id: string
+          weight?: number | null
+          workout_date?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          reps?: number | null
+          user_id?: string
+          weight?: number | null
+          workout_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
