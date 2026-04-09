@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X } from "lucide-react";
-import { defaultExerciseMasters, exerciseCategories } from "@/lib/dummyData";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2 } from "lucide-react";
+import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +9,15 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  clients, clientBodyMetrics, clientTrainingRecords, clientBookings, clientChatMessages,
-  planOptions, planPrices, clientPaymentStatus, PlanType, ChatMessage,
+  clientBodyMetrics, clientBookings, clientChatMessages,
+  planOptions, planPrices, PlanType, ChatMessage,
 } from "@/lib/dummyData";
 import { Switch } from "@/components/ui/switch";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TrainerClientDetailProps {
   clientId: string;
@@ -24,35 +25,124 @@ interface TrainerClientDetailProps {
 }
 
 interface ExerciseEntry {
+  exerciseId: string;
   name: string;
   weight: string;
   reps: string;
 }
 
+interface ExerciseMaster {
+  id: string;
+  name: string;
+  category: string;
+}
+
+interface WorkoutRecord {
+  id: string;
+  workout_date: string;
+  exercise_id: string;
+  weight: number | null;
+  reps: number | null;
+  exercise_name?: string;
+}
+
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
-  const client = clients.find(c => c.id === clientId);
-  const [clientPlan, setClientPlan] = useState<PlanType>(client?.plan || '月4回プラン');
+  const [profile, setProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [clientPlan, setClientPlan] = useState<PlanType>('月4回プラン');
+  const [isPaid, setIsPaid] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
-  const [exercises, setExercises] = useState<ExerciseEntry[]>([{ name: "", weight: "", reps: "" }]);
+  const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", weight: "", reps: "" }]);
   const [memo, setMemo] = useState("");
-  const [isPaid, setIsPaid] = useState(clientPaymentStatus[clientId] || false);
-  const [exerciseMasters] = useState(defaultExerciseMasters);
+  const [exerciseMasters, setExerciseMasters] = useState<ExerciseMaster[]>([]);
   const [showNewExercise, setShowNewExercise] = useState<number | null>(null);
   const [newExName, setNewExName] = useState("");
+  const [workoutRecords, setWorkoutRecords] = useState<WorkoutRecord[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  if (!client) return null;
+  // Fetch profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", clientId)
+        .maybeSingle();
+      if (data) {
+        setProfile(data);
+        setClientPlan(data.plan as PlanType);
+        setIsPaid(data.paid_this_month);
+      }
+      setLoadingProfile(false);
+    };
+    fetchProfile();
+  }, [clientId]);
 
+  // Fetch exercises master
+  useEffect(() => {
+    const fetchExercises = async () => {
+      const { data } = await supabase
+        .from("exercises")
+        .select("*")
+        .order("category")
+        .order("name");
+      if (data) setExerciseMasters(data);
+    };
+    fetchExercises();
+  }, []);
+
+  // Fetch workout records
+  useEffect(() => {
+    const fetchRecords = async () => {
+      const { data } = await supabase
+        .from("workouts")
+        .select("*, exercises(name)")
+        .eq("user_id", clientId)
+        .order("workout_date", { ascending: false })
+        .limit(50);
+      if (data) {
+        setWorkoutRecords(data.map((w: any) => ({
+          ...w,
+          exercise_name: w.exercises?.name || "不明",
+        })));
+      }
+      setLoadingRecords(false);
+    };
+    fetchRecords();
+  }, [clientId]);
+
+  if (loadingProfile) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="text-center py-20 text-muted-foreground">
+        <p>顧客情報が見つかりません</p>
+        <Button variant="ghost" onClick={onBack} className="mt-4">戻る</Button>
+      </div>
+    );
+  }
+
+  const displayName = profile.display_name || "名前未設定";
+  const initial = displayName[0];
+
+  // Dummy data for non-DB features
   const metrics = clientBodyMetrics[clientId] || [];
-  const records = clientTrainingRecords[clientId] || [];
   const bookings = clientBookings[clientId] || [];
   const messages = clientChatMessages[clientId] || [];
 
-  const addExercise = () => setExercises([...exercises, { name: "", weight: "", reps: "" }]);
+  const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", weight: "", reps: "" }]);
   const updateExercise = (i: number, field: keyof ExerciseEntry, value: string) => {
     const updated = [...exercises];
-    updated[i][field] = value;
+    updated[i] = { ...updated[i], [field]: value };
     setExercises(updated);
   };
   const removeExercise = (i: number) => {
@@ -60,9 +150,94 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     setExercises(exercises.filter((_, idx) => idx !== i));
   };
 
-  const handleSave = () => {
-    toast.success("記録を保存しました", { description: `${client.name}さんのトレーニング記録を保存しました` });
+  const handleSelectExercise = (i: number, exerciseId: string) => {
+    if (exerciseId === "__new__") {
+      setShowNewExercise(i);
+      setNewExName("");
+      return;
+    }
+    const master = exerciseMasters.find(e => e.id === exerciseId);
+    if (master) {
+      const updated = [...exercises];
+      updated[i] = { ...updated[i], exerciseId: master.id, name: master.name };
+      setExercises(updated);
+    }
   };
+
+  const handleAddNewExercise = async (i: number) => {
+    if (!newExName.trim()) return;
+    const { data, error } = await supabase
+      .from("exercises")
+      .insert({ name: newExName.trim(), category: "その他" })
+      .select()
+      .single();
+    if (error) {
+      toast.error("種目の追加に失敗しました");
+      return;
+    }
+    setExerciseMasters(prev => [...prev, data]);
+    const updated = [...exercises];
+    updated[i] = { ...updated[i], exerciseId: data.id, name: data.name };
+    setExercises(updated);
+    setShowNewExercise(null);
+    setNewExName("");
+    toast.success(`「${data.name}」をマスターに追加しました`);
+  };
+
+  const handleSave = async () => {
+    const validEntries = exercises.filter(ex => ex.exerciseId && ex.weight && ex.reps);
+    if (validEntries.length === 0) {
+      toast.error("種目・重量・回数をすべて入力してください");
+      return;
+    }
+    setSaving(true);
+    const rows = validEntries.map(ex => ({
+      user_id: clientId,
+      exercise_id: ex.exerciseId,
+      weight: parseFloat(ex.weight),
+      reps: parseInt(ex.reps, 10),
+      workout_date: trainingDate,
+    }));
+    const { data, error } = await supabase.from("workouts").insert(rows).select("*, exercises(name)");
+    if (error) {
+      toast.error("保存に失敗しました");
+      setSaving(false);
+      return;
+    }
+    const newRecords = (data || []).map((w: any) => ({
+      ...w,
+      exercise_name: w.exercises?.name || "不明",
+    }));
+    setWorkoutRecords(prev => [...newRecords, ...prev]);
+    setExercises([{ exerciseId: "", name: "", weight: "", reps: "" }]);
+    setMemo("");
+    setSaving(false);
+    toast.success("記録を保存しました", { description: `${displayName}さんのトレーニング記録を保存しました` });
+  };
+
+  const handlePlanChange = async (v: string) => {
+    const { error } = await supabase.from("profiles").update({ plan: v }).eq("user_id", clientId);
+    if (error) { toast.error("プラン変更に失敗しました"); return; }
+    setClientPlan(v as PlanType);
+    toast.success(`${displayName}さんのプランを「${v}」に変更しました`);
+  };
+
+  const handlePaymentToggle = async (checked: boolean) => {
+    const { error } = await supabase.from("profiles").update({ paid_this_month: checked }).eq("user_id", clientId);
+    if (error) { toast.error("更新に失敗しました"); return; }
+    setIsPaid(checked);
+    toast.success(checked ? `${displayName}さんの今月分を「支払済」にしました` : `${displayName}さんの今月分を「未払い」に戻しました`);
+  };
+
+  // Group workout records by date for display
+  const groupedRecords = workoutRecords.reduce((acc, r) => {
+    const dateKey = r.workout_date;
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(r);
+    return acc;
+  }, {} as Record<string, WorkoutRecord[]>);
+
+  const sortedDates = Object.keys(groupedRecords).sort((a, b) => b.localeCompare(a));
 
   return (
     <div className="pb-24 md:pb-0">
@@ -74,18 +249,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
       <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-base sm:text-lg shrink-0">
-          {client.avatar}
+          {initial}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-xl font-bold truncate">{client.name}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground truncate">{client.goal} · 入会 {client.memberSince}</p>
-        </div>
-        <div className="text-right shrink-0">
-          <p className="text-base sm:text-lg font-extrabold">{client.totalSessions}<span className="text-[10px] text-muted-foreground ml-0.5">回</span></p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <Progress value={client.progress} className="h-1.5 w-12 sm:w-16" />
-            <span className="text-[10px] font-bold text-muted-foreground">{client.progress}%</span>
-          </div>
+          <h1 className="text-lg sm:text-xl font-bold truncate">{displayName}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">{clientPlan}</p>
         </div>
       </div>
 
@@ -98,10 +266,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         <Card>
           <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             <div>
-              <Select value={clientPlan} onValueChange={(v) => {
-                setClientPlan(v as PlanType);
-                toast.success(`${client.name}さんのプランを「${v}」に変更しました`);
-              }}>
+              <Select value={clientPlan} onValueChange={handlePlanChange}>
                 <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {planOptions.map((p) => (
@@ -121,16 +286,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <span className={`text-xs font-bold ${isPaid ? 'text-success' : 'text-destructive'}`}>
                   {isPaid ? '支払済' : '未払い'}
                 </span>
-                <Switch
-                  checked={isPaid}
-                  onCheckedChange={(checked) => {
-                    setIsPaid(checked);
-                    toast.success(checked
-                      ? `${client.name}さんの今月分を「支払済」にしました`
-                      : `${client.name}さんの今月分を「未払い」に戻しました`
-                    );
-                  }}
-                />
+                <Switch checked={isPaid} onCheckedChange={handlePaymentToggle} />
               </div>
             </div>
           </CardContent>
@@ -138,7 +294,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       </section>
 
       {/* Tabbed sections */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="training" className="space-y-4">
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="overview" className="text-[10px] sm:text-xs px-1">概要</TabsTrigger>
           <TabsTrigger value="training" className="text-[10px] sm:text-xs px-1">記録</TabsTrigger>
@@ -148,85 +304,85 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
         {/* Overview */}
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-          <div className="space-y-4 sm:space-y-6">
-            <section>
-              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5" />
-                体重・体脂肪率推移
-              </h2>
-              <Card>
-                <CardContent className="p-3 sm:p-4">
-                  {metrics.length > 0 ? (
-                    <div className="h-40 sm:h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={metrics}>
-                          <defs>
-                            <linearGradient id={`wg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0} />
-                            </linearGradient>
-                            <linearGradient id={`fg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(225, 12%, 90%)" />
-                          <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
-                          <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="kg" width={38} />
-                          <YAxis yAxisId="f" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="%" width={38} />
-                          <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }} />
-                          <Area yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(18, 90%, 55%)" fill={`url(#wg-${clientId})`} strokeWidth={2} name="体重(kg)" />
-                          <Area yAxisId="f" type="monotone" dataKey="bodyFat" stroke="hsl(210, 80%, 55%)" fill={`url(#fg-${clientId})`} strokeWidth={2} name="体脂肪率(%)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">データなし</p>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
-
-            <section>
-              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                <Weight className="w-3.5 h-3.5" />
-                今日の計測
-              </h2>
-              <Card>
-                <CardContent className="p-3 sm:p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground mb-1 block">体重 (kg)</label>
-                      <Input type="number" step="0.1" placeholder="73.5" value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} className="h-11" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground mb-1 block">体脂肪率 (%)</label>
-                      <Input type="number" step="0.1" placeholder="18.0" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} className="h-11" />
-                    </div>
+          <section>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5" />
+              体重・体脂肪率推移
+            </h2>
+            <Card>
+              <CardContent className="p-3 sm:p-4">
+                {metrics.length > 0 ? (
+                  <div className="h-40 sm:h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={metrics}>
+                        <defs>
+                          <linearGradient id={`wg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id={`fg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(225, 12%, 90%)" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="kg" width={38} />
+                        <YAxis yAxisId="f" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="%" width={38} />
+                        <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }} />
+                        <Area yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(18, 90%, 55%)" fill={`url(#wg-${clientId})`} strokeWidth={2} name="体重(kg)" />
+                        <Area yAxisId="f" type="monotone" dataKey="bodyFat" stroke="hsl(210, 80%, 55%)" fill={`url(#fg-${clientId})`} strokeWidth={2} name="体脂肪率(%)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
-                </CardContent>
-              </Card>
-            </section>
-          </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">データなし</p>
+                )}
+              </CardContent>
+            </Card>
+          </section>
 
-          {/* Recent training records */}
+          <section>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <Weight className="w-3.5 h-3.5" />
+              今日の計測
+            </h2>
+            <Card>
+              <CardContent className="p-3 sm:p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">体重 (kg)</label>
+                    <Input type="number" step="0.1" placeholder="73.5" value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} className="h-11" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">体脂肪率 (%)</label>
+                    <Input type="number" step="0.1" placeholder="18.0" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} className="h-11" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* Recent records from DB */}
           <section>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <Dumbbell className="w-3.5 h-3.5" />
               最近のトレーニング記録
             </h2>
-            {records.length > 0 ? (
+            {loadingRecords ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+            ) : sortedDates.length > 0 ? (
               <div className="space-y-2">
-                {records.slice(0, 3).map((r) => (
-                  <Card key={r.id}>
+                {sortedDates.slice(0, 3).map((date) => (
+                  <Card key={date}>
                     <CardContent className="p-3">
                       <p className="text-xs font-bold text-muted-foreground mb-1">
-                        {format(new Date(r.date), "M月d日（E）", { locale: ja })}
+                        {format(new Date(date), "M月d日（E）", { locale: ja })}
                       </p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {r.exercises.map((ex, i) => (
-                          <span key={i} className="text-xs bg-muted rounded-lg px-2 py-1">
-                            {ex.name} {ex.weight}kg×{ex.reps}
+                        {groupedRecords[date].map((r) => (
+                          <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1">
+                            {r.exercise_name} {r.weight}kg×{r.reps}
                           </span>
                         ))}
                       </div>
@@ -263,28 +419,21 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       )}
                     </div>
                     <Select
-                      value={ex.name}
-                      onValueChange={(v) => {
-                        if (v === "__new__") {
-                          setShowNewExercise(i);
-                          setNewExName("");
-                        } else {
-                          updateExercise(i, "name", v);
-                        }
-                      }}
+                      value={ex.exerciseId || undefined}
+                      onValueChange={(v) => handleSelectExercise(i, v)}
                     >
                       <SelectTrigger className="w-full h-11">
                         <SelectValue placeholder="種目を選択" />
                       </SelectTrigger>
                       <SelectContent>
-                        {exerciseCategories.map((cat) => {
+                        {[...exerciseCategories].map((cat) => {
                           const catExercises = exerciseMasters.filter((e) => e.category === cat);
                           if (catExercises.length === 0) return null;
                           return (
                             <div key={cat}>
                               <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{cat}</div>
                               {catExercises.map((e) => (
-                                <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
+                                <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
                               ))}
                             </div>
                           );
@@ -298,30 +447,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                           placeholder="新しい種目名を入力"
                           value={newExName}
                           onChange={(e) => setNewExName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && newExName.trim()) {
-                              updateExercise(i, "name", newExName.trim());
-                              setShowNewExercise(null);
-                              setNewExName("");
-                              toast.success(`「${newExName.trim()}」を設定しました`);
-                            }
-                          }}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleAddNewExercise(i); }}
                           className="flex-1 h-11"
                           autoFocus
                         />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-11"
-                          onClick={() => {
-                            if (newExName.trim()) {
-                              updateExercise(i, "name", newExName.trim());
-                              setShowNewExercise(null);
-                              setNewExName("");
-                              toast.success(`「${newExName.trim()}」を設定しました`);
-                            }
-                          }}
-                        >
+                        <Button size="sm" variant="outline" className="h-11" onClick={() => handleAddNewExercise(i)}>
                           確定
                         </Button>
                         <Button size="sm" variant="ghost" className="h-11" onClick={() => setShowNewExercise(null)}>
@@ -356,29 +486,31 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           </Card>
 
           <div className="flex justify-end">
-            <Button variant="accent" size="lg" onClick={handleSave} className="gap-2 w-full sm:w-auto">
-              <Save className="w-4 h-4" />
+            <Button variant="accent" size="lg" onClick={handleSave} disabled={saving} className="gap-2 w-full sm:w-auto">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               記録を保存
             </Button>
           </div>
 
-          {/* Past records */}
-          {records.length > 0 && (
+          {/* Past records from DB */}
+          {loadingRecords ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+          ) : sortedDates.length > 0 && (
             <section>
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">過去の記録</h2>
               <div className="space-y-2">
-                {records.map((r) => (
-                  <Card key={r.id}>
+                {sortedDates.map((date) => (
+                  <Card key={date}>
                     <CardContent className="p-3">
                       <p className="text-xs font-bold text-muted-foreground mb-1.5">
-                        {format(new Date(r.date), "yyyy年M月d日（E）", { locale: ja })}
+                        {format(new Date(date), "yyyy年M月d日（E）", { locale: ja })}
                       </p>
                       <div className="space-y-1">
-                        {r.exercises.map((ex, i) => (
-                          <div key={i} className="flex items-center gap-2 text-sm flex-wrap">
+                        {groupedRecords[date].map((r) => (
+                          <div key={r.id} className="flex items-center gap-2 text-sm flex-wrap">
                             <Dumbbell className="w-3 h-3 text-accent shrink-0" />
-                            <span className="font-medium">{ex.name}</span>
-                            <span className="text-muted-foreground">{ex.weight}kg × {ex.reps}rep</span>
+                            <span className="font-medium">{r.exercise_name}</span>
+                            <span className="text-muted-foreground">{r.weight}kg × {r.reps}rep</span>
                           </div>
                         ))}
                       </div>

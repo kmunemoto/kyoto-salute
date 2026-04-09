@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Check, X, Dumbbell } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Pencil, Trash2, Check, X, Dumbbell, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { defaultExerciseMasters, exerciseCategories, type ExerciseMaster } from "@/lib/dummyData";
+import { exerciseCategories } from "@/lib/dummyData";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Exercise {
+  id: string;
+  name: string;
+  category: string;
+}
 
 const TrainerExerciseManager = () => {
-  const [exercises, setExercises] = useState<ExerciseMaster[]>(defaultExerciseMasters);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<string>(exerciseCategories[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -22,36 +30,71 @@ const TrainerExerciseManager = () => {
   const [editCategory, setEditCategory] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
 
-  const handleAdd = () => {
+  useEffect(() => {
+    fetchExercises();
+  }, []);
+
+  const fetchExercises = async () => {
+    const { data, error } = await supabase
+      .from("exercises")
+      .select("*")
+      .order("category")
+      .order("name");
+    if (error) {
+      toast.error("種目の取得に失敗しました");
+    } else {
+      setExercises(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handleAdd = async () => {
     if (!newName.trim()) return;
     if (exercises.some((e) => e.name === newName.trim())) {
       toast.error("同じ名前の種目が既に存在します");
       return;
     }
-    const newEx: ExerciseMaster = {
-      id: `ex-${Date.now()}`,
-      name: newName.trim(),
-      category: newCategory,
-    };
-    setExercises([...exercises, newEx]);
+    const { data, error } = await supabase
+      .from("exercises")
+      .insert({ name: newName.trim(), category: newCategory })
+      .select()
+      .single();
+    if (error) {
+      toast.error("追加に失敗しました");
+      return;
+    }
+    setExercises([...exercises, data]);
     setNewName("");
-    toast.success(`「${newEx.name}」を追加しました`);
+    toast.success(`「${data.name}」を追加しました`);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const ex = exercises.find((e) => e.id === id);
+    const { error } = await supabase.from("exercises").delete().eq("id", id);
+    if (error) {
+      toast.error("削除に失敗しました");
+      return;
+    }
     setExercises(exercises.filter((e) => e.id !== id));
     toast.success(`「${ex?.name}」を削除しました`);
   };
 
-  const startEdit = (ex: ExerciseMaster) => {
+  const startEdit = (ex: Exercise) => {
     setEditingId(ex.id);
     setEditName(ex.name);
     setEditCategory(ex.category);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editName.trim() || !editingId) return;
+    const { error } = await supabase
+      .from("exercises")
+      .update({ name: editName.trim(), category: editCategory })
+      .eq("id", editingId);
+    if (error) {
+      toast.error("更新に失敗しました");
+      return;
+    }
     setExercises(
       exercises.map((e) =>
         e.id === editingId ? { ...e, name: editName.trim(), category: editCategory } : e
@@ -64,11 +107,19 @@ const TrainerExerciseManager = () => {
   const filtered =
     filterCategory === "all" ? exercises : exercises.filter((e) => e.category === filterCategory);
 
-  const grouped = exerciseCategories.reduce((acc, cat) => {
+  const grouped = [...exerciseCategories].reduce((acc, cat) => {
     const items = filtered.filter((e) => e.category === cat);
     if (items.length > 0) acc.push({ category: cat, items });
     return acc;
-  }, [] as { category: string; items: ExerciseMaster[] }[]);
+  }, [] as { category: string; items: Exercise[] }[]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-24 md:pb-0 space-y-4 sm:space-y-5 slide-up">
