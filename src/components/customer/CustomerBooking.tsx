@@ -49,8 +49,7 @@ const CustomerBooking = () => {
       };
       bookingStore.addBooking(newBooking);
       setLastBooked(newBooking);
-      const label = isTrialUser ? trialLabel : `${slot.time}〜${endTime}`;
-      toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${label} で予約しました！`);
+      toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
       setSelectedSlot(null);
       setSelectedDate(undefined);
     }
@@ -75,7 +74,7 @@ const CustomerBooking = () => {
   return (
     <>
       <div className="px-4 py-4 space-y-5 slide-up">
-        {/* Trial user: special banner */}
+        {/* Trial user: special banner / Regular user: plan badge */}
         {isTrialUser ? (
           <Card className="border-2 border-accent bg-gradient-to-r from-accent/10 to-accent/5">
             <CardContent className="p-4">
@@ -85,15 +84,15 @@ const CustomerBooking = () => {
                 </div>
                 <div>
                   <p className="font-bold text-base">{trialLabel}</p>
-                  <p className="text-xs text-muted-foreground">初めての方限定の体験プラン</p>
+                  <p className="text-xs text-muted-foreground">初めての方限定</p>
                 </div>
               </div>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-2xl font-extrabold text-accent">¥{trialPrice.toLocaleString()}</span>
-                <span className="text-xs text-muted-foreground">（税込）</span>
+                <span className="text-2xl font-extrabold text-accent">無料</span>
+                <span className="text-xs text-muted-foreground">（¥0）</span>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                カウンセリング＋パーソナルトレーニング60分の体験セッションです。下のカレンダーからご希望の日時をお選びください。
+                カウンセリング＋パーソナルトレーニング60分の無料体験セッションです。下のカレンダーからご希望の日時をお選びください。
               </p>
             </CardContent>
           </Card>
@@ -109,11 +108,11 @@ const CustomerBooking = () => {
         <div>
           <h1 className="text-lg font-bold flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-accent" />
-            {isTrialUser ? "初回体験を予約する" : "予約する"}
+            {isTrialUser ? "初回無料体験を予約する" : "予約する"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isTrialUser
-              ? "ご希望の日時を選んでください（体験60分）"
+              ? "ご希望の日時を選んでください（無料体験60分）"
               : "空いている日時を選んでください（1コマ60分＋休憩15分）"}
           </p>
         </div>
@@ -124,7 +123,7 @@ const CustomerBooking = () => {
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-accent" />
                 <span className="font-bold text-sm">
-                  {isTrialUser ? "初回体験の予約が完了しました！" : "予約が完了しました！"}
+                  {isTrialUser ? "初回無料体験の予約が完了しました！" : "予約が完了しました！"}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -269,7 +268,7 @@ const CustomerBooking = () => {
                 <p className="text-sm text-center mb-3">
                   {isTrialUser && (
                     <span className="block text-xs font-bold text-accent mb-1">
-                      {trialLabel} — ¥{trialPrice.toLocaleString()}
+                      {trialLabel} — 無料
                     </span>
                   )}
                   <span className="font-bold">{slots.find((s) => s.id === selectedSlot)?.time}</span>
@@ -286,7 +285,7 @@ const CustomerBooking = () => {
                   （60分）
                 </p>
                 <Button variant="accent" size="lg" className="w-full" onClick={handleBook}>
-                  {isTrialUser ? "初回体験を予約する" : "この時間で予約する"}
+                  {isTrialUser ? "初回無料体験を予約する" : "この時間で予約する"}
                 </Button>
               </div>
             )}

@@ -59,9 +59,9 @@ export const planPrices: Record<PlanType, number> = {
   '通い放題プラン (月15回まで)': 60000,
 };
 
-// Trial session pricing
-export const trialPrice = 5000;
-export const trialLabel = '初回体験 60分';
+// Trial session
+export const trialPrice = 0;
+export const trialLabel = '初回無料体験（60分）';
 
 // Payment status for current month (dummy data)
 export const clientPaymentStatus: Record<string, boolean> = {
