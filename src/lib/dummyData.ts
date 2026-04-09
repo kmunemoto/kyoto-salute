@@ -59,6 +59,10 @@ export const planPrices: Record<PlanType, number> = {
   '通い放題プラン (月15回まで)': 60000,
 };
 
+// Trial session pricing
+export const trialPrice = 5000;
+export const trialLabel = '初回体験 60分';
+
 // Payment status for current month (dummy data)
 export const clientPaymentStatus: Record<string, boolean> = {
   '1': true,
@@ -101,11 +105,12 @@ export const sessions: Session[] = [
 ];
 
 export const clients: Client[] = [
-  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72, plan: '月4回プラン' },
-  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58, plan: '月6回プラン' },
-  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85, plan: '月8回プラン' },
-  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40, plan: '通い放題プラン (月15回まで)' },
-  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92, plan: '月4回プラン' },
+  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72, plan: '月4回プラン', isExistingCustomer: true },
+  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58, plan: '月6回プラン', isExistingCustomer: true },
+  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85, plan: '月8回プラン', isExistingCustomer: true },
+  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40, plan: '通い放題プラン (月15回まで)', isExistingCustomer: true },
+  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92, plan: '月4回プラン', isExistingCustomer: true },
+  { id: '6', name: '中村 あおい', avatar: 'A', goal: '健康維持', nextSession: '未定', totalSessions: 0, memberSince: '2026-04', progress: 0, plan: '月4回プラン', isExistingCustomer: false },
 ];
 
 // Per-client body metrics
