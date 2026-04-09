@@ -70,7 +70,7 @@ const CustomerMeals = () => {
       // Insert meal record
       const { data: mealData, error: insertError } = await supabase
         .from("meals")
-        .insert({ image_url: imageUrl })
+        .insert({ image_url: imageUrl, user_id: user?.id })
         .select()
         .single();
       if (insertError) throw insertError;
