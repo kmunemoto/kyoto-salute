@@ -137,7 +137,11 @@ const TrainerSchedule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {timeSlots.map((time) => (
+                  {timeSlots.map((time) => {
+                    const hasAnySession = weekDays.some((day) => getSession(day, time));
+                    // Hide empty rows to keep the table compact
+                    if (!hasAnySession) return null;
+                    return (
                     <tr key={time} className="border-b last:border-b-0">
                       <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
                       {weekDays.map((day) => {
@@ -155,7 +159,8 @@ const TrainerSchedule = () => {
                         );
                       })}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
