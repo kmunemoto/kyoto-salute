@@ -57,9 +57,13 @@ const CustomerBooking = () => {
 
   const handleCancel = () => {
     if (!cancelTarget) return;
-    bookingStore.removeBooking(cancelTarget.id);
-    toast.success("予約をキャンセルしました");
+    const targetId = cancelTarget.id;
     setCancelTarget(null);
+    // Delay removal so the dialog portal can unmount cleanly
+    setTimeout(() => {
+      bookingStore.removeBooking(targetId);
+      toast.success("予約をキャンセルしました");
+    }, 150);
   };
 
   // Compute effective slot availability: base availability AND not blocked by any booking
