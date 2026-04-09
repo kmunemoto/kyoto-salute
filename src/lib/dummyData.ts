@@ -70,7 +70,12 @@ export const clientPaymentStatus: Record<string, boolean> = {
   '3': false,
   '4': false,
   '5': true,
+  '6': false,
 };
+
+// Current logged-in customer state (toggle to test trial vs existing)
+// Set to true to simulate a first-time trial user
+export const isTrialUser = false;
 
 export interface CustomerBookingEntry {
   id: string;
