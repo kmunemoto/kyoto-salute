@@ -92,10 +92,10 @@ const CustomerBooking = () => {
         </div>
 
         {lastBooked && (
-          <Card className="border-l-4 border-l-green-500 bg-green-50 dark:bg-green-950/20 slide-up">
+          <Card className="border-l-4 border-l-accent bg-accent/5 slide-up">
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-green-600" />
+                <Check className="w-5 h-5 text-accent" />
                 <span className="font-bold text-sm">予約が完了しました！</span>
               </div>
               <p className="text-xs text-muted-foreground">
