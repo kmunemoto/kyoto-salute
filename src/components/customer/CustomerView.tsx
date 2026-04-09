@@ -31,7 +31,7 @@ const CustomerView = () => {
           </Button>
         </div>
       </div>
-      <div className="pt-12">
+      <div className="pt-12" key={tab}>
         {tab === "home" && <CustomerHome />}
         {tab === "booking" && <CustomerBooking />}
         {tab === "training" && <CustomerTraining />}
