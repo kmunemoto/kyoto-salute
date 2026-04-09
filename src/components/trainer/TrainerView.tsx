@@ -14,17 +14,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import GymLogo from "@/components/GymLogo";
+import { useUnreadCount } from "@/hooks/useMessages";
+import { supabase } from "@/integrations/supabase/client";
 
 export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "settings" | "exercises" | "gym-settings";
-
-// Dummy unread count
-const DUMMY_UNREAD = 3;
 
 const TrainerView = () => {
   const [tab, setTab] = useState<TrainerTab>("dashboard");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [unreadMessages, setUnreadMessages] = useState(DUMMY_UNREAD);
   const { signOut } = useAuth();
+  const { user } = useAuth();
+  const { count: unreadMessages, refetch: refetchUnread } = useUnreadCount();
 
   const handleSelectClient = (clientId: string) => {
     setSelectedClientId(clientId);
