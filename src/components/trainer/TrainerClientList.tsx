@@ -1,8 +1,9 @@
-import { Users, Search, ChevronRight } from "lucide-react";
+import { Users, Search, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { clients } from "@/lib/dummyData";
+import { Checkbox } from "@/components/ui/checkbox";
+import { clients, planPrices, clientPaymentStatus, PlanType } from "@/lib/dummyData";
 import { useState } from "react";
 
 interface TrainerClientListProps {
@@ -11,10 +12,18 @@ interface TrainerClientListProps {
 
 const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   const [search, setSearch] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<Record<string, boolean>>({ ...clientPaymentStatus });
 
   const filtered = clients.filter(c =>
     c.name.includes(search) || c.goal.includes(search)
   );
+
+  const formatPrice = (plan: PlanType) => `¥${planPrices[plan].toLocaleString()}`;
+
+  const togglePayment = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPaymentStatus(prev => ({ ...prev, [clientId]: !prev[clientId] }));
+  };
 
   return (
     <div className="pb-20 md:pb-0">
@@ -49,14 +58,29 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm">{c.name}</p>
-                <p className="text-xs text-muted-foreground">{c.goal} · {c.totalSessions}回</p>
+                <p className="text-xs text-muted-foreground">{c.plan} · {formatPrice(c.plan)}</p>
                 <div className="flex items-center gap-2 mt-1.5">
                   <Progress value={c.progress} className="h-1.5 flex-1" />
                   <span className="text-[10px] font-bold text-muted-foreground">{c.progress}%</span>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                <p className="text-xs font-medium">次回 {c.nextSession}</p>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <div
+                  className="flex items-center gap-1.5"
+                  onClick={(e) => togglePayment(c.id, e)}
+                >
+                  {paymentStatus[c.id] ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-success">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      支払済
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-destructive">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      未払い
+                    </span>
+                  )}
+                </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
             </CardContent>
