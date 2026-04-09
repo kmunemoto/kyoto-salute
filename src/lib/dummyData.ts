@@ -223,6 +223,47 @@ export const photos: Photo[] = [
   { id: '4', url: '', date: '2026-04-07', note: '3ヶ月目' },
 ];
 
+// Exercise master data with categories
+export interface ExerciseMaster {
+  id: string;
+  name: string;
+  category: string;
+}
+
+export const exerciseCategories = ['胸', '背中', '肩', '腕', '脚・臀部', '体幹・腹筋', 'その他'] as const;
+
+export const defaultExerciseMasters: ExerciseMaster[] = [
+  // 胸
+  { id: 'ex-1', name: 'ベンチプレス', category: '胸' },
+  { id: 'ex-2', name: 'インクラインダンベルプレス', category: '胸' },
+  { id: 'ex-3', name: 'ケーブルフライ', category: '胸' },
+  { id: 'ex-4', name: 'ダンベルフライ', category: '胸' },
+  { id: 'ex-5', name: 'ケーブルプレス', category: '胸' },
+  { id: 'ex-6', name: 'インクラインベンチ', category: '胸' },
+  { id: 'ex-7', name: 'ディップス', category: '胸' },
+  // 背中
+  { id: 'ex-10', name: 'デッドリフト', category: '背中' },
+  { id: 'ex-11', name: 'ベントオーバーロウ', category: '背中' },
+  { id: 'ex-12', name: 'ラットプルダウン', category: '背中' },
+  { id: 'ex-13', name: 'シーテッドロウ', category: '背中' },
+  { id: 'ex-14', name: 'ダンベルロウ', category: '背中' },
+  // 肩
+  { id: 'ex-20', name: 'ショルダープレス', category: '肩' },
+  { id: 'ex-21', name: 'ダンベルショルダープレス', category: '肩' },
+  // 腕
+  { id: 'ex-30', name: 'トライセプスプッシュダウン', category: '腕' },
+  // 脚・臀部
+  { id: 'ex-40', name: 'スクワット', category: '脚・臀部' },
+  { id: 'ex-41', name: 'レッグプレス', category: '脚・臀部' },
+  { id: 'ex-42', name: 'ヒップスラスト', category: '脚・臀部' },
+  { id: 'ex-43', name: 'ブルガリアンスクワット', category: '脚・臀部' },
+  { id: 'ex-44', name: 'レッグカール', category: '脚・臀部' },
+  { id: 'ex-45', name: 'レッグエクステンション', category: '脚・臀部' },
+  { id: 'ex-46', name: 'スミスマシンスクワット', category: '脚・臀部' },
+  // その他
+  { id: 'ex-90', name: 'HIIT', category: 'その他' },
+];
+
 export interface TrainingExercise {
   name: string;
   weight: number;
