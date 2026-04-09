@@ -2,7 +2,7 @@ import { Users, CalendarDays, TrendingUp, Clock, BarChart3, Bell } from "lucide-
 import { Card, CardContent } from "@/components/ui/card";
 import { planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
-import { useAllCustomerProfiles } from "@/hooks/useProfile";
+import { useAllCustomerProfiles, useProfile } from "@/hooks/useProfile";
 import { useAllBookings } from "@/hooks/useBookings";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -14,6 +14,8 @@ interface TrainerDashboardProps {
 const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const { profiles, loading } = useAllCustomerProfiles();
   const { bookings, loading: bookingsLoading } = useAllBookings();
+  const { profile: trainerProfile } = useProfile();
+  const trainerName = trainerProfile?.display_name || "トレーナー";
 
   const today = format(new Date(), "yyyy-MM-dd");
   const todayBookings = bookings.filter((b) => b.date === today && b.status !== "キャンセル済み");
@@ -50,7 +52,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
         <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-accent/10 -translate-y-12 translate-x-12" />
         <div className="relative">
           <p className="text-xs sm:text-sm opacity-75">ダッシュボード</p>
-          <h1 className="text-lg sm:text-2xl font-bold mt-1">山本 コーチ</h1>
+          <h1 className="text-lg sm:text-2xl font-bold mt-1">{trainerName}</h1>
           <p className="text-xs sm:text-sm opacity-75 mt-1">{format(new Date(), "yyyy年M月d日（E）")}</p>
         </div>
       </div>
