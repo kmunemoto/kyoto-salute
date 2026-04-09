@@ -52,6 +52,7 @@ const CustomerView = () => {
         {tab === "settings" && <CustomerSettings />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
+      <PwaInstallBanner />
     </div>
   );
 };
