@@ -125,7 +125,7 @@ const CustomerHome = () => {
                       fontSize: '12px',
                     }}
                   />
-                  <Area type="monotone" dataKey="weight" stroke="hsl(18, 90%, 55%)" strokeWidth={2.5} fill="url(#weightGradient)" dot={{ r: 4, fill: "hsl(18, 90%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
+                  <Area type="monotone" dataKey="weight" stroke="hsl(18, 90%, 55%)" strokeWidth={2.5} fill="url(#weightGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(18, 90%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -158,7 +158,7 @@ const CustomerHome = () => {
                       fontSize: '12px',
                     }}
                   />
-                  <Area type="monotone" dataKey="bodyFat" stroke="hsl(210, 80%, 55%)" strokeWidth={2.5} fill="url(#fatGradient)" dot={{ r: 4, fill: "hsl(210, 80%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
+                  <Area type="monotone" dataKey="bodyFat" stroke="hsl(210, 80%, 55%)" strokeWidth={2.5} fill="url(#fatGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(210, 80%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
