@@ -65,7 +65,6 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm">{s.clientName}</p>
-                    <p className="text-xs text-muted-foreground">{s.type}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold">{s.time}</p>
