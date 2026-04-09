@@ -40,6 +40,30 @@ export interface TimeSlot {
   available: boolean;
 }
 
+export type PlanType = '月4回プラン' | '月6回プラン' | '月8回プラン' | '通い放題プラン (月15回まで)';
+
+export const planOptions: PlanType[] = [
+  '月4回プラン',
+  '月6回プラン',
+  '月8回プラン',
+  '通い放題プラン (月15回まで)',
+];
+
+export interface CustomerBookingEntry {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
+export const currentPlan: PlanType = '月4回プラン';
+
+export const myBookings: CustomerBookingEntry[] = [
+  { id: 'b1', date: '2026-04-09', startTime: '10:00', endTime: '11:15' },
+  { id: 'b2', date: '2026-04-14', startTime: '14:00', endTime: '15:15' },
+  { id: 'b3', date: '2026-04-18', startTime: '11:00', endTime: '12:15' },
+];
+
 export interface Photo {
   id: string;
   url: string;
@@ -57,12 +81,24 @@ export const sessions: Session[] = [
   { id: '6', clientName: '鈴木 花子', clientAvatar: 'S', date: '2026-04-05', time: '11:00', duration: 60, type: '上半身トレーニング', status: 'completed' },
 ];
 
+export interface Client {
+  id: string;
+  name: string;
+  avatar: string;
+  goal: string;
+  nextSession: string;
+  totalSessions: number;
+  memberSince: string;
+  progress: number;
+  plan: PlanType;
+}
+
 export const clients: Client[] = [
-  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72 },
-  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58 },
-  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85 },
-  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40 },
-  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92 },
+  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72, plan: '月4回プラン' },
+  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58, plan: '月6回プラン' },
+  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85, plan: '月8回プラン' },
+  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40, plan: '通い放題プラン (月15回まで)' },
+  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92, plan: '月4回プラン' },
 ];
 
 // Customer-facing data
@@ -75,36 +111,32 @@ export const bodyMetrics: BodyMetric[] = [
   { date: '4月', weight: 73.8, bodyFat: 18.0 },
 ];
 
+// Generate 15-min increment slots from 10:00 to 21:15 (last start = 20:00 for 75-min session ending 21:15)
+function generateTimeSlots(dateKey: string, bookedStarts: string[]): TimeSlot[] {
+  const slots: TimeSlot[] = [];
+  for (let h = 10; h <= 20; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      if (h === 20 && m > 0) break; // last start is 20:00
+      const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      slots.push({
+        id: `${dateKey}-${time}`,
+        time,
+        available: !bookedStarts.includes(time),
+      });
+    }
+  }
+  return slots;
+}
+
 export const availableSlots: Record<string, TimeSlot[]> = {
-  '2026-04-10': [
-    { id: 's1', time: '10:00', available: true },
-    { id: 's2', time: '11:00', available: false },
-    { id: 's3', time: '13:00', available: true },
-    { id: 's4', time: '14:00', available: true },
-    { id: 's5', time: '16:00', available: false },
-    { id: 's6', time: '17:00', available: true },
-  ],
-  '2026-04-11': [
-    { id: 's7', time: '09:00', available: true },
-    { id: 's8', time: '10:00', available: true },
-    { id: 's9', time: '11:00', available: true },
-    { id: 's10', time: '14:00', available: false },
-    { id: 's11', time: '15:00', available: true },
-  ],
-  '2026-04-12': [
-    { id: 's12', time: '10:00', available: true },
-    { id: 's13', time: '13:00', available: true },
-    { id: 's14', time: '15:00', available: false },
-    { id: 's15', time: '16:00', available: true },
-  ],
-  '2026-04-14': [
-    { id: 's16', time: '09:00', available: true },
-    { id: 's17', time: '10:00', available: false },
-    { id: 's18', time: '11:00', available: true },
-    { id: 's19', time: '14:00', available: true },
-    { id: 's20', time: '16:00', available: true },
-    { id: 's21', time: '17:00', available: true },
-  ],
+  '2026-04-10': generateTimeSlots('2026-04-10', ['11:00', '16:00']),
+  '2026-04-11': generateTimeSlots('2026-04-11', ['14:00']),
+  '2026-04-12': generateTimeSlots('2026-04-12', ['15:00']),
+  '2026-04-14': generateTimeSlots('2026-04-14', ['10:00']),
+  '2026-04-15': generateTimeSlots('2026-04-15', []),
+  '2026-04-16': generateTimeSlots('2026-04-16', ['13:00']),
+  '2026-04-17': generateTimeSlots('2026-04-17', []),
+  '2026-04-18': generateTimeSlots('2026-04-18', ['11:00']),
 };
 
 export const chatMessages: ChatMessage[] = [
