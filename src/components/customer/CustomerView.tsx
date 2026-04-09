@@ -12,7 +12,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
-import PwaInstallBanner from "@/components/PwaInstallBanner";
 
 export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings";
 
@@ -52,7 +51,6 @@ const CustomerView = () => {
         {tab === "settings" && <CustomerSettings />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
-      <PwaInstallBanner />
     </div>
   );
 };
