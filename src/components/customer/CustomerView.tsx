@@ -7,10 +7,11 @@ import CustomerBooking from "./CustomerBooking";
 import CustomerMeals from "./CustomerMeals";
 import CustomerChat from "./CustomerChat";
 import CustomerTraining from "./CustomerTraining";
+import CustomerSettings from "./CustomerSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
-export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat";
+export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
@@ -37,6 +38,7 @@ const CustomerView = () => {
         {tab === "training" && <CustomerTraining />}
         {tab === "meals" && <CustomerMeals />}
         {tab === "chat" && <CustomerChat />}
+        {tab === "settings" && <CustomerSettings />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} />
     </div>
