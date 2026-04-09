@@ -5,10 +5,11 @@ import CustomerHome from "./CustomerHome";
 import CustomerBooking from "./CustomerBooking";
 import CustomerMeals from "./CustomerMeals";
 import CustomerChat from "./CustomerChat";
+import CustomerTraining from "./CustomerTraining";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
-export type CustomerTab = "home" | "booking" | "meals" | "chat";
+export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
@@ -28,6 +29,7 @@ const CustomerView = () => {
       <div className="pt-12">
         {tab === "home" && <CustomerHome />}
         {tab === "booking" && <CustomerBooking />}
+        {tab === "training" && <CustomerTraining />}
         {tab === "meals" && <CustomerMeals />}
         {tab === "chat" && <CustomerChat />}
       </div>
