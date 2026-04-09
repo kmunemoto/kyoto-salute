@@ -23,6 +23,7 @@ const CustomerView = () => {
         <div className="max-w-lg mx-auto flex items-center justify-between px-4 py-2">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[8px] text-muted-foreground">LOGO</div>
+            {/* ⚠️ DO NOT change this app name. Keep exactly as-is: "パーソナルジムSalute御所南" — never convert "Salute" to katakana */}
             <span className="text-sm font-bold">パーソナルジムSalute御所南</span>
           </div>
           <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground">
