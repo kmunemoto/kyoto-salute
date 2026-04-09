@@ -4,6 +4,7 @@ import type { TrainerTab } from "./TrainerView";
 interface TrainerSidebarProps {
   activeTab: TrainerTab;
   onTabChange: (tab: TrainerTab) => void;
+  unreadMessages?: number;
 }
 
 const tabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard }[] = [
@@ -13,7 +14,7 @@ const tabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard }[] = 
   { id: "messages", label: "メッセージ", icon: MessageCircle },
 ];
 
-const TrainerSidebar = ({ activeTab, onTabChange }: TrainerSidebarProps) => {
+const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerSidebarProps) => {
   return (
     <>
       {/* Desktop sidebar */}
@@ -21,6 +22,7 @@ const TrainerSidebar = ({ activeTab, onTabChange }: TrainerSidebarProps) => {
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-3">メニュー</p>
         {tabs.map((t) => {
           const active = activeTab === t.id;
+          const showBadge = t.id === "messages" && unreadMessages > 0;
           return (
             <button
               key={t.id}
@@ -33,6 +35,11 @@ const TrainerSidebar = ({ activeTab, onTabChange }: TrainerSidebarProps) => {
             >
               <t.icon className="w-4.5 h-4.5" />
               {t.label}
+              {showBadge && (
+                <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {unreadMessages}
+                </span>
+              )}
             </button>
           );
         })}
@@ -43,15 +50,23 @@ const TrainerSidebar = ({ activeTab, onTabChange }: TrainerSidebarProps) => {
         <div className="flex">
           {tabs.map((t) => {
             const active = activeTab === t.id;
+            const showBadge = t.id === "messages" && unreadMessages > 0;
             return (
               <button
                 key={t.id}
                 onClick={() => onTabChange(t.id)}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-all duration-200 ${
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-all duration-200 relative ${
                   active ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""} transition-transform`} />
+                <div className="relative">
+                  <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""} transition-transform`} />
+                  {showBadge && (
+                    <span className="absolute -top-1.5 -right-2.5 bg-destructive text-destructive-foreground text-[8px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
+                      {unreadMessages}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] font-semibold">{t.label}</span>
               </button>
             );

@@ -1,9 +1,12 @@
-import { Users, Search, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { clients, planPrices, clientPaymentStatus, PlanType } from "@/lib/dummyData";
+
+// Dummy: clients with unread messages
+const clientsWithUnread: Record<string, number> = { "1": 1, "2": 2 };
 import { useState } from "react";
 
 interface TrainerClientListProps {
@@ -53,8 +56,13 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
             onClick={() => onSelectClient(c.id)}
           >
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
+              <div className="w-11 h-11 rounded-xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 relative">
                 {c.avatar}
+                {clientsWithUnread[c.id] && (
+                  <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[8px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5">
+                    <MessageCircle className="w-2.5 h-2.5" />
+                  </span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm">{c.name}</p>
