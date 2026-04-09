@@ -1,14 +1,19 @@
-import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle, Sparkles, UserCheck } from "lucide-react";
+import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle, Sparkles, UserCheck, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { planPrices, PlanType } from "@/lib/dummyData";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TrainerClientListProps {
   onSelectClient: (clientId: string) => void;
@@ -17,15 +22,34 @@ interface TrainerClientListProps {
 const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   const { profiles, loading, setProfiles } = useAllCustomerProfiles();
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = profiles.filter(c =>
-    (c.display_name || "").includes(search) || c.plan.includes(search)
+    (c.display_name || "").includes(search) || (c.plan || "").includes(search)
   );
 
   const formatPrice = (plan: string) => {
     const p = planPrices[plan as PlanType];
-    return p ? `¥${p.toLocaleString()}` : "";
+    return p !== undefined ? `¥${p.toLocaleString()}` : "";
   };
+
+  const handleDeleteCustomer = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.rpc("delete_customer_cascade", { _customer_id: deleteTarget });
+    if (error) {
+      toast.error("削除に失敗しました");
+      setDeleting(false);
+      return;
+    }
+    setProfiles(prev => prev.filter(p => p.user_id !== deleteTarget));
+    setDeleteTarget(null);
+    setDeleting(false);
+    toast.success("顧客データを削除しました");
+  };
+
+  const deleteTargetName = profiles.find(p => p.user_id === deleteTarget)?.display_name || "この顧客";
 
   const togglePayment = async (userId: string, currentStatus: boolean, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -99,7 +123,7 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{c.display_name || "名前未設定"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{c.plan} · {formatPrice(c.plan)}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.plan || "未契約"} {formatPrice(c.plan || "")}</p>
                     <div className="flex items-center gap-1.5 mt-1">
                       {c.trial_completed ? (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
@@ -131,7 +155,16 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                         </span>
                       )}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex items-center gap-1">
+                      <button
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(c.user_id); }}
+                        title="削除"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -139,6 +172,24 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>顧客データの削除</AlertDialogTitle>
+            <AlertDialogDescription>
+              「{deleteTargetName}」さんのデータを完全に削除しますか？予約・トレーニング記録・食事記録・メッセージなど、すべてのデータが消去されます。この操作は元に戻せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCustomer} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

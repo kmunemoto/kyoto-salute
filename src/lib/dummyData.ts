@@ -43,20 +43,22 @@ export interface TimeSlot {
   available: boolean;
 }
 
-export type PlanType = '月4回プラン' | '月6回プラン' | '月8回プラン' | '通い放題プラン (月15回まで)';
+export type PlanType = '初回無料体験' | '月4回' | '月6回' | '月8回' | '通い放題';
 
 export const planOptions: PlanType[] = [
-  '月4回プラン',
-  '月6回プラン',
-  '月8回プラン',
-  '通い放題プラン (月15回まで)',
+  '初回無料体験',
+  '月4回',
+  '月6回',
+  '月8回',
+  '通い放題',
 ];
 
 export const planPrices: Record<PlanType, number> = {
-  '月4回プラン': 20000,
-  '月6回プラン': 28500,
-  '月8回プラン': 36000,
-  '通い放題プラン (月15回まで)': 60000,
+  '初回無料体験': 0,
+  '月4回': 20000,
+  '月6回': 28500,
+  '月8回': 36000,
+  '通い放題': 60000,
 };
 
 // Trial session
@@ -84,7 +86,7 @@ export interface CustomerBookingEntry {
   endTime: string;
 }
 
-export const currentPlan: PlanType = '月4回プラン';
+export const currentPlan: PlanType = '月4回';
 
 export const myBookings: CustomerBookingEntry[] = [
   { id: 'b1', date: '2026-04-09', startTime: '10:00', endTime: '11:00' },
@@ -110,12 +112,12 @@ export const sessions: Session[] = [
 ];
 
 export const clients: Client[] = [
-  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72, plan: '月4回プラン', isExistingCustomer: true },
-  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58, plan: '月6回プラン', isExistingCustomer: true },
-  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85, plan: '月8回プラン', isExistingCustomer: true },
-  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40, plan: '通い放題プラン (月15回まで)', isExistingCustomer: true },
-  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92, plan: '月4回プラン', isExistingCustomer: true },
-  { id: '6', name: '中村 あおい', avatar: 'A', goal: '健康維持', nextSession: '未定', totalSessions: 0, memberSince: '2026-04', progress: 0, plan: '月4回プラン', isExistingCustomer: false },
+  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72, plan: '月4回', isExistingCustomer: true },
+  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58, plan: '月6回', isExistingCustomer: true },
+  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85, plan: '月8回', isExistingCustomer: true },
+  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40, plan: '通い放題', isExistingCustomer: true },
+  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92, plan: '月4回', isExistingCustomer: true },
+  { id: '6', name: '中村 あおい', avatar: 'A', goal: '健康維持', nextSession: '未定', totalSessions: 0, memberSince: '2026-04', progress: 0, plan: '初回無料体験', isExistingCustomer: false },
 ];
 
 // Per-client body metrics
