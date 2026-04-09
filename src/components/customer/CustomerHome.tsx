@@ -62,9 +62,11 @@ const CustomerHome = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-bold text-base">上半身トレーニング</p>
-                <p className="text-sm text-muted-foreground mt-1">4月9日（水）10:00 - 11:00</p>
+                <p className="font-bold text-base">4月9日（水）10:00 - 11:00</p>
                 <p className="text-xs text-muted-foreground mt-0.5">山本 コーチ</p>
+                <p className="text-xs font-semibold text-accent mt-1.5">
+                  次回は {usedSessions + 1}/{maxSessions}回目
+                </p>
               </div>
               <div className="w-12 h-12 rounded-xl accent-gradient flex items-center justify-center pulse-glow">
                 <CalendarDays className="w-5 h-5 text-accent-foreground" />
