@@ -1,8 +1,9 @@
-import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle } from "lucide-react";
+import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle, Sparkles, UserCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { clients, planPrices, clientPaymentStatus, PlanType } from "@/lib/dummyData";
 
 // Dummy: clients with unread messages
@@ -67,6 +68,19 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm">{c.name}</p>
                 <p className="text-xs text-muted-foreground">{c.plan} · {formatPrice(c.plan)}</p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {c.isExistingCustomer ? (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
+                      <UserCheck className="w-2.5 h-2.5" />
+                      既存顧客
+                    </Badge>
+                  ) : (
+                    <Badge className="text-[10px] px-1.5 py-0 h-4 gap-0.5 bg-accent text-accent-foreground">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      初回体験
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-1.5">
                   <Progress value={c.progress} className="h-1.5 flex-1" />
                   <span className="text-[10px] font-bold text-muted-foreground">{c.progress}%</span>

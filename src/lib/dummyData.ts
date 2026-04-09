@@ -19,6 +19,8 @@ export interface Client {
   memberSince: string;
   progress: number;
   plan: PlanType;
+  /** true = has completed at least one session; false = trial candidate */
+  isExistingCustomer: boolean;
 }
 
 export interface BodyMetric {
@@ -57,6 +59,10 @@ export const planPrices: Record<PlanType, number> = {
   '通い放題プラン (月15回まで)': 60000,
 };
 
+// Trial session pricing
+export const trialPrice = 5000;
+export const trialLabel = '初回体験 60分';
+
 // Payment status for current month (dummy data)
 export const clientPaymentStatus: Record<string, boolean> = {
   '1': true,
@@ -64,7 +70,12 @@ export const clientPaymentStatus: Record<string, boolean> = {
   '3': false,
   '4': false,
   '5': true,
+  '6': false,
 };
+
+// Current logged-in customer state (toggle to test trial vs existing)
+// Set to true to simulate a first-time trial user
+export const isTrialUser = false;
 
 export interface CustomerBookingEntry {
   id: string;
@@ -99,11 +110,12 @@ export const sessions: Session[] = [
 ];
 
 export const clients: Client[] = [
-  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72, plan: '月4回プラン' },
-  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58, plan: '月6回プラン' },
-  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85, plan: '月8回プラン' },
-  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40, plan: '通い放題プラン (月15回まで)' },
-  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92, plan: '月4回プラン' },
+  { id: '1', name: '田中 太郎', avatar: 'T', goal: '筋力アップ', nextSession: '4/9 10:00', totalSessions: 24, memberSince: '2025-10', progress: 72, plan: '月4回プラン', isExistingCustomer: true },
+  { id: '2', name: '鈴木 花子', avatar: 'S', goal: 'ダイエット', nextSession: '4/9 11:30', totalSessions: 18, memberSince: '2025-12', progress: 58, plan: '月6回プラン', isExistingCustomer: true },
+  { id: '3', name: '佐藤 健太', avatar: 'K', goal: '体力向上', nextSession: '4/9 14:00', totalSessions: 32, memberSince: '2025-08', progress: 85, plan: '月8回プラン', isExistingCustomer: true },
+  { id: '4', name: '高橋 美咲', avatar: 'M', goal: 'ボディメイク', nextSession: '4/9 16:00', totalSessions: 12, memberSince: '2026-01', progress: 40, plan: '通い放題プラン (月15回まで)', isExistingCustomer: true },
+  { id: '5', name: '山田 翔太', avatar: 'Y', goal: '減量', nextSession: '4/10 10:00', totalSessions: 45, memberSince: '2025-04', progress: 92, plan: '月4回プラン', isExistingCustomer: true },
+  { id: '6', name: '中村 あおい', avatar: 'A', goal: '健康維持', nextSession: '未定', totalSessions: 0, memberSince: '2026-04', progress: 0, plan: '月4回プラン', isExistingCustomer: false },
 ];
 
 // Per-client body metrics
@@ -148,6 +160,9 @@ export const clientBodyMetrics: Record<string, BodyMetric[]> = {
     { date: '12月', weight: 82.0, bodyFat: 21.0 },
     { date: '2月', weight: 79.5, bodyFat: 19.0 },
     { date: '4月', weight: 77.0, bodyFat: 17.5 },
+  ],
+  '6': [
+    { date: '4月', weight: 58.0, bodyFat: 26.0 },
   ],
 };
 
@@ -311,6 +326,7 @@ export const clientTrainingRecords: Record<string, TrainingRecord[]> = {
       { name: 'ダンベルロウ', weight: 35, reps: 10 },
     ]},
   ],
+  '6': [],
 };
 
 // Default training records (customer view = client 1)
@@ -335,9 +351,8 @@ export const clientBookings: Record<string, CustomerBookingEntry[]> = {
   '5': [
     { id: 'b5-1', date: '2026-04-10', startTime: '10:00', endTime: '11:00' },
   ],
+  '6': [],
 };
-
-// Per-client chat messages
 export const clientChatMessages: Record<string, ChatMessage[]> = {
   '1': chatMessages,
   '2': [
@@ -355,5 +370,9 @@ export const clientChatMessages: Record<string, ChatMessage[]> = {
   '5': [
     { id: 'c5-1', sender: 'trainer', text: '減量ペースが理想的です。このまま維持していきましょう。', time: '12:00', date: '4/6' },
     { id: 'c5-2', sender: 'customer', text: '食事管理も頑張っています！', time: '12:30', date: '4/6' },
+  ],
+  '6': [
+    { id: 'c6-1', sender: 'trainer', text: '初回体験のご予約ありがとうございます！当日お待ちしております😊', time: '10:00', date: '4/9' },
+    { id: 'c6-2', sender: 'customer', text: 'よろしくお願いします！楽しみです！', time: '10:30', date: '4/9' },
   ],
 };
