@@ -725,6 +725,61 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Edit workout dialog */}
+      <Dialog open={!!editRecord} onOpenChange={(open) => { if (!open) setEditRecord(null); }}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>記録を編集</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-1 block">種目</label>
+              <Select value={editExerciseId} onValueChange={setEditExerciseId}>
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {exerciseMasters.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">重量 (kg)</label>
+                <Input type="number" step="0.5" value={editWeight} onChange={(e) => setEditWeight(e.target.value)} className="h-11" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">回数 (rep)</label>
+                <Input type="number" value={editReps} onChange={(e) => setEditReps(e.target.value)} className="h-11" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setEditRecord(null)} className="w-full sm:w-auto">キャンセル</Button>
+            <Button variant="accent" onClick={handleEditSave} disabled={editSaving || !editExerciseId || !editWeight || !editReps} className="w-full sm:w-auto">
+              {editSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>この記録を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && `${deleteTarget.exercise_name} ${deleteTarget.weight}kg × ${deleteTarget.reps}rep の記録を削除します。この操作は取り消せません。`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">削除する</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
