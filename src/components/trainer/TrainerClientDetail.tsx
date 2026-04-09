@@ -334,9 +334,10 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
       {/* Tabbed sections */}
       <Tabs defaultValue="training" className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="overview" className="text-[10px] sm:text-xs px-1">概要</TabsTrigger>
           <TabsTrigger value="training" className="text-[10px] sm:text-xs px-1">記録</TabsTrigger>
+          <TabsTrigger value="meals" className="text-[10px] sm:text-xs px-1">食事</TabsTrigger>
           <TabsTrigger value="bookings" className="text-[10px] sm:text-xs px-1">予約</TabsTrigger>
           <TabsTrigger value="chat" className="text-[10px] sm:text-xs px-1">チャット</TabsTrigger>
         </TabsList>
