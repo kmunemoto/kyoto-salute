@@ -240,7 +240,10 @@ const TrainerSchedule = () => {
                 <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="初回無料体験">初回無料体験</SelectItem>
-                  <SelectItem value="通常">通常（月4回・月6回・月8回・通い放題）</SelectItem>
+                  <SelectItem value="月4回">月4回</SelectItem>
+                  <SelectItem value="月6回">月6回</SelectItem>
+                  <SelectItem value="月8回">月8回</SelectItem>
+                  <SelectItem value="通い放題">通い放題</SelectItem>
                 </SelectContent>
               </Select>
             </div>
