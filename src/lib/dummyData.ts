@@ -19,6 +19,8 @@ export interface Client {
   memberSince: string;
   progress: number;
   plan: PlanType;
+  /** true = has completed at least one session; false = trial candidate */
+  isExistingCustomer: boolean;
 }
 
 export interface BodyMetric {
