@@ -1,50 +1,54 @@
-import { useState } from "react";
-import { CalendarDays, Clock, Check, CreditCard, X, Trash2 } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
+import { CalendarDays, Clock, Check, CreditCard, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { availableSlots, currentPlan, myBookings, CustomerBookingEntry } from "@/lib/dummyData";
+import { availableSlots, currentPlan } from "@/lib/dummyData";
+import { bookingStore, Booking } from "@/stores/bookingStore";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 const CustomerBooking = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [bookings, setBookings] = useState<CustomerBookingEntry[]>(myBookings);
-  const [cancelTarget, setCancelTarget] = useState<CustomerBookingEntry | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+
+  const bookings = useSyncExternalStore(bookingStore.subscribe, bookingStore.getBookings);
+  const myBookings = bookings.filter((b) => b.clientName === "田中 太郎");
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
   const slots = dateKey ? availableSlots[dateKey] || [] : [];
 
   const availableDates = Object.keys(availableSlots).map((d) => new Date(d));
-  const bookedDates = bookings.map((b) => new Date(b.date));
+  const bookedDates = myBookings.map((b) => new Date(b.date));
 
   const handleBook = () => {
     if (selectedDate && selectedSlot) {
       const slot = slots.find((s) => s.id === selectedSlot);
       if (!slot) return;
-      // Calculate end time (60 min session)
+
+      if (bookingStore.isSlotBlocked(dateKey, slot.time)) {
+        toast.error("この時間帯はすでに予約が入っています");
+        setSelectedSlot(null);
+        return;
+      }
+
       const [h, m] = slot.time.split(":").map(Number);
       const endMin = h * 60 + m + 60;
       const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
-      const newBooking: CustomerBookingEntry = {
+
+      bookingStore.addBooking({
         id: `b-${Date.now()}`,
         date: dateKey,
         startTime: slot.time,
         endTime,
-      };
-      setBookings([...bookings, newBooking]);
+        clientName: "田中 太郎",
+      });
       toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
       setSelectedSlot(null);
       setSelectedDate(undefined);
@@ -53,14 +57,19 @@ const CustomerBooking = () => {
 
   const handleCancel = () => {
     if (!cancelTarget) return;
-    setBookings(bookings.filter((b) => b.id !== cancelTarget.id));
+    bookingStore.removeBooking(cancelTarget.id);
     toast.success("予約をキャンセルしました");
     setCancelTarget(null);
   };
 
+  // Compute effective slot availability: base availability AND not blocked by any booking
+  const isSlotAvailable = (slot: { available: boolean; time: string }) => {
+    if (!slot.available) return false;
+    return !bookingStore.isSlotBlocked(dateKey, slot.time);
+  };
+
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
-      {/* Plan badge */}
       <Card className="border-l-4 border-l-accent bg-accent/5">
         <CardContent className="p-3 flex items-center gap-2">
           <CreditCard className="w-4 h-4 text-accent" />
@@ -79,42 +88,39 @@ const CustomerBooking = () => {
       </div>
 
       {/* My bookings */}
-      {bookings.length > 0 && (
+      {myBookings.length > 0 && (
         <section>
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">
-            予約済み（{bookings.length}件）
+            予約済み（{myBookings.length}件）
           </h2>
           <div className="space-y-2">
-            {bookings
+            {[...myBookings]
               .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
-              .map((b) => {
-                const d = new Date(b.date);
-                return (
-                  <Card key={b.id} className="card-hover">
-                    <CardContent className="p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center">
-                          <CalendarDays className="w-4 h-4 text-accent-foreground" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm">
-                            {format(d, "M月d日（E）", { locale: ja })}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {b.startTime}〜{b.endTime}
-                          </p>
-                        </div>
+              .map((b) => (
+                <Card key={b.id} className="card-hover">
+                  <CardContent className="p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center">
+                        <CalendarDays className="w-4 h-4 text-accent-foreground" />
                       </div>
-                      <button
-                        onClick={() => setCancelTarget(b)}
-                        className="text-destructive hover:text-destructive/80 transition-colors p-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                      <div>
+                        <p className="font-bold text-sm">
+                          {format(new Date(b.date), "M月d日（E）", { locale: ja })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {b.startTime}〜{b.endTime}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setCancelTarget(b)}
+                      className="text-destructive hover:text-destructive/80 transition-colors p-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         </section>
       )}
@@ -125,23 +131,14 @@ const CustomerBooking = () => {
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={(d) => {
-              setSelectedDate(d);
-              setSelectedSlot(null);
-            }}
+            onSelect={(d) => { setSelectedDate(d); setSelectedSlot(null); }}
             locale={ja}
             disabled={(date) => {
               const key = format(date, "yyyy-MM-dd");
               return !availableSlots[key];
             }}
-            modifiers={{
-              available: availableDates,
-              booked: bookedDates,
-            }}
-            modifiersClassNames={{
-              available: "font-bold text-accent",
-              booked: "ring-2 ring-accent ring-inset",
-            }}
+            modifiers={{ available: availableDates, booked: bookedDates }}
+            modifiersClassNames={{ available: "font-bold text-accent", booked: "ring-2 ring-accent ring-inset" }}
             className="pointer-events-auto"
           />
         </CardContent>
@@ -162,34 +159,41 @@ const CustomerBooking = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-4 gap-1.5">
-              {slots.map((slot) => (
-                <button
-                  key={slot.id}
-                  disabled={!slot.available}
-                  onClick={() => setSelectedSlot(slot.id)}
-                  className={`relative rounded-lg p-2 text-center text-xs font-semibold transition-all duration-200 ${
-                    !slot.available
-                      ? "bg-muted text-muted-foreground/40 cursor-not-allowed line-through"
-                      : selectedSlot === slot.id
-                      ? "accent-gradient text-accent-foreground shadow-md scale-105"
-                      : "bg-card border border-border hover:border-accent hover:shadow-sm"
-                  }`}
-                >
-                  {slot.time}
-                  {selectedSlot === slot.id && (
-                    <Check className="w-2.5 h-2.5 absolute top-0.5 right-0.5" />
-                  )}
-                </button>
-              ))}
+              {slots.map((slot) => {
+                const available = isSlotAvailable(slot);
+                const isBooked = !slot.available ? false : bookingStore.isSlotBlocked(dateKey, slot.time);
+                return (
+                  <button
+                    key={slot.id}
+                    disabled={!available}
+                    onClick={() => setSelectedSlot(slot.id)}
+                    className={`relative rounded-lg p-2 text-center text-xs font-semibold transition-all duration-200 ${
+                      !available
+                        ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                        : selectedSlot === slot.id
+                        ? "accent-gradient text-accent-foreground shadow-md scale-105"
+                        : "bg-card border border-border hover:border-accent hover:shadow-sm"
+                    }`}
+                  >
+                    <span className={!available && isBooked ? "" : !available ? "line-through" : ""}>
+                      {slot.time}
+                    </span>
+                    {isBooked && (
+                      <span className="block text-[9px] text-destructive/70 font-medium">満枠</span>
+                    )}
+                    {selectedSlot === slot.id && (
+                      <Check className="w-2.5 h-2.5 absolute top-0.5 right-0.5" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           {selectedSlot && (
             <div className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
               <p className="text-sm text-center mb-3">
-                <span className="font-bold">
-                  {slots.find((s) => s.id === selectedSlot)?.time}
-                </span>
+                <span className="font-bold">{slots.find((s) => s.id === selectedSlot)?.time}</span>
                 〜
                 <span className="font-bold">
                   {(() => {
@@ -202,12 +206,7 @@ const CustomerBooking = () => {
                 </span>
                 （60分）
               </p>
-              <Button
-                variant="accent"
-                size="lg"
-                className="w-full"
-                onClick={handleBook}
-              >
+              <Button variant="accent" size="lg" className="w-full" onClick={handleBook}>
                 この時間で予約する
               </Button>
             </div>
