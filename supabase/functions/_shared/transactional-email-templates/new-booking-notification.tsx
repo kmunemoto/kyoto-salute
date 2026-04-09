@@ -55,7 +55,6 @@ const NewBookingNotificationEmail = ({
 export const template = {
   component: NewBookingNotificationEmail,
   subject: '【Salute御所南】新しい予約が入りました',
-  to: Deno.env.get('TRAINER_NOTIFICATION_EMAIL') || undefined,
   displayName: '新規予約通知（トレーナー向け）',
   previewData: {
     customerName: '山田 太郎',
