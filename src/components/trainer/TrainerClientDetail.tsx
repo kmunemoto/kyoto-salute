@@ -38,6 +38,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [exercises, setExercises] = useState<ExerciseEntry[]>([{ name: "", weight: "", reps: "" }]);
   const [memo, setMemo] = useState("");
   const [isPaid, setIsPaid] = useState(clientPaymentStatus[clientId] || false);
+  const [exerciseMasters] = useState(defaultExerciseMasters);
+  const [showNewExercise, setShowNewExercise] = useState<number | null>(null);
+  const [newExName, setNewExName] = useState("");
 
   if (!client) return null;
 
@@ -259,7 +262,74 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         </button>
                       )}
                     </div>
-                    <Input placeholder="種目名（例：ベンチプレス）" value={ex.name} onChange={(e) => updateExercise(i, "name", e.target.value)} />
+                    <div className="flex gap-2">
+                      <Select
+                        value={ex.name}
+                        onValueChange={(v) => {
+                          if (v === "__new__") {
+                            setShowNewExercise(i);
+                            setNewExName("");
+                          } else {
+                            updateExercise(i, "name", v);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="flex-1 h-11">
+                          <SelectValue placeholder="種目を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {exerciseCategories.map((cat) => {
+                            const catExercises = exerciseMasters.filter((e) => e.category === cat);
+                            if (catExercises.length === 0) return null;
+                            return (
+                              <div key={cat}>
+                                <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{cat}</div>
+                                {catExercises.map((e) => (
+                                  <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
+                                ))}
+                              </div>
+                            );
+                          })}
+                          <SelectItem value="__new__" className="text-accent font-semibold">＋ 新しい種目を追加</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {showNewExercise === i && (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="新しい種目名を入力"
+                          value={newExName}
+                          onChange={(e) => setNewExName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && newExName.trim()) {
+                              updateExercise(i, "name", newExName.trim());
+                              setShowNewExercise(null);
+                              setNewExName("");
+                              toast.success(`「${newExName.trim()}」を設定しました`);
+                            }
+                          }}
+                          className="flex-1"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (newExName.trim()) {
+                              updateExercise(i, "name", newExName.trim());
+                              setShowNewExercise(null);
+                              setNewExName("");
+                              toast.success(`「${newExName.trim()}」を設定しました`);
+                            }
+                          }}
+                        >
+                          確定
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setShowNewExercise(null)}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">重量 (kg)</label>
