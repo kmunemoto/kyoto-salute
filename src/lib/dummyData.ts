@@ -76,7 +76,7 @@ export interface Photo {
 export const sessions: Session[] = [
   { id: '1', clientName: '田中 太郎', clientAvatar: 'T', date: '2026-04-09', time: '10:00', duration: 60, type: '上半身トレーニング', status: 'upcoming' },
   { id: '2', clientName: '鈴木 花子', clientAvatar: 'S', date: '2026-04-09', time: '11:30', duration: 60, type: '下半身トレーニング', status: 'upcoming' },
-  { id: '3', clientName: '佐藤 健太', clientAvatar: 'K', date: '2026-04-09', time: '14:00', duration: 45, type: 'HIIT', status: 'upcoming' },
+  { id: '3', clientName: '佐藤 健太', clientAvatar: 'K', date: '2026-04-09', time: '14:00', duration: 60, type: 'HIIT', status: 'upcoming' },
   { id: '4', clientName: '高橋 美咲', clientAvatar: 'M', date: '2026-04-09', time: '16:00', duration: 60, type: '全身トレーニング', status: 'upcoming' },
   { id: '5', clientName: '田中 太郎', clientAvatar: 'T', date: '2026-04-07', time: '10:00', duration: 60, type: '下半身トレーニング', status: 'completed' },
   { id: '6', clientName: '鈴木 花子', clientAvatar: 'S', date: '2026-04-05', time: '11:00', duration: 60, type: '上半身トレーニング', status: 'completed' },
