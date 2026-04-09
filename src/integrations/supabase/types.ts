@@ -186,7 +186,7 @@ export type Database = {
           display_name: string | null
           id: string
           paid_this_month: boolean
-          plan: string
+          plan: string | null
           trial_completed: boolean
           updated_at: string
           user_id: string
@@ -197,7 +197,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           paid_this_month?: boolean
-          plan?: string
+          plan?: string | null
           trial_completed?: boolean
           updated_at?: string
           user_id: string
@@ -208,7 +208,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           paid_this_month?: boolean
-          plan?: string
+          plan?: string | null
           trial_completed?: boolean
           updated_at?: string
           user_id?: string
