@@ -26,7 +26,7 @@ const CustomerBooking = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const isTrialUser = profile ? !profile.trial_completed : false;
-  const currentPlan = profile?.plan || "月4回プラン";
+  const currentPlan = profile?.plan || "";
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
