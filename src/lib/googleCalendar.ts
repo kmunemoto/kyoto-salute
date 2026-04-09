@@ -1,7 +1,4 @@
-import { currentPlan } from "@/lib/dummyData";
-
-export function buildGoogleCalendarUrl(date: string, startTime: string, endTime: string): string {
-  // date: "2025-04-10", startTime: "10:00", endTime: "11:00"
+export function buildGoogleCalendarUrl(date: string, startTime: string, endTime: string, planName?: string): string {
   const dateClean = date.replace(/-/g, "");
   const startClean = startTime.replace(":", "") + "00";
   const endClean = endTime.replace(":", "") + "00";
@@ -11,7 +8,7 @@ export function buildGoogleCalendarUrl(date: string, startTime: string, endTime:
     text: "パーソナルジムSalute御所南 トレーニング",
     dates: `${dateClean}T${startClean}/${dateClean}T${endClean}`,
     ctz: "Asia/Tokyo",
-    details: `予約プラン：${currentPlan}\nお着替え等の準備のため、開始5分前にお越しください。`,
+    details: `予約プラン：${planName || "パーソナルトレーニング"}\nお着替え等の準備のため、開始5分前にお越しください。`,
     location: "パーソナルジムSalute御所南",
   });
 
