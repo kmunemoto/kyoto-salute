@@ -281,7 +281,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-sm font-bold mt-2">月額: ¥{planPrices[clientPlan].toLocaleString()}</p>
+              <p className="text-sm font-bold mt-2">月額: ¥{getPrice(clientPlan).toLocaleString()}</p>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
