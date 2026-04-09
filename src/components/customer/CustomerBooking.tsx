@@ -8,10 +8,6 @@ import { bookingStore, Booking } from "@/stores/bookingStore";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const CustomerBooking = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -57,185 +53,186 @@ const CustomerBooking = () => {
 
   const handleCancel = () => {
     if (!cancelTarget) return;
-    const targetId = cancelTarget.id;
+    bookingStore.removeBooking(cancelTarget.id);
+    toast.success("予約をキャンセルしました");
     setCancelTarget(null);
-    // Delay removal so the dialog portal can unmount cleanly
-    setTimeout(() => {
-      bookingStore.removeBooking(targetId);
-      toast.success("予約をキャンセルしました");
-    }, 150);
   };
 
-  // Compute effective slot availability: base availability AND not blocked by any booking
   const isSlotAvailable = (slot: { available: boolean; time: string }) => {
     if (!slot.available) return false;
     return !bookingStore.isSlotBlocked(dateKey, slot.time);
   };
 
-  return (
-    <div className="px-4 py-4 space-y-5 slide-up">
-      <Card className="border-l-4 border-l-accent bg-accent/5">
-        <CardContent className="p-3 flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-accent" />
-          <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
-        </CardContent>
-      </Card>
+  const cancelDescription = cancelTarget
+    ? `${format(new Date(cancelTarget.date), "M月d日（E）", { locale: ja })} ${cancelTarget.startTime}〜${cancelTarget.endTime} の予約をキャンセルします。`
+    : "予約をキャンセルします。";
 
-      <div>
-        <h1 className="text-lg font-bold flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-accent" />
-          予約する
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          空いている日時を選んでください（1コマ60分＋休憩15分）
-        </p>
+  return (
+    <>
+      <div className="px-4 py-4 space-y-5 slide-up">
+        <Card className="border-l-4 border-l-accent bg-accent/5">
+          <CardContent className="p-3 flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-accent" />
+            <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
+          </CardContent>
+        </Card>
+
+        <div>
+          <h1 className="text-lg font-bold flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-accent" />
+            予約する
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            空いている日時を選んでください（1コマ60分＋休憩15分）
+          </p>
+        </div>
+
+        {myBookings.length > 0 && (
+          <section>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">
+              予約済み（{myBookings.length}件）
+            </h2>
+            <div className="space-y-2">
+              {[...myBookings]
+                .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+                .map((b) => (
+                  <Card key={b.id} className="card-hover">
+                    <CardContent className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center">
+                          <CalendarDays className="w-4 h-4 text-accent-foreground" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm">
+                            {format(new Date(b.date), "M月d日（E）", { locale: ja })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {b.startTime}〜{b.endTime}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCancelTarget(b)}
+                        className="text-destructive hover:text-destructive/80 transition-colors p-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </section>
+        )}
+
+        <Card>
+          <CardContent className="p-3 flex justify-center">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => {
+                setSelectedDate(d);
+                setSelectedSlot(null);
+              }}
+              locale={ja}
+              disabled={(date) => {
+                const key = format(date, "yyyy-MM-dd");
+                return !availableSlots[key];
+              }}
+              modifiers={{ available: availableDates, booked: bookedDates }}
+              modifiersClassNames={{ available: "font-bold text-accent", booked: "ring-2 ring-accent ring-inset" }}
+              className="pointer-events-auto"
+            />
+          </CardContent>
+        </Card>
+
+        {selectedDate && (
+          <section className="slide-up">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              {format(selectedDate, "M月d日（E）", { locale: ja })} の空き枠
+            </h2>
+            {slots.length === 0 ? (
+              <Card>
+                <CardContent className="p-4 text-center text-sm text-muted-foreground">
+                  この日の空き枠はありません
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-4 gap-1.5">
+                {slots.map((slot) => {
+                  const available = isSlotAvailable(slot);
+                  return (
+                    <button
+                      key={slot.id}
+                      type="button"
+                      disabled={!available}
+                      onClick={() => setSelectedSlot(slot.id)}
+                      className={`relative rounded-lg p-2 text-center text-xs font-semibold transition-all duration-200 ${
+                        !available
+                          ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                          : selectedSlot === slot.id
+                            ? "accent-gradient text-accent-foreground shadow-md scale-105"
+                            : "bg-card border border-border hover:border-accent hover:shadow-sm"
+                      }`}
+                    >
+                      <span>{slot.time}</span>
+                      {!available && (
+                        <span className="block text-[9px] text-destructive/70 font-medium">満枠</span>
+                      )}
+                      {selectedSlot === slot.id && (
+                        <Check className="w-2.5 h-2.5 absolute top-0.5 right-0.5" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {selectedSlot && (
+              <div className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
+                <p className="text-sm text-center mb-3">
+                  <span className="font-bold">{slots.find((s) => s.id === selectedSlot)?.time}</span>
+                  〜
+                  <span className="font-bold">
+                    {(() => {
+                      const t = slots.find((s) => s.id === selectedSlot)?.time;
+                      if (!t) return "";
+                      const [h, m] = t.split(":").map(Number);
+                      const end = h * 60 + m + 60;
+                      return `${String(Math.floor(end / 60)).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`;
+                    })()}
+                  </span>
+                  （60分）
+                </p>
+                <Button variant="accent" size="lg" className="w-full" onClick={handleBook}>
+                  この時間で予約する
+                </Button>
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
-      {/* My bookings */}
-      {myBookings.length > 0 && (
-        <section>
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">
-            予約済み（{myBookings.length}件）
-          </h2>
-          <div className="space-y-2">
-            {[...myBookings]
-              .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
-              .map((b) => (
-                <Card key={b.id} className="card-hover">
-                  <CardContent className="p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center">
-                        <CalendarDays className="w-4 h-4 text-accent-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm">
-                          {format(new Date(b.date), "M月d日（E）", { locale: ja })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {b.startTime}〜{b.endTime}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setCancelTarget(b)}
-                      className="text-destructive hover:text-destructive/80 transition-colors p-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </section>
-      )}
-
-      {/* Calendar */}
-      <Card>
-        <CardContent className="p-3 flex justify-center">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(d) => { setSelectedDate(d); setSelectedSlot(null); }}
-            locale={ja}
-            disabled={(date) => {
-              const key = format(date, "yyyy-MM-dd");
-              return !availableSlots[key];
-            }}
-            modifiers={{ available: availableDates, booked: bookedDates }}
-            modifiersClassNames={{ available: "font-bold text-accent", booked: "ring-2 ring-accent ring-inset" }}
-            className="pointer-events-auto"
-          />
-        </CardContent>
-      </Card>
-
-      {/* Time Slots */}
-      {selectedDate && (
-        <section className="slide-up">
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5" />
-            {format(selectedDate, "M月d日（E）", { locale: ja })} の空き枠
-          </h2>
-          {slots.length === 0 ? (
-            <Card>
-              <CardContent className="p-4 text-center text-sm text-muted-foreground">
-                この日の空き枠はありません
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-4 gap-1.5">
-              {slots.map((slot) => {
-                const available = isSlotAvailable(slot);
-                const isBooked = !slot.available ? false : bookingStore.isSlotBlocked(dateKey, slot.time);
-                return (
-                  <button
-                    key={slot.id}
-                    disabled={!available}
-                    onClick={() => setSelectedSlot(slot.id)}
-                    className={`relative rounded-lg p-2 text-center text-xs font-semibold transition-all duration-200 ${
-                      !available
-                        ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
-                        : selectedSlot === slot.id
-                        ? "accent-gradient text-accent-foreground shadow-md scale-105"
-                        : "bg-card border border-border hover:border-accent hover:shadow-sm"
-                    }`}
-                  >
-                    <span>{slot.time}</span>
-                    {!available && (
-                      <span className="block text-[9px] text-destructive/70 font-medium">満枠</span>
-                    )}
-                    {selectedSlot === slot.id && (
-                      <Check className="w-2.5 h-2.5 absolute top-0.5 right-0.5" />
-                    )}
-                  </button>
-                );
-              })}
+      {cancelTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-lg">
+            <div className="space-y-2 text-center sm:text-left">
+              <h3 className="text-lg font-semibold">予約をキャンセルしますか？</h3>
+              <p className="text-sm text-muted-foreground">{cancelDescription}</p>
             </div>
-          )}
-
-          {selectedSlot && (
-            <div className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
-              <p className="text-sm text-center mb-3">
-                <span className="font-bold">{slots.find((s) => s.id === selectedSlot)?.time}</span>
-                〜
-                <span className="font-bold">
-                  {(() => {
-                    const t = slots.find((s) => s.id === selectedSlot)?.time;
-                    if (!t) return "";
-                    const [h, m] = t.split(":").map(Number);
-                    const end = h * 60 + m + 60;
-                    return `${String(Math.floor(end / 60)).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`;
-                  })()}
-                </span>
-                （60分）
-              </p>
-              <Button variant="accent" size="lg" className="w-full" onClick={handleBook}>
-                この時間で予約する
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
+              <Button variant="outline" onClick={() => setCancelTarget(null)}>
+                戻る
+              </Button>
+              <Button onClick={handleCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                キャンセルする
               </Button>
             </div>
-          )}
-        </section>
+          </div>
+        </div>
       )}
-
-      {/* Cancel Dialog */}
-      <AlertDialog open={!!cancelTarget} onOpenChange={() => setCancelTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
-            <AlertDialogDescription>
-              {cancelTarget
-                ? `${format(new Date(cancelTarget.date), "M月d日（E）", { locale: ja })} ${cancelTarget.startTime}〜${cancelTarget.endTime} の予約をキャンセルします。`
-                : "予約をキャンセルします。"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>戻る</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              キャンセルする
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    </>
   );
 };
 
