@@ -159,7 +159,7 @@ const CustomerBooking = () => {
           <p className="text-sm text-muted-foreground mt-1">
             {isTrialUser
               ? "ご希望の日時を選んでください（無料体験60分）"
-              : "空いている日時を選んでください（1コマ60分＋休憩15分）"}
+              : "空いている日時を選んでください（1コマ60分）"}
           </p>
         </div>
 
