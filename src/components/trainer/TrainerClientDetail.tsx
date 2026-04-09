@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf } from "lucide-react";
 import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,20 @@ interface WorkoutRecord {
   exercise_name?: string;
 }
 
+interface MealRecord {
+  id: string;
+  image_url: string;
+  meal_type: string;
+  calories: number | null;
+  protein: number | null;
+  fat: number | null;
+  carbs: number | null;
+  fiber: number | null;
+  feedback: string | null;
+  analyzed: boolean;
+  created_at: string;
+}
+
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -62,6 +76,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [workoutRecords, setWorkoutRecords] = useState<WorkoutRecord[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [clientMeals, setClientMeals] = useState<MealRecord[]>([]);
+  const [loadingMeals, setLoadingMeals] = useState(true);
 
   // Fetch profile
   useEffect(() => {
@@ -114,6 +130,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       setLoadingRecords(false);
     };
     fetchRecords();
+  }, [clientId]);
+
+  // Fetch client meals
+  useEffect(() => {
+    const fetchMeals = async () => {
+      const { data } = await supabase
+        .from("meals")
+        .select("*")
+        .eq("user_id", clientId)
+        .order("created_at", { ascending: false });
+      if (data) setClientMeals(data as MealRecord[]);
+      setLoadingMeals(false);
+    };
+    fetchMeals();
   }, [clientId]);
 
   if (loadingProfile) {
@@ -304,9 +334,10 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
       {/* Tabbed sections */}
       <Tabs defaultValue="training" className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="overview" className="text-[10px] sm:text-xs px-1">概要</TabsTrigger>
           <TabsTrigger value="training" className="text-[10px] sm:text-xs px-1">記録</TabsTrigger>
+          <TabsTrigger value="meals" className="text-[10px] sm:text-xs px-1">食事</TabsTrigger>
           <TabsTrigger value="bookings" className="text-[10px] sm:text-xs px-1">予約</TabsTrigger>
           <TabsTrigger value="chat" className="text-[10px] sm:text-xs px-1">チャット</TabsTrigger>
         </TabsList>
@@ -528,6 +559,59 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 ))}
               </div>
             </section>
+          )}
+        </TabsContent>
+
+        {/* Meals */}
+        <TabsContent value="meals" className="space-y-4">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <Utensils className="w-3.5 h-3.5" />
+            食事記録
+          </h2>
+          {loadingMeals ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+          ) : clientMeals.length > 0 ? (
+            <div className="space-y-3">
+              {clientMeals.map((meal) => (
+                <Card key={meal.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="relative">
+                      <img src={meal.image_url} alt="食事写真" className="w-full h-40 object-cover" />
+                      <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2 py-0.5 rounded-lg text-xs font-bold backdrop-blur-sm">
+                        {meal.meal_type}
+                      </div>
+                      <div className="absolute top-2 right-2 bg-foreground/70 text-primary-foreground px-2 py-0.5 rounded-lg text-xs backdrop-blur-sm">
+                        {new Date(meal.created_at).toLocaleDateString("ja-JP", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    </div>
+                    {meal.analyzed ? (
+                      <div className="p-3 space-y-2">
+                        <div className="grid grid-cols-5 gap-1 text-center">
+                          <div><Flame className="w-3.5 h-3.5 mx-auto text-destructive" /><p className="text-[10px] text-muted-foreground">カロリー</p><p className="text-xs font-bold">{meal.calories ?? 0}</p></div>
+                          <div><Beef className="w-3.5 h-3.5 mx-auto text-accent" /><p className="text-[10px] text-muted-foreground">タンパク質</p><p className="text-xs font-bold">{meal.protein ?? 0}g</p></div>
+                          <div><Droplets className="w-3.5 h-3.5 mx-auto text-warning" /><p className="text-[10px] text-muted-foreground">脂質</p><p className="text-xs font-bold">{meal.fat ?? 0}g</p></div>
+                          <div><Wheat className="w-3.5 h-3.5 mx-auto text-info" /><p className="text-[10px] text-muted-foreground">炭水化物</p><p className="text-xs font-bold">{meal.carbs ?? 0}g</p></div>
+                          <div><Leaf className="w-3.5 h-3.5 mx-auto text-success" /><p className="text-[10px] text-muted-foreground">食物繊維</p><p className="text-xs font-bold">{meal.fiber ?? 0}g</p></div>
+                        </div>
+                        {meal.feedback && (
+                          <div className="bg-accent/10 rounded-lg p-2">
+                            <p className="text-[10px] font-bold text-accent mb-0.5">🤖 AIアドバイス</p>
+                            <p className="text-xs text-foreground leading-relaxed">{meal.feedback}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-3 flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-xs">AI分析中...</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card><CardContent className="p-4 text-sm text-muted-foreground text-center">食事記録なし</CardContent></Card>
           )}
         </TabsContent>
 
