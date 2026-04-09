@@ -218,12 +218,9 @@ const CustomerBooking = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
             <AlertDialogDescription>
-              {cancelTarget && (
-                <>
-                  {format(new Date(cancelTarget.date), "M月d日（E）", { locale: ja })}{" "}
-                  {cancelTarget.startTime}〜{cancelTarget.endTime} の予約をキャンセルします。
-                </>
-              )}
+              {cancelTarget
+                ? `${format(new Date(cancelTarget.date), "M月d日（E）", { locale: ja })} ${cancelTarget.startTime}〜${cancelTarget.endTime} の予約をキャンセルします。`
+                : "予約をキャンセルします。"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
