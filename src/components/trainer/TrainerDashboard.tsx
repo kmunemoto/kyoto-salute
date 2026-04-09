@@ -1,4 +1,4 @@
-import { Users, CalendarDays, TrendingUp, Clock, BarChart3 } from "lucide-react";
+import { Users, CalendarDays, TrendingUp, Clock, BarChart3, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { sessions, clients, planPrices } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
@@ -104,6 +104,33 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                     <Bar dataKey="revenue" fill="hsl(18, 90%, 55%)" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Reminder Notification Status */}
+        <section>
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <Bell className="w-3.5 h-3.5" />
+            リマインド通知ステータス
+          </h2>
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">24時間前リマインド</span>
+                <span className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">有効</span>
+              </div>
+              <div className="text-xs text-muted-foreground space-y-1.5">
+                <p>予約の前日に各顧客へリマインド通知が自動送信されます。</p>
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <span>通知オン中の顧客</span>
+                  <span className="font-bold text-foreground">{clients.length}名 / {clients.length}名</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>本日送信済みリマインド</span>
+                  <span className="font-bold text-foreground">{todaySessions.length}件</span>
+                </div>
               </div>
             </CardContent>
           </Card>
