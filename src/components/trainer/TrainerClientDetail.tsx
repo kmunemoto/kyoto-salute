@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,24 +16,24 @@ interface TrainerClientDetailProps {
 
 interface ExerciseEntry {
   name: string;
-  sets: string;
-  reps: string;
   weight: string;
+  reps: string;
 }
 
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const client = clients.find(c => c.id === clientId);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
+  const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<ExerciseEntry[]>([
-    { name: "", sets: "", reps: "", weight: "" },
+    { name: "", weight: "", reps: "" },
   ]);
   const [memo, setMemo] = useState("");
 
   if (!client) return null;
 
   const addExercise = () => {
-    setExercises([...exercises, { name: "", sets: "", reps: "", weight: "" }]);
+    setExercises([...exercises, { name: "", weight: "", reps: "" }]);
   };
 
   const updateExercise = (index: number, field: keyof ExerciseEntry, value: string) => {
