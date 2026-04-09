@@ -1,4 +1,4 @@
-import { Home, CalendarDays, Camera, MessageCircle } from "lucide-react";
+import { Home, CalendarDays, Camera, MessageCircle, Utensils } from "lucide-react";
 import type { CustomerTab } from "./CustomerView";
 
 interface BottomNavProps {
@@ -9,6 +9,7 @@ interface BottomNavProps {
 const tabs: { id: CustomerTab; label: string; icon: typeof Home }[] = [
   { id: "home", label: "ホーム", icon: Home },
   { id: "booking", label: "予約", icon: CalendarDays },
+  { id: "meals", label: "食事", icon: Utensils },
   { id: "photos", label: "写真", icon: Camera },
   { id: "chat", label: "チャット", icon: MessageCircle },
 ];
