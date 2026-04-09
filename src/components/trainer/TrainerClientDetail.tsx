@@ -132,7 +132,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     fetchRecords();
   }, [clientId]);
 
-  if (loadingProfile) {
+  // Fetch client meals
+  useEffect(() => {
+    const fetchMeals = async () => {
+      const { data } = await supabase
+        .from("meals")
+        .select("*")
+        .eq("user_id", clientId)
+        .order("created_at", { ascending: false });
+      if (data) setClientMeals(data as MealRecord[]);
+      setLoadingMeals(false);
+    };
+    fetchMeals();
+  }, [clientId]);
+
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-accent" />
