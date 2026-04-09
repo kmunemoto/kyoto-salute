@@ -31,8 +31,25 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
 
   const formatPrice = (plan: string) => {
     const p = planPrices[plan as PlanType];
-    return p ? `¥${p.toLocaleString()}` : "";
+    return p !== undefined ? `¥${p.toLocaleString()}` : "";
   };
+
+  const handleDeleteCustomer = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.rpc("delete_customer_cascade", { _customer_id: deleteTarget });
+    if (error) {
+      toast.error("削除に失敗しました");
+      setDeleting(false);
+      return;
+    }
+    setProfiles(prev => prev.filter(p => p.user_id !== deleteTarget));
+    setDeleteTarget(null);
+    setDeleting(false);
+    toast.success("顧客データを削除しました");
+  };
+
+  const deleteTargetName = profiles.find(p => p.user_id === deleteTarget)?.display_name || "この顧客";
 
   const togglePayment = async (userId: string, currentStatus: boolean, e: React.MouseEvent) => {
     e.stopPropagation();
