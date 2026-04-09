@@ -235,6 +235,16 @@ const TrainerSchedule = () => {
               </Select>
             </div>
             <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-1 block">予約プラン</label>
+              <Select value={proxyBookingType} onValueChange={setProxyBookingType}>
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="初回無料体験">初回無料体験</SelectItem>
+                  <SelectItem value="通常">通常（月4回・月6回・月8回・通い放題）</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">日付</label>
               <Calendar
                 mode="single"
