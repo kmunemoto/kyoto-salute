@@ -184,12 +184,12 @@ const CustomerHome = () => {
                 <AreaChart data={bodyMetrics}>
                   <defs>
                     <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} width={35} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(0, 0%, 100%)',
@@ -199,7 +199,7 @@ const CustomerHome = () => {
                       fontSize: '12px',
                     }}
                   />
-                  <Area type="monotone" dataKey="weight" stroke="hsl(18, 90%, 55%)" strokeWidth={2.5} fill="url(#weightGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(18, 90%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
+                  <Area type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2.5} fill="url(#weightGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(36, 50%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -217,12 +217,12 @@ const CustomerHome = () => {
                 <AreaChart data={bodyMetrics}>
                   <defs>
                     <linearGradient id="fatGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} width={35} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(0, 0%, 100%)',
@@ -232,7 +232,7 @@ const CustomerHome = () => {
                       fontSize: '12px',
                     }}
                   />
-                  <Area type="monotone" dataKey="bodyFat" stroke="hsl(210, 80%, 55%)" strokeWidth={2.5} fill="url(#fatGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(210, 80%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
+                  <Area type="monotone" dataKey="bodyFat" stroke="hsl(210, 40%, 58%)" strokeWidth={2.5} fill="url(#fatGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(210, 40%, 58%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

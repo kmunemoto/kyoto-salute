@@ -402,21 +402,21 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       <AreaChart data={metrics}>
                         <defs>
                           <linearGradient id={`wg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="hsl(18, 90%, 55%)" stopOpacity={0} />
+                            <stop offset="0%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id={`fg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="hsl(210, 80%, 55%)" stopOpacity={0} />
+                            <stop offset="0%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(225, 12%, 90%)" />
-                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} />
-                        <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="kg" width={38} />
-                        <YAxis yAxisId="f" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(225, 8%, 52%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="%" width={38} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(30, 10%, 92%)" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="kg" width={38} />
+                        <YAxis yAxisId="f" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="%" width={38} />
                         <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }} />
-                        <Area yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(18, 90%, 55%)" fill={`url(#wg-${clientId})`} strokeWidth={2} name="体重(kg)" />
-                        <Area yAxisId="f" type="monotone" dataKey="bodyFat" stroke="hsl(210, 80%, 55%)" fill={`url(#fg-${clientId})`} strokeWidth={2} name="体脂肪率(%)" />
+                        <Area yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" fill={`url(#wg-${clientId})`} strokeWidth={2} name="体重(kg)" />
+                        <Area yAxisId="f" type="monotone" dataKey="bodyFat" stroke="hsl(210, 40%, 58%)" fill={`url(#fg-${clientId})`} strokeWidth={2} name="体脂肪率(%)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
