@@ -63,18 +63,18 @@ const TrainerView = () => {
     <div className="min-h-screen bg-background fade-in">
       {/* Header — アプリ名は「パーソナルジムSalute御所南」で固定。絶対にカタカナに変更しないこと！ */}
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2">
+          <div className="flex items-center gap-2 min-w-0">
             <GymLogo size="sm" />
-            <span className="text-sm font-bold">パーソナルジムSalute御所南 管理画面</span>
+            <span className="text-xs sm:text-sm font-bold truncate">パーソナルジムSalute御所南 <span className="hidden sm:inline">管理画面</span></span>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setTab("settings")} className="text-muted-foreground">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => setTab("settings")} className="text-muted-foreground h-9 w-9 p-0 sm:h-auto sm:w-auto sm:p-2">
               <Settings className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground">
-              <LogOut className="w-4 h-4 mr-1" />
-              ログアウト
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground h-9 px-2 sm:px-3">
+              <LogOut className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">ログアウト</span>
             </Button>
           </div>
         </div>
@@ -86,7 +86,7 @@ const TrainerView = () => {
             onTabChange={(t) => { setTab(t); setSelectedClientId(null); }}
             unreadMessages={unreadMessages}
           />
-          <main className="flex-1 ml-0 md:ml-60 p-4 md:p-8 max-w-6xl" key={`${tab}-${selectedClientId}`}>
+          <main className="flex-1 ml-0 md:ml-60 p-3 sm:p-4 md:p-8 max-w-6xl" key={`${tab}-${selectedClientId}`}>
               {tab === "dashboard" && <TrainerDashboard onSelectClient={handleSelectClient} />}
               {tab === "clients" && !selectedClientId && <TrainerClientList onSelectClient={handleSelectClient} />}
               {tab === "clients" && selectedClientId && <TrainerClientDetail clientId={selectedClientId} onBack={handleBackToList} />}

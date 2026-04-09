@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageCircle, Send, Image } from "lucide-react";
+import { MessageCircle, Send, Image, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,13 +42,13 @@ const TrainerMessages = () => {
   };
 
   return (
-    <div className="pb-20 md:pb-0">
-      <h1 className="text-xl font-bold flex items-center gap-2 mb-6">
+    <div className="pb-24 md:pb-0">
+      <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2 mb-4 sm:mb-6">
         <MessageCircle className="w-5 h-5 text-accent" />
         メッセージ
       </h1>
 
-      <div className="grid md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-180px)]">
+      <div className="md:grid md:grid-cols-[320px_1fr] md:gap-4 md:h-[calc(100vh-180px)]">
         {/* Conversation list */}
         <Card className={`overflow-hidden ${selectedConv ? 'hidden md:block' : ''}`}>
           <CardContent className="p-0">
@@ -57,7 +57,7 @@ const TrainerMessages = () => {
                 <button
                   key={conv.clientId}
                   onClick={() => setSelectedConv(conv.clientId)}
-                  className={`w-full p-4 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 ${
+                  className={`w-full p-3 sm:p-4 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 min-h-[60px] ${
                     selectedConv === conv.clientId ? "bg-accent/10" : ""
                   }`}
                 >
@@ -84,14 +84,14 @@ const TrainerMessages = () => {
 
         {/* Chat area */}
         {selectedConv ? (
-          <Card className="flex flex-col overflow-hidden">
+          <Card className={`flex flex-col overflow-hidden ${selectedConv ? '' : 'hidden md:flex'} h-[calc(100vh-200px)] md:h-auto`}>
             {/* Chat header */}
-            <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="p-3 sm:p-4 border-b border-border flex items-center gap-3">
               <button
                 onClick={() => setSelectedConv(null)}
-                className="md:hidden text-sm text-muted-foreground"
+                className="md:hidden text-muted-foreground p-1"
               >
-                ← 戻る
+                <ArrowLeft className="w-5 h-5" />
               </button>
               <div className="w-8 h-8 rounded-lg gym-gradient flex items-center justify-center text-primary-foreground font-bold text-xs">
                 {selected?.avatar}
@@ -100,10 +100,10 @@ const TrainerMessages = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === 'trainer' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                  <div className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 ${
                     msg.sender === 'trainer'
                       ? 'accent-gradient text-accent-foreground rounded-br-md'
                       : 'bg-muted rounded-bl-md'
@@ -118,8 +118,8 @@ const TrainerMessages = () => {
             </div>
 
             {/* Input */}
-            <div className="p-3 border-t border-border flex gap-2">
-              <Button variant="ghost" size="icon" className="shrink-0">
+            <div className="p-2 sm:p-3 border-t border-border flex gap-2">
+              <Button variant="ghost" size="icon" className="shrink-0 h-11 w-11">
                 <Image className="w-5 h-5" />
               </Button>
               <Input
@@ -127,9 +127,9 @@ const TrainerMessages = () => {
                 value={newMsg}
                 onChange={(e) => setNewMsg(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                className="flex-1"
+                className="flex-1 h-11"
               />
-              <Button variant="accent" size="icon" onClick={handleSend} className="shrink-0">
+              <Button variant="accent" size="icon" onClick={handleSend} className="shrink-0 h-11 w-11">
                 <Send className="w-4 h-4" />
               </Button>
             </div>

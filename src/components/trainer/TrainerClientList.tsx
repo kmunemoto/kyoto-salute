@@ -56,22 +56,22 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   }
 
   return (
-    <div className="pb-20 md:pb-0">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold flex items-center gap-2">
+    <div className="pb-24 md:pb-0">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2">
           <Users className="w-5 h-5 text-accent" />
           顧客一覧
         </h1>
         <span className="text-sm text-muted-foreground">{profiles.length}名</span>
       </div>
 
-      <div className="relative mb-4">
+      <div className="relative mb-3 sm:mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="名前・プランで検索..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
+          className="pl-9 h-11"
         />
       </div>
 
@@ -93,13 +93,13 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                 className="card-hover cursor-pointer"
                 onClick={() => onSelectClient(c.user_id)}
               >
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 relative">
+                <CardContent className="p-3 sm:p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 relative">
                     {initial}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm">{c.display_name || "名前未設定"}</p>
-                    <p className="text-xs text-muted-foreground">{c.plan} · {formatPrice(c.plan)}</p>
+                    <p className="font-bold text-sm truncate">{c.display_name || "名前未設定"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.plan} · {formatPrice(c.plan)}</p>
                     <div className="flex items-center gap-1.5 mt-1">
                       {c.trial_completed ? (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
@@ -116,17 +116,17 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <div
-                      className="flex items-center gap-1.5 cursor-pointer"
+                      className="flex items-center gap-1.5 cursor-pointer min-h-[44px] px-1 items-center"
                       onClick={(e) => togglePayment(c.user_id, c.paid_this_month, e)}
                     >
                       {c.paid_this_month ? (
                         <span className="flex items-center gap-1 text-[10px] font-bold text-success">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="w-4 h-4" />
                           支払済
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-[10px] font-bold text-destructive">
-                          <AlertCircle className="w-3.5 h-3.5" />
+                          <AlertCircle className="w-4 h-4" />
                           未払い
                         </span>
                       )}
