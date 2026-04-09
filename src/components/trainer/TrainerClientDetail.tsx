@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { clients, bodyMetrics } from "@/lib/dummyData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { clients, bodyMetrics, planOptions, PlanType } from "@/lib/dummyData";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { toast } from "sonner";
 
@@ -22,6 +23,7 @@ interface ExerciseEntry {
 
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const client = clients.find(c => c.id === clientId);
+  const [clientPlan, setClientPlan] = useState<PlanType>(client?.plan || '月4回プラン');
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
@@ -80,6 +82,31 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           </div>
         </div>
       </div>
+
+      {/* Plan setting */}
+      <section className="mb-6">
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <CreditCard className="w-3.5 h-3.5" />
+          契約プラン
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <Select value={clientPlan} onValueChange={(v) => {
+              setClientPlan(v as PlanType);
+              toast.success(`${client.name}さんのプランを「${v}」に変更しました`);
+            }}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {planOptions.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      </section>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Body metrics chart */}
