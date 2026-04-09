@@ -368,4 +368,8 @@ export const clientChatMessages: Record<string, ChatMessage[]> = {
     { id: 'c5-1', sender: 'trainer', text: '減量ペースが理想的です。このまま維持していきましょう。', time: '12:00', date: '4/6' },
     { id: 'c5-2', sender: 'customer', text: '食事管理も頑張っています！', time: '12:30', date: '4/6' },
   ],
+  '6': [
+    { id: 'c6-1', sender: 'trainer', text: '初回体験のご予約ありがとうございます！当日お待ちしております😊', time: '10:00', date: '4/9' },
+    { id: 'c6-2', sender: 'customer', text: 'よろしくお願いします！楽しみです！', time: '10:30', date: '4/9' },
+  ],
 };
