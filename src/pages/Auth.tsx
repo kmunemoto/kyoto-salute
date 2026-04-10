@@ -28,9 +28,15 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "signup" && !isTrainerTarget() && password !== passwordConfirm) {
-      toast.error("パスワードが一致しません");
-      return;
+    if (mode === "signup" && !isTrainerTarget()) {
+      if (password.length < 6) {
+        toast.error("パスワードは6文字以上にしてください");
+        return;
+      }
+      if (password !== passwordConfirm) {
+        toast.error("パスワードが一致しません");
+        return;
+      }
     }
     setLoading(true);
 
@@ -77,8 +83,10 @@ const Auth = () => {
           ? "有効なメールアドレスを入力してください。"
         : msg.includes("Email rate limit exceeded")
           ? "送信回数の上限に達しました。しばらく時間をおいてお試しください。"
-        : msg.includes("password") && msg.includes("breach")
+        : (msg.includes("password") && msg.includes("breach"))
           ? "このパスワードは過去に漏洩が確認されています。別のパスワードをお試しください。"
+        : (msg.toLowerCase().includes("weak") || msg.toLowerCase().includes("easy to guess"))
+          ? "このパスワードは推測されやすいため、より複雑なパスワード（英数字の組み合わせなど）をお試しください。"
         : `エラーが発生しました: ${msg}`;
       toast.error(jaMessage);
     } finally {
@@ -172,18 +180,21 @@ const Auth = () => {
               <div className="space-y-1.5">
                 <label className="text-sm font-bold">パスワード</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="6文字以上"
-                    minLength={6}
-                    className="w-full bg-secondary rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-muted-foreground"
-                  />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="6文字以上"
+                      minLength={6}
+                      className="w-full bg-secondary rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-muted-foreground"
+                    />
+                  </div>
+                  {mode === "signup" && !isTrainer && (
+                    <p className="text-xs text-muted-foreground mt-1">※パスワードは6文字以上で、推測されにくいものを設定してください</p>
+                  )}
                 </div>
-              </div>
 
               {/* Password confirmation for signup */}
               {mode === "signup" && !isTrainer && (
