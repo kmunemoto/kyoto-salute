@@ -15,18 +15,28 @@ const Auth = () => {
   const [loginTarget, setLoginTarget] = useState<LoginTarget>("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const passwordMismatch = mode === "signup" && !isTrainerTarget() && passwordConfirm.length > 0 && password !== passwordConfirm;
+
+  function isTrainerTarget() {
+    return loginTarget === "trainer";
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && !isTrainerTarget() && password !== passwordConfirm) {
+      toast.error("パスワードが一致しません");
+      return;
+    }
     setLoading(true);
 
     try {
       if (mode === "signup") {
-        // Signups are always customer — trainer is pre-registered
-        if (loginTarget === "trainer") {
+        if (isTrainerTarget()) {
           toast.error("トレーナーアカウントは事前に登録済みです。ログインしてください。");
           setLoading(false);
           return;
