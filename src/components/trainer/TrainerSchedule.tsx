@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -29,11 +29,10 @@ const TrainerSchedule = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const { bookings, loading, refetch } = useAllBookings();
+  const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  // Generate 15-min interval slots matching booking system (10:00–20:15)
   const timeSlots = (() => {
     const slots: string[] = [];
     for (let min = 600; min <= 1215; min += 15) {
@@ -83,24 +82,31 @@ const TrainerSchedule = () => {
     setProxyClient("");
     setProxyBookingType("通常");
     setSubmitting(false);
-    refetch();
+    void refetch();
 
-    // Fire-and-forget notification email
     if (bookingData?.id) {
       sendBookingNotification(bookingData.id, client?.display_name || "顧客", proxyDateKey, proxyTime, proxyEndTime, proxyBookingType);
     }
   };
 
   const handleDeleteBooking = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || deleting) return;
+
+    const target = deleteTarget;
     setDeleting(true);
-    const { error } = await cancelBooking(deleteTarget.id);
+
+    const { error } = await cancelBooking(target.id);
+
     if (error) {
-      toast.error("削除に失敗しました");
-    } else {
-      toast.success("予約を削除しました");
-      refetch();
+      console.error("Failed to delete booking:", error);
+      const isPermissionError = error.code === "42501" || error.message?.includes("row-level security");
+      toast.error(isPermissionError ? "削除権限がありません" : "エラーが発生しました");
+      setDeleting(false);
+      return;
     }
+
+    removeBooking(target.id);
+    toast.success("予約を削除しました");
     setDeleting(false);
     setDeleteTarget(null);
   };
@@ -144,7 +150,6 @@ const TrainerSchedule = () => {
         </div>
       </div>
 
-      {/* Desktop: table view */}
       <div className="hidden md:block">
         <Card>
           <CardContent className="p-0">
@@ -171,33 +176,35 @@ const TrainerSchedule = () => {
                 <tbody>
                   {timeSlots.map((time) => {
                     const hasAnySession = weekDays.some((day) => getSession(day, time));
-                    // Hide empty rows to keep the table compact
                     if (!hasAnySession) return null;
+
                     return (
-                    <tr key={time} className="border-b last:border-b-0">
-                      <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
-                      {weekDays.map((day) => {
-                        const session = getSession(day, time);
-                        const isToday = isSameDay(day, new Date());
-                        return (
-                          <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
-                            {session && (
-                              <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs relative group">
-                                <button
-                                  onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime })}
-                                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/20"
-                                >
-                                  <Trash2 className="w-3 h-3 text-destructive-foreground" />
-                                </button>
-                                <p className="font-bold truncate">{session.clientName}</p>
-                                <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
-                                <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
+                      <tr key={time} className="border-b last:border-b-0">
+                        <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
+                        {weekDays.map((day) => {
+                          const session = getSession(day, time);
+                          const isToday = isSameDay(day, new Date());
+                          return (
+                            <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
+                              {session && (
+                                <div className="accent-gradient text-accent-foreground rounded-lg p-2 pr-10 text-xs relative">
+                                  <button
+                                    type="button"
+                                    aria-label={`${session.clientName}さんの予約を削除`}
+                                    onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime })}
+                                    className="absolute top-1 right-1 p-1 rounded-md bg-card/90 text-destructive hover:bg-destructive/10 transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                  <p className="font-bold truncate">{session.clientName}</p>
+                                  <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
+                                  <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -207,7 +214,6 @@ const TrainerSchedule = () => {
         </Card>
       </div>
 
-      {/* Mobile: day-based list view */}
       <div className="md:hidden space-y-3">
         {weekDays.map((day) => {
           const isToday = isSameDay(day, new Date());
@@ -224,20 +230,22 @@ const TrainerSchedule = () => {
                 <div className="space-y-1.5">
                   {dayBookings
                     .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                    .map((b) => (
-                      <Card key={b.id} className="card-hover">
+                    .map((booking) => (
+                      <Card key={booking.id} className="card-hover">
                         <CardContent className="p-3 flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
-                            {b.clientName[0]}
+                            {booking.clientName[0]}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold truncate">{b.clientName}</p>
-                            <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
-                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{b.booking_type}</p>
+                            <p className="text-sm font-bold truncate">{booking.clientName}</p>
+                            <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
+                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>
                           </div>
                           <button
-                            onClick={() => setDeleteTarget({ id: b.id, clientName: b.clientName, date: b.date, startTime: b.startTime })}
-                            className="p-2 rounded-lg hover:bg-destructive/10 transition-colors shrink-0"
+                            type="button"
+                            aria-label={`${booking.clientName}さんの予約を削除`}
+                            onClick={() => setDeleteTarget({ id: booking.id, clientName: booking.clientName, date: booking.date, startTime: booking.startTime })}
+                            className="p-2 rounded-lg bg-muted hover:bg-destructive/10 transition-colors shrink-0"
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </button>
@@ -260,7 +268,6 @@ const TrainerSchedule = () => {
         </div>
       </div>
 
-      {/* Proxy booking dialog */}
       <Dialog open={proxyDialogOpen} onOpenChange={setProxyDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -314,21 +321,22 @@ const TrainerSchedule = () => {
                       const blocked = checkSlotBlocked(bookings, proxyDateKey, time);
                       slots.push({ time, blocked });
                     }
-                    return slots.map((s) => (
+                    return slots.map((slot) => (
                       <button
-                        key={s.time}
-                        disabled={s.blocked}
-                        onClick={() => setProxyTime(s.time)}
+                        key={slot.time}
+                        type="button"
+                        disabled={slot.blocked}
+                        onClick={() => setProxyTime(slot.time)}
                         className={`rounded-lg p-2.5 text-xs font-semibold transition-all min-h-[44px] ${
-                          s.blocked
+                          slot.blocked
                             ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
-                            : proxyTime === s.time
-                            ? "accent-gradient text-accent-foreground shadow-md"
-                            : "bg-card border border-border hover:border-accent"
+                            : proxyTime === slot.time
+                              ? "accent-gradient text-accent-foreground shadow-md"
+                              : "bg-card border border-border hover:border-accent"
                         }`}
                       >
-                        {s.time}
-                        {s.blocked && <span className="block text-[9px] text-destructive/70">満枠</span>}
+                        {slot.time}
+                        {slot.blocked && <span className="block text-[9px] text-destructive/70">満枠</span>}
                       </button>
                     ));
                   })()}
@@ -346,8 +354,7 @@ const TrainerSchedule = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>予約を削除しますか？</AlertDialogTitle>
@@ -359,8 +366,11 @@ const TrainerSchedule = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteBooking}
               disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleDeleteBooking();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
