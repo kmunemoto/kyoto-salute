@@ -164,31 +164,51 @@ export const useAllCustomerProfiles = () => {
       .select("*")
       .in("user_id", customerIds);
 
-    // 4. Fetch all future bookings for these customers (next booking)
-    const now = new Date().toISOString();
-    const { data: futureBookings } = await supabase
+    // 4. Fetch ALL bookings for these customers (not just future)
+    const { data: allBookings } = await supabase
       .from("bookings")
       .select("user_id, booking_date, booking_type, status")
       .in("user_id", customerIds)
-      .gte("booking_date", now)
       .neq("status", "キャンセル済み")
       .order("booking_date", { ascending: true });
 
-    // Build next-booking map (first future booking per user)
+    // Build next-booking map: nearest FUTURE booking per user
+    const now = new Date();
     const nextBookingMap: Record<string, { booking_date: string; booking_type: string }> = {};
-    futureBookings?.forEach((b) => {
-      if (!nextBookingMap[b.user_id]) {
+    allBookings?.forEach((b) => {
+      if (new Date(b.booking_date) > now && !nextBookingMap[b.user_id]) {
         nextBookingMap[b.user_id] = { booking_date: b.booking_date, booking_type: b.booking_type };
       }
     });
 
-    // Merge profiles with booking info
-    const merged: ProfileWithBooking[] = (profileData || []).map((p) => ({
-      ...(p as Profile),
-      next_booking_date: nextBookingMap[p.user_id]?.booking_date || null,
-      next_booking_type: nextBookingMap[p.user_id]?.booking_type || null,
-    }));
+    // Debug logging
+    console.log("[顧客一覧] customerIds:", customerIds);
+    console.log("[顧客一覧] profiles:", profileData?.length, "bookings:", allBookings?.length);
+    console.log("[顧客一覧] nextBookingMap:", nextBookingMap);
 
+    // Build profile map
+    const profileMap = new Map<string, Profile>();
+    (profileData || []).forEach((p) => profileMap.set(p.user_id, p as Profile));
+
+    // Merge: include ALL customerIds, even those without a profile row
+    const merged: ProfileWithBooking[] = customerIds.map((uid) => {
+      const p = profileMap.get(uid);
+      return {
+        id: p?.id || uid,
+        user_id: uid,
+        display_name: p?.display_name || "名前未設定",
+        avatar_url: p?.avatar_url || null,
+        plan: p?.plan || null,
+        paid_this_month: p?.paid_this_month || false,
+        trial_completed: p?.trial_completed || false,
+        created_at: p?.created_at || new Date().toISOString(),
+        updated_at: p?.updated_at || new Date().toISOString(),
+        next_booking_date: nextBookingMap[uid]?.booking_date || null,
+        next_booking_type: nextBookingMap[uid]?.booking_type || null,
+      };
+    });
+
+    console.log("[顧客一覧] merged result:", merged);
     setProfiles(merged);
     setLoading(false);
   }, []);
