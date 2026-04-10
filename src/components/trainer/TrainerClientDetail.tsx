@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  clientBodyMetrics, clientBookings, clientChatMessages,
+  clientBodyMetrics, clientChatMessages,
   planOptions, planPrices, PlanType, ChatMessage,
 } from "@/lib/dummyData";
 import { Switch } from "@/components/ui/switch";
@@ -86,6 +86,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [saving, setSaving] = useState(false);
   const [clientMeals, setClientMeals] = useState<MealRecord[]>([]);
   const [loadingMeals, setLoadingMeals] = useState(true);
+  const [clientBookings2, setClientBookings2] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
   const [editRecord, setEditRecord] = useState<WorkoutRecord | null>(null);
   const [editWeight, setEditWeight] = useState("");
   const [editReps, setEditReps] = useState("");
@@ -162,6 +164,37 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     fetchMeals();
   }, [clientId]);
 
+  // Fetch client bookings from DB
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const { data } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", clientId)
+        .order("booking_date", { ascending: true });
+      if (data) {
+        setClientBookings2(data.map((row) => {
+          const dt = new Date(row.booking_date);
+          const h = dt.getHours();
+          const m = dt.getMinutes();
+          const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+          const endMin = h * 60 + m + 60;
+          const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+          return {
+            id: row.id,
+            date: row.booking_date,
+            startTime,
+            endTime,
+            status: row.status,
+            booking_type: row.booking_type,
+          };
+        }));
+      }
+      setLoadingBookings(false);
+    };
+    fetchBookings();
+  }, [clientId]);
+
   if (loadingProfile) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -191,7 +224,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
   // Dummy data for non-DB features
   const metrics = clientBodyMetrics[clientId] || [];
-  const bookings = clientBookings[clientId] || [];
+  const bookings = clientBookings2;
   const messages = clientChatMessages[clientId] || [];
 
   const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", weight: "", reps: "" }]);
@@ -676,9 +709,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
             <CalendarDays className="w-3.5 h-3.5" />
             予約一覧
           </h2>
-          {bookings.length > 0 ? (
+          {loadingBookings ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+          ) : bookings.length > 0 ? (
             <div className="space-y-2">
-              {bookings.map((b) => (
+              {bookings.map((b: any) => (
                 <Card key={b.id}>
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl accent-gradient flex items-center justify-center shrink-0">
@@ -689,6 +724,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {format(new Date(b.date), "M月d日（E）", { locale: ja })}
                       </p>
                       <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
+                      {b.booking_type && (
+                        <span className="text-[10px] text-muted-foreground">{b.booking_type}</span>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
