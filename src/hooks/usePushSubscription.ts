@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 // This must be the FULL 65-byte uncompressed VAPID public key in URL-safe base64
 // Generate with: npx web-push generate-vapid-keys
@@ -56,35 +57,56 @@ export function usePushSubscription() {
       }
 
       // 2. Ensure SW is registered and ready
-      const registration = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
+      let registration: ServiceWorkerRegistration;
+      try {
+        registration = await navigator.serviceWorker.register("/sw.js");
+        await navigator.serviceWorker.ready;
+        console.log("[Push] SW registered OK");
+      } catch (swErr) {
+        console.error("[Push] SW registration failed:", swErr);
+        toast.error("Service Workerの登録に失敗しました");
+        return false;
+      }
 
-      // 3. Convert VAPID key
-      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      // 3. Convert VAPID key and subscribe
+      let subscription: PushSubscription;
+      try {
+        const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey as unknown as BufferSource,
+        });
+        console.log("[Push] pushManager.subscribe OK:", subscription.endpoint);
+      } catch (subErr) {
+        console.error("[Push] pushManager.subscribe failed:", subErr);
+        toast.error(`プッシュ登録に失敗: ${subErr instanceof Error ? subErr.message : subErr}`);
+        return false;
+      }
 
-      // 4. Subscribe to push
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
-      });
+      // 4. Store in DB
+      try {
+        const json = subscription.toJSON();
+        const { error } = await supabase.from("push_subscriptions").upsert(
+          {
+            user_id: user.id,
+            endpoint: json.endpoint!,
+            p256dh: json.keys!.p256dh,
+            auth: json.keys!.auth,
+          },
+          { onConflict: "user_id,endpoint" }
+        );
+        if (error) throw error;
+        console.log("[Push] DB save OK");
+      } catch (dbErr) {
+        console.error("[Push] DB save failed:", dbErr);
+        toast.error(`DB保存に失敗: ${dbErr instanceof Error ? dbErr.message : dbErr}`);
+        return false;
+      }
 
-      // 5. Store in DB
-      const json = subscription.toJSON();
-      const { error } = await supabase.from("push_subscriptions").upsert(
-        {
-          user_id: user.id,
-          endpoint: json.endpoint!,
-          p256dh: json.keys!.p256dh,
-          auth: json.keys!.auth,
-        },
-        { onConflict: "user_id,endpoint" }
-      );
-
-      if (error) throw error;
       setIsSubscribed(true);
       return true;
     } catch (err) {
-      console.error("Push subscription failed:", err);
+      console.error("[Push] Unexpected error:", err);
       return false;
     }
   }, [user]);
