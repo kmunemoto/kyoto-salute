@@ -1,24 +1,24 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, parseISO, startOfDay, endOfDay } from "date-fns";
+import { format } from "date-fns";
 
 export interface BookingRow {
   id: string;
   user_id: string;
-  booking_date: string; // ISO timestamptz
+  booking_date: string;
   status: string;
   booking_type: string;
   created_at: string;
-  display_name?: string; // joined from profiles
+  display_name?: string;
 }
 
 export interface BookingWithTime {
   id: string;
   user_id: string;
-  date: string;        // "yyyy-MM-dd"
-  startTime: string;   // "HH:mm"
-  endTime: string;     // "HH:mm"
+  date: string;
+  startTime: string;
+  endTime: string;
   clientName: string;
   status: string;
   booking_type: string;
@@ -45,14 +45,18 @@ function parseBooking(row: BookingRow): BookingWithTime {
   };
 }
 
-/** Customer: own bookings */
 export const useMyBookings = () => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingWithTime[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchBookings = useCallback(async () => {
-    if (!user) { setBookings([]); setLoading(false); return; }
+    if (!user) {
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
+
     const { data } = await supabase
       .from("bookings")
       .select("*")
@@ -60,7 +64,6 @@ export const useMyBookings = () => {
       .order("booking_date", { ascending: true });
 
     if (data) {
-      // Get own profile for display_name
       const { data: profile } = await supabase
         .from("profiles")
         .select("display_name")
@@ -72,48 +75,76 @@ export const useMyBookings = () => {
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  useEffect(() => {
+    void fetchBookings();
+  }, [fetchBookings]);
 
   return { bookings, loading, refetch: fetchBookings };
 };
 
-/** Trainer: all bookings with client names */
 export const useAllBookings = () => {
   const [bookings, setBookings] = useState<BookingWithTime[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchBookings = useCallback(async () => {
-    // Fetch all bookings
-    const { data: rows } = await supabase
+    setLoading(true);
+
+    const { data: rows, error } = await supabase
       .from("bookings")
       .select("*")
       .order("booking_date", { ascending: true });
 
-    if (!rows) { setLoading(false); return; }
+    if (error) {
+      console.error("Failed to fetch bookings:", error);
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
 
-    // Fetch profiles for display names
+    if (!rows || rows.length === 0) {
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
+
     const userIds = [...new Set(rows.map((r) => r.user_id))];
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("user_id, display_name")
       .in("user_id", userIds);
 
+    if (profilesError) {
+      console.error("Failed to fetch booking profiles:", profilesError);
+    }
+
     const nameMap: Record<string, string> = {};
-    profiles?.forEach((p) => { nameMap[p.user_id] = p.display_name || "不明"; });
+    profiles?.forEach((p) => {
+      nameMap[p.user_id] = p.display_name || "不明";
+    });
 
     setBookings(rows.map((r) => parseBooking({ ...r, display_name: nameMap[r.user_id] || "不明" })));
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  const removeBooking = useCallback((bookingId: string) => {
+    setBookings((current) => current.filter((booking) => booking.id !== bookingId));
+  }, []);
 
-  return { bookings, loading, refetch: fetchBookings };
+  useEffect(() => {
+    void fetchBookings();
+  }, [fetchBookings]);
+
+  return { bookings, loading, refetch: fetchBookings, removeBooking };
 };
 
-/** Check if a time slot is blocked on a given date */
 export const checkSlotBlocked = (bookings: BookingWithTime[], date: string, startTime: string): boolean => {
-  const timeToMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const timeToMin = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+
   const newMin = timeToMin(startTime);
+
   return bookings.some((b) => {
     if (b.date !== date || b.status === "キャンセル済み") return false;
     const bMin = timeToMin(b.startTime);
@@ -121,14 +152,12 @@ export const checkSlotBlocked = (bookings: BookingWithTime[], date: string, star
   });
 };
 
-/** Create a booking */
 export const createBooking = async (
   userId: string,
   date: string,
   startTime: string,
   bookingType: string = "通常"
 ) => {
-  // Construct timestamptz: "2026-04-10T10:00:00+09:00"
   const bookingDate = `${date}T${startTime}:00+09:00`;
   const { data, error } = await supabase
     .from("bookings")
@@ -139,11 +168,11 @@ export const createBooking = async (
   return { data, error };
 };
 
-/** Cancel a booking */
 export const cancelBooking = async (bookingId: string) => {
   const { error } = await supabase
     .from("bookings")
     .delete()
     .eq("id", bookingId);
+
   return { error };
 };
