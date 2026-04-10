@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -350,14 +350,15 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         <Card>
           <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             <div>
-              <Select value={clientPlan} onValueChange={handlePlanChange}>
-                <SelectTrigger className="w-full h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {planOptions.map((p) => (
-                    <SelectItem key={p} value={p}>{p}（¥{planPrices[p as PlanType]?.toLocaleString() ?? 0}）</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={clientPlan}
+                onChange={(e) => handlePlanChange(e.target.value)}
+                className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {planOptions.map((p) => (
+                  <option key={p} value={p}>{p}（¥{planPrices[p as PlanType]?.toLocaleString() ?? 0}）</option>
+                ))}
+              </select>
               <p className="text-sm font-bold mt-2">月額: ¥{getPrice(clientPlan).toLocaleString()}</p>
             </div>
 
@@ -503,29 +504,25 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         </button>
                       )}
                     </div>
-                    <Select
-                      value={ex.exerciseId || undefined}
-                      onValueChange={(v) => handleSelectExercise(i, v)}
+                    <select
+                      value={ex.exerciseId || ""}
+                      onChange={(e) => handleSelectExercise(i, e.target.value)}
+                      className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     >
-                      <SelectTrigger className="w-full h-11">
-                        <SelectValue placeholder="種目を選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[...exerciseCategories].map((cat) => {
-                          const catExercises = exerciseMasters.filter((e) => e.category === cat);
-                          if (catExercises.length === 0) return null;
-                          return (
-                            <div key={cat}>
-                              <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{cat}</div>
-                              {catExercises.map((e) => (
-                                <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                              ))}
-                            </div>
-                          );
-                        })}
-                        <SelectItem value="__new__" className="text-accent font-semibold">＋ 新しい種目を追加</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <option value="" disabled>種目を選択</option>
+                      {[...exerciseCategories].map((cat) => {
+                        const catExercises = exerciseMasters.filter((e) => e.category === cat);
+                        if (catExercises.length === 0) return null;
+                        return (
+                          <optgroup key={cat} label={cat}>
+                            {catExercises.map((e) => (
+                              <option key={e.id} value={e.id}>{e.name}</option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
+                      <option value="__new__">＋ 新しい種目を追加</option>
+                    </select>
                     {showNewExercise === i && (
                       <div className="flex gap-2">
                         <Input
@@ -733,14 +730,15 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">種目</label>
-              <Select value={editExerciseId} onValueChange={setEditExerciseId}>
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {exerciseMasters.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={editExerciseId}
+                onChange={(e) => setEditExerciseId(e.target.value)}
+                className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {exerciseMasters.map((e) => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
