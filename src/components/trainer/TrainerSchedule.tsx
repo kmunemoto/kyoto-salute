@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAllBookings, checkSlotBlocked, createBooking } from "@/hooks/useBookings";
+import { useAllBookings, checkSlotBlocked, createBooking, cancelBooking } from "@/hooks/useBookings";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -22,6 +26,8 @@ const TrainerSchedule = () => {
   const [proxyClient, setProxyClient] = useState<string>("");
   const [proxyBookingType, setProxyBookingType] = useState<string>("通常");
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { bookings, loading, refetch } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
@@ -83,6 +89,20 @@ const TrainerSchedule = () => {
     if (bookingData?.id) {
       sendBookingNotification(bookingData.id, client?.display_name || "顧客", proxyDateKey, proxyTime, proxyEndTime, proxyBookingType);
     }
+  };
+
+  const handleDeleteBooking = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await cancelBooking(deleteTarget.id);
+    if (error) {
+      toast.error("削除に失敗しました");
+    } else {
+      toast.success("予約を削除しました");
+      refetch();
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
   };
 
   const getDayBookings = (day: Date) => {
@@ -162,7 +182,13 @@ const TrainerSchedule = () => {
                         return (
                           <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
                             {session && (
-                              <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs">
+                              <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs relative group">
+                                <button
+                                  onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime })}
+                                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/20"
+                                >
+                                  <Trash2 className="w-3 h-3 text-destructive-foreground" />
+                                </button>
                                 <p className="font-bold truncate">{session.clientName}</p>
                                 <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
                                 <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
@@ -209,6 +235,12 @@ const TrainerSchedule = () => {
                             <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
                             <p className="text-[10px] text-muted-foreground/70 mt-0.5">{b.booking_type}</p>
                           </div>
+                          <button
+                            onClick={() => setDeleteTarget({ id: b.id, clientName: b.clientName, date: b.date, startTime: b.startTime })}
+                            className="p-2 rounded-lg hover:bg-destructive/10 transition-colors shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </button>
                         </CardContent>
                       </Card>
                     ))}
@@ -313,6 +345,30 @@ const TrainerSchedule = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>予約を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && `${deleteTarget.clientName}さんの予約（${deleteTarget.date} ${deleteTarget.startTime}）を削除します。`}
+              本当にこの予約を削除しますか？元に戻すことはできません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBooking}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              はい、削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
