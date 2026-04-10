@@ -709,9 +709,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
             <CalendarDays className="w-3.5 h-3.5" />
             予約一覧
           </h2>
-          {bookings.length > 0 ? (
+          {loadingBookings ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+          ) : bookings.length > 0 ? (
             <div className="space-y-2">
-              {bookings.map((b) => (
+              {bookings.map((b: any) => (
                 <Card key={b.id}>
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl accent-gradient flex items-center justify-center shrink-0">
@@ -722,6 +724,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {format(new Date(b.date), "M月d日（E）", { locale: ja })}
                       </p>
                       <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
+                      {b.booking_type && (
+                        <span className="text-[10px] text-muted-foreground">{b.booking_type}</span>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
