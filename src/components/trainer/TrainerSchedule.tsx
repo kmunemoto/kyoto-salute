@@ -11,10 +11,6 @@ import { sendBookingNotification } from "@/lib/bookingNotification";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 
 
@@ -365,31 +361,31 @@ const TrainerSchedule = () => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>予約を削除しますか？</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}>
+        <DialogContent className="max-w-[90vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>予約を削除しますか？</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-1">
               {deleteTarget && `${deleteTarget.clientName}さんの予約（${deleteTarget.date} ${deleteTarget.startTime}）を削除します。`}
               本当にこの予約を削除しますか？元に戻すことはできません。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
+            </p>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting} className="w-full sm:w-auto">
+              キャンセル
+            </Button>
+            <Button
+              variant="destructive"
               disabled={deleting}
-              onClick={(event) => {
-                event.preventDefault();
-                void handleDeleteBooking();
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void handleDeleteBooking()}
+              className="w-full sm:w-auto"
             >
               {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
               はい、削除する
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
