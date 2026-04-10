@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveMealPhotoUrls } from "@/lib/mealPhotoUrl";
 
 interface Meal {
   id: string;
   image_url: string;
+  resolved_image_url?: string;
   meal_type: string;
   calories: number | null;
   protein: number | null;
@@ -40,7 +42,10 @@ const CustomerMeals = () => {
       .from("meals")
       .select("*")
       .order("created_at", { ascending: false });
-    if (!error && data) setMeals(data as Meal[]);
+    if (!error && data) {
+      const resolved = await resolveMealPhotoUrls(data as Meal[]);
+      setMeals(resolved);
+    }
     setLoading(false);
   };
 
@@ -84,22 +89,17 @@ const CustomerMeals = () => {
       // Convert to JPEG if needed (HEIC etc.)
       const convertedFile = await convertToJpeg(file);
 
-      // Upload to storage
-      const fileName = `${Date.now()}-${convertedFile.name}`;
+      // Upload to storage (user-scoped path)
+      const storagePath = `${user!.id}/${Date.now()}-${convertedFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from("meal-photos")
-        .upload(fileName, convertedFile);
+        .upload(storagePath, convertedFile);
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from("meal-photos")
-        .getPublicUrl(fileName);
-      const imageUrl = urlData.publicUrl;
-
-      // Insert meal record
+      // Insert meal record with storage path
       const { data: mealData, error: insertError } = await supabase
         .from("meals")
-        .insert({ image_url: imageUrl, user_id: user?.id })
+        .insert({ image_url: storagePath, user_id: user?.id })
         .select()
         .single();
       if (insertError) throw insertError;
@@ -197,7 +197,7 @@ const CustomerMeals = () => {
                 {/* Photo */}
                 <div className="relative">
                   <img
-                    src={meal.image_url}
+                    src={meal.resolved_image_url || meal.image_url}
                     alt="食事写真"
                     className="w-full h-48 object-cover"
                   />
