@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+// This must be the FULL 65-byte uncompressed VAPID public key in URL-safe base64
+// Generate with: npx web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = "BKxLbT912uBVUI_0010w-QQWaic5ITY-_SZS1wo9BZdTq6mTyfbBPlmftYG_CKB4cdJYPTSLhiEGADA3Uv_R5_s";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -46,15 +48,27 @@ export function usePushSubscription() {
   const subscribe = useCallback(async () => {
     if (!user) return false;
     try {
-      // Register SW if not already
+      // 1. Request notification permission FIRST (must be from user gesture)
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        console.warn("Notification permission denied:", permission);
+        return false;
+      }
+
+      // 2. Ensure SW is registered and ready
       const registration = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
 
+      // 3. Convert VAPID key
+      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+
+      // 4. Subscribe to push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
+        applicationServerKey,
       });
 
+      // 5. Store in DB
       const json = subscription.toJSON();
       const { error } = await supabase.from("push_subscriptions").upsert(
         {
