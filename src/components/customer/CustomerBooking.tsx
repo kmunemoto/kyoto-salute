@@ -40,6 +40,15 @@ const CustomerBooking = () => {
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
+  const isSlotWithin24Hours = (date: string, time: string): boolean => {
+    const now = new Date();
+    const [h, m] = time.split(":").map(Number);
+    const slotDate = new Date(date + "T00:00:00+09:00");
+    slotDate.setHours(h, m, 0, 0);
+    const diffMs = slotDate.getTime() - now.getTime();
+    return diffMs < 24 * 60 * 60 * 1000;
+  };
+
   const generateSlots = () => {
     const slots: { id: string; time: string; available: boolean }[] = [];
     for (let totalMin = 600; totalMin <= 1215; totalMin += 15) {
@@ -47,7 +56,8 @@ const CustomerBooking = () => {
       const m = totalMin % 60;
       const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
       const blocked = checkSlotBlocked(allBookings, dateKey, time);
-      slots.push({ id: `${dateKey}-${time}`, time, available: !blocked });
+      const tooSoon = isSlotWithin24Hours(dateKey, time);
+      slots.push({ id: `${dateKey}-${time}`, time, available: !blocked && !tooSoon });
     }
     return slots;
   };
@@ -58,6 +68,12 @@ const CustomerBooking = () => {
     if (!selectedDate || !selectedSlot || !user || !selectedPlan) return;
     const slot = slots.find((s) => s.id === selectedSlot);
     if (!slot) return;
+
+    if (isSlotWithin24Hours(dateKey, slot.time)) {
+      toast.error("予約は24時間前までにお願いします");
+      setSelectedSlot(null);
+      return;
+    }
 
     if (checkSlotBlocked(allBookings, dateKey, slot.time)) {
       toast.error("この時間帯はすでに予約が入っています");
@@ -165,6 +181,7 @@ const CustomerBooking = () => {
           <p className="text-sm text-muted-foreground mt-1">
             ご希望のプランを選択してください
           </p>
+          <p className="text-xs text-muted-foreground/70 mt-1">※ご予約は24時間前までにお願いいたします</p>
         </div>
 
         {/* Success banner */}
@@ -324,9 +341,11 @@ const CustomerBooking = () => {
                   }}
                   locale={ja}
                   disabled={(date) => {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    return date < today;
+                    const now = new Date();
+                    // Disable dates where the latest possible slot (20:15) is within 24 hours
+                    const latestSlot = new Date(date);
+                    latestSlot.setHours(20, 15, 0, 0);
+                    return latestSlot.getTime() - now.getTime() < 24 * 60 * 60 * 1000;
                   }}
                   className="pointer-events-auto"
                 />
