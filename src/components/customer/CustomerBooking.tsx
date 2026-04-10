@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { CalendarDays, Clock, Check, CreditCard, Trash2, ExternalLink, Sparkles, Loader2, ChevronLeft, Crown } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -99,6 +100,24 @@ const CustomerBooking = () => {
 
     // Fire-and-forget notification email to trainer
     sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
+
+    // Fire-and-forget confirmation email to customer
+    const customerName = profile?.display_name || "お客様";
+    const dateObj = new Date(dateKey + "T00:00:00");
+    const formattedDate = format(dateObj, "M月d日（E）", { locale: ja });
+    supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName: "booking-confirmation",
+        recipientEmail: user.email,
+        idempotencyKey: `booking-confirm-${data.id}`,
+        templateData: {
+          customerName,
+          bookingDate: formattedDate,
+          bookingTime: `${slot.time}〜${endTime}`,
+          planName: selectedPlan,
+        },
+      },
+    }).catch((e) => console.error("Failed to send booking confirmation:", e));
   };
 
   const handleCancel = async () => {
