@@ -91,6 +91,20 @@ const TrainerSchedule = () => {
     }
   };
 
+  const handleDeleteBooking = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await cancelBooking(deleteTarget.id);
+    if (error) {
+      toast.error("削除に失敗しました");
+    } else {
+      toast.success("予約を削除しました");
+      refetch();
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
+  };
+
   const getDayBookings = (day: Date) => {
     const dateStr = format(day, "yyyy-MM-dd");
     return bookings.filter((b) => b.date === dateStr && b.status !== "キャンセル済み");
