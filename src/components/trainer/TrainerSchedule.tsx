@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const TrainerSchedule = () => {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
@@ -284,27 +284,30 @@ const TrainerSchedule = () => {
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">お客様</label>
-              <Select value={proxyClient} onValueChange={setProxyClient}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="選択してください" /></SelectTrigger>
-                <SelectContent>
-                  {profiles.map((p) => (
-                    <SelectItem key={p.user_id} value={p.user_id}>{p.display_name || "不明"}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={proxyClient}
+                onChange={(e) => setProxyClient(e.target.value)}
+                className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="" disabled>選択してください</option>
+                {profiles.map((p) => (
+                  <option key={p.user_id} value={p.user_id}>{p.display_name || "不明"}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">予約プラン</label>
-              <Select value={proxyBookingType} onValueChange={setProxyBookingType}>
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="初回無料体験">初回無料体験</SelectItem>
-                  <SelectItem value="月4回">月4回</SelectItem>
-                  <SelectItem value="月6回">月6回</SelectItem>
-                  <SelectItem value="月8回">月8回</SelectItem>
-                  <SelectItem value="通い放題">通い放題</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={proxyBookingType}
+                onChange={(e) => setProxyBookingType(e.target.value)}
+                className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="初回無料体験">初回無料体験</option>
+                <option value="月4回">月4回</option>
+                <option value="月6回">月6回</option>
+                <option value="月8回">月8回</option>
+                <option value="通い放題">通い放題</option>
+              </select>
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">日付</label>
