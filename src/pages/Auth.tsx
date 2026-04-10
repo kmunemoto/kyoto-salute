@@ -15,18 +15,28 @@ const Auth = () => {
   const [loginTarget, setLoginTarget] = useState<LoginTarget>("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const passwordMismatch = mode === "signup" && !isTrainerTarget() && passwordConfirm.length > 0 && password !== passwordConfirm;
+
+  function isTrainerTarget() {
+    return loginTarget === "trainer";
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && !isTrainerTarget() && password !== passwordConfirm) {
+      toast.error("パスワードが一致しません");
+      return;
+    }
     setLoading(true);
 
     try {
       if (mode === "signup") {
-        // Signups are always customer — trainer is pre-registered
-        if (loginTarget === "trainer") {
+        if (isTrainerTarget()) {
           toast.error("トレーナーアカウントは事前に登録済みです。ログインしてください。");
           setLoading(false);
           return;
@@ -172,7 +182,31 @@ const Auth = () => {
                 </div>
               </div>
 
-              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading}>
+              {/* Password confirmation for signup */}
+              {mode === "signup" && !isTrainer && (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold">パスワード（確認用）</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="password"
+                      required
+                      value={passwordConfirm}
+                      onChange={(e) => setPasswordConfirm(e.target.value)}
+                      placeholder="もう一度入力"
+                      minLength={6}
+                      className={`w-full bg-secondary rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 transition-all placeholder:text-muted-foreground ${
+                        passwordMismatch ? "ring-2 ring-destructive/50 focus:ring-destructive/50" : "focus:ring-accent/30"
+                      }`}
+                    />
+                  </div>
+                  {passwordMismatch && (
+                    <p className="text-xs text-destructive font-medium">パスワードが一致しません</p>
+                  )}
+                </div>
+              )}
+
+              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading || passwordMismatch}>
                 {loading ? "処理中..." : mode === "login" ? "ログイン" : "アカウント作成"}
               </Button>
             </form>
