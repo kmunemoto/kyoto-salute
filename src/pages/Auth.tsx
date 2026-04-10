@@ -193,7 +193,7 @@ const Auth = () => {
                       required
                       value={passwordConfirm}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
-                      placeholder="もう一度入力"
+                      placeholder="6文字以上"
                       minLength={6}
                       className={`w-full bg-secondary rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 transition-all placeholder:text-muted-foreground ${
                         passwordMismatch ? "ring-2 ring-destructive/50 focus:ring-destructive/50" : "focus:ring-accent/30"
