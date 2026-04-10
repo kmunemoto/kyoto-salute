@@ -104,7 +104,9 @@ const CustomerMeals = () => {
         .single();
       if (insertError) throw insertError;
 
-      const newMeal = { ...mealData as Meal, resolved_image_url: storagePath };
+      const { getMealPhotoUrl } = await import("@/lib/mealPhotoUrl");
+      const resolvedUrl = await getMealPhotoUrl(storagePath);
+      const newMeal = { ...mealData as Meal, resolved_image_url: resolvedUrl };
       setMeals((prev) => [newMeal, ...prev]);
       toast.success("写真をアップロードしました。AI分析中...");
 
