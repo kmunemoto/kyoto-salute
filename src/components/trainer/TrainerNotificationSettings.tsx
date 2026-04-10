@@ -4,16 +4,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 
 const TrainerNotificationSettings = () => {
-  const [browserNotif, setBrowserNotif] = useState(false);
   const [messageNotif, setMessageNotif] = useState(true);
   const [reminderNotif, setReminderNotif] = useState(true);
+  const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
 
-  const requestBrowserPermission = () => {
-    // UI demo only — will integrate with actual Notification API later
-    setBrowserNotif(true);
-    toast.success("ブラウザ通知を許可しました（デモ）");
+  const handleTogglePush = async () => {
+    if (isSubscribed) {
+      const ok = await unsubscribe();
+      if (ok) toast.success("プッシュ通知を無効にしました");
+      else toast.error("通知の解除に失敗しました");
+    } else {
+      const ok = await subscribe();
+      if (ok) toast.success("プッシュ通知を有効にしました！");
+      else toast.error("通知の許可が得られませんでした。ブラウザの設定を確認してください。");
+    }
   };
 
   return (
@@ -32,19 +39,26 @@ const TrainerNotificationSettings = () => {
                 <Shield className="w-5 h-5 text-accent" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-sm mb-1">ブラウザ通知</h3>
+                <h3 className="font-bold text-sm mb-1">プッシュ通知</h3>
                 <p className="text-xs text-muted-foreground mb-3">
-                  ブラウザを開いていない時でも、新着メッセージや予約の通知を受け取れます。
+                  アプリを開いていない時でも、新着メッセージや予約の通知をスマートフォンに届けます。
                 </p>
-                {browserNotif ? (
-                  <div className="flex items-center gap-2 text-xs font-bold text-success">
-                    <BellRing className="w-4 h-4" />
-                    ブラウザ通知は有効です
+                {!isSupported ? (
+                  <p className="text-xs text-muted-foreground">このブラウザはプッシュ通知に対応していません。</p>
+                ) : isSubscribed ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-green-600 dark:text-green-400">
+                      <BellRing className="w-4 h-4" />
+                      プッシュ通知は有効です
+                    </div>
+                    <Button size="sm" variant="outline" onClick={handleTogglePush} disabled={pushLoading}>
+                      通知を無効にする
+                    </Button>
                   </div>
                 ) : (
-                  <Button size="sm" onClick={requestBrowserPermission}>
+                  <Button size="sm" onClick={handleTogglePush} disabled={pushLoading}>
                     <Bell className="w-4 h-4 mr-1.5" />
-                    ブラウザ通知を許可する
+                    プッシュ通知を許可する
                   </Button>
                 )}
               </div>

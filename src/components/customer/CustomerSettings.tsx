@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Settings, User, Pencil } from "lucide-react";
+import { Bell, BellOff, BellRing, Settings, User, Pencil, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
