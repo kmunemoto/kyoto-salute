@@ -47,7 +47,7 @@ const TrainerNotificationSettings = () => {
                   <p className="text-xs text-muted-foreground">このブラウザはプッシュ通知に対応していません。</p>
                 ) : isSubscribed ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-green-600 dark:text-green-400">
+                    <div className="flex items-center gap-2 text-xs font-bold text-accent">
                       <BellRing className="w-4 h-4" />
                       プッシュ通知は有効です
                     </div>
