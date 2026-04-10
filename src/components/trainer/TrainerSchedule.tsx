@@ -187,15 +187,17 @@ const TrainerSchedule = () => {
                           return (
                             <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
                               {session && (
-                                <div className="accent-gradient text-accent-foreground rounded-lg p-2 pr-10 text-xs relative">
-                                  <button
+                                <div className="accent-gradient text-accent-foreground rounded-lg p-2 pr-12 text-xs relative">
+                                  <Button
                                     type="button"
+                                    variant="destructive"
+                                    size="icon"
                                     aria-label={`${session.clientName}さんの予約を削除`}
                                     onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime })}
-                                    className="absolute top-1 right-1 p-1 rounded-md bg-card/90 text-destructive hover:bg-destructive/10 transition-colors"
+                                    className="absolute top-1 right-1 h-7 w-7 rounded-md"
                                   >
                                     <Trash2 className="w-3 h-3" />
-                                  </button>
+                                  </Button>
                                   <p className="font-bold truncate">{session.clientName}</p>
                                   <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
                                   <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
@@ -232,23 +234,29 @@ const TrainerSchedule = () => {
                     .sort((a, b) => a.startTime.localeCompare(b.startTime))
                     .map((booking) => (
                       <Card key={booking.id} className="card-hover">
-                        <CardContent className="p-3 flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
-                            {booking.clientName[0]}
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
+                              {booking.clientName[0]}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold truncate">{booking.clientName}</p>
+                              <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
+                              <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold truncate">{booking.clientName}</p>
-                            <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
-                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>
+                          <div className="mt-3 flex justify-end">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setDeleteTarget({ id: booking.id, clientName: booking.clientName, date: booking.date, startTime: booking.startTime })}
+                              className="min-w-[112px]"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              削除
+                            </Button>
                           </div>
-                          <button
-                            type="button"
-                            aria-label={`${booking.clientName}さんの予約を削除`}
-                            onClick={() => setDeleteTarget({ id: booking.id, clientName: booking.clientName, date: booking.date, startTime: booking.startTime })}
-                            className="p-2 rounded-lg bg-muted hover:bg-destructive/10 transition-colors shrink-0"
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </button>
                         </CardContent>
                       </Card>
                     ))}
