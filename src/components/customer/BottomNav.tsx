@@ -19,7 +19,7 @@ const tabs: { id: CustomerTab; label: string; icon: typeof Home }[] = [
 const BottomNav = ({ activeTab, onTabChange, unreadChat = 0 }: BottomNavProps) => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 glass border-t border-border">
-      <div className="max-w-lg mx-auto flex">
+      <div className="max-w-md mx-auto flex">
         {tabs.map((t) => {
           const active = activeTab === t.id;
           const showBadge = t.id === "chat" && unreadChat > 0;

@@ -29,10 +29,10 @@ const CustomerView = () => {
   }, [tab]);
 
   return (
-    <div className="min-h-screen bg-background pb-20 max-w-lg mx-auto fade-in" translate="no">
+    <div className="min-h-screen bg-background pb-20 w-full max-w-md mx-auto overflow-x-hidden fade-in" translate="no">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
-        <div className="max-w-lg mx-auto flex items-center justify-between px-4 py-2">
+        <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2">
           <div className="flex items-center gap-2">
             <GymLogo size="sm" />
             {/* ⚠️ DO NOT change this app name. Keep exactly as-is: "パーソナルジムSalute御所南" — never convert "Salute" to katakana */}

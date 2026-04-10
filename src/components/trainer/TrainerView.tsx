@@ -76,7 +76,7 @@ const TrainerView = () => {
   }, [tab]);
 
   return (
-    <div className="min-h-screen bg-background fade-in">
+    <div className="min-h-screen bg-background fade-in overflow-x-hidden">
       {/* Header — アプリ名は「パーソナルジムSalute御所南」で固定。絶対にカタカナに変更しないこと！ */}
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
         <div className="flex items-center justify-between px-3 sm:px-4 py-2">
