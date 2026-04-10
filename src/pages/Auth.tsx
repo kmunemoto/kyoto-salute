@@ -182,8 +182,33 @@ const Auth = () => {
                 </div>
               </div>
 
-              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading}>
+              {/* Password confirmation for signup */}
+              {mode === "signup" && !isTrainer && (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold">パスワード（確認用）</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="password"
+                      required
+                      value={passwordConfirm}
+                      onChange={(e) => setPasswordConfirm(e.target.value)}
+                      placeholder="もう一度入力"
+                      minLength={6}
+                      className={`w-full bg-secondary rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 transition-all placeholder:text-muted-foreground ${
+                        passwordMismatch ? "ring-2 ring-destructive/50 focus:ring-destructive/50" : "focus:ring-accent/30"
+                      }`}
+                    />
+                  </div>
+                  {passwordMismatch && (
+                    <p className="text-xs text-destructive font-medium">パスワードが一致しません</p>
+                  )}
+                </div>
+              )}
+
+              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading || passwordMismatch}>
                 {loading ? "処理中..." : mode === "login" ? "ログイン" : "アカウント作成"}
+              </Button>
               </Button>
             </form>
 
