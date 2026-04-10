@@ -56,7 +56,7 @@ const CustomerSettings = () => {
     );
   }
 
-  const currentPlan = profile?.plan || "月4回";
+  const currentPlan = profile?.plan || "未設定";
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
