@@ -63,6 +63,7 @@ const Auth = () => {
       }
     } catch (err: any) {
       const msg = err.message || "";
+      console.error("Auth error:", msg);
       const jaMessage = 
         msg.includes("Invalid login credentials")
           ? "メールアドレスまたはパスワードが正しくありません。入力内容をご確認ください。"
@@ -76,7 +77,9 @@ const Auth = () => {
           ? "有効なメールアドレスを入力してください。"
         : msg.includes("Email rate limit exceeded")
           ? "送信回数の上限に達しました。しばらく時間をおいてお試しください。"
-        : "エラーが発生しました。もう一度お試しください。";
+        : msg.includes("password") && msg.includes("breach")
+          ? "このパスワードは過去に漏洩が確認されています。別のパスワードをお試しください。"
+        : `エラーが発生しました: ${msg}`;
       toast.error(jaMessage);
     } finally {
       setLoading(false);
