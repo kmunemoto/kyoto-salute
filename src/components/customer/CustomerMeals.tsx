@@ -104,13 +104,13 @@ const CustomerMeals = () => {
         .single();
       if (insertError) throw insertError;
 
-      const newMeal = mealData as Meal;
+      const newMeal = { ...mealData as Meal, resolved_image_url: storagePath };
       setMeals((prev) => [newMeal, ...prev]);
       toast.success("写真をアップロードしました。AI分析中...");
 
       // Trigger AI analysis
       const { data: fnData, error: fnError } = await supabase.functions.invoke("analyze-meal", {
-        body: { mealId: newMeal.id, imageUrl },
+        body: { mealId: newMeal.id, imageUrl: storagePath },
       });
 
       const isFallback = fnError || fnData?.fallback || fnData?.error;
