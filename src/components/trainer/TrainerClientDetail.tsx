@@ -224,7 +224,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
   // Dummy data for non-DB features
   const metrics = clientBodyMetrics[clientId] || [];
-  const bookings = clientBookings[clientId] || [];
+  const bookings = clientBookings2;
   const messages = clientChatMessages[clientId] || [];
 
   const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", weight: "", reps: "" }]);
