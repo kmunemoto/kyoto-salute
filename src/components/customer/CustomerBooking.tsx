@@ -117,6 +117,22 @@ const CustomerBooking = () => {
     // Fire-and-forget notification email to trainer
     sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
 
+    // Fire-and-forget push notification to trainer
+    supabase.from("user_roles").select("user_id").eq("role", "trainer").then(({ data: trainers }) => {
+      if (trainers && trainers.length > 0) {
+        const trainerIds = trainers.map((t) => t.user_id);
+        supabase.functions.invoke("send-push-notification", {
+          body: {
+            user_ids: [...trainerIds, user.id],
+            title: "📅 新しい予約",
+            body: `${profile?.display_name || "お客様"}が${format(selectedDate!, "M月d日", { locale: ja })} ${slot.time}〜${endTime}を予約しました`,
+            url: "/",
+            tag: `booking-${data.id}`,
+          },
+        }).catch((e) => console.error("Push notification failed:", e));
+      }
+    });
+
     // Fire-and-forget confirmation email to customer
     const customerName = profile?.display_name || "お客様";
     const dateObj = new Date(dateKey + "T00:00:00");
