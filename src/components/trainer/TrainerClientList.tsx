@@ -1,15 +1,16 @@
-import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, MessageCircle, Sparkles, UserCheck, Trash2 } from "lucide-react";
+import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, Sparkles, UserCheck, Trash2, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { planPrices, PlanType } from "@/lib/dummyData";
-import { useAllCustomerProfiles } from "@/hooks/useProfile";
+import { useAllCustomerProfiles, ProfileWithBooking } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -32,6 +33,13 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   const formatPrice = (plan: string) => {
     const p = planPrices[plan as PlanType];
     return p !== undefined ? `¥${p.toLocaleString()}` : "";
+  };
+
+  const formatNextBooking = (profile: ProfileWithBooking) => {
+    if (!profile.next_booking_date) return null;
+    const dt = new Date(profile.next_booking_date);
+    const dateStr = format(dt, "M/d(E) HH:mm", { locale: ja });
+    return { dateStr, type: profile.next_booking_type || "通常" };
   };
 
   const handleDeleteCustomer = async () => {
@@ -111,6 +119,7 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
         <div className="space-y-2">
           {filtered.map((c) => {
             const initial = (c.display_name || "?")[0];
+            const nextBooking = formatNextBooking(c);
             return (
               <Card
                 key={c.user_id}
@@ -124,7 +133,7 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{c.display_name || "名前未設定"}</p>
                     <p className="text-xs text-muted-foreground truncate">{c.plan || "未契約"} {formatPrice(c.plan || "")}</p>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       {c.trial_completed ? (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
                           <UserCheck className="w-2.5 h-2.5" />
@@ -134,6 +143,16 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                         <Badge className="text-[10px] px-1.5 py-0 h-4 gap-0.5 bg-accent text-accent-foreground">
                           <Sparkles className="w-2.5 h-2.5" />
                           初回体験
+                        </Badge>
+                      )}
+                      {nextBooking ? (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-primary border-primary/30">
+                          <CalendarDays className="w-2.5 h-2.5" />
+                          次回 {nextBooking.dateStr}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-muted-foreground">
+                          予約なし
                         </Badge>
                       )}
                     </div>
