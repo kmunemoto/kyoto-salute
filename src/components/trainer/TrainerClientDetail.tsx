@@ -86,6 +86,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [saving, setSaving] = useState(false);
   const [clientMeals, setClientMeals] = useState<MealRecord[]>([]);
   const [loadingMeals, setLoadingMeals] = useState(true);
+  const [clientBookings2, setClientBookings2] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
   const [editRecord, setEditRecord] = useState<WorkoutRecord | null>(null);
   const [editWeight, setEditWeight] = useState("");
   const [editReps, setEditReps] = useState("");
