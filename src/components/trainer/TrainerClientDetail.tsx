@@ -56,6 +56,7 @@ interface WorkoutRecord {
 interface MealRecord {
   id: string;
   image_url: string;
+  resolved_image_url?: string;
   meal_type: string;
   calories: number | null;
   protein: number | null;
@@ -151,7 +152,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         .select("*")
         .eq("user_id", clientId)
         .order("created_at", { ascending: false });
-      if (data) setClientMeals(data as MealRecord[]);
+      if (data) {
+        const { resolveMealPhotoUrls } = await import("@/lib/mealPhotoUrl");
+        const resolved = await resolveMealPhotoUrls(data as MealRecord[]);
+        setClientMeals(resolved);
+      }
       setLoadingMeals(false);
     };
     fetchMeals();
@@ -626,7 +631,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <Card key={meal.id} className="overflow-hidden">
                   <CardContent className="p-0">
                     <div className="relative">
-                      <img src={meal.image_url} alt="食事写真" className="w-full h-40 object-cover" />
+                      <img src={meal.resolved_image_url || meal.image_url} alt="食事写真" className="w-full h-40 object-cover" />
                       <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2 py-0.5 rounded-lg text-xs font-bold backdrop-blur-sm">
                         {meal.meal_type}
                       </div>
