@@ -1,0 +1,96 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+const VAPID_PUBLIC_KEY = "BKxLbT912uBVUI_0010w-QQWaic5ITY-_SZS1wo9BZdTq6mTyfbBPlmftYG_CKB4cdJYPTSLhiEGADA3Uv_R5_s";
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+export function usePushSubscription() {
+  const { user } = useAuth();
+  const [isSupported, setIsSupported] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supported = "serviceWorker" in navigator && "PushManager" in window;
+    setIsSupported(supported);
+    if (supported && user) {
+      checkSubscription();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const checkSubscription = useCallback(async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      setIsSubscribed(!!subscription);
+    } catch {
+      setIsSubscribed(false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const subscribe = useCallback(async () => {
+    if (!user) return false;
+    try {
+      // Register SW if not already
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+
+      const json = subscription.toJSON();
+      const { error } = await supabase.from("push_subscriptions").upsert(
+        {
+          user_id: user.id,
+          endpoint: json.endpoint!,
+          p256dh: json.keys!.p256dh,
+          auth: json.keys!.auth,
+        },
+        { onConflict: "user_id,endpoint" }
+      );
+
+      if (error) throw error;
+      setIsSubscribed(true);
+      return true;
+    } catch (err) {
+      console.error("Push subscription failed:", err);
+      return false;
+    }
+  }, [user]);
+
+  const unsubscribe = useCallback(async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        const endpoint = subscription.endpoint;
+        await subscription.unsubscribe();
+        await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+      }
+      setIsSubscribed(false);
+      return true;
+    } catch (err) {
+      console.error("Push unsubscribe failed:", err);
+      return false;
+    }
+  }, []);
+
+  return { isSupported, isSubscribed, loading, subscribe, unsubscribe };
+}
