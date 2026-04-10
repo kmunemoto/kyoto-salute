@@ -209,7 +209,6 @@ const Auth = () => {
               <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading || passwordMismatch}>
                 {loading ? "処理中..." : mode === "login" ? "ログイン" : "アカウント作成"}
               </Button>
-              </Button>
             </form>
 
             {/* Only customers can sign up */}
