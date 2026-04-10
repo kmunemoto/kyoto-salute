@@ -86,8 +86,8 @@ const Auth = () => {
   const isTrainer = loginTarget === "trainer";
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-6 slide-up">
+    <div className="min-h-screen bg-background flex flex-col justify-start px-4 py-8 overflow-y-auto">
+      <div className="w-full max-w-md space-y-6 slide-up mx-auto my-auto">
         {/* Logo & Title */}
         {/* ⚠️ DO NOT change app name. Keep exactly: "パーソナルジムSalute御所南" */}
         <div className="text-center flex flex-col items-center gap-2">
