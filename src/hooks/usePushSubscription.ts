@@ -65,7 +65,7 @@ export function usePushSubscription() {
       // 4. Subscribe to push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey,
+        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
       });
 
       // 5. Store in DB
