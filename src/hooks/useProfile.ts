@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,6 +12,11 @@ export interface Profile {
   trial_completed: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProfileWithBooking extends Profile {
+  next_booking_date: string | null;
+  next_booking_type: string | null;
 }
 
 const PROFILE_UPDATED_EVENT = "profile-updated";
@@ -119,37 +124,95 @@ export const useProfile = () => {
 };
 
 export const useAllCustomerProfiles = () => {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<ProfileWithBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "customer");
+  const fetchProfiles = useCallback(async () => {
+    // 1. Get all customer user_ids from roles
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "customer");
 
-      if (!roles || roles.length === 0) {
-        setProfiles([]);
-        setLoading(false);
-        return;
-      }
+    // 2. Get all user_ids that have bookings (union for self-healing)
+    const { data: bookingUsers } = await supabase
+      .from("bookings")
+      .select("user_id");
 
-      const customerIds = roles.map((r) => r.user_id);
+    const allUserIds = new Set<string>();
+    roles?.forEach((r) => allUserIds.add(r.user_id));
+    bookingUsers?.forEach((b) => allUserIds.add(b.user_id));
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("user_id", customerIds);
+    // Remove trainer ids
+    const { data: trainerRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "trainer");
+    trainerRoles?.forEach((t) => allUserIds.delete(t.user_id));
 
-      if (!error && data) {
-        setProfiles(data as Profile[]);
-      }
+    if (allUserIds.size === 0) {
+      setProfiles([]);
       setLoading(false);
-    };
+      return;
+    }
 
-    fetchProfiles();
+    const customerIds = [...allUserIds];
+
+    // 3. Fetch profiles
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("user_id", customerIds);
+
+    // 4. Fetch all future bookings for these customers (next booking)
+    const now = new Date().toISOString();
+    const { data: futureBookings } = await supabase
+      .from("bookings")
+      .select("user_id, booking_date, booking_type, status")
+      .in("user_id", customerIds)
+      .gte("booking_date", now)
+      .neq("status", "キャンセル済み")
+      .order("booking_date", { ascending: true });
+
+    // Build next-booking map (first future booking per user)
+    const nextBookingMap: Record<string, { booking_date: string; booking_type: string }> = {};
+    futureBookings?.forEach((b) => {
+      if (!nextBookingMap[b.user_id]) {
+        nextBookingMap[b.user_id] = { booking_date: b.booking_date, booking_type: b.booking_type };
+      }
+    });
+
+    // Merge profiles with booking info
+    const merged: ProfileWithBooking[] = (profileData || []).map((p) => ({
+      ...(p as Profile),
+      next_booking_date: nextBookingMap[p.user_id]?.booking_date || null,
+      next_booking_type: nextBookingMap[p.user_id]?.booking_type || null,
+    }));
+
+    setProfiles(merged);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
+
+  // Realtime: refetch when bookings or profiles change
+  useEffect(() => {
+    const channel = supabase
+      .channel("customer-list-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+        fetchProfiles();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        fetchProfiles();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchProfiles]);
 
   return { profiles, loading, setProfiles };
 };
