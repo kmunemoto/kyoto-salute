@@ -13,10 +13,23 @@ import { Loader2 } from "lucide-react";
 const CustomerSettings = () => {
   const { profile, loading, updateDisplayName } = useProfile();
   const { user } = useAuth();
+  const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+
+  const handleTogglePush = async () => {
+    if (isSubscribed) {
+      const ok = await unsubscribe();
+      if (ok) toast.success("プッシュ通知を無効にしました");
+      else toast.error("通知の解除に失敗しました");
+    } else {
+      const ok = await subscribe();
+      if (ok) toast.success("プッシュ通知を有効にしました！");
+      else toast.error("通知の許可が得られませんでした。ブラウザの設定を確認してください。");
+    }
+  };
 
   useEffect(() => {
     setDisplayName(profile?.display_name || "");
