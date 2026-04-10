@@ -107,11 +107,49 @@ const CustomerSettings = () => {
         </Card>
       </section>
 
-      {/* Notification Settings */}
+      {/* Push Notification */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5" />
+          プッシュ通知
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+                <BellRing className="w-4 h-4 text-accent" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold">スマートフォン通知</p>
+                <p className="text-[11px] text-muted-foreground mb-2">アプリを閉じていても予約やメッセージの通知が届きます</p>
+                {!isSupported ? (
+                  <p className="text-[11px] text-muted-foreground">このブラウザはプッシュ通知に対応していません。</p>
+                ) : isSubscribed ? (
+                  <div className="space-y-2">
+                    <div className="bg-accent/5 rounded-lg p-2 border border-accent/20">
+                      <p className="text-xs text-muted-foreground">✅ プッシュ通知は<span className="font-bold text-foreground">オン</span>です</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={handleTogglePush} disabled={pushLoading} className="text-xs h-7">
+                      通知を無効にする
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" onClick={handleTogglePush} disabled={pushLoading} className="text-xs">
+                    <Bell className="w-3.5 h-3.5 mr-1" />
+                    プッシュ通知を許可する
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Reminder Notification Settings */}
       <section>
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
           <Bell className="w-3.5 h-3.5" />
-          通知設定
+          リマインド通知
         </h2>
         <Card>
           <CardContent className="p-4 space-y-4">
@@ -131,10 +169,7 @@ const CustomerSettings = () => {
                   <p className="text-[11px] text-muted-foreground">予約の24時間前にお知らせが届きます</p>
                 </div>
               </div>
-              <Switch
-                checked={reminderEnabled}
-                onCheckedChange={setReminderEnabled}
-              />
+              <Switch checked={reminderEnabled} onCheckedChange={setReminderEnabled} />
             </div>
             {reminderEnabled && (
               <div className="bg-accent/5 rounded-lg p-3 border border-accent/20">
