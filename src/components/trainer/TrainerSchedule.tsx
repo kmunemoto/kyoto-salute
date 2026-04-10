@@ -182,7 +182,13 @@ const TrainerSchedule = () => {
                         return (
                           <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
                             {session && (
-                              <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs">
+                              <div className="accent-gradient text-accent-foreground rounded-lg p-2 text-xs relative group">
+                                <button
+                                  onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime })}
+                                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/20"
+                                >
+                                  <Trash2 className="w-3 h-3 text-destructive-foreground" />
+                                </button>
                                 <p className="font-bold truncate">{session.clientName}</p>
                                 <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
                                 <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
@@ -229,6 +235,12 @@ const TrainerSchedule = () => {
                             <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
                             <p className="text-[10px] text-muted-foreground/70 mt-0.5">{b.booking_type}</p>
                           </div>
+                          <button
+                            onClick={() => setDeleteTarget({ id: b.id, clientName: b.clientName, date: b.date, startTime: b.startTime })}
+                            className="p-2 rounded-lg hover:bg-destructive/10 transition-colors shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </button>
                         </CardContent>
                       </Card>
                     ))}
@@ -333,6 +345,30 @@ const TrainerSchedule = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>予約を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && `${deleteTarget.clientName}さんの予約（${deleteTarget.date} ${deleteTarget.startTime}）を削除します。`}
+              本当にこの予約を削除しますか？元に戻すことはできません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBooking}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              はい、削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
