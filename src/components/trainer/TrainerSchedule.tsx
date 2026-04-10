@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAllBookings, checkSlotBlocked, createBooking } from "@/hooks/useBookings";
+import { useAllBookings, checkSlotBlocked, createBooking, cancelBooking } from "@/hooks/useBookings";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -22,6 +26,8 @@ const TrainerSchedule = () => {
   const [proxyClient, setProxyClient] = useState<string>("");
   const [proxyBookingType, setProxyBookingType] = useState<string>("通常");
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { bookings, loading, refetch } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
