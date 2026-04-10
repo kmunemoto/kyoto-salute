@@ -164,6 +164,37 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     fetchMeals();
   }, [clientId]);
 
+  // Fetch client bookings from DB
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const { data } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", clientId)
+        .order("booking_date", { ascending: true });
+      if (data) {
+        setClientBookings2(data.map((row) => {
+          const dt = new Date(row.booking_date);
+          const h = dt.getHours();
+          const m = dt.getMinutes();
+          const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+          const endMin = h * 60 + m + 60;
+          const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+          return {
+            id: row.id,
+            date: row.booking_date,
+            startTime,
+            endTime,
+            status: row.status,
+            booking_type: row.booking_type,
+          };
+        }));
+      }
+      setLoadingBookings(false);
+    };
+    fetchBookings();
+  }, [clientId]);
+
   if (loadingProfile) {
     return (
       <div className="flex items-center justify-center py-20">
