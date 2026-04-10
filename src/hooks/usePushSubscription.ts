@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 // This must be the FULL 65-byte uncompressed VAPID public key in URL-safe base64
 // Generate with: npx web-push generate-vapid-keys
