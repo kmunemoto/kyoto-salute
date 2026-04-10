@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  clientBodyMetrics, clientBookings, clientChatMessages,
+  clientBodyMetrics, clientChatMessages,
   planOptions, planPrices, PlanType, ChatMessage,
 } from "@/lib/dummyData";
 import { Switch } from "@/components/ui/switch";
