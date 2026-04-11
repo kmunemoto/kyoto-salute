@@ -510,13 +510,29 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1 block">体重 (kg)</label>
-                    <Input type="number" step="0.1" placeholder="73.5" value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} className="h-11" />
+                    <Input type="number" step="0.1" placeholder={latestMeasurement?.weight?.toString() || "73.5"} value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} className="h-11" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1 block">体脂肪率 (%)</label>
-                    <Input type="number" step="0.1" placeholder="18.0" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} className="h-11" />
+                    <Input type="number" step="0.1" placeholder={latestMeasurement?.body_fat?.toString() || "18.0"} value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} className="h-11" />
                   </div>
                 </div>
+                <Button
+                  className="w-full"
+                  disabled={savingMeasurement || (!bodyWeight && !bodyFat)}
+                  onClick={async () => {
+                    setSavingMeasurement(true);
+                    const today = new Date().toISOString().slice(0, 10);
+                    const w = bodyWeight ? parseFloat(bodyWeight) : null;
+                    const f = bodyFat ? parseFloat(bodyFat) : null;
+                    const ok = await saveMeasurement(today, w, f);
+                    if (ok) { setBodyWeight(""); setBodyFat(""); }
+                    setSavingMeasurement(false);
+                  }}
+                >
+                  {savingMeasurement ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                  計測データを保存
+                </Button>
               </CardContent>
             </Card>
           </section>
