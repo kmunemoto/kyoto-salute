@@ -47,8 +47,8 @@ const TrainerSchedule = () => {
   const proxyDateKey = proxyDate ? format(proxyDate, "yyyy-MM-dd") : "";
 
   const handleProxyBook = async () => {
-    if (!proxyDate || !proxyTime || !proxyClient) {
-      toast.error("日付・時間・お客様を選択してください");
+    if (!proxyDate || !proxyTime || !proxyClient || !proxyBookingType) {
+      toast.error("日付・時間・お客様・プランを選択してください");
       return;
     }
 
@@ -76,7 +76,7 @@ const TrainerSchedule = () => {
     setProxyDate(undefined);
     setProxyTime("");
     setProxyClient("");
-    setProxyBookingType("通常");
+    setProxyBookingType("");
     setSubmitting(false);
     void refetch();
 
