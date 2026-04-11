@@ -10,6 +10,7 @@ export interface Profile {
   plan: string | null;
   paid_this_month: boolean;
   trial_completed: boolean;
+  line_user_id: string | null;
   created_at: string;
   updated_at: string;
 }

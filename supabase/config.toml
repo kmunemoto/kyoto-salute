@@ -13,3 +13,9 @@ project_id = "gvgrqaigffxtkvckjfur"
     verify_jwt = true
   [functions.send-transactional-email]
     verify_jwt = false
+  [functions.line-login-callback]
+    verify_jwt = false
+  [functions.send-line-message]
+    verify_jwt = false
+  [functions.line-booking-reminder]
+    verify_jwt = false
