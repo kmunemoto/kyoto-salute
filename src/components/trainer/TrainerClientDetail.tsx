@@ -558,6 +558,37 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <Switch checked={isPaid} onCheckedChange={handlePaymentToggle} />
               </div>
             </div>
+
+            {/* Cycle Start Date */}
+            <div className="pt-2 border-t border-border space-y-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">利用期間（起算日）</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={cycleStartDate}
+                  onChange={(e) => handleCycleStartDateChange(e.target.value)}
+                  className="flex-1 h-9 text-sm"
+                />
+                <Button variant="outline" size="sm" onClick={handleResetCycleToToday} className="shrink-0 h-9 text-xs gap-1">
+                  <RotateCcw className="w-3 h-3" />
+                  今日にリセット
+                </Button>
+              </div>
+              {cycleStartDate && (
+                <p className="text-xs text-muted-foreground">
+                  有効期限：{format(addMonths(parseISO(cycleStartDate), 1), "yyyy年M月d日", { locale: ja })}
+                  {(() => {
+                    const remaining = differenceInDays(addMonths(parseISO(cycleStartDate), 1), new Date());
+                    if (remaining < 0) return <span className="text-destructive font-bold ml-1">（期限切れ）</span>;
+                    if (remaining <= 3) return <span className="text-warning font-bold ml-1">（残り{remaining}日）</span>;
+                    return <span className="ml-1">（残り{remaining}日）</span>;
+                  })()}
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </section>
