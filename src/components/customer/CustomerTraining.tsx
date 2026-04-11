@@ -55,6 +55,7 @@ const CustomerTraining = () => {
           workout_date: w.workout_date,
           weight: w.weight,
           reps: w.reps,
+          sets: w.sets || (w.weight != null ? [{ set: 1, weight: w.weight, reps: w.reps }] : null),
           exercise_name: w.exercises?.name || "不明",
         })));
       }
