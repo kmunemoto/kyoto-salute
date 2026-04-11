@@ -30,7 +30,7 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
       {/* Desktop sidebar */}
       <aside className="hidden md:flex fixed left-0 top-14 bottom-0 w-60 flex-col gap-1 p-4 border-r border-border bg-card/60 backdrop-blur-xl z-30">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-3">メニュー</p>
-        {tabs.map((t) => {
+        {desktopTabs.map((t) => {
           const active = activeTab === t.id;
           const showBadge = t.id === "messages" && unreadMessages > 0;
           return (
@@ -58,9 +58,8 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border">
         <div className="flex">
-          {tabs.map((t) => {
+          {mobileTabs.map((t) => {
             const active = activeTab === t.id;
-            const showBadge = t.id === "messages" && unreadMessages > 0;
             return (
               <button
                 key={t.id}
