@@ -295,7 +295,7 @@ async function sendCancelLineNotification(
       },
     });
   } else {
-    // Customer cancelled → notify trainer via LINE
+    // Customer cancelled → notify both trainer and customer via LINE
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name")
@@ -303,15 +303,23 @@ async function sendCancelLineNotification(
       .maybeSingle();
     const customerName = profile?.display_name || "顧客";
 
-    // Get trainer user_id
+    // Notify trainer
     const { data: trainerIds } = await supabase.rpc("get_trainer_ids");
     const trainerId = trainerIds?.[0]?.user_id;
-    if (!trainerId) return;
+    if (trainerId) {
+      await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: trainerId,
+          message: `❌ 予約キャンセル通知\n\n${customerName}様が${dateStr}の予約（${booking.booking_type}）をキャンセルしました。\n\nパーソナルジムSalute御所南`,
+        },
+      });
+    }
 
+    // Notify customer (cancellation confirmation)
     await supabase.functions.invoke("send-line-message", {
       body: {
-        user_id: trainerId,
-        message: `❌ 予約キャンセル通知\n\n${customerName}様が${dateStr}の予約（${booking.booking_type}）をキャンセルしました。\n\nパーソナルジムSalute御所南`,
+        user_id: booking.user_id,
+        message: `❌ キャンセル完了のお知らせ\n\n${customerName}様、${dateStr}の予約（${booking.booking_type}）のキャンセルが完了しました。\n\n再予約はアプリからお願いいたします。\nパーソナルジムSalute御所南`,
       },
     });
   }
