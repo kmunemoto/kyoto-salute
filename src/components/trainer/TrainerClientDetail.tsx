@@ -839,65 +839,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         </TabsContent>
       </Tabs>
 
-      {/* Edit workout dialog */}
-      <Dialog open={!!editRecord} onOpenChange={(open) => { if (!open) setEditRecord(null); }}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>記録を編集</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-1 block">種目</label>
-              <select
-                value={editExerciseId}
-                onChange={(e) => setEditExerciseId(e.target.value)}
-                className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                {exerciseMasters.map((e) => (
-                  <option key={e.id} value={e.id}>{e.name}</option>
-                ))}
-              </select>
-            </div>
-            {editSets.map((s, si) => (
-              <div key={si} className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-muted-foreground">セット {si + 1}</span>
-                  {editSets.length > 1 && (
-                    <button onClick={() => setEditSets(prev => prev.filter((_, i) => i !== si))} className="text-destructive/60 hover:text-destructive p-0.5">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">重量 (kg)</label>
-                    <Input type="number" step="0.5" value={s.weight} onChange={(e) => { const u = [...editSets]; u[si] = { ...u[si], weight: e.target.value }; setEditSets(u); }} className="h-11" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">回数 (rep)</label>
-                    <Input type="number" value={s.reps} onChange={(e) => { const u = [...editSets]; u[si] = { ...u[si], reps: e.target.value }; setEditSets(u); }} className="h-11" />
-                  </div>
-                </div>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setEditSets(prev => [...prev, { weight: "", reps: "" }])}
-              className="w-full text-xs text-accent font-medium py-1.5 rounded-lg border border-dashed border-accent/40 hover:bg-accent/5 transition-colors flex items-center justify-center gap-1"
-            >
-              <Plus className="w-3 h-3" /> セットを追加
-            </button>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setEditRecord(null)} className="w-full sm:w-auto">キャンセル</Button>
-            <Button variant="accent" onClick={handleEditSave} disabled={editSaving || !editExerciseId || editSets.every(s => !s.weight || !s.reps)} className="w-full sm:w-auto">
-              {editSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
-              保存
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
