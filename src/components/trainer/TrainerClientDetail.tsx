@@ -716,7 +716,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                           </div>
                           );
                         })}
-                        })}
                       </div>
                     </CardContent>
                   </Card>
