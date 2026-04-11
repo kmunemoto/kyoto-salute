@@ -132,7 +132,7 @@ const CustomerHome = () => {
               <Clock className={`w-4 h-4 ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-accent'}`} />
               <div className="flex-1">
                 <p className="text-sm font-bold">
-                  現在の利用期間：{format(startDate, "M月d日", { locale: ja })} 〜 {format(endDate, "M月d日", { locale: ja })}
+                  今回の利用期間：{format(startDate, "M月d日", { locale: ja })} 〜 {format(endDate, "M月d日", { locale: ja })}
                 </p>
                 {isExpired ? (
                   <p className="text-xs font-bold text-destructive mt-0.5">利用期限が過ぎています</p>
