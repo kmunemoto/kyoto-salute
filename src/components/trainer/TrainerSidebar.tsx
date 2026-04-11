@@ -7,11 +7,19 @@ interface TrainerSidebarProps {
   unreadMessages?: number;
 }
 
-const tabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard }[] = [
+const desktopTabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "ダッシュボード", icon: LayoutDashboard },
   { id: "clients", label: "顧客一覧", icon: Users },
   { id: "schedule", label: "予約管理", icon: CalendarDays },
   { id: "messages", label: "メッセージ", icon: MessageCircle },
+  { id: "exercises", label: "種目設定", icon: Dumbbell },
+  { id: "gym-settings", label: "ジム設定", icon: Settings2 },
+];
+
+const mobileTabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard }[] = [
+  { id: "dashboard", label: "ダッシュボード", icon: LayoutDashboard },
+  { id: "clients", label: "顧客一覧", icon: Users },
+  { id: "schedule", label: "予約管理", icon: CalendarDays },
   { id: "exercises", label: "種目設定", icon: Dumbbell },
   { id: "gym-settings", label: "ジム設定", icon: Settings2 },
 ];
@@ -22,7 +30,7 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
       {/* Desktop sidebar */}
       <aside className="hidden md:flex fixed left-0 top-14 bottom-0 w-60 flex-col gap-1 p-4 border-r border-border bg-card/60 backdrop-blur-xl z-30">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-3">メニュー</p>
-        {tabs.map((t) => {
+        {desktopTabs.map((t) => {
           const active = activeTab === t.id;
           const showBadge = t.id === "messages" && unreadMessages > 0;
           return (
@@ -50,9 +58,8 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border">
         <div className="flex">
-          {tabs.map((t) => {
+          {mobileTabs.map((t) => {
             const active = activeTab === t.id;
-            const showBadge = t.id === "messages" && unreadMessages > 0;
             return (
               <button
                 key={t.id}
@@ -63,11 +70,6 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
               >
                 <div className="relative">
                   <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""} transition-transform`} />
-                  {showBadge && (
-                    <span className="absolute -top-1.5 -right-2.5 bg-destructive text-destructive-foreground text-[8px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
-                      {unreadMessages}
-                    </span>
-                  )}
                 </div>
                 <span className="text-[10px] font-semibold">{t.label}</span>
               </button>
