@@ -25,14 +25,14 @@ const TrainerMessages = () => {
 
   const { messages, sendMessage, markAsRead } = useMessages(selectedCustomerId);
 
-  // Fetch customers
+  // Fetch customers - trainer can view all roles via RLS
   useEffect(() => {
     const fetchCustomers = async () => {
       const { data: roles } = await supabase
         .from("user_roles")
         .select("user_id")
         .eq("role", "customer");
-      if (!roles) return;
+      if (!roles || roles.length === 0) return;
 
       const ids = roles.map((r) => r.user_id);
       const { data: profiles } = await supabase

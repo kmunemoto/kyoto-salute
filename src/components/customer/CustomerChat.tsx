@@ -12,26 +12,22 @@ const CustomerChat = () => {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Fetch trainer user id
+  // Fetch trainer user id using security definer function
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "trainer")
-        .limit(1)
-        .single();
-      if (data) {
-        setTrainerId(data.user_id);
+    const fetchTrainer = async () => {
+      const { data } = await supabase.rpc("get_trainer_ids");
+      if (data && data.length > 0) {
+        const tid = data[0].user_id;
+        setTrainerId(tid);
         const { data: profile } = await supabase
           .from("profiles")
           .select("display_name")
-          .eq("user_id", data.user_id)
+          .eq("user_id", tid)
           .single();
         if (profile?.display_name) setTrainerName(profile.display_name);
       }
     };
-    fetch();
+    fetchTrainer();
   }, []);
 
   const { messages, sendMessage, markAsRead } = useMessages(trainerId);
