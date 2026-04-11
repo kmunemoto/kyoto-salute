@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, BellRing, Settings, User, Pencil, Shield } from "lucide-react";
+import { Bell, BellOff, BellRing, Settings, User, Pencil, Shield, MessageCircle, CheckCircle2, Unlink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -7,17 +7,20 @@ import { Input } from "@/components/ui/input";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 const CustomerSettings = () => {
-  const { profile, loading, updateDisplayName } = useProfile();
+  const { profile, loading, updateDisplayName, refetch } = useProfile();
   const { user } = useAuth();
   const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+
+  const isLineLinked = !!profile?.line_user_id;
 
   const handleTogglePush = async () => {
     if (isSubscribed) {
@@ -34,6 +37,53 @@ const CustomerSettings = () => {
   useEffect(() => {
     setDisplayName(profile?.display_name || "");
   }, [profile?.display_name]);
+
+  // Listen for LINE link callback
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "line-link-result") {
+        if (e.data.success) {
+          toast.success("LINE連携が完了しました！");
+          refetch();
+        } else {
+          toast.error("LINE連携に失敗しました");
+        }
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [refetch]);
+
+  const handleLineLink = () => {
+    if (!user) return;
+    const channelId = import.meta.env.VITE_LINE_LOGIN_CHANNEL_ID;
+    if (!channelId) {
+      // Use the edge function URL to construct the redirect
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
+      // We need the LINE Login channel ID from secrets - prompt user
+      toast.error("LINE Login Channel IDの設定が必要です");
+      return;
+    }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
+    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${user.id}&scope=profile%20openid`;
+    window.open(lineAuthUrl, "line-link", "width=500,height=700");
+  };
+
+  const handleLineUnlink = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ line_user_id: null })
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("LINE連携の解除に失敗しました");
+    } else {
+      toast.success("LINE連携を解除しました");
+      refetch();
+    }
+  };
 
   const handleSaveName = async () => {
     if (!user || !displayName.trim()) return;
@@ -102,6 +152,52 @@ const CustomerSettings = () => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">プラン</span>
               <span className="text-sm font-bold">{currentPlan}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* LINE連携 */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <MessageCircle className="w-3.5 h-3.5" />
+          LINE連携
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${isLineLinked ? "bg-[#06C755]/10" : "bg-muted"}`}>
+                <MessageCircle className={`w-4 h-4 ${isLineLinked ? "text-[#06C755]" : "text-muted-foreground"}`} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold">LINE通知</p>
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  LINEアカウントと連携すると、予約確認やリマインド通知がLINEに届きます
+                </p>
+                {isLineLinked ? (
+                  <div className="space-y-2">
+                    <div className="bg-[#06C755]/5 rounded-lg p-2 border border-[#06C755]/20">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#06C755]" />
+                        LINE連携済み
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={handleLineUnlink} className="text-xs h-7">
+                      <Unlink className="w-3 h-3 mr-1" />
+                      連携を解除
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={handleLineLink}
+                    className="text-xs bg-[#06C755] hover:bg-[#06C755]/90 text-white"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 mr-1" />
+                    LINEと連携する
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
