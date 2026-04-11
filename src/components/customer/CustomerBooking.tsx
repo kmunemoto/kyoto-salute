@@ -309,7 +309,7 @@ const CustomerBooking = () => {
                           className="text-muted-foreground hover:text-accent transition-colors p-2"
                           title="Googleカレンダーに追加"
                         >
-                          <ExternalLink className="w-4 h-4" />
+                          <CalendarPlus className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
