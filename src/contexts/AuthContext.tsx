@@ -28,44 +28,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchRole = async (userId: string): Promise<AppRole | null> => {
-    const { data } = await supabase
+  const fetchRole = (userId: string) => {
+    supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .single();
-    const r = (data?.role as AppRole) ?? null;
-    setRole(r);
-    return r;
+      .maybeSingle()
+      .then(({ data }) => {
+        setRole((data?.role as AppRole) ?? "customer");
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    let initialSessionHandled = false;
+    // 1. Restore session from storage first
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchRole(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
 
+    // 2. Listen for subsequent auth changes (do NOT await inside)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!initialSessionHandled) return; // skip, getSession handles first load
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
           setLoading(true);
-          await fetchRole(session.user.id);
+          fetchRole(session.user.id);
         } else {
           setRole(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchRole(session.user.id);
-      }
-      setLoading(false);
-      initialSessionHandled = true;
-    });
 
     return () => subscription.unsubscribe();
   }, []);
