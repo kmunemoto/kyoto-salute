@@ -146,11 +146,13 @@ export const useAllBookings = () => {
     // Merge blocked slots
     blockedRows?.forEach((bs) => {
       const dt = new Date(bs.blocked_date);
+      const endDt = new Date(bs.end_blocked_date);
       const h = dt.getHours();
       const m = dt.getMinutes();
       const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-      const endMin = h * 60 + m + 60;
-      const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+      const eh = endDt.getHours();
+      const em = endDt.getMinutes();
+      const endTime = `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
       parsed.push({
         id: bs.id,
         user_id: "blocked",
@@ -180,18 +182,20 @@ export const useAllBookings = () => {
   return { bookings, loading, refetch: fetchBookings, removeBooking };
 };
 
-export const checkSlotBlocked = (bookings: BookingWithTime[], date: string, startTime: string): boolean => {
+export const checkSlotBlocked = (bookings: BookingWithTime[], date: string, startTime: string, endTimeOverride?: string): boolean => {
   const timeToMin = (t: string) => {
     const [h, m] = t.split(":").map(Number);
     return h * 60 + m;
   };
 
   const newMin = timeToMin(startTime);
+  const newEnd = endTimeOverride ? timeToMin(endTimeOverride) : newMin + 75;
 
   return bookings.some((b) => {
     if (b.date !== date || b.status === "キャンセル済み") return false;
     const bMin = timeToMin(b.startTime);
-    return newMin < bMin + 75 && bMin < newMin + 75;
+    const bEnd = timeToMin(b.endTime);
+    return newMin < bEnd && bMin < newEnd;
   });
 };
 

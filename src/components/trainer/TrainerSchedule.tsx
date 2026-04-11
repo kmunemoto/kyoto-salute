@@ -142,34 +142,26 @@ const TrainerSchedule = () => {
     if (!blockDate || !blockStartTime || !blockEndTime || !user) return;
     const dateStr = format(blockDate, "yyyy-MM-dd");
 
-    // Generate all 15-min slots from start to end (exclusive)
-    const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-    const startMin = toMin(blockStartTime);
-    const endMin = toMin(blockEndTime);
-    if (endMin <= startMin) {
+    if (blockEndTime <= blockStartTime) {
       toast.error("終了時間は開始時間より後にしてください");
       return;
     }
 
-    // Check all slots in range
-    const slotsToBlock: string[] = [];
-    for (let m = startMin; m < endMin; m += 15) {
-      const time = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-      if (checkSlotBlocked(bookings, dateStr, time)) {
-        toast.error(`${time} はすでに予約またはブロックが入っています`);
-        return;
-      }
-      slotsToBlock.push(time);
+    // Check if the range overlaps with any existing booking/block
+    if (checkSlotBlocked(bookings, dateStr, blockStartTime, blockEndTime)) {
+      toast.error("この時間帯にはすでに予約またはブロックが入っています");
+      return;
     }
 
     setSubmitting(true);
-    const rows = slotsToBlock.map((time) => ({
-      blocked_date: `${dateStr}T${time}:00+09:00`,
+    const row = {
+      blocked_date: `${dateStr}T${blockStartTime}:00+09:00`,
+      end_blocked_date: `${dateStr}T${blockEndTime}:00+09:00`,
       created_by: user.id,
       reason: `ブロック（${blockStartTime}〜${blockEndTime}）`,
-    }));
+    };
 
-    const { error } = await supabase.from("blocked_slots").insert(rows);
+    const { error } = await supabase.from("blocked_slots").insert(row);
 
     if (error) {
       toast.error("ブロックに失敗しました");
@@ -426,7 +418,7 @@ const TrainerSchedule = () => {
                       const h = Math.floor(totalMin / 60);
                       const m = totalMin % 60;
                       const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                      const blocked = checkSlotBlocked(bookings, proxyDateKey, time);
+                    const blocked = checkSlotBlocked(bookings, proxyDateKey, time, undefined);
                       slots.push({ time, blocked });
                     }
                     return slots.map((slot) => (
@@ -522,7 +514,7 @@ const TrainerSchedule = () => {
                         const h = Math.floor(totalMin / 60);
                         const m = totalMin % 60;
                         const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                        const blocked = checkSlotBlocked(bookings, blockDateKey, time);
+                      const blocked = checkSlotBlocked(bookings, blockDateKey, time, undefined);
                         slots.push({ time, blocked });
                       }
                       return slots.map((slot) => (

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 interface TrialSlotBooking {
   date: string;
   startTime: string;
+  endTime: string;
 }
 
 const TrialBooking = () => {
@@ -37,13 +38,15 @@ const TrialBooking = () => {
       d.setDate(today.getDate() + i);
       const dateStr = format(d, "yyyy-MM-dd");
       promises.push(
-        supabase.rpc("get_booked_slots", { check_date: dateStr }).then(({ data }) => {
-          data?.forEach((r: { booking_date: string; status: string }) => {
+        supabase.rpc("get_booked_slots", { check_date: dateStr }).then(({ data }: { data: any }) => {
+          data?.forEach((r: { booking_date: string; end_booking_date: string; status: string }) => {
             if (r.status === "キャンセル済み") return;
             const dt = new Date(r.booking_date);
+            const endDt = new Date(r.end_booking_date);
             slots.push({
               date: format(dt, "yyyy-MM-dd"),
               startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
+              endTime: `${String(endDt.getHours()).padStart(2, "0")}:${String(endDt.getMinutes()).padStart(2, "0")}`,
             });
           });
         })
@@ -68,7 +71,8 @@ const TrialBooking = () => {
     return existingBookings.some((b) => {
       if (b.date !== date) return false;
       const bMin = timeToMin(b.startTime);
-      return newMin < bMin + 75 && bMin < newMin + 75;
+      const bEnd = timeToMin(b.endTime);
+      return newMin < bEnd && bMin < newMin + 75;
     });
   };
 
