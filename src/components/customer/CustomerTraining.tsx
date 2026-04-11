@@ -81,12 +81,17 @@ const CustomerTraining = () => {
   const chartData = useMemo(() => {
     const points: { date: string; weight: number; reps: number }[] = [];
     [...workouts].reverse().forEach((w) => {
-      if (w.exercise_name === selectedExercise && w.weight != null && w.reps != null) {
+      if (w.exercise_name === selectedExercise) {
+        const setsData = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
+        if (setsData.length === 0) return;
+        // Use max weight set for graph
+        const best = setsData.reduce((a, b) => (b.weight > a.weight ? b : a), setsData[0]);
+        if (best.weight == null || best.reps == null) return;
         const d = new Date(w.workout_date);
         points.push({
           date: `${d.getMonth() + 1}/${d.getDate()}`,
-          weight: w.weight,
-          reps: w.reps,
+          weight: best.weight,
+          reps: best.reps,
         });
       }
     });
