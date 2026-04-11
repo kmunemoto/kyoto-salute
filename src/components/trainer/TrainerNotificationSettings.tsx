@@ -1,15 +1,61 @@
-import { useState } from "react";
-import { Bell, BellRing, Settings, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Bell, BellRing, Settings, Shield, MessageCircle, CheckCircle2, Unlink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
+import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const TrainerNotificationSettings = () => {
   const [messageNotif, setMessageNotif] = useState(true);
   const [reminderNotif, setReminderNotif] = useState(true);
   const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
+  const { profile, loading: profileLoading, refetch } = useProfile();
+  const { user } = useAuth();
+
+  const isLineLinked = !!profile?.line_user_id;
+
+  // Listen for LINE link callback
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "line-link-result") {
+        if (e.data.success) {
+          toast.success("LINE連携が完了しました！");
+          refetch();
+        } else {
+          toast.error("LINE連携に失敗しました");
+        }
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [refetch]);
+
+  const handleLineLink = () => {
+    if (!user) return;
+    const channelId = "2009770713";
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
+    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${user.id}&scope=profile%20openid`;
+    window.open(lineAuthUrl, "line-link", "width=500,height=700");
+  };
+
+  const handleLineUnlink = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ line_user_id: null })
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("LINE連携の解除に失敗しました");
+    } else {
+      toast.success("LINE連携を解除しました");
+      refetch();
+    }
+  };
 
   const handleTogglePush = async () => {
     if (isSubscribed) {
@@ -31,6 +77,44 @@ const TrainerNotificationSettings = () => {
       </h1>
 
       <div className="space-y-4 max-w-lg">
+        {/* LINE連携 */}
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#06C755]/10 flex items-center justify-center shrink-0">
+                <MessageCircle className="w-5 h-5 text-[#06C755]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-sm mb-1">LINE連携</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  LINEと連携すると、新規予約・キャンセルなどの通知をLINEで受け取れます。
+                </p>
+                {isLineLinked ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#06C755]">
+                      <CheckCircle2 className="w-4 h-4" />
+                      LINE連携済み
+                    </div>
+                    <Button size="sm" variant="outline" onClick={handleLineUnlink}>
+                      <Unlink className="w-3.5 h-3.5 mr-1.5" />
+                      連携を解除
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={handleLineLink}
+                    className="bg-[#06C755] hover:bg-[#05b34c] text-white"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-1.5" />
+                    LINEと連携する
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Browser push notification */}
         <Card>
           <CardContent className="p-5">
