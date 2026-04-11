@@ -20,7 +20,7 @@ const TrainerSchedule = () => {
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
   const [proxyTime, setProxyTime] = useState<string>("");
   const [proxyClient, setProxyClient] = useState<string>("");
-  const [proxyBookingType, setProxyBookingType] = useState<string>("通常");
+  const [proxyBookingType, setProxyBookingType] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
