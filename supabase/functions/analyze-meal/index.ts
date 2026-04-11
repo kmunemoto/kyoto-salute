@@ -21,6 +21,23 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Resolve storage path to a signed URL so the AI can access the image
+    let resolvedImageUrl = imageUrl;
+    if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+      const { data: signedData, error: signError } = await supabase.storage
+        .from("meal-photos")
+        .createSignedUrl(imageUrl, 600); // 10 min
+      if (signError || !signedData?.signedUrl) {
+        console.error("Failed to create signed URL:", signError);
+        throw new Error("Could not access uploaded image");
+      }
+      resolvedImageUrl = signedData.signedUrl;
+    }
+
     // Call Gemini via Lovable AI Gateway with image
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -50,7 +67,7 @@ serve(async (req) => {
             content: [
               {
                 type: "image_url",
-                image_url: { url: imageUrl }
+                image_url: { url: resolvedImageUrl }
               },
               {
                 type: "text",
@@ -100,10 +117,6 @@ serve(async (req) => {
     }
 
     // Update the meal record in DB
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const { error: updateError } = await supabase
       .from("meals")
       .update({
