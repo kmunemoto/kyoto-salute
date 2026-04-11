@@ -232,7 +232,7 @@ export interface ExerciseMaster {
   category: string;
 }
 
-export const exerciseCategories = ['胸', '背中', '肩', '腕', '脚・臀部', '体幹・腹筋', 'その他'] as const;
+export const exerciseCategories = ['胸', '背中', '肩', '上腕二頭筋', '上腕三頭筋', '脚・臀部', '体幹・腹筋', 'その他'] as const;
 
 export const defaultExerciseMasters: ExerciseMaster[] = [
   // 胸
@@ -252,8 +252,8 @@ export const defaultExerciseMasters: ExerciseMaster[] = [
   // 肩
   { id: 'ex-20', name: 'ショルダープレス', category: '肩' },
   { id: 'ex-21', name: 'ダンベルショルダープレス', category: '肩' },
-  // 腕
-  { id: 'ex-30', name: 'トライセプスプッシュダウン', category: '腕' },
+  // 上腕三頭筋
+  { id: 'ex-30', name: 'トライセプスプッシュダウン', category: '上腕三頭筋' },
   // 脚・臀部
   { id: 'ex-40', name: 'スクワット', category: '脚・臀部' },
   { id: 'ex-41', name: 'レッグプレス', category: '脚・臀部' },
