@@ -337,25 +337,39 @@ const CustomerMeals = () => {
                         <p className="text-[10px] text-muted-foreground">P</p>
                         <p className="text-sm font-bold text-accent">{totals.protein.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
                         <p className="text-[10px] font-semibold text-accent">{pfc.pPct}%</p>
+                        <p className="text-[9px] text-muted-foreground">目標{PFC_GOALS.p}%</p>
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground">F</p>
                         <p className="text-sm font-bold text-warning">{totals.fat.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
                         <p className="text-[10px] font-semibold text-warning">{pfc.fPct}%</p>
+                        <p className="text-[9px] text-muted-foreground">目標{PFC_GOALS.f}%</p>
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground">C</p>
                         <p className="text-sm font-bold text-info">{totals.carbs.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
                         <p className="text-[10px] font-semibold text-info">{pfc.cPct}%</p>
+                        <p className="text-[9px] text-muted-foreground">目標{PFC_GOALS.c}%</p>
                       </div>
                     </div>
                   </div>
-                  {/* PFC Balance Bar */}
+                  {/* PFC Balance Bar with goal markers */}
                   {(pfc.pPct + pfc.fPct + pfc.cPct) > 0 && (
-                    <div className="flex h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-accent transition-all" style={{ width: `${pfc.pPct}%` }} />
-                      <div className="bg-warning transition-all" style={{ width: `${pfc.fPct}%` }} />
-                      <div className="bg-info transition-all" style={{ width: `${pfc.cPct}%` }} />
+                    <div className="space-y-1">
+                      <div className="relative">
+                        <div className="flex h-2.5 rounded-full overflow-hidden">
+                          <div className="bg-accent transition-all" style={{ width: `${pfc.pPct}%` }} />
+                          <div className="bg-warning transition-all" style={{ width: `${pfc.fPct}%` }} />
+                          <div className="bg-info transition-all" style={{ width: `${pfc.cPct}%` }} />
+                        </div>
+                        {/* Goal marker lines */}
+                        <div className="absolute top-0 h-full w-0.5 bg-foreground/60 rounded" style={{ left: `${PFC_GOALS.p}%` }} title="P目標" />
+                        <div className="absolute top-0 h-full w-0.5 bg-foreground/60 rounded" style={{ left: `${PFC_GOALS.p + PFC_GOALS.f}%` }} title="F目標" />
+                      </div>
+                      <div className="flex justify-between text-[9px] text-muted-foreground">
+                        <span>実績バランス</span>
+                        <span>▼ 目標ライン</span>
+                      </div>
                     </div>
                   )}
                 </CardContent>
