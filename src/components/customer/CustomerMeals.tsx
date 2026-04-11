@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf } from "lucide-react";
+import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
