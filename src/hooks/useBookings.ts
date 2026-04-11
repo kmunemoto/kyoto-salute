@@ -194,16 +194,22 @@ export const createBooking = async (
     }
 
     // Sync to Google Calendar (fire-and-forget)
-    const clientName = await getDisplayName(userId);
-    supabase.functions.invoke("google-calendar-sync", {
-      body: {
-        action: "create",
-        booking_id: data.id,
-        booking_date: data.booking_date,
-        booking_type: bookingType,
-        client_name: clientName,
-      },
-    }).catch(console.error);
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data: prof }) => {
+        supabase.functions.invoke("google-calendar-sync", {
+          body: {
+            action: "create",
+            booking_id: data.id,
+            booking_date: data.booking_date,
+            booking_type: bookingType,
+            client_name: prof?.display_name || "顧客",
+          },
+        }).catch(console.error);
+      });
   }
 
   return { data, error };
