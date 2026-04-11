@@ -336,34 +336,31 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     setIsPaid(checked);
     toast.success(checked ? `${displayName}さんの今月分を「支払済」にしました` : `${displayName}さんの今月分を「未払い」に戻しました`);
   };
-  const openEdit = (r: WorkoutRecord) => {
-    setEditRecord(r);
-    setEditExerciseId(r.exercise_id);
-    const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : [{ set: 1, weight: 0, reps: 0 }]);
-    setEditSets(setsData.map((s: any) => ({ weight: String(s.weight ?? ""), reps: String(s.reps ?? "") })));
+  const openEdit = (dateKey: string) => {
+    const records = groupedRecords[dateKey] || [];
+    if (records.length === 0) return;
+    setEditingDate(dateKey);
+    setEditingRecordIds(records.map(r => r.id));
+    setTrainingDate(dateKey);
+    setExercises(records.map(r => {
+      const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight!, reps: r.reps! }] : [{ set: 1, weight: 0, reps: 0 }]);
+      return {
+        exerciseId: r.exercise_id,
+        name: r.exercise_name || "",
+        sets: setsData.map((s: any) => ({ weight: String(s.weight ?? ""), reps: String(s.reps ?? "") })),
+      };
+    }));
+    setMemo("");
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleEditSave = async () => {
-    if (!editRecord) return;
-    setEditSaving(true);
-    const validSets = editSets.filter(s => s.weight && s.reps);
-    if (validSets.length === 0) { toast.error("セット情報を入力してください"); setEditSaving(false); return; }
-    const setsJson = validSets.map((s, i) => ({ set: i + 1, weight: parseFloat(s.weight), reps: parseInt(s.reps, 10) }));
-    const { error } = await supabase.from("workouts").update({
-      exercise_id: editExerciseId,
-      weight: setsJson[0].weight,
-      reps: setsJson[0].reps,
-      sets: setsJson,
-    } as any).eq("id", editRecord.id);
-    if (error) { toast.error("更新に失敗しました"); setEditSaving(false); return; }
-    const master = exerciseMasters.find(e => e.id === editExerciseId);
-    setWorkoutRecords(prev => prev.map(r => r.id === editRecord.id ? {
-      ...r, exercise_id: editExerciseId, weight: setsJson[0].weight, reps: setsJson[0].reps, sets: setsJson,
-      exercise_name: master?.name || r.exercise_name,
-    } : r));
-    setEditRecord(null);
-    setEditSaving(false);
-    toast.success("記録を更新しました");
+  const cancelEdit = () => {
+    setEditingDate(null);
+    setEditingRecordIds([]);
+    setTrainingDate(new Date().toISOString().slice(0, 10));
+    setExercises([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
+    setMemo("");
   };
 
   const handleDelete = async () => {
