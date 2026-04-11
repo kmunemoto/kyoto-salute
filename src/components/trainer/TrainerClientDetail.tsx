@@ -838,20 +838,39 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">重量 (kg)</label>
-                <Input type="number" step="0.5" value={editWeight} onChange={(e) => setEditWeight(e.target.value)} className="h-11" />
+            {editSets.map((s, si) => (
+              <div key={si} className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground">セット {si + 1}</span>
+                  {editSets.length > 1 && (
+                    <button onClick={() => setEditSets(prev => prev.filter((_, i) => i !== si))} className="text-destructive/60 hover:text-destructive p-0.5">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">重量 (kg)</label>
+                    <Input type="number" step="0.5" value={s.weight} onChange={(e) => { const u = [...editSets]; u[si] = { ...u[si], weight: e.target.value }; setEditSets(u); }} className="h-11" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">回数 (rep)</label>
+                    <Input type="number" value={s.reps} onChange={(e) => { const u = [...editSets]; u[si] = { ...u[si], reps: e.target.value }; setEditSets(u); }} className="h-11" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">回数 (rep)</label>
-                <Input type="number" value={editReps} onChange={(e) => setEditReps(e.target.value)} className="h-11" />
-              </div>
-            </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setEditSets(prev => [...prev, { weight: "", reps: "" }])}
+              className="w-full text-xs text-accent font-medium py-1.5 rounded-lg border border-dashed border-accent/40 hover:bg-accent/5 transition-colors flex items-center justify-center gap-1"
+            >
+              <Plus className="w-3 h-3" /> セットを追加
+            </button>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setEditRecord(null)} className="w-full sm:w-auto">キャンセル</Button>
-            <Button variant="accent" onClick={handleEditSave} disabled={editSaving || !editExerciseId || !editWeight || !editReps} className="w-full sm:w-auto">
+            <Button variant="accent" onClick={handleEditSave} disabled={editSaving || !editExerciseId || editSets.every(s => !s.weight || !s.reps)} className="w-full sm:w-auto">
               {editSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
               保存
             </Button>
@@ -865,7 +884,10 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           <AlertDialogHeader>
             <AlertDialogTitle>この記録を削除しますか？</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteTarget && `${deleteTarget.exercise_name} ${deleteTarget.weight}kg × ${deleteTarget.reps}rep の記録を削除します。この操作は取り消せません。`}
+              {deleteTarget && (() => {
+                const s = deleteTarget.sets || (deleteTarget.weight != null ? [{ set: 1, weight: deleteTarget.weight, reps: deleteTarget.reps }] : []);
+                return `${deleteTarget.exercise_name} ${s.map((x: any) => `${x.weight}kg×${x.reps}`).join(", ")} の記録を削除します。この操作は取り消せません。`;
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
