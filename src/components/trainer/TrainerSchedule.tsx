@@ -189,6 +189,10 @@ const TrainerSchedule = () => {
           予約管理
         </h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setBlockDialogOpen(true)} className="gap-1.5">
+            <Ban className="w-3.5 h-3.5" />
+            時間ブロック
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setProxyDialogOpen(true)} className="gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             代理予約
