@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, BellRing, Settings, Shield, MessageCircle, CheckCircle2, Unlink } from "lucide-react";
+import { Bell, BellRing, Settings, Shield, MessageCircle, CheckCircle2, Unlink, Calendar, Loader2, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,28 @@ const TrainerNotificationSettings = () => {
 
   const isLineLinked = !!profile?.line_user_id;
 
-  // Listen for LINE link callback
+  // Google Calendar state
+  const [gcalLinked, setGcalLinked] = useState(false);
+  const [gcalLoading, setGcalLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  const checkGcalStatus = async () => {
+    if (!user) return;
+    setGcalLoading(true);
+    const { data } = await supabase
+      .from("google_calendar_tokens" as any)
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setGcalLinked(!!data);
+    setGcalLoading(false);
+  };
+
+  useEffect(() => {
+    checkGcalStatus();
+  }, [user]);
+
+  // Listen for LINE link callback AND Google Calendar callback
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "line-link-result") {
@@ -27,6 +48,14 @@ const TrainerNotificationSettings = () => {
           refetch();
         } else {
           toast.error("LINE連携に失敗しました");
+        }
+      }
+      if (e.data?.type === "google-calendar-result") {
+        if (e.data.success) {
+          toast.success("Googleカレンダー連携が完了しました！");
+          setGcalLinked(true);
+        } else {
+          toast.error("Googleカレンダー連携に失敗しました");
         }
       }
     };
@@ -57,6 +86,52 @@ const TrainerNotificationSettings = () => {
     }
   };
 
+  const handleGcalLink = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth-url", {
+        body: { user_id: user.id },
+      });
+      if (error || !data?.url) {
+        toast.error("Google認証URLの取得に失敗しました");
+        return;
+      }
+      window.open(data.url, "gcal-link", "width=500,height=700");
+    } catch (e) {
+      console.error(e);
+      toast.error("エラーが発生しました");
+    }
+  };
+
+  const handleGcalUnlink = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("google_calendar_tokens" as any)
+      .delete()
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("連携解除に失敗しました");
+    } else {
+      toast.success("Googleカレンダー連携を解除しました");
+      setGcalLinked(false);
+    }
+  };
+
+  const handleSyncAll = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-sync", {
+        body: { action: "sync_all" },
+      });
+      if (error) throw error;
+      toast.success(`${data?.synced || 0}件の予約をGoogleカレンダーに同期しました`);
+    } catch (e) {
+      console.error(e);
+      toast.error("同期に失敗しました");
+    }
+    setSyncing(false);
+  };
+
   const handleTogglePush = async () => {
     if (isSubscribed) {
       const ok = await unsubscribe();
@@ -77,6 +152,52 @@ const TrainerNotificationSettings = () => {
       </h1>
 
       <div className="space-y-4 max-w-lg">
+        {/* Google Calendar連携 */}
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Calendar className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-sm mb-1">Googleカレンダー連携</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  予約が入ると自動的にGoogleカレンダーに登録されます。キャンセル時は自動削除されます。
+                </p>
+                {gcalLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                ) : gcalLinked ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-blue-500">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Googleカレンダー連携済み
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button size="sm" variant="outline" onClick={handleSyncAll} disabled={syncing}>
+                        {syncing ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+                        既存予約を一括同期
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleGcalUnlink}>
+                        <Unlink className="w-3.5 h-3.5 mr-1.5" />
+                        連携を解除
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={handleGcalLink}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    <Calendar className="w-4 h-4 mr-1.5" />
+                    Googleカレンダーと連携する
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* LINE連携 */}
         <Card>
           <CardContent className="p-5">

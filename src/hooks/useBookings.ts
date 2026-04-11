@@ -188,12 +188,28 @@ export const createBooking = async (
 
   if (!error && data) {
     if (isProxyBooking) {
-      // Trainer made proxy booking → notify customer
       sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
     } else {
-      // Customer booked → notify trainer
       sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
     }
+
+    // Sync to Google Calendar (fire-and-forget)
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data: prof }) => {
+        supabase.functions.invoke("google-calendar-sync", {
+          body: {
+            action: "create",
+            booking_id: data.id,
+            booking_date: data.booking_date,
+            booking_type: bookingType,
+            client_name: prof?.display_name || "顧客",
+          },
+        }).catch(console.error);
+      });
   }
 
   return { data, error };
@@ -255,7 +271,7 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
   // Fetch booking details before deleting
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, user_id, booking_date, booking_type")
+    .select("id, user_id, booking_date, booking_type, google_event_id")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -267,6 +283,13 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
   if (!error && booking) {
     // Send LINE cancel notification (fire-and-forget)
     sendCancelLineNotification(booking, cancelledByTrainer).catch(console.error);
+
+    // Delete from Google Calendar (fire-and-forget)
+    if (booking.google_event_id) {
+      supabase.functions.invoke("google-calendar-sync", {
+        body: { action: "delete", google_event_id: booking.google_event_id },
+      }).catch(console.error);
+    }
   }
 
   return { error };
