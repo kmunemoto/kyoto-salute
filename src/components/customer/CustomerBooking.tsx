@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, Clock, Check, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { CalendarDays, Clock, Check, Trash2, CalendarPlus, ExternalLink, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -309,7 +309,7 @@ const CustomerBooking = () => {
                           className="text-muted-foreground hover:text-accent transition-colors p-2"
                           title="Googleカレンダーに追加"
                         >
-                          <ExternalLink className="w-4 h-4" />
+                          <CalendarPlus className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
