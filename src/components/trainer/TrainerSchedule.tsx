@@ -97,6 +97,21 @@ const TrainerSchedule = () => {
     const target = deleteTarget;
     setDeleting(true);
 
+    // Blocked slot → delete from blocked_slots table
+    if (target.isBlocked) {
+      const { error } = await supabase.from("blocked_slots").delete().eq("id", target.id);
+      if (error) {
+        toast.error("ブロック解除に失敗しました");
+        setDeleting(false);
+        return;
+      }
+      removeBooking(target.id);
+      toast.success("ブロックを解除しました");
+      setDeleting(false);
+      setDeleteTarget(null);
+      return;
+    }
+
     // Trial guest bookings are in trial_bookings table
     const booking = bookings.find((b) => b.id === target.id);
     let error: any;
@@ -120,6 +135,37 @@ const TrainerSchedule = () => {
     toast.success("予約を削除しました");
     setDeleting(false);
     setDeleteTarget(null);
+  };
+
+  const handleBlockSlot = async () => {
+    if (!blockDate || !blockTime || !user) return;
+    const dateStr = format(blockDate, "yyyy-MM-dd");
+
+    if (checkSlotBlocked(bookings, dateStr, blockTime)) {
+      toast.error("この時間帯はすでに予約またはブロックが入っています");
+      return;
+    }
+
+    setSubmitting(true);
+    const blockedDate = `${dateStr}T${blockTime}:00+09:00`;
+    const { error } = await supabase.from("blocked_slots").insert({
+      blocked_date: blockedDate,
+      created_by: user.id,
+      reason: "ブロック",
+    });
+
+    if (error) {
+      toast.error("ブロックに失敗しました");
+      setSubmitting(false);
+      return;
+    }
+
+    toast.success(`${format(blockDate, "M/d")} ${blockTime} をブロックしました`);
+    setBlockDialogOpen(false);
+    setBlockDate(undefined);
+    setBlockTime("");
+    setSubmitting(false);
+    void refetch();
   };
 
   const getDayBookings = (day: Date) => {
