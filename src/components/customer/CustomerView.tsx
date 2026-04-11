@@ -38,8 +38,13 @@ const CustomerView = () => {
             {/* ⚠️ DO NOT change this app name. Keep exactly as-is: "パーソナルジムSalute御所南" — never convert "Salute" to katakana */}
             <span className="text-sm font-bold">パーソナルジムSalute御所南</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground">
-            <LogOut className="w-4 h-4" />
+          <Button variant="ghost" size="sm" onClick={() => setTab("chat")} className="text-muted-foreground relative">
+            <MessageCircle className="w-4 h-4" />
+            {unreadChat > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
+                {unreadChat}
+              </span>
+            )}
           </Button>
         </div>
       </div>
