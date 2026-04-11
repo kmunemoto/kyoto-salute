@@ -659,12 +659,25 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
+           <div className="flex justify-end gap-2">
+            {editingDate && (
+              <Button variant="outline" size="lg" onClick={cancelEdit} className="gap-2 w-full sm:w-auto">
+                <X className="w-4 h-4" />
+                編集をキャンセル
+              </Button>
+            )}
             <Button variant="accent" size="lg" onClick={handleSave} disabled={saving} className="gap-2 w-full sm:w-auto">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              記録を保存
+              {editingDate ? "変更を保存" : "記録を保存"}
             </Button>
           </div>
+
+          {editingDate && (
+            <div className="rounded-lg bg-accent/10 border border-accent/30 px-4 py-2 text-sm text-accent font-medium flex items-center gap-2">
+              <Pencil className="w-4 h-4" />
+              編集モード：{format(new Date(editingDate), "yyyy年M月d日（E）", { locale: ja })}の記録を編集中
+            </div>
+          )}
 
           {/* Past records from DB */}
           {loadingRecords ? (
