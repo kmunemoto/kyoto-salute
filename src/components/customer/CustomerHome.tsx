@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Bell } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Bell, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { useProfile } from "@/hooks/useProfile";
@@ -6,7 +6,7 @@ import { useMyBookings } from "@/hooks/useBookings";
 import { useMeasurements } from "@/hooks/useMeasurements";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addMonths, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
 
 const planMaxSessions: Record<string, number> = {
