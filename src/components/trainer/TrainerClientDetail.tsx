@@ -81,7 +81,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
-  const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", weight: "", reps: "" }]);
+  const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
   const [memo, setMemo] = useState("");
   const [exerciseMasters, setExerciseMasters] = useState<ExerciseMaster[]>([]);
   const [showNewExercise, setShowNewExercise] = useState<number | null>(null);
