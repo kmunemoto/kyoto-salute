@@ -243,14 +243,13 @@ const CustomerMeals = () => {
   };
 
   const groupedMeals = useMemo(() => {
-    const groups: { dateKey: string; meals: Meal[]; totals: { calories: number; protein: number; fat: number; carbs: number } }[] = [];
+    const groups: { dateKey: string; meals: Meal[]; totals: { calories: number; protein: number; fat: number; carbs: number }; pfc: { pPct: number; fPct: number; cPct: number } }[] = [];
     const map = new Map<string, Meal[]>();
     for (const meal of meals) {
       const key = getDateKey(meal.created_at);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(meal);
     }
-    // Sort date keys descending
     const sortedKeys = [...map.keys()].sort((a, b) => b.localeCompare(a));
     for (const dateKey of sortedKeys) {
       const dayMeals = map.get(dateKey)!;
@@ -263,7 +262,14 @@ const CustomerMeals = () => {
           totals.carbs += m.carbs ?? 0;
         }
       }
-      groups.push({ dateKey, meals: dayMeals, totals });
+      const pKcal = totals.protein * 4;
+      const fKcal = totals.fat * 9;
+      const cKcal = totals.carbs * 4;
+      const totalKcal = pKcal + fKcal + cKcal;
+      const pfc = totalKcal > 0
+        ? { pPct: Math.round((pKcal / totalKcal) * 100), fPct: Math.round((fKcal / totalKcal) * 100), cPct: Math.round((cKcal / totalKcal) * 100) }
+        : { pPct: 0, fPct: 0, cPct: 0 };
+      groups.push({ dateKey, meals: dayMeals, totals, pfc });
     }
     return groups;
   }, [meals]);
