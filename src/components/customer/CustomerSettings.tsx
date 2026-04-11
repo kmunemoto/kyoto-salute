@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
-import { Bell, BellRing, Settings, User, Pencil, Shield, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2 } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const CustomerSettings = () => {
   const { profile, loading, updateDisplayName, refetch } = useProfile();
   const { user, signOut } = useAuth();
-  const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
   
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
