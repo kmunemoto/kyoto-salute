@@ -508,6 +508,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
             </Card>
           </section>
 
+          {/* Training Growth Chart */}
+          <TrainingGrowthChart workoutRecords={workoutRecords} loadingRecords={loadingRecords} />
+
           <section>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <Weight className="w-3.5 h-3.5" />
