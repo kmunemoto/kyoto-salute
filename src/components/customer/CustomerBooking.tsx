@@ -296,60 +296,26 @@ const CustomerBooking = () => {
           </section>
         )}
 
-        {/* STEP 1: Plan selection */}
+        {/* No plan set → block booking */}
         {!selectedPlan && (
-          <section className="slide-up">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5" />
-              STEP 1 — プランを選択
-            </h2>
-            <div className="space-y-2">
-              {availablePlans.map((plan) => {
-                const Icon = plan.icon;
-                return (
-                  <Card
-                    key={plan.value}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      plan.accent ? "border-accent/40 bg-accent/5" : ""
-                    }`}
-                    onClick={() => setSelectedPlan(plan.value)}
-                  >
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                        plan.accent ? "accent-gradient" : "bg-muted"
-                      }`}>
-                        <Icon className={`w-5 h-5 ${plan.accent ? "text-accent-foreground" : "text-muted-foreground"}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm">{plan.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{plan.desc}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className={`font-extrabold text-sm ${plan.accent ? "text-accent" : ""}`}>{plan.price}</p>
-                        {!plan.accent && <p className="text-[10px] text-muted-foreground">/月</p>}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </section>
+          <Card className="border-l-4 border-l-destructive bg-destructive/5 slide-up">
+            <CardContent className="p-4 space-y-2">
+              <p className="font-bold text-sm text-destructive">プランが設定されていません</p>
+              <p className="text-xs text-muted-foreground">
+                トレーナーにお問い合わせの上、プランを設定してもらってください。
+              </p>
+            </CardContent>
+          </Card>
         )}
 
-        {/* STEP 2: Date & time selection */}
+        {/* Date & time selection (plan auto-assigned) */}
         {selectedPlan && (
           <section className="slide-up">
             <div className="flex items-center gap-2 mb-3">
-              <button
-                onClick={() => { setSelectedPlan(null); setSelectedDate(undefined); setSelectedSlot(null); }}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-              </button>
               <div className="flex-1">
                 <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" />
-                  STEP 2 — 日時を選択
+                  日時を選択
                 </h2>
               </div>
               <Badge variant="outline" className="text-xs shrink-0">
