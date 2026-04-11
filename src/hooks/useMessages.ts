@@ -65,6 +65,28 @@ export const useMessages = (otherUserId: string | null) => {
       receiver_id: receiverId,
       content,
     });
+
+    // Fire-and-forget: send LINE notification to receiver
+    (async () => {
+      try {
+        // Get sender's display name
+        const { data: senderProfile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const senderName = senderProfile?.display_name || "不明";
+        const preview = content.length > 20 ? content.slice(0, 20) + "..." : content;
+        const message = `【Salute御所南】新着メッセージが届きました！💬\n送信者: ${senderName}\n『${preview}』\n詳細はアプリからご確認ください。`;
+
+        await supabase.functions.invoke("send-line-message", {
+          body: { user_id: receiverId, message },
+        });
+      } catch (e) {
+        console.error("LINE notification failed (non-blocking):", e);
+      }
+    })();
   };
 
   const markAsRead = async () => {
