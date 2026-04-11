@@ -203,7 +203,7 @@ const CustomerBooking = () => {
             予約する
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            ご希望のプランを選択してください
+            ご希望の日時を選択してください
           </p>
           <p className="text-xs text-muted-foreground/70 mt-1">※ご予約は24時間前までにお願いいたします</p>
         </div>
