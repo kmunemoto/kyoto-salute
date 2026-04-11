@@ -23,6 +23,7 @@ export interface BookingWithTime {
   clientName: string;
   status: string;
   booking_type: string;
+  isBlocked?: boolean;
 }
 
 function parseBooking(row: BookingRow): BookingWithTime {
@@ -90,9 +91,10 @@ export const useAllBookings = () => {
   const fetchBookings = useCallback(async () => {
     setLoading(true);
 
-    const [{ data: rows, error }, { data: trialRows }] = await Promise.all([
+    const [{ data: rows, error }, { data: trialRows }, { data: blockedRows }] = await Promise.all([
       supabase.from("bookings").select("*").order("booking_date", { ascending: true }),
       supabase.from("trial_bookings").select("*").order("booking_date", { ascending: true }),
+      supabase.from("blocked_slots").select("*"),
     ]);
 
     if (error) {
@@ -138,6 +140,27 @@ export const useAllBookings = () => {
         clientName: `🆕 ${t.guest_name}`,
         status: t.status,
         booking_type: t.booking_type,
+      });
+    });
+
+    // Merge blocked slots
+    blockedRows?.forEach((bs) => {
+      const dt = new Date(bs.blocked_date);
+      const h = dt.getHours();
+      const m = dt.getMinutes();
+      const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      const endMin = h * 60 + m + 60;
+      const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+      parsed.push({
+        id: bs.id,
+        user_id: "blocked",
+        date: format(dt, "yyyy-MM-dd"),
+        startTime,
+        endTime,
+        clientName: bs.reason || "ブロック",
+        status: "ブロック済み",
+        booking_type: "ブロック",
+        isBlocked: true,
       });
     });
 

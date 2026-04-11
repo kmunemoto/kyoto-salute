@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2, Ban } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAllBookings, checkSlotBlocked, createBooking, cancelBooking } from "@/hooks/useBookings";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 
 
 const TrainerSchedule = () => {
+  const { user } = useAuth();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [proxyDialogOpen, setProxyDialogOpen] = useState(false);
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
@@ -23,8 +25,11 @@ const TrainerSchedule = () => {
   const [proxyClient, setProxyClient] = useState<string>("");
   const [proxyBookingType, setProxyBookingType] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string; isBlocked?: boolean } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blockDate, setBlockDate] = useState<Date | undefined>();
+  const [blockTime, setBlockTime] = useState<string>("");
 
   const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
@@ -92,6 +97,21 @@ const TrainerSchedule = () => {
     const target = deleteTarget;
     setDeleting(true);
 
+    // Blocked slot → delete from blocked_slots table
+    if (target.isBlocked) {
+      const { error } = await supabase.from("blocked_slots").delete().eq("id", target.id);
+      if (error) {
+        toast.error("ブロック解除に失敗しました");
+        setDeleting(false);
+        return;
+      }
+      removeBooking(target.id);
+      toast.success("ブロックを解除しました");
+      setDeleting(false);
+      setDeleteTarget(null);
+      return;
+    }
+
     // Trial guest bookings are in trial_bookings table
     const booking = bookings.find((b) => b.id === target.id);
     let error: any;
@@ -117,6 +137,37 @@ const TrainerSchedule = () => {
     setDeleteTarget(null);
   };
 
+  const handleBlockSlot = async () => {
+    if (!blockDate || !blockTime || !user) return;
+    const dateStr = format(blockDate, "yyyy-MM-dd");
+
+    if (checkSlotBlocked(bookings, dateStr, blockTime)) {
+      toast.error("この時間帯はすでに予約またはブロックが入っています");
+      return;
+    }
+
+    setSubmitting(true);
+    const blockedDate = `${dateStr}T${blockTime}:00+09:00`;
+    const { error } = await supabase.from("blocked_slots").insert({
+      blocked_date: blockedDate,
+      created_by: user.id,
+      reason: "ブロック",
+    });
+
+    if (error) {
+      toast.error("ブロックに失敗しました");
+      setSubmitting(false);
+      return;
+    }
+
+    toast.success(`${format(blockDate, "M/d")} ${blockTime} をブロックしました`);
+    setBlockDialogOpen(false);
+    setBlockDate(undefined);
+    setBlockTime("");
+    setSubmitting(false);
+    void refetch();
+  };
+
   const getDayBookings = (day: Date) => {
     const dateStr = format(day, "yyyy-MM-dd");
     return bookings.filter((b) => b.date === dateStr && b.status !== "キャンセル済み");
@@ -138,6 +189,10 @@ const TrainerSchedule = () => {
           予約管理
         </h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setBlockDialogOpen(true)} className="gap-1.5">
+            <Ban className="w-3.5 h-3.5" />
+            時間ブロック
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setProxyDialogOpen(true)} className="gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             代理予約
@@ -193,20 +248,24 @@ const TrainerSchedule = () => {
                           return (
                             <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
                               {session && (
-                                <div className="accent-gradient text-accent-foreground rounded-lg p-2 pr-12 text-xs relative">
+                                <div className={`rounded-lg p-2 pr-12 text-xs relative ${
+                                  session.isBlocked
+                                    ? "bg-muted border border-dashed border-destructive/30 text-muted-foreground"
+                                    : "accent-gradient text-accent-foreground"
+                                }`}>
                                   <Button
                                     type="button"
                                     variant="destructive"
                                     size="icon"
-                                    aria-label={`${session.clientName}さんの予約を削除`}
-                                    onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime })}
+                                    aria-label={session.isBlocked ? "ブロック解除" : `${session.clientName}さんの予約を削除`}
+                                    onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime, isBlocked: session.isBlocked })}
                                     className="absolute top-1 right-1 h-7 w-7 rounded-md"
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
-                                  <p className="font-bold truncate">{session.clientName}</p>
+                                  <p className="font-bold truncate">{session.isBlocked ? "🚫 ブロック" : session.clientName}</p>
                                   <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
-                                  <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
+                                  {!session.isBlocked && <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>}
                                 </div>
                               )}
                             </td>
@@ -239,16 +298,18 @@ const TrainerSchedule = () => {
                   {dayBookings
                     .sort((a, b) => a.startTime.localeCompare(b.startTime))
                     .map((booking) => (
-                      <Card key={booking.id} className="card-hover">
+                      <Card key={booking.id} className={`card-hover ${booking.isBlocked ? "border-dashed border-destructive/30" : ""}`}>
                         <CardContent className="p-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
-                              {booking.clientName[0]}
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+                              booking.isBlocked ? "bg-muted text-muted-foreground" : "accent-gradient text-accent-foreground"
+                            }`}>
+                              {booking.isBlocked ? "🚫" : booking.clientName[0]}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold truncate">{booking.clientName}</p>
+                              <p className="text-sm font-bold truncate">{booking.isBlocked ? "ブロック" : booking.clientName}</p>
                               <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
-                              <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>
+                              {!booking.isBlocked && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>}
                             </div>
                           </div>
                           <div className="mt-3 flex justify-end">
@@ -256,11 +317,11 @@ const TrainerSchedule = () => {
                               type="button"
                               variant="destructive"
                               size="sm"
-                              onClick={() => setDeleteTarget({ id: booking.id, clientName: booking.clientName, date: booking.date, startTime: booking.startTime })}
+                              onClick={() => setDeleteTarget({ id: booking.id, clientName: booking.clientName, date: booking.date, startTime: booking.startTime, isBlocked: booking.isBlocked })}
                               className="min-w-[112px]"
                             >
                               <Trash2 className="w-4 h-4" />
-                              削除
+                              {booking.isBlocked ? "解除" : "削除"}
                             </Button>
                           </div>
                         </CardContent>
@@ -279,6 +340,10 @@ const TrainerSchedule = () => {
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded accent-gradient" />
           <span className="text-xs text-muted-foreground">予約あり</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-dashed border-destructive/30 bg-muted" />
+          <span className="text-xs text-muted-foreground">ブロック</span>
         </div>
       </div>
 
@@ -382,10 +447,12 @@ const TrainerSchedule = () => {
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}>
         <DialogContent className="max-w-[90vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>予約を削除しますか？</DialogTitle>
+            <DialogTitle>{deleteTarget?.isBlocked ? "ブロックを解除しますか？" : "予約を削除しますか？"}</DialogTitle>
             <p className="text-sm text-muted-foreground pt-1">
-              {deleteTarget && `${deleteTarget.clientName}さんの予約（${deleteTarget.date} ${deleteTarget.startTime}）を削除します。`}
-              本当にこの予約を削除しますか？元に戻すことはできません。
+              {deleteTarget?.isBlocked
+                ? `${deleteTarget.date} ${deleteTarget.startTime} のブロックを解除します。この時間帯に予約が入れられるようになります。`
+                : deleteTarget && `${deleteTarget.clientName}さんの予約（${deleteTarget.date} ${deleteTarget.startTime}）を削除します。本当にこの予約を削除しますか？元に戻すことはできません。`
+              }
             </p>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
@@ -399,7 +466,74 @@ const TrainerSchedule = () => {
               className="w-full sm:w-auto"
             >
               {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
-              はい、削除する
+              {deleteTarget?.isBlocked ? "はい、解除する" : "はい、削除する"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Block slot dialog */}
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>時間帯をブロック</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-1">
+              選択した時間帯に予約が入らないようにブロックします。
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-1 block">日付</label>
+              <Calendar
+                mode="single"
+                selected={blockDate}
+                onSelect={(d) => { setBlockDate(d); setBlockTime(""); }}
+                locale={ja}
+                className="pointer-events-auto border rounded-lg mx-auto"
+              />
+            </div>
+            {blockDate && (
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">ブロックする時間</label>
+                <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
+                  {(() => {
+                    const blockDateKey = format(blockDate, "yyyy-MM-dd");
+                    const slots: { time: string; blocked: boolean }[] = [];
+                    for (let totalMin = 600; totalMin <= 1215; totalMin += 15) {
+                      const h = Math.floor(totalMin / 60);
+                      const m = totalMin % 60;
+                      const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                      const blocked = checkSlotBlocked(bookings, blockDateKey, time);
+                      slots.push({ time, blocked });
+                    }
+                    return slots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        type="button"
+                        disabled={slot.blocked}
+                        onClick={() => setBlockTime(slot.time)}
+                        className={`rounded-lg p-2.5 text-xs font-semibold transition-all min-h-[44px] ${
+                          slot.blocked
+                            ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                            : blockTime === slot.time
+                              ? "bg-destructive text-destructive-foreground shadow-md"
+                              : "bg-card border border-border hover:border-destructive"
+                        }`}
+                      >
+                        {slot.time}
+                        {slot.blocked && <span className="block text-[9px] text-destructive/70">使用中</span>}
+                      </button>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setBlockDialogOpen(false)} className="w-full sm:w-auto">キャンセル</Button>
+            <Button variant="destructive" onClick={handleBlockSlot} disabled={!blockDate || !blockTime || submitting} className="w-full sm:w-auto">
+              {submitting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              ブロックする
             </Button>
           </DialogFooter>
         </DialogContent>
