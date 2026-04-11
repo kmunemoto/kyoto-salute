@@ -15,13 +15,13 @@ import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 
-const PLAN_OPTIONS = [
-  { value: "初回無料体験", label: "初回無料体験", desc: "カウンセリング＋60分トレーニング", price: "¥0", icon: Sparkles, accent: true },
-  { value: "月4回", label: "月4回プラン", desc: "週1回ペースで無理なく継続", price: "¥20,000", icon: CalendarDays },
-  { value: "月6回", label: "月6回プラン", desc: "週1〜2回の安定したペース", price: "¥28,500", icon: CalendarDays },
-  { value: "月8回", label: "月8回プラン", desc: "週2回で確実に変化を実感", price: "¥36,000", icon: CalendarDays },
-  { value: "通い放題", label: "通い放題プラン", desc: "回数無制限で最速の結果を", price: "¥60,000", icon: Crown },
-];
+const PLAN_LABELS: Record<string, string> = {
+  "初回無料体験": "初回無料体験",
+  "月4回": "月4回プラン",
+  "月6回": "月6回プラン",
+  "月8回": "月8回プラン",
+  "通い放題": "通い放題プラン",
+};
 
 const CustomerBooking = () => {
   const { user } = useAuth();
