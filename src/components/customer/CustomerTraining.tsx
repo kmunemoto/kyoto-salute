@@ -20,11 +20,18 @@ import {
   CartesianGrid,
 } from "recharts";
 
+interface SetData {
+  set: number;
+  weight: number;
+  reps: number;
+}
+
 interface WorkoutWithExercise {
   id: string;
   workout_date: string;
   weight: number | null;
   reps: number | null;
+  sets: SetData[] | null;
   exercise_name: string;
 }
 
@@ -48,6 +55,7 @@ const CustomerTraining = () => {
           workout_date: w.workout_date,
           weight: w.weight,
           reps: w.reps,
+          sets: w.sets || (w.weight != null ? [{ set: 1, weight: w.weight, reps: w.reps }] : null),
           exercise_name: w.exercises?.name || "不明",
         })));
       }
@@ -73,12 +81,17 @@ const CustomerTraining = () => {
   const chartData = useMemo(() => {
     const points: { date: string; weight: number; reps: number }[] = [];
     [...workouts].reverse().forEach((w) => {
-      if (w.exercise_name === selectedExercise && w.weight != null && w.reps != null) {
+      if (w.exercise_name === selectedExercise) {
+        const setsData = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
+        if (setsData.length === 0) return;
+        // Use max weight set for graph
+        const best = setsData.reduce((a, b) => (b.weight > a.weight ? b : a), setsData[0]);
+        if (best.weight == null || best.reps == null) return;
         const d = new Date(w.workout_date);
         points.push({
           date: `${d.getMonth() + 1}/${d.getDate()}`,
-          weight: w.weight,
-          reps: w.reps,
+          weight: best.weight,
+          reps: best.reps,
         });
       }
     });
@@ -205,15 +218,35 @@ const CustomerTraining = () => {
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        {records.map((r) => (
-                          <div key={r.id} className="flex items-center justify-between text-sm py-1.5 px-3 rounded-lg bg-muted/50">
-                            <span className="font-medium">{r.exercise_name}</span>
-                            <span className="text-muted-foreground">
-                              <span className="font-bold text-foreground">{r.weight}</span>kg ×{" "}
-                              <span className="font-bold text-foreground">{r.reps}</span>回
-                            </span>
+                        {records.map((r) => {
+                          const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight!, reps: r.reps! }] : []);
+                          return (
+                          <div key={r.id} className="text-sm py-1.5 px-3 rounded-lg bg-muted/50">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{r.exercise_name}</span>
+                              {setsData.length === 1 && (
+                                <span className="text-muted-foreground">
+                                  <span className="font-bold text-foreground">{setsData[0].weight}</span>kg ×{" "}
+                                  <span className="font-bold text-foreground">{setsData[0].reps}</span>回
+                                </span>
+                              )}
+                            </div>
+                            {setsData.length > 1 && (
+                              <div className="mt-1 space-y-0.5">
+                                {setsData.map((s, si) => (
+                                  <div key={si} className="flex items-center justify-between text-xs text-muted-foreground pl-2">
+                                    <span>セット{s.set}</span>
+                                    <span>
+                                      <span className="font-bold text-foreground">{s.weight}</span>kg ×{" "}
+                                      <span className="font-bold text-foreground">{s.reps}</span>回
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>

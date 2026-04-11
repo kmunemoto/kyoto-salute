@@ -380,6 +380,7 @@ export type Database = {
           exercise_id: string
           id: string
           reps: number | null
+          sets: Json | null
           user_id: string
           weight: number | null
           workout_date: string
@@ -389,6 +390,7 @@ export type Database = {
           exercise_id: string
           id?: string
           reps?: number | null
+          sets?: Json | null
           user_id: string
           weight?: number | null
           workout_date?: string
@@ -398,6 +400,7 @@ export type Database = {
           exercise_id?: string
           id?: string
           reps?: number | null
+          sets?: Json | null
           user_id?: string
           weight?: number | null
           workout_date?: string

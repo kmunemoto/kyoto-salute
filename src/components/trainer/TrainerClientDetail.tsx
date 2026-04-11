@@ -31,11 +31,15 @@ interface TrainerClientDetailProps {
   onBack: () => void;
 }
 
+interface SetEntry {
+  weight: string;
+  reps: string;
+}
+
 interface ExerciseEntry {
   exerciseId: string;
   name: string;
-  weight: string;
-  reps: string;
+  sets: SetEntry[];
 }
 
 interface ExerciseMaster {
@@ -50,6 +54,7 @@ interface WorkoutRecord {
   exercise_id: string;
   weight: number | null;
   reps: number | null;
+  sets: { set: number; weight: number; reps: number }[] | null;
   exercise_name?: string;
 }
 
@@ -76,7 +81,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
-  const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", weight: "", reps: "" }]);
+  const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
   const [memo, setMemo] = useState("");
   const [exerciseMasters, setExerciseMasters] = useState<ExerciseMaster[]>([]);
   const [showNewExercise, setShowNewExercise] = useState<number | null>(null);
@@ -89,8 +94,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [clientBookings2, setClientBookings2] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [editRecord, setEditRecord] = useState<WorkoutRecord | null>(null);
-  const [editWeight, setEditWeight] = useState("");
-  const [editReps, setEditReps] = useState("");
+  const [editSets, setEditSets] = useState<{ weight: string; reps: string }[]>([]);
   const [editExerciseId, setEditExerciseId] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
@@ -227,10 +231,23 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const bookings = clientBookings2;
   const messages = clientChatMessages[clientId] || [];
 
-  const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", weight: "", reps: "" }]);
-  const updateExercise = (i: number, field: keyof ExerciseEntry, value: string) => {
+  const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
+  const updateExerciseSet = (exIdx: number, setIdx: number, field: keyof SetEntry, value: string) => {
     const updated = [...exercises];
-    updated[i] = { ...updated[i], [field]: value };
+    const updatedSets = [...updated[exIdx].sets];
+    updatedSets[setIdx] = { ...updatedSets[setIdx], [field]: value };
+    updated[exIdx] = { ...updated[exIdx], sets: updatedSets };
+    setExercises(updated);
+  };
+  const addSet = (exIdx: number) => {
+    const updated = [...exercises];
+    updated[exIdx] = { ...updated[exIdx], sets: [...updated[exIdx].sets, { weight: "", reps: "" }] };
+    setExercises(updated);
+  };
+  const removeSet = (exIdx: number, setIdx: number) => {
+    const updated = [...exercises];
+    if (updated[exIdx].sets.length <= 1) return;
+    updated[exIdx] = { ...updated[exIdx], sets: updated[exIdx].sets.filter((_, i) => i !== setIdx) };
     setExercises(updated);
   };
   const removeExercise = (i: number) => {
@@ -273,7 +290,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   };
 
   const handleSave = async () => {
-    const validEntries = exercises.filter(ex => ex.exerciseId && ex.weight && ex.reps);
+    const validEntries = exercises.filter(ex => ex.exerciseId && ex.sets.some(s => s.weight && s.reps));
     if (validEntries.length === 0) {
       toast.error("種目・重量・回数をすべて入力してください");
       return;
@@ -282,11 +299,16 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     const rows = validEntries.map(ex => ({
       user_id: clientId,
       exercise_id: ex.exerciseId,
-      weight: parseFloat(ex.weight),
-      reps: parseInt(ex.reps, 10),
+      weight: parseFloat(ex.sets[0].weight) || null,
+      reps: parseInt(ex.sets[0].reps, 10) || null,
+      sets: ex.sets.filter(s => s.weight && s.reps).map((s, i) => ({
+        set: i + 1,
+        weight: parseFloat(s.weight),
+        reps: parseInt(s.reps, 10),
+      })),
       workout_date: trainingDate,
     }));
-    const { data, error } = await supabase.from("workouts").insert(rows).select("*, exercises(name)");
+    const { data, error } = await supabase.from("workouts").insert(rows as any).select("*, exercises(name)");
     if (error) {
       toast.error("保存に失敗しました");
       setSaving(false);
@@ -297,7 +319,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       exercise_name: w.exercises?.name || "不明",
     }));
     setWorkoutRecords(prev => [...newRecords, ...prev]);
-    setExercises([{ exerciseId: "", name: "", weight: "", reps: "" }]);
+    setExercises([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
     setMemo("");
     setSaving(false);
     toast.success("記録を保存しました", { description: `${displayName}さんのトレーニング記録を保存しました` });
@@ -319,22 +341,26 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const openEdit = (r: WorkoutRecord) => {
     setEditRecord(r);
     setEditExerciseId(r.exercise_id);
-    setEditWeight(r.weight?.toString() || "");
-    setEditReps(r.reps?.toString() || "");
+    const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : [{ set: 1, weight: 0, reps: 0 }]);
+    setEditSets(setsData.map((s: any) => ({ weight: String(s.weight ?? ""), reps: String(s.reps ?? "") })));
   };
 
   const handleEditSave = async () => {
     if (!editRecord) return;
     setEditSaving(true);
+    const validSets = editSets.filter(s => s.weight && s.reps);
+    if (validSets.length === 0) { toast.error("セット情報を入力してください"); setEditSaving(false); return; }
+    const setsJson = validSets.map((s, i) => ({ set: i + 1, weight: parseFloat(s.weight), reps: parseInt(s.reps, 10) }));
     const { error } = await supabase.from("workouts").update({
       exercise_id: editExerciseId,
-      weight: parseFloat(editWeight),
-      reps: parseInt(editReps, 10),
-    }).eq("id", editRecord.id);
+      weight: setsJson[0].weight,
+      reps: setsJson[0].reps,
+      sets: setsJson,
+    } as any).eq("id", editRecord.id);
     if (error) { toast.error("更新に失敗しました"); setEditSaving(false); return; }
     const master = exerciseMasters.find(e => e.id === editExerciseId);
     setWorkoutRecords(prev => prev.map(r => r.id === editRecord.id ? {
-      ...r, exercise_id: editExerciseId, weight: parseFloat(editWeight), reps: parseInt(editReps, 10),
+      ...r, exercise_id: editExerciseId, weight: setsJson[0].weight, reps: setsJson[0].reps, sets: setsJson,
       exercise_name: master?.name || r.exercise_name,
     } : r));
     setEditRecord(null);
@@ -504,11 +530,14 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {format(new Date(date), "M月d日（E）", { locale: ja })}
                       </p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {groupedRecords[date].map((r) => (
-                          <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1">
-                            {r.exercise_name} {r.weight}kg×{r.reps}
-                          </span>
-                        ))}
+                        {groupedRecords[date].map((r) => {
+                          const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : []);
+                          return (
+                            <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1">
+                              {r.exercise_name} {setsData.map((s: any) => `${s.weight}kg×${s.reps}`).join(", ")}
+                            </span>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -579,16 +608,35 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         </Button>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">重量 (kg)</label>
-                        <Input type="number" step="0.5" placeholder="60" value={ex.weight} onChange={(e) => updateExercise(i, "weight", e.target.value)} className="h-11" />
+                    {ex.sets.map((s, si) => (
+                      <div key={si} className="space-y-1">
+                        {ex.sets.length > 1 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-muted-foreground">セット {si + 1}</span>
+                            <button onClick={() => removeSet(i, si)} className="text-destructive/60 hover:text-destructive transition-colors p-0.5">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">重量 (kg)</label>
+                            <Input type="number" step="0.5" placeholder="60" value={s.weight} onChange={(e) => updateExerciseSet(i, si, "weight", e.target.value)} className="h-11" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">回数 (rep)</label>
+                            <Input type="number" placeholder="10" value={s.reps} onChange={(e) => updateExerciseSet(i, si, "reps", e.target.value)} className="h-11" />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-[10px] font-semibold text-muted-foreground mb-0.5 block">回数 (rep)</label>
-                        <Input type="number" placeholder="10" value={ex.reps} onChange={(e) => updateExercise(i, "reps", e.target.value)} className="h-11" />
-                      </div>
-                    </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addSet(i)}
+                      className="w-full text-xs text-accent font-medium py-1.5 rounded-lg border border-dashed border-accent/40 hover:bg-accent/5 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> セットを追加
+                    </button>
                   </div>
                 ))}
               </div>
@@ -626,11 +674,17 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {format(new Date(date), "yyyy年M月d日（E）", { locale: ja })}
                       </p>
                       <div className="space-y-1.5">
-                        {groupedRecords[date].map((r) => (
+                        {groupedRecords[date].map((r) => {
+                          const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : []);
+                          return (
                           <div key={r.id} className="flex items-center gap-2 text-sm">
                             <Dumbbell className="w-3 h-3 text-accent shrink-0" />
                             <span className="font-medium truncate">{r.exercise_name}</span>
-                            <span className="text-muted-foreground whitespace-nowrap">{r.weight}kg × {r.reps}rep</span>
+                            <span className="text-muted-foreground whitespace-nowrap">
+                              {setsData.map((s: any, si: number) => (
+                                <span key={si}>{si > 0 && " / "}{s.weight}kg×{s.reps}</span>
+                              ))}
+                            </span>
                             <div className="ml-auto flex items-center gap-0.5 shrink-0">
                               <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="編集">
                                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
@@ -640,7 +694,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                               </button>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -783,20 +838,39 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">重量 (kg)</label>
-                <Input type="number" step="0.5" value={editWeight} onChange={(e) => setEditWeight(e.target.value)} className="h-11" />
+            {editSets.map((s, si) => (
+              <div key={si} className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground">セット {si + 1}</span>
+                  {editSets.length > 1 && (
+                    <button onClick={() => setEditSets(prev => prev.filter((_, i) => i !== si))} className="text-destructive/60 hover:text-destructive p-0.5">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">重量 (kg)</label>
+                    <Input type="number" step="0.5" value={s.weight} onChange={(e) => { const u = [...editSets]; u[si] = { ...u[si], weight: e.target.value }; setEditSets(u); }} className="h-11" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">回数 (rep)</label>
+                    <Input type="number" value={s.reps} onChange={(e) => { const u = [...editSets]; u[si] = { ...u[si], reps: e.target.value }; setEditSets(u); }} className="h-11" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">回数 (rep)</label>
-                <Input type="number" value={editReps} onChange={(e) => setEditReps(e.target.value)} className="h-11" />
-              </div>
-            </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setEditSets(prev => [...prev, { weight: "", reps: "" }])}
+              className="w-full text-xs text-accent font-medium py-1.5 rounded-lg border border-dashed border-accent/40 hover:bg-accent/5 transition-colors flex items-center justify-center gap-1"
+            >
+              <Plus className="w-3 h-3" /> セットを追加
+            </button>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setEditRecord(null)} className="w-full sm:w-auto">キャンセル</Button>
-            <Button variant="accent" onClick={handleEditSave} disabled={editSaving || !editExerciseId || !editWeight || !editReps} className="w-full sm:w-auto">
+            <Button variant="accent" onClick={handleEditSave} disabled={editSaving || !editExerciseId || editSets.every(s => !s.weight || !s.reps)} className="w-full sm:w-auto">
               {editSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
               保存
             </Button>
@@ -810,7 +884,10 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           <AlertDialogHeader>
             <AlertDialogTitle>この記録を削除しますか？</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteTarget && `${deleteTarget.exercise_name} ${deleteTarget.weight}kg × ${deleteTarget.reps}rep の記録を削除します。この操作は取り消せません。`}
+              {deleteTarget && (() => {
+                const s = deleteTarget.sets || (deleteTarget.weight != null ? [{ set: 1, weight: deleteTarget.weight, reps: deleteTarget.reps }] : []);
+                return `${deleteTarget.exercise_name} ${s.map((x: any) => `${x.weight}kg×${x.reps}`).join(", ")} の記録を削除します。この操作は取り消せません。`;
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
