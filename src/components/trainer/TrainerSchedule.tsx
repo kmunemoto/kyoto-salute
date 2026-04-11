@@ -215,17 +215,17 @@ const TrainerSchedule = () => {
             <Plus className="w-3.5 h-3.5" />
             代理予約
           </Button>
-          <div className="flex items-center gap-1 ml-auto sm:ml-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, -7))}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-xs sm:text-sm font-semibold min-w-[120px] sm:min-w-[140px] text-center">
-              {format(weekStart, "M/d", { locale: ja })} 〜 {format(addDays(weekStart, 6), "M/d", { locale: ja })}
-            </span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+        </div>
+        <div className="flex items-center justify-center gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm font-semibold min-w-[120px] text-center">
+            {format(weekStart, "M/d", { locale: ja })} 〜 {format(addDays(weekStart, 6), "M/d", { locale: ja })}
+          </span>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
