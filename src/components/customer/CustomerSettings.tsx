@@ -56,7 +56,7 @@ const CustomerSettings = () => {
 
   const handleLineLink = () => {
     if (!user) return;
-    const channelId = "2009770163";
+    const channelId = "2009770713";
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${user.id}&scope=profile%20openid`;
