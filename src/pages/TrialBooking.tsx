@@ -26,33 +26,30 @@ const TrialBooking = () => {
   const [completedInfo, setCompletedInfo] = useState<{ date: string; time: string } | null>(null);
   const [existingBookings, setExistingBookings] = useState<TrialSlotBooking[]>([]);
 
-  // Fetch all existing bookings (regular + trial) for slot blocking
+  // Fetch all existing bookings via secure RPC (no PII exposed)
   const fetchExistingSlots = useCallback(async () => {
-    const [{ data: regular }, { data: trial }] = await Promise.all([
-      supabase.from("bookings").select("booking_date, status"),
-      supabase.from("trial_bookings").select("booking_date, status"),
-    ]);
-
+    // Fetch slots for upcoming 60 days using the secure RPC
     const slots: TrialSlotBooking[] = [];
-
-    regular?.forEach((r) => {
-      if (r.status === "キャンセル済み") return;
-      const dt = new Date(r.booking_date);
-      slots.push({
-        date: format(dt, "yyyy-MM-dd"),
-        startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
-      });
-    });
-
-    trial?.forEach((r) => {
-      if (r.status === "キャンセル済み") return;
-      const dt = new Date(r.booking_date);
-      slots.push({
-        date: format(dt, "yyyy-MM-dd"),
-        startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
-      });
-    });
-
+    const today = new Date();
+    const promises = [];
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const dateStr = format(d, "yyyy-MM-dd");
+      promises.push(
+        supabase.rpc("get_booked_slots", { check_date: dateStr }).then(({ data }) => {
+          data?.forEach((r: { booking_date: string; status: string }) => {
+            if (r.status === "キャンセル済み") return;
+            const dt = new Date(r.booking_date);
+            slots.push({
+              date: format(dt, "yyyy-MM-dd"),
+              startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
+            });
+          });
+        })
+      );
+    }
+    await Promise.all(promises);
     setExistingBookings(slots);
   }, []);
 
