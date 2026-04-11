@@ -94,8 +94,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [clientBookings2, setClientBookings2] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [editRecord, setEditRecord] = useState<WorkoutRecord | null>(null);
-  const [editWeight, setEditWeight] = useState("");
-  const [editReps, setEditReps] = useState("");
+  const [editSets, setEditSets] = useState<{ weight: string; reps: string }[]>([]);
   const [editExerciseId, setEditExerciseId] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
