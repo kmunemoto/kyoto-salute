@@ -29,7 +29,6 @@ const CustomerBooking = () => {
   const { bookings: myBookings, loading: bookingsLoading, refetch } = useMyBookings();
   const { bookings: allBookings, refetch: refetchAll } = useAllBookings();
 
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<BookingWithTime | null>(null);
@@ -37,6 +36,10 @@ const CustomerBooking = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const isTrialUser = profile ? !profile.trial_completed : false;
+
+  // Auto-assign plan from profile; trial users get 初回無料体験
+  const customerPlan = isTrialUser ? "初回無料体験" : (profile?.plan || null);
+  const selectedPlan = customerPlan;
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
