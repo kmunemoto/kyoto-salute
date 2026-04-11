@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarDays, Clock, Check, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMyBookings, checkSlotBlocked, createBooking, cancelBooking, useAllBookings, BookingWithTime } from "@/hooks/useBookings";
+import { useMyBookings, createBooking, cancelBooking, BookingWithTime } from "@/hooks/useBookings";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
