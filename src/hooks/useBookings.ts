@@ -23,6 +23,7 @@ export interface BookingWithTime {
   clientName: string;
   status: string;
   booking_type: string;
+  isBlocked?: boolean;
 }
 
 function parseBooking(row: BookingRow): BookingWithTime {
