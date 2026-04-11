@@ -191,7 +191,7 @@ const TrialBooking = () => {
             <GymLogo size="lg" />
           </div>
           <h1 className="text-xl font-bold">初回無料体験</h1>
-          <p className="text-sm opacity-80">カウンセリング＋60分トレーニング</p>
+          <p className="text-sm opacity-80">カウンセリング＋トレーニング（計60分）</p>
         </div>
       </div>
 
