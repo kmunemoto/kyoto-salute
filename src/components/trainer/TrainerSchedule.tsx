@@ -298,16 +298,18 @@ const TrainerSchedule = () => {
                   {dayBookings
                     .sort((a, b) => a.startTime.localeCompare(b.startTime))
                     .map((booking) => (
-                      <Card key={booking.id} className="card-hover">
+                      <Card key={booking.id} className={`card-hover ${booking.isBlocked ? "border-dashed border-destructive/30" : ""}`}>
                         <CardContent className="p-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center text-accent-foreground text-xs font-bold shrink-0">
-                              {booking.clientName[0]}
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+                              booking.isBlocked ? "bg-muted text-muted-foreground" : "accent-gradient text-accent-foreground"
+                            }`}>
+                              {booking.isBlocked ? "🚫" : booking.clientName[0]}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold truncate">{booking.clientName}</p>
+                              <p className="text-sm font-bold truncate">{booking.isBlocked ? "ブロック" : booking.clientName}</p>
                               <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
-                              <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>
+                              {!booking.isBlocked && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>}
                             </div>
                           </div>
                           <div className="mt-3 flex justify-end">
@@ -315,11 +317,11 @@ const TrainerSchedule = () => {
                               type="button"
                               variant="destructive"
                               size="sm"
-                              onClick={() => setDeleteTarget({ id: booking.id, clientName: booking.clientName, date: booking.date, startTime: booking.startTime })}
+                              onClick={() => setDeleteTarget({ id: booking.id, clientName: booking.clientName, date: booking.date, startTime: booking.startTime, isBlocked: booking.isBlocked })}
                               className="min-w-[112px]"
                             >
                               <Trash2 className="w-4 h-4" />
-                              削除
+                              {booking.isBlocked ? "解除" : "削除"}
                             </Button>
                           </div>
                         </CardContent>
