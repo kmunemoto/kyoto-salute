@@ -341,22 +341,26 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const openEdit = (r: WorkoutRecord) => {
     setEditRecord(r);
     setEditExerciseId(r.exercise_id);
-    setEditWeight(r.weight?.toString() || "");
-    setEditReps(r.reps?.toString() || "");
+    const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : [{ set: 1, weight: 0, reps: 0 }]);
+    setEditSets(setsData.map((s: any) => ({ weight: String(s.weight ?? ""), reps: String(s.reps ?? "") })));
   };
 
   const handleEditSave = async () => {
     if (!editRecord) return;
     setEditSaving(true);
+    const validSets = editSets.filter(s => s.weight && s.reps);
+    if (validSets.length === 0) { toast.error("セット情報を入力してください"); setEditSaving(false); return; }
+    const setsJson = validSets.map((s, i) => ({ set: i + 1, weight: parseFloat(s.weight), reps: parseInt(s.reps, 10) }));
     const { error } = await supabase.from("workouts").update({
       exercise_id: editExerciseId,
-      weight: parseFloat(editWeight),
-      reps: parseInt(editReps, 10),
-    }).eq("id", editRecord.id);
+      weight: setsJson[0].weight,
+      reps: setsJson[0].reps,
+      sets: setsJson,
+    } as any).eq("id", editRecord.id);
     if (error) { toast.error("更新に失敗しました"); setEditSaving(false); return; }
     const master = exerciseMasters.find(e => e.id === editExerciseId);
     setWorkoutRecords(prev => prev.map(r => r.id === editRecord.id ? {
-      ...r, exercise_id: editExerciseId, weight: parseFloat(editWeight), reps: parseInt(editReps, 10),
+      ...r, exercise_id: editExerciseId, weight: setsJson[0].weight, reps: setsJson[0].reps, sets: setsJson,
       exercise_name: master?.name || r.exercise_name,
     } : r));
     setEditRecord(null);
