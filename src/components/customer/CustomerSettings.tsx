@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
-import { Bell, BellRing, Settings, User, Pencil, Shield, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2 } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const CustomerSettings = () => {
   const { profile, loading, updateDisplayName, refetch } = useProfile();
   const { user, signOut } = useAuth();
-  const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
   
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -20,17 +18,8 @@ const CustomerSettings = () => {
 
   const isLineLinked = !!profile?.line_user_id;
 
-  const handleTogglePush = async () => {
-    if (isSubscribed) {
-      const ok = await unsubscribe();
-      if (ok) toast.success("プッシュ通知を無効にしました");
-      else toast.error("通知の解除に失敗しました");
-    } else {
-      const ok = await subscribe();
-      if (ok) toast.success("プッシュ通知を有効にしました！");
-      else toast.error("通知の許可が得られませんでした。ブラウザの設定を確認してください。");
-    }
-  };
+
+
 
   useEffect(() => {
     setDisplayName(profile?.display_name || "");
@@ -193,43 +182,8 @@ const CustomerSettings = () => {
         </Card>
       </section>
 
-      {/* Push Notification */}
-      <section>
-        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-          <Shield className="w-3.5 h-3.5" />
-          プッシュ通知
-        </h2>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                <BellRing className="w-4 h-4 text-accent" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold">スマートフォン通知</p>
-                <p className="text-[11px] text-muted-foreground mb-2">アプリを閉じていても予約やメッセージの通知が届きます</p>
-                {!isSupported ? (
-                  <p className="text-[11px] text-muted-foreground">このブラウザはプッシュ通知に対応していません。</p>
-                ) : isSubscribed ? (
-                  <div className="space-y-2">
-                    <div className="bg-accent/5 rounded-lg p-2 border border-accent/20">
-                      <p className="text-xs text-muted-foreground">✅ プッシュ通知は<span className="font-bold text-foreground">オン</span>です</p>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={handleTogglePush} disabled={pushLoading} className="text-xs h-7">
-                      通知を無効にする
-                    </Button>
-                  </div>
-                ) : (
-                  <Button size="sm" onClick={handleTogglePush} disabled={pushLoading} className="text-xs">
-                    <Bell className="w-3.5 h-3.5 mr-1" />
-                    プッシュ通知を許可する
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+
+
 
       {/* Logout */}
       <section className="pt-2">
