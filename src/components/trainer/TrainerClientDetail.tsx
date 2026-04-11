@@ -211,6 +211,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         setProfile(data);
         setClientPlan(data.plan || '初回無料体験');
         setIsPaid(data.paid_this_month);
+        setCycleStartDate(data.cycle_start_date || "");
       }
       setLoadingProfile(false);
     };
