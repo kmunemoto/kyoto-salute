@@ -107,7 +107,7 @@ const CustomerBooking = () => {
       return;
     }
 
-    if (checkSlotBlocked(allBookings, dateKey, slot.time)) {
+    if (isSlotBlocked(dateKey, slot.time)) {
       toast.error("この時間帯はすでに予約が入っています");
       setSelectedSlot(null);
       return;
@@ -144,7 +144,7 @@ const CustomerBooking = () => {
     // plan is auto-assigned, no need to reset
     setSubmitting(false);
     refetch();
-    refetchAll();
+    fetchBookedSlots(dateKey);
 
     // Fire-and-forget notification email to trainer
     sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
@@ -202,7 +202,7 @@ const CustomerBooking = () => {
     toast.success("予約をキャンセルしました");
     setCancelTarget(null);
     refetch();
-    refetchAll();
+    if (dateKey) fetchBookedSlots(dateKey);
   };
 
   const activeBookings = myBookings.filter((b) => b.status !== "キャンセル済み");
