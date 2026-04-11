@@ -88,16 +88,25 @@ const TrainerNotificationSettings = () => {
 
   const handleGcalLink = async () => {
     if (!user) return;
+    // Open popup immediately to avoid browser popup blocker
+    const popup = window.open("about:blank", "gcal-link", "width=500,height=700");
     try {
       const { data, error } = await supabase.functions.invoke("google-calendar-auth-url", {
         body: { user_id: user.id },
       });
       if (error || !data?.url) {
+        popup?.close();
         toast.error("Google認証URLの取得に失敗しました");
         return;
       }
-      window.open(data.url, "gcal-link", "width=500,height=700");
+      if (popup) {
+        popup.location.href = data.url;
+      } else {
+        // Fallback: redirect in same window
+        window.location.href = data.url;
+      }
     } catch (e) {
+      popup?.close();
       console.error(e);
       toast.error("エラーが発生しました");
     }
