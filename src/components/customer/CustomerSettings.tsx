@@ -56,15 +56,7 @@ const CustomerSettings = () => {
 
   const handleLineLink = () => {
     if (!user) return;
-    const channelId = import.meta.env.VITE_LINE_LOGIN_CHANNEL_ID;
-    if (!channelId) {
-      // Use the edge function URL to construct the redirect
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
-      // We need the LINE Login channel ID from secrets - prompt user
-      toast.error("LINE Login Channel IDの設定が必要です");
-      return;
-    }
+    const channelId = "2009770163";
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${user.id}&scope=profile%20openid`;
