@@ -294,6 +294,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       return;
     }
     setSaving(true);
+
     const rows = validEntries.map(ex => ({
       user_id: clientId,
       exercise_id: ex.exerciseId,
@@ -306,21 +307,31 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       })),
       workout_date: trainingDate,
     }));
-    const { data, error } = await supabase.from("workouts").insert(rows as any).select("*, exercises(name)");
-    if (error) {
-      toast.error("保存に失敗しました");
-      setSaving(false);
-      return;
+
+    if (editingDate) {
+      // Edit mode: delete old records, insert new ones
+      const { error: delErr } = await supabase.from("workouts").delete().in("id", editingRecordIds);
+      if (delErr) { toast.error("更新に失敗しました"); setSaving(false); return; }
+      const { data, error } = await supabase.from("workouts").insert(rows as any).select("*, exercises(name)");
+      if (error) { toast.error("更新に失敗しました"); setSaving(false); return; }
+      const newRecords = (data || []).map((w: any) => ({ ...w, exercise_name: w.exercises?.name || "不明" }));
+      setWorkoutRecords(prev => [...newRecords, ...prev.filter(r => !editingRecordIds.includes(r.id))]);
+      setEditingDate(null);
+      setEditingRecordIds([]);
+      toast.success("記録を更新しました");
+    } else {
+      // New mode: insert
+      const { data, error } = await supabase.from("workouts").insert(rows as any).select("*, exercises(name)");
+      if (error) { toast.error("保存に失敗しました"); setSaving(false); return; }
+      const newRecords = (data || []).map((w: any) => ({ ...w, exercise_name: w.exercises?.name || "不明" }));
+      setWorkoutRecords(prev => [...newRecords, ...prev]);
+      toast.success("記録を保存しました", { description: `${displayName}さんのトレーニング記録を保存しました` });
     }
-    const newRecords = (data || []).map((w: any) => ({
-      ...w,
-      exercise_name: w.exercises?.name || "不明",
-    }));
-    setWorkoutRecords(prev => [...newRecords, ...prev]);
+
+    setTrainingDate(new Date().toISOString().slice(0, 10));
     setExercises([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
     setMemo("");
     setSaving(false);
-    toast.success("記録を保存しました", { description: `${displayName}さんのトレーニング記録を保存しました` });
   };
 
   const handlePlanChange = async (v: string) => {
