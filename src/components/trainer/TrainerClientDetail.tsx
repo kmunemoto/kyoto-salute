@@ -93,10 +93,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [loadingMeals, setLoadingMeals] = useState(true);
   const [clientBookings2, setClientBookings2] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
-  const [editRecord, setEditRecord] = useState<WorkoutRecord | null>(null);
-  const [editSets, setEditSets] = useState<{ weight: string; reps: string }[]>([]);
-  const [editExerciseId, setEditExerciseId] = useState("");
-  const [editSaving, setEditSaving] = useState(false);
+  const [editingDate, setEditingDate] = useState<string | null>(null);
+  const [editingRecordIds, setEditingRecordIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
 
   // Fetch profile
