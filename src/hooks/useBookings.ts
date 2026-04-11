@@ -188,12 +188,22 @@ export const createBooking = async (
 
   if (!error && data) {
     if (isProxyBooking) {
-      // Trainer made proxy booking → notify customer
       sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
     } else {
-      // Customer booked → notify trainer
       sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
     }
+
+    // Sync to Google Calendar (fire-and-forget)
+    const clientName = await getDisplayName(userId);
+    supabase.functions.invoke("google-calendar-sync", {
+      body: {
+        action: "create",
+        booking_id: data.id,
+        booking_date: data.booking_date,
+        booking_type: bookingType,
+        client_name: clientName,
+      },
+    }).catch(console.error);
   }
 
   return { data, error };
