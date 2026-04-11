@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, Clock, Check, CreditCard, Trash2, ExternalLink, Sparkles, Loader2, ChevronLeft, Crown } from "lucide-react";
+import { CalendarDays, Clock, Check, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,13 +15,13 @@ import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 
-const PLAN_OPTIONS = [
-  { value: "初回無料体験", label: "初回無料体験", desc: "カウンセリング＋60分トレーニング", price: "¥0", icon: Sparkles, accent: true },
-  { value: "月4回", label: "月4回プラン", desc: "週1回ペースで無理なく継続", price: "¥20,000", icon: CalendarDays },
-  { value: "月6回", label: "月6回プラン", desc: "週1〜2回の安定したペース", price: "¥28,500", icon: CalendarDays },
-  { value: "月8回", label: "月8回プラン", desc: "週2回で確実に変化を実感", price: "¥36,000", icon: CalendarDays },
-  { value: "通い放題", label: "通い放題プラン", desc: "回数無制限で最速の結果を", price: "¥60,000", icon: Crown },
-];
+const PLAN_LABELS: Record<string, string> = {
+  "初回無料体験": "初回無料体験",
+  "月4回": "月4回プラン",
+  "月6回": "月6回プラン",
+  "月8回": "月8回プラン",
+  "通い放題": "通い放題プラン",
+};
 
 const CustomerBooking = () => {
   const { user } = useAuth();
@@ -29,7 +29,6 @@ const CustomerBooking = () => {
   const { bookings: myBookings, loading: bookingsLoading, refetch } = useMyBookings();
   const { bookings: allBookings, refetch: refetchAll } = useAllBookings();
 
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<BookingWithTime | null>(null);
@@ -37,6 +36,10 @@ const CustomerBooking = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const isTrialUser = profile ? !profile.trial_completed : false;
+
+  // Auto-assign plan from profile; trial users get 初回無料体験
+  const customerPlan = isTrialUser ? "初回無料体験" : (profile?.plan || null);
+  const selectedPlan = customerPlan;
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
@@ -109,7 +112,7 @@ const CustomerBooking = () => {
     toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
     setSelectedSlot(null);
     setSelectedDate(undefined);
-    setSelectedPlan(null);
+    // plan is auto-assigned, no need to reset
     setSubmitting(false);
     refetch();
     refetchAll();
@@ -187,12 +190,9 @@ const CustomerBooking = () => {
     );
   }
 
-  const planLabel = (type: string) => {
-    const opt = PLAN_OPTIONS.find((p) => p.value === type);
-    return opt?.label || type;
-  };
+  const planLabel = (type: string) => PLAN_LABELS[type] || type;
 
-  const availablePlans = PLAN_OPTIONS;
+  
 
   return (
     <>
@@ -203,7 +203,7 @@ const CustomerBooking = () => {
             予約する
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            ご希望のプランを選択してください
+            ご希望の日時を選択してください
           </p>
           <p className="text-xs text-muted-foreground/70 mt-1">※ご予約は24時間前までにお願いいたします</p>
         </div>
@@ -293,60 +293,26 @@ const CustomerBooking = () => {
           </section>
         )}
 
-        {/* STEP 1: Plan selection */}
+        {/* No plan set → block booking */}
         {!selectedPlan && (
-          <section className="slide-up">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5" />
-              STEP 1 — プランを選択
-            </h2>
-            <div className="space-y-2">
-              {availablePlans.map((plan) => {
-                const Icon = plan.icon;
-                return (
-                  <Card
-                    key={plan.value}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      plan.accent ? "border-accent/40 bg-accent/5" : ""
-                    }`}
-                    onClick={() => setSelectedPlan(plan.value)}
-                  >
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                        plan.accent ? "accent-gradient" : "bg-muted"
-                      }`}>
-                        <Icon className={`w-5 h-5 ${plan.accent ? "text-accent-foreground" : "text-muted-foreground"}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm">{plan.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{plan.desc}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className={`font-extrabold text-sm ${plan.accent ? "text-accent" : ""}`}>{plan.price}</p>
-                        {!plan.accent && <p className="text-[10px] text-muted-foreground">/月</p>}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </section>
+          <Card className="border-l-4 border-l-destructive bg-destructive/5 slide-up">
+            <CardContent className="p-4 space-y-2">
+              <p className="font-bold text-sm text-destructive">プランが設定されていません</p>
+              <p className="text-xs text-muted-foreground">
+                トレーナーにお問い合わせの上、プランを設定してもらってください。
+              </p>
+            </CardContent>
+          </Card>
         )}
 
-        {/* STEP 2: Date & time selection */}
+        {/* Date & time selection (plan auto-assigned) */}
         {selectedPlan && (
           <section className="slide-up">
             <div className="flex items-center gap-2 mb-3">
-              <button
-                onClick={() => { setSelectedPlan(null); setSelectedDate(undefined); setSelectedSlot(null); }}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-              </button>
               <div className="flex-1">
                 <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" />
-                  STEP 2 — 日時を選択
+                  日時を選択
                 </h2>
               </div>
               <Badge variant="outline" className="text-xs shrink-0">
