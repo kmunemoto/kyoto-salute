@@ -19,6 +19,7 @@ export type Database = {
           blocked_date: string
           created_at: string
           created_by: string
+          end_blocked_date: string
           id: string
           reason: string | null
         }
@@ -26,6 +27,7 @@ export type Database = {
           blocked_date: string
           created_at?: string
           created_by: string
+          end_blocked_date: string
           id?: string
           reason?: string | null
         }
@@ -33,6 +35,7 @@ export type Database = {
           blocked_date?: string
           created_at?: string
           created_by?: string
+          end_blocked_date?: string
           id?: string
           reason?: string | null
         }
@@ -559,6 +562,7 @@ export type Database = {
         Args: { check_date: string }
         Returns: {
           booking_date: string
+          end_booking_date: string
           status: string
         }[]
       }
