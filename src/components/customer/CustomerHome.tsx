@@ -1,9 +1,10 @@
-import { TrendingDown, CalendarDays, Flame, Target, CreditCard, Bell } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { bodyMetrics } from "@/lib/dummyData";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { useProfile } from "@/hooks/useProfile";
 import { useMyBookings } from "@/hooks/useBookings";
+import { useMeasurements } from "@/hooks/useMeasurements";
+import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -16,13 +17,10 @@ const planMaxSessions: Record<string, number> = {
 };
 
 const CustomerHome = () => {
+  const { user } = useAuth();
   const { profile, loading } = useProfile();
   const { bookings, loading: bookingsLoading } = useMyBookings();
-
-  const latestMetric = bodyMetrics[bodyMetrics.length - 1];
-  const firstMetric = bodyMetrics[0];
-  const weightChange = (latestMetric.weight - firstMetric.weight).toFixed(1);
-  const fatChange = (latestMetric.bodyFat - firstMetric.bodyFat).toFixed(1);
+  const { chartData, latest, loading: metricsLoading } = useMeasurements(user?.id);
 
   const displayName = profile?.display_name || "ゲスト";
   const currentPlan = profile?.plan;
@@ -49,7 +47,7 @@ const CustomerHome = () => {
   ).length;
   const maxSessions = hasPlan ? (planMaxSessions[currentPlan] || 4) : 0;
 
-  if (loading || bookingsLoading) {
+  if (loading || bookingsLoading || metricsLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-accent" />
@@ -63,6 +61,13 @@ const CustomerHome = () => {
     const d = parseISO(b.date);
     return `${format(d, "M月d日（E）", { locale: ja })} ${b.startTime} - ${b.endTime}`;
   };
+
+  // Compute weight/fat changes from first to latest
+  const first = chartData.length > 0 ? chartData[0] : null;
+  const weightChange = latest && first && latest.weight != null && first.weight != null
+    ? (latest.weight - first.weight).toFixed(1) : null;
+  const fatChange = latest && first && latest.body_fat != null && first.bodyFat != null
+    ? (latest.body_fat - (first.bodyFat as number)).toFixed(1) : null;
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
@@ -151,94 +156,125 @@ const CustomerHome = () => {
       </section>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="card-hover">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-extrabold">{latestMetric.weight}<span className="text-sm font-medium text-muted-foreground">kg</span></p>
-            <p className="text-xs text-muted-foreground mt-1">現在の体重</p>
-            <div className="flex items-center justify-center gap-1 mt-1.5">
-              <TrendingDown className="w-3 h-3 text-success" />
-              <span className="text-xs font-bold text-success">{weightChange}kg</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="card-hover">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-extrabold">{latestMetric.bodyFat}<span className="text-sm font-medium text-muted-foreground">%</span></p>
-            <p className="text-xs text-muted-foreground mt-1">体脂肪率</p>
-            <div className="flex items-center justify-center gap-1 mt-1.5">
-              <TrendingDown className="w-3 h-3 text-success" />
-              <span className="text-xs font-bold text-success">{fatChange}%</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {latest && (latest.weight != null || latest.body_fat != null) && (
+        <div className="grid grid-cols-2 gap-3">
+          {latest.weight != null && (
+            <Card className="card-hover">
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-extrabold">{latest.weight}<span className="text-sm font-medium text-muted-foreground">kg</span></p>
+                <p className="text-xs text-muted-foreground mt-1">現在の体重</p>
+                {weightChange && (
+                  <div className="flex items-center justify-center gap-1 mt-1.5">
+                    {parseFloat(weightChange) <= 0 ? (
+                      <TrendingDown className="w-3 h-3 text-success" />
+                    ) : (
+                      <TrendingUp className="w-3 h-3 text-destructive" />
+                    )}
+                    <span className={`text-xs font-bold ${parseFloat(weightChange) <= 0 ? 'text-success' : 'text-destructive'}`}>{weightChange}kg</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          {latest.body_fat != null && (
+            <Card className="card-hover">
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-extrabold">{latest.body_fat}<span className="text-sm font-medium text-muted-foreground">%</span></p>
+                <p className="text-xs text-muted-foreground mt-1">体脂肪率</p>
+                {fatChange && (
+                  <div className="flex items-center justify-center gap-1 mt-1.5">
+                    {parseFloat(fatChange) <= 0 ? (
+                      <TrendingDown className="w-3 h-3 text-success" />
+                    ) : (
+                      <TrendingUp className="w-3 h-3 text-destructive" />
+                    )}
+                    <span className={`text-xs font-bold ${parseFloat(fatChange) <= 0 ? 'text-success' : 'text-destructive'}`}>{fatChange}%</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Weight Chart */}
-      <section>
-        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">体重推移</h2>
-        <Card>
-          <CardContent className="p-4">
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={bodyMetrics}>
-                  <defs>
-                    <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'hsl(0, 0%, 100%)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Area type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2.5} fill="url(#weightGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(36, 50%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      {chartData.length > 0 && (
+        <section>
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">体重推移</h2>
+          <Card>
+            <CardContent className="p-4">
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                    <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(0, 0%, 100%)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                        fontSize: '12px',
+                      }}
+                    />
+                    <Area type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2.5} fill="url(#weightGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(36, 50%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} name="体重(kg)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Body Fat Chart */}
-      <section>
-        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">体脂肪率推移</h2>
+      {chartData.some(d => d.bodyFat != null) && (
+        <section>
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">体脂肪率推移</h2>
+          <Card>
+            <CardContent className="p-4">
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="fatGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                    <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(0, 0%, 100%)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                        fontSize: '12px',
+                      }}
+                    />
+                    <Area type="monotone" dataKey="bodyFat" stroke="hsl(210, 40%, 58%)" strokeWidth={2.5} fill="url(#fatGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(210, 40%, 58%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} name="体脂肪率(%)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* No data message */}
+      {chartData.length === 0 && (
         <Card>
-          <CardContent className="p-4">
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={bodyMetrics}>
-                  <defs>
-                    <linearGradient id="fatGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'hsl(0, 0%, 100%)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Area type="monotone" dataKey="bodyFat" stroke="hsl(210, 40%, 58%)" strokeWidth={2.5} fill="url(#fatGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(210, 40%, 58%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            まだ計測データがありません。トレーナーがデータを入力すると、ここに表示されます。
           </CardContent>
         </Card>
-      </section>
+      )}
     </div>
   );
 };

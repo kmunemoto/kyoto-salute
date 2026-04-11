@@ -356,6 +356,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_measurements: {
+        Row: {
+          body_fat: number | null
+          created_at: string
+          id: string
+          measured_date: string
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          body_fat?: number | null
+          created_at?: string
+          id?: string
+          measured_date?: string
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          body_fat?: number | null
+          created_at?: string
+          id?: string
+          measured_date?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

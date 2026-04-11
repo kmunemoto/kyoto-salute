@@ -16,9 +16,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  clientBodyMetrics, clientChatMessages,
+  clientChatMessages,
   planOptions, planPrices, PlanType, ChatMessage,
 } from "@/lib/dummyData";
+import { useMeasurements } from "@/hooks/useMeasurements";
 import { Switch } from "@/components/ui/switch";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { toast } from "sonner";
@@ -80,6 +81,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [isPaid, setIsPaid] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
+  const [savingMeasurement, setSavingMeasurement] = useState(false);
+  const { measurements, chartData: measurementChartData, saveMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
   const [memo, setMemo] = useState("");
@@ -225,7 +228,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   };
 
   // Dummy data for non-DB features
-  const metrics = clientBodyMetrics[clientId] || [];
   const bookings = clientBookings2;
   const messages = clientChatMessages[clientId] || [];
 
@@ -465,12 +467,12 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
               <Activity className="w-3.5 h-3.5" />
               体重・体脂肪率推移
             </h2>
-            <Card>
+             <Card>
               <CardContent className="p-3 sm:p-4">
-                {metrics.length > 0 ? (
+                {measurementChartData.length > 0 ? (
                   <div className="h-40 sm:h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={metrics}>
+                      <AreaChart data={measurementChartData}>
                         <defs>
                           <linearGradient id={`wg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
@@ -508,13 +510,29 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1 block">体重 (kg)</label>
-                    <Input type="number" step="0.1" placeholder="73.5" value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} className="h-11" />
+                    <Input type="number" step="0.1" placeholder={latestMeasurement?.weight?.toString() || "73.5"} value={bodyWeight} onChange={(e) => setBodyWeight(e.target.value)} className="h-11" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1 block">体脂肪率 (%)</label>
-                    <Input type="number" step="0.1" placeholder="18.0" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} className="h-11" />
+                    <Input type="number" step="0.1" placeholder={latestMeasurement?.body_fat?.toString() || "18.0"} value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} className="h-11" />
                   </div>
                 </div>
+                <Button
+                  className="w-full"
+                  disabled={savingMeasurement || (!bodyWeight && !bodyFat)}
+                  onClick={async () => {
+                    setSavingMeasurement(true);
+                    const today = new Date().toISOString().slice(0, 10);
+                    const w = bodyWeight ? parseFloat(bodyWeight) : null;
+                    const f = bodyFat ? parseFloat(bodyFat) : null;
+                    const ok = await saveMeasurement(today, w, f);
+                    if (ok) { setBodyWeight(""); setBodyFat(""); }
+                    setSavingMeasurement(false);
+                  }}
+                >
+                  {savingMeasurement ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                  計測データを保存
+                </Button>
               </CardContent>
             </Card>
           </section>
