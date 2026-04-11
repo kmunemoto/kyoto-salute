@@ -689,9 +689,15 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 {sortedDates.map((date) => (
                   <Card key={date}>
                     <CardContent className="p-3">
-                      <p className="text-xs font-bold text-muted-foreground mb-1.5">
-                        {format(new Date(date), "yyyy年M月d日（E）", { locale: ja })}
-                      </p>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-bold text-muted-foreground">
+                          {format(new Date(date), "yyyy年M月d日（E）", { locale: ja })}
+                        </p>
+                        <button onClick={() => openEdit(date)} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground" title="この日の記録を編集">
+                          <Pencil className="w-3.5 h-3.5" />
+                          <span>編集</span>
+                        </button>
+                      </div>
                       <div className="space-y-1.5">
                         {groupedRecords[date].map((r) => {
                           const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : []);
@@ -704,16 +710,12 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                                 <span key={si}>{si > 0 && " / "}{s.weight}kg×{s.reps}</span>
                               ))}
                             </span>
-                            <div className="ml-auto flex items-center gap-0.5 shrink-0">
-                              <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="編集">
-                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                              </button>
-                              <button onClick={() => setDeleteTarget(r)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors" title="削除">
-                                <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
-                              </button>
-                            </div>
+                            <button onClick={() => setDeleteTarget(r)} className="ml-auto p-1.5 rounded-lg hover:bg-destructive/10 transition-colors shrink-0" title="削除">
+                              <Trash2 className="w-3.5 h-3.5 text-destructive/70" />
+                            </button>
                           </div>
                           );
+                        })}
                         })}
                       </div>
                     </CardContent>
