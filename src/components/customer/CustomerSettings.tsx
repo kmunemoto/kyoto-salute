@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Bell, BellRing, Settings, User, Pencil, Shield, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
