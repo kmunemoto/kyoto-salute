@@ -248,20 +248,24 @@ const TrainerSchedule = () => {
                           return (
                             <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
                               {session && (
-                                <div className="accent-gradient text-accent-foreground rounded-lg p-2 pr-12 text-xs relative">
+                                <div className={`rounded-lg p-2 pr-12 text-xs relative ${
+                                  session.isBlocked
+                                    ? "bg-muted border border-dashed border-destructive/30 text-muted-foreground"
+                                    : "accent-gradient text-accent-foreground"
+                                }`}>
                                   <Button
                                     type="button"
                                     variant="destructive"
                                     size="icon"
-                                    aria-label={`${session.clientName}さんの予約を削除`}
-                                    onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime })}
+                                    aria-label={session.isBlocked ? "ブロック解除" : `${session.clientName}さんの予約を削除`}
+                                    onClick={() => setDeleteTarget({ id: session.id, clientName: session.clientName, date: session.date, startTime: session.startTime, isBlocked: session.isBlocked })}
                                     className="absolute top-1 right-1 h-7 w-7 rounded-md"
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
-                                  <p className="font-bold truncate">{session.clientName}</p>
+                                  <p className="font-bold truncate">{session.isBlocked ? "🚫 ブロック" : session.clientName}</p>
                                   <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
-                                  <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>
+                                  {!session.isBlocked && <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>}
                                 </div>
                               )}
                             </td>
