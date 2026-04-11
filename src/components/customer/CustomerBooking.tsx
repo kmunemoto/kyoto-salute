@@ -112,7 +112,7 @@ const CustomerBooking = () => {
     toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
     setSelectedSlot(null);
     setSelectedDate(undefined);
-    setSelectedPlan(null);
+    // plan is auto-assigned, no need to reset
     setSubmitting(false);
     refetch();
     refetchAll();
