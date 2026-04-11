@@ -70,11 +70,6 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
               >
                 <div className="relative">
                   <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""} transition-transform`} />
-                  {showBadge && (
-                    <span className="absolute -top-1.5 -right-2.5 bg-destructive text-destructive-foreground text-[8px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
-                      {unreadMessages}
-                    </span>
-                  )}
                 </div>
                 <span className="text-[10px] font-semibold">{t.label}</span>
               </button>
