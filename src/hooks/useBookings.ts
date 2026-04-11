@@ -271,7 +271,7 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
   // Fetch booking details before deleting
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, user_id, booking_date, booking_type")
+    .select("id, user_id, booking_date, booking_type, google_event_id")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -283,6 +283,13 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
   if (!error && booking) {
     // Send LINE cancel notification (fire-and-forget)
     sendCancelLineNotification(booking, cancelledByTrainer).catch(console.error);
+
+    // Delete from Google Calendar (fire-and-forget)
+    if (booking.google_event_id) {
+      supabase.functions.invoke("google-calendar-sync", {
+        body: { action: "delete", google_event_id: booking.google_event_id },
+      }).catch(console.error);
+    }
   }
 
   return { error };
