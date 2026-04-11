@@ -291,7 +291,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   };
 
   const handleSave = async () => {
-    const validEntries = exercises.filter(ex => ex.exerciseId && ex.weight && ex.reps);
+    const validEntries = exercises.filter(ex => ex.exerciseId && ex.sets.some(s => s.weight && s.reps));
     if (validEntries.length === 0) {
       toast.error("種目・重量・回数をすべて入力してください");
       return;
@@ -300,11 +300,16 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     const rows = validEntries.map(ex => ({
       user_id: clientId,
       exercise_id: ex.exerciseId,
-      weight: parseFloat(ex.weight),
-      reps: parseInt(ex.reps, 10),
+      weight: parseFloat(ex.sets[0].weight) || null,
+      reps: parseInt(ex.sets[0].reps, 10) || null,
+      sets: ex.sets.filter(s => s.weight && s.reps).map((s, i) => ({
+        set: i + 1,
+        weight: parseFloat(s.weight),
+        reps: parseInt(s.reps, 10),
+      })),
       workout_date: trainingDate,
     }));
-    const { data, error } = await supabase.from("workouts").insert(rows).select("*, exercises(name)");
+    const { data, error } = await supabase.from("workouts").insert(rows as any).select("*, exercises(name)");
     if (error) {
       toast.error("保存に失敗しました");
       setSaving(false);
@@ -315,7 +320,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       exercise_name: w.exercises?.name || "不明",
     }));
     setWorkoutRecords(prev => [...newRecords, ...prev]);
-    setExercises([{ exerciseId: "", name: "", weight: "", reps: "" }]);
+    setExercises([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
     setMemo("");
     setSaving(false);
     toast.success("記録を保存しました", { description: `${displayName}さんのトレーニング記録を保存しました` });
