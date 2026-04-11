@@ -1,16 +1,30 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Dumbbell, Users, Mail, Lock, User, Shield } from "lucide-react";
+import { Dumbbell, Users, Mail, Lock, User, Shield, Loader2 } from "lucide-react";
 import GymLogo from "@/components/GymLogo";
+import { useAuth } from "@/contexts/AuthContext";
 
 type AuthMode = "login" | "signup";
 type LoginTarget = "customer" | "trainer";
 
 const Auth = () => {
+  const { user, loading } = useAuth();
+
+  // Already authenticated → redirect to home
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
   const [mode, setMode] = useState<AuthMode>("login");
   const [loginTarget, setLoginTarget] = useState<LoginTarget>("customer");
   const [email, setEmail] = useState("");

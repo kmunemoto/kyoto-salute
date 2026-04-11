@@ -34,8 +34,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("role")
       .eq("user_id", userId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn("Failed to fetch role, defaulting to customer:", error.message);
+        }
         setRole((data?.role as AppRole) ?? "customer");
+        setLoading(false);
+      })
+      .catch(() => {
+        setRole("customer");
         setLoading(false);
       });
   };
