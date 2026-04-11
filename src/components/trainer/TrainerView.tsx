@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { MessageSquare } from "lucide-react";
 
 import TrainerSidebar from "./TrainerSidebar";
 import TrainerDashboard from "./TrainerDashboard";
@@ -81,6 +82,18 @@ const TrainerView = () => {
             <GymLogo size="sm" />
             <span className="text-xs sm:text-sm font-bold truncate">パーソナルジムSalute御所南 <span className="hidden sm:inline">管理画面</span></span>
           </div>
+          <button
+            onClick={() => { setTab("messages"); setSelectedClientId(null); }}
+            className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="チャット"
+          >
+            <MessageSquare className="w-5 h-5" />
+            {unreadMessages > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
+                {unreadMessages > 99 ? "99+" : unreadMessages}
+              </span>
+            )}
+          </button>
         </div>
       </div>
       <div className="pt-12">
