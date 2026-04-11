@@ -86,19 +86,21 @@ const TrainerNotificationSettings = () => {
     }
   };
 
-  const handleGcalLink = () => {
+  const handleGcalLink = async () => {
     if (!user) return;
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      // Fallback: use edge function URL-based flow
-      toast.error("Google Client IDが設定されていません");
-      return;
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth-url", {
+        body: { user_id: user.id },
+      });
+      if (error || !data?.url) {
+        toast.error("Google認証URLの取得に失敗しました");
+        return;
+      }
+      window.open(data.url, "gcal-link", "width=500,height=700");
+    } catch (e) {
+      console.error(e);
+      toast.error("エラーが発生しました");
     }
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/google-calendar-callback`);
-    const scope = encodeURIComponent("https://www.googleapis.com/auth/calendar.events");
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${user.id}`;
-    window.open(googleAuthUrl, "gcal-link", "width=500,height=700");
   };
 
   const handleGcalUnlink = async () => {
