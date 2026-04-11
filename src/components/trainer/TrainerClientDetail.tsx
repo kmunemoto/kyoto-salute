@@ -527,11 +527,14 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {format(new Date(date), "M月d日（E）", { locale: ja })}
                       </p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {groupedRecords[date].map((r) => (
-                          <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1">
-                            {r.exercise_name} {r.weight}kg×{r.reps}
-                          </span>
-                        ))}
+                        {groupedRecords[date].map((r) => {
+                          const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : []);
+                          return (
+                            <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1">
+                              {r.exercise_name} {setsData.map((s: any) => `${s.weight}kg×${s.reps}`).join(", ")}
+                            </span>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
