@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Trash2, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -227,6 +227,47 @@ const CustomerMeals = () => {
     return `${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   };
 
+  const getDateKey = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const formatDateLabel = (key: string) => {
+    const [y, m, d] = key.split("-");
+    const today = getDateKey(new Date().toISOString());
+    const yesterday = getDateKey(new Date(Date.now() - 86400000).toISOString());
+    const label = `${parseInt(m)}月${parseInt(d)}日`;
+    if (key === today) return `📅 今日 (${label})`;
+    if (key === yesterday) return `📅 昨日 (${label})`;
+    return `📅 ${label}`;
+  };
+
+  const groupedMeals = useMemo(() => {
+    const groups: { dateKey: string; meals: Meal[]; totals: { calories: number; protein: number; fat: number; carbs: number } }[] = [];
+    const map = new Map<string, Meal[]>();
+    for (const meal of meals) {
+      const key = getDateKey(meal.created_at);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(meal);
+    }
+    // Sort date keys descending
+    const sortedKeys = [...map.keys()].sort((a, b) => b.localeCompare(a));
+    for (const dateKey of sortedKeys) {
+      const dayMeals = map.get(dateKey)!;
+      const totals = { calories: 0, protein: 0, fat: 0, carbs: 0 };
+      for (const m of dayMeals) {
+        if (m.analyzed) {
+          totals.calories += m.calories ?? 0;
+          totals.protein += m.protein ?? 0;
+          totals.fat += m.fat ?? 0;
+          totals.carbs += m.carbs ?? 0;
+        }
+      }
+      groups.push({ dateKey, meals: dayMeals, totals });
+    }
+    return groups;
+  }, [meals]);
+
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
       <div className="flex items-center justify-between">
@@ -268,11 +309,44 @@ const CustomerMeals = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {meals.map((meal) => (
+        <div className="space-y-6">
+          {groupedMeals.map(({ dateKey, meals: dayMeals, totals }) => (
+            <div key={dateKey} className="space-y-3">
+              {/* Daily Summary Header */}
+              <div className="text-sm font-bold text-foreground">{formatDateLabel(dateKey)}</div>
+              <Card className="border-accent/30 bg-accent/5">
+                <CardContent className="p-4">
+                  <div className="flex items-end gap-4">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">合計カロリー</p>
+                      <div className="flex items-baseline gap-1">
+                        <Flame className="w-5 h-5 text-destructive shrink-0" />
+                        <span className="text-3xl font-extrabold text-foreground">{totals.calories.toLocaleString()}</span>
+                        <span className="text-sm text-muted-foreground">kcal</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 text-center">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">P</p>
+                        <p className="text-sm font-bold text-accent">{totals.protein.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">F</p>
+                        <p className="text-sm font-bold text-warning">{totals.fat.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">C</p>
+                        <p className="text-sm font-bold text-info">{totals.carbs.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Meal Cards for this day */}
+              {dayMeals.map((meal) => (
             <Card key={meal.id} className="overflow-hidden card-hover">
               <CardContent className="p-0">
-                {/* Photo */}
                 <div className="relative">
                   <img
                     src={meal.resolved_image_url || meal.image_url}
@@ -282,7 +356,6 @@ const CustomerMeals = () => {
                   <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
                     {mealTypeEmoji[meal.meal_type] || "🍽️"} {meal.meal_type}
                   </div>
-                  {/* Date + edit button */}
                   <button
                     onClick={() => openEditTime(meal)}
                     className="absolute top-2 right-12 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs backdrop-blur-sm flex items-center gap-1 hover:bg-foreground/90 transition-colors"
@@ -290,7 +363,6 @@ const CustomerMeals = () => {
                     {formatDate(meal.created_at)}
                     <Pencil className="w-3 h-3" />
                   </button>
-                  {/* Delete button */}
                   <button
                     onClick={() => setDeleteTarget(meal)}
                     className="absolute top-2 right-2 bg-destructive/80 text-destructive-foreground p-1.5 rounded-lg backdrop-blur-sm hover:bg-destructive transition-colors"
@@ -299,7 +371,6 @@ const CustomerMeals = () => {
                   </button>
                 </div>
 
-                {/* Analysis Results */}
                 {meal.analyzed ? (
                   <div className="p-4 space-y-3">
                     <div className="grid grid-cols-5 gap-2">
@@ -324,6 +395,8 @@ const CustomerMeals = () => {
                 )}
               </CardContent>
             </Card>
+              ))}
+            </div>
           ))}
         </div>
       )}
