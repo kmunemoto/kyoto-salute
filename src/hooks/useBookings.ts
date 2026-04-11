@@ -176,7 +176,8 @@ export const createBooking = async (
   userId: string,
   date: string,
   startTime: string,
-  bookingType: string = "通常"
+  bookingType: string = "通常",
+  isProxyBooking = false,
 ) => {
   const bookingDate = `${date}T${startTime}:00+09:00`;
   const { data, error } = await supabase
@@ -185,8 +186,37 @@ export const createBooking = async (
     .select()
     .single();
 
+  // If trainer made a proxy booking, notify the customer via LINE
+  if (!error && data && isProxyBooking) {
+    sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
+  }
+
   return { data, error };
 };
+
+async function sendProxyBookingLineNotification(
+  userId: string,
+  date: string,
+  startTime: string,
+  bookingType: string,
+) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const name = profile?.display_name || "お客";
+
+  const dt = new Date(`${date}T${startTime}:00+09:00`);
+  const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
+
+  await supabase.functions.invoke("send-line-message", {
+    body: {
+      user_id: userId,
+      message: `📅 予約のお知らせ\n\n${name}様、下記の予約が確定しました。\n\n日時：${dateStr}\nプラン：${bookingType}\n\nお気をつけてお越しください！\nパーソナルジムSalute御所南`,
+    },
+  });
+}
 
 export const cancelBooking = async (bookingId: string, cancelledByTrainer = false) => {
   // Fetch booking details before deleting
