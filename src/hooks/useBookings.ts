@@ -91,9 +91,10 @@ export const useAllBookings = () => {
   const fetchBookings = useCallback(async () => {
     setLoading(true);
 
-    const [{ data: rows, error }, { data: trialRows }] = await Promise.all([
+    const [{ data: rows, error }, { data: trialRows }, { data: blockedRows }] = await Promise.all([
       supabase.from("bookings").select("*").order("booking_date", { ascending: true }),
       supabase.from("trial_bookings").select("*").order("booking_date", { ascending: true }),
+      supabase.from("blocked_slots").select("*"),
     ]);
 
     if (error) {
