@@ -29,7 +29,8 @@ const TrainerSchedule = () => {
   const [deleting, setDeleting] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blockDate, setBlockDate] = useState<Date | undefined>();
-  const [blockTime, setBlockTime] = useState<string>("");
+  const [blockStartTime, setBlockStartTime] = useState<string>("");
+  const [blockEndTime, setBlockEndTime] = useState<string>("");
 
   const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
@@ -138,21 +139,37 @@ const TrainerSchedule = () => {
   };
 
   const handleBlockSlot = async () => {
-    if (!blockDate || !blockTime || !user) return;
+    if (!blockDate || !blockStartTime || !blockEndTime || !user) return;
     const dateStr = format(blockDate, "yyyy-MM-dd");
 
-    if (checkSlotBlocked(bookings, dateStr, blockTime)) {
-      toast.error("この時間帯はすでに予約またはブロックが入っています");
+    // Generate all 15-min slots from start to end (exclusive)
+    const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+    const startMin = toMin(blockStartTime);
+    const endMin = toMin(blockEndTime);
+    if (endMin <= startMin) {
+      toast.error("終了時間は開始時間より後にしてください");
       return;
     }
 
+    // Check all slots in range
+    const slotsToBlock: string[] = [];
+    for (let m = startMin; m < endMin; m += 15) {
+      const time = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+      if (checkSlotBlocked(bookings, dateStr, time)) {
+        toast.error(`${time} はすでに予約またはブロックが入っています`);
+        return;
+      }
+      slotsToBlock.push(time);
+    }
+
     setSubmitting(true);
-    const blockedDate = `${dateStr}T${blockTime}:00+09:00`;
-    const { error } = await supabase.from("blocked_slots").insert({
-      blocked_date: blockedDate,
+    const rows = slotsToBlock.map((time) => ({
+      blocked_date: `${dateStr}T${time}:00+09:00`,
       created_by: user.id,
-      reason: "ブロック",
-    });
+      reason: `ブロック（${blockStartTime}〜${blockEndTime}）`,
+    }));
+
+    const { error } = await supabase.from("blocked_slots").insert(rows);
 
     if (error) {
       toast.error("ブロックに失敗しました");
@@ -160,10 +177,11 @@ const TrainerSchedule = () => {
       return;
     }
 
-    toast.success(`${format(blockDate, "M/d")} ${blockTime} をブロックしました`);
+    toast.success(`${format(blockDate, "M/d")} ${blockStartTime}〜${blockEndTime} をブロックしました`);
     setBlockDialogOpen(false);
     setBlockDate(undefined);
-    setBlockTime("");
+    setBlockStartTime("");
+    setBlockEndTime("");
     setSubmitting(false);
     void refetch();
   };
