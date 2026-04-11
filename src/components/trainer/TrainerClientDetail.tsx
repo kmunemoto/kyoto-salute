@@ -467,12 +467,12 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
               <Activity className="w-3.5 h-3.5" />
               体重・体脂肪率推移
             </h2>
-            <Card>
+             <Card>
               <CardContent className="p-3 sm:p-4">
-                {metrics.length > 0 ? (
+                {measurementChartData.length > 0 ? (
                   <div className="h-40 sm:h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={metrics}>
+                      <AreaChart data={measurementChartData}>
                         <defs>
                           <linearGradient id={`wg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
