@@ -89,10 +89,10 @@ export const useAllBookings = () => {
   const fetchBookings = useCallback(async () => {
     setLoading(true);
 
-    const { data: rows, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .order("booking_date", { ascending: true });
+    const [{ data: rows, error }, { data: trialRows }] = await Promise.all([
+      supabase.from("bookings").select("*").order("booking_date", { ascending: true }),
+      supabase.from("trial_bookings").select("*").order("booking_date", { ascending: true }),
+    ]);
 
     if (error) {
       console.error("Failed to fetch bookings:", error);
@@ -101,28 +101,47 @@ export const useAllBookings = () => {
       return;
     }
 
-    if (!rows || rows.length === 0) {
-      setBookings([]);
-      setLoading(false);
-      return;
+    const allRows = rows || [];
+
+    const userIds = [...new Set(allRows.map((r) => r.user_id))];
+    let nameMap: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", userIds);
+      profiles?.forEach((p) => {
+        nameMap[p.user_id] = p.display_name || "不明";
+      });
     }
 
-    const userIds = [...new Set(rows.map((r) => r.user_id))];
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("user_id, display_name")
-      .in("user_id", userIds);
+    const parsed: BookingWithTime[] = allRows.map((r) =>
+      parseBooking({ ...r, display_name: nameMap[r.user_id] || "不明" })
+    );
 
-    if (profilesError) {
-      console.error("Failed to fetch booking profiles:", profilesError);
-    }
-
-    const nameMap: Record<string, string> = {};
-    profiles?.forEach((p) => {
-      nameMap[p.user_id] = p.display_name || "不明";
+    // Merge trial bookings as BookingWithTime entries
+    trialRows?.forEach((t) => {
+      if (t.status === "キャンセル済み") return;
+      const dt = new Date(t.booking_date);
+      const h = dt.getHours();
+      const m = dt.getMinutes();
+      const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      const endMin = h * 60 + m + 60;
+      const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+      parsed.push({
+        id: t.id,
+        user_id: "trial-guest",
+        date: format(dt, "yyyy-MM-dd"),
+        startTime,
+        endTime,
+        clientName: `🆕 ${t.guest_name}`,
+        status: t.status,
+        booking_type: t.booking_type,
+      });
     });
 
-    setBookings(rows.map((r) => parseBooking({ ...r, display_name: nameMap[r.user_id] || "不明" })));
+    parsed.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+    setBookings(parsed);
     setLoading(false);
   }, []);
 
