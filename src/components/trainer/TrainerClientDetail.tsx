@@ -228,7 +228,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   };
 
   // Dummy data for non-DB features
-  const metrics = clientBodyMetrics[clientId] || [];
   const bookings = clientBookings2;
   const messages = clientChatMessages[clientId] || [];
 
