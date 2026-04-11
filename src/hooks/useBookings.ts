@@ -188,11 +188,68 @@ export const createBooking = async (
   return { data, error };
 };
 
-export const cancelBooking = async (bookingId: string) => {
+export const cancelBooking = async (bookingId: string, cancelledByTrainer = false) => {
+  // Fetch booking details before deleting
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("id, user_id, booking_date, booking_type")
+    .eq("id", bookingId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("bookings")
     .delete()
     .eq("id", bookingId);
 
+  if (!error && booking) {
+    // Send LINE cancel notification (fire-and-forget)
+    sendCancelLineNotification(booking, cancelledByTrainer).catch(console.error);
+  }
+
   return { error };
 };
+
+async function sendCancelLineNotification(
+  booking: { user_id: string; booking_date: string; booking_type: string },
+  cancelledByTrainer: boolean,
+) {
+  const dt = new Date(booking.booking_date);
+  const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
+
+  if (cancelledByTrainer) {
+    // Trainer cancelled → notify customer via LINE
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", booking.user_id)
+      .maybeSingle();
+    const name = profile?.display_name || "お客";
+
+    await supabase.functions.invoke("send-line-message", {
+      body: {
+        user_id: booking.user_id,
+        message: `❌ 予約キャンセルのお知らせ\n\n${name}様、${dateStr}の予約（${booking.booking_type}）がキャンセルされました。\n\nご不明な点がございましたらお問い合わせください。\nパーソナルジムSalute御所南`,
+      },
+    });
+  } else {
+    // Customer cancelled → notify trainer via LINE
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", booking.user_id)
+      .maybeSingle();
+    const customerName = profile?.display_name || "顧客";
+
+    // Get trainer user_id
+    const { data: trainerIds } = await supabase.rpc("get_trainer_ids");
+    const trainerId = trainerIds?.[0]?.user_id;
+    if (!trainerId) return;
+
+    await supabase.functions.invoke("send-line-message", {
+      body: {
+        user_id: trainerId,
+        message: `❌ 予約キャンセル通知\n\n${customerName}様が${dateStr}の予約（${booking.booking_type}）をキャンセルしました。\n\nパーソナルジムSalute御所南`,
+      },
+    });
+  }
+}
