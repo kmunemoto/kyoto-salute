@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Bell, Clock } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { useProfile } from "@/hooks/useProfile";
@@ -91,23 +91,6 @@ const CustomerHome = () => {
         </div>
       </div>
 
-      {/* Reminder Notification Banner */}
-      {nextBooking && (
-        <Card className="border-l-4 border-l-warning bg-warning/5">
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="relative">
-              <Bell className="w-4 h-4 text-warning" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive" />
-            </div>
-            <div className="flex-1">
-              <p className="text-xs font-bold">🔔 リマインド通知</p>
-              <p className="text-[11px] text-muted-foreground">
-                {formatBookingDate(nextBooking)} からトレーニングの予約が入っています
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Plan badge - only show if user has a plan */}
       {hasPlan && (
