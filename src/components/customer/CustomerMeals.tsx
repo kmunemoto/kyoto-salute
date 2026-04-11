@@ -49,6 +49,8 @@ const mealTypeEmoji: Record<string, string> = {
   "食事": "🍽️",
 };
 
+const PFC_GOALS = { p: 30, f: 20, c: 50 };
+
 const CustomerMeals = () => {
   const { user } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
