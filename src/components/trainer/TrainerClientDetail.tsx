@@ -172,7 +172,7 @@ const TrainingGrowthChart = ({ workoutRecords, loadingRecords }: { workoutRecord
   );
 };
 
-
+const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [clientPlan, setClientPlan] = useState<string>('');
