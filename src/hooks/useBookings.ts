@@ -186,9 +186,14 @@ export const createBooking = async (
     .select()
     .single();
 
-  // If trainer made a proxy booking, notify the customer via LINE
-  if (!error && data && isProxyBooking) {
-    sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
+  if (!error && data) {
+    if (isProxyBooking) {
+      // Trainer made proxy booking → notify customer
+      sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
+    } else {
+      // Customer booked → notify trainer
+      sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
+    }
   }
 
   return { data, error };
