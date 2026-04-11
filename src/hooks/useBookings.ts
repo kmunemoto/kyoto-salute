@@ -143,6 +143,27 @@ export const useAllBookings = () => {
       });
     });
 
+    // Merge blocked slots
+    blockedRows?.forEach((bs) => {
+      const dt = new Date(bs.blocked_date);
+      const h = dt.getHours();
+      const m = dt.getMinutes();
+      const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      const endMin = h * 60 + m + 60;
+      const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+      parsed.push({
+        id: bs.id,
+        user_id: "blocked",
+        date: format(dt, "yyyy-MM-dd"),
+        startTime,
+        endTime,
+        clientName: bs.reason || "ブロック",
+        status: "ブロック済み",
+        booking_type: "ブロック",
+        isBlocked: true,
+      });
+    });
+
     parsed.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
     setBookings(parsed);
     setLoading(false);
