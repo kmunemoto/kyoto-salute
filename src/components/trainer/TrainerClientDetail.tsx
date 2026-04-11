@@ -232,10 +232,23 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const bookings = clientBookings2;
   const messages = clientChatMessages[clientId] || [];
 
-  const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", weight: "", reps: "" }]);
-  const updateExercise = (i: number, field: keyof ExerciseEntry, value: string) => {
+  const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
+  const updateExerciseSet = (exIdx: number, setIdx: number, field: keyof SetEntry, value: string) => {
     const updated = [...exercises];
-    updated[i] = { ...updated[i], [field]: value };
+    const updatedSets = [...updated[exIdx].sets];
+    updatedSets[setIdx] = { ...updatedSets[setIdx], [field]: value };
+    updated[exIdx] = { ...updated[exIdx], sets: updatedSets };
+    setExercises(updated);
+  };
+  const addSet = (exIdx: number) => {
+    const updated = [...exercises];
+    updated[exIdx] = { ...updated[exIdx], sets: [...updated[exIdx].sets, { weight: "", reps: "" }] };
+    setExercises(updated);
+  };
+  const removeSet = (exIdx: number, setIdx: number) => {
+    const updated = [...exercises];
+    if (updated[exIdx].sets.length <= 1) return;
+    updated[exIdx] = { ...updated[exIdx], sets: updated[exIdx].sets.filter((_, i) => i !== setIdx) };
     setExercises(updated);
   };
   const removeExercise = (i: number) => {
