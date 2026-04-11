@@ -59,7 +59,7 @@ const TrainerSchedule = () => {
     }
 
     setSubmitting(true);
-    const { data: bookingData, error } = await createBooking(proxyClient, proxyDateKey, proxyTime, proxyBookingType);
+    const { data: bookingData, error } = await createBooking(proxyClient, proxyDateKey, proxyTime, proxyBookingType, true);
 
     if (error) {
       toast.error("予約の追加に失敗しました");
