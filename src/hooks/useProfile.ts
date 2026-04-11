@@ -204,6 +204,7 @@ export const useAllCustomerProfiles = () => {
         paid_this_month: p?.paid_this_month || false,
         trial_completed: p?.trial_completed || false,
         line_user_id: p?.line_user_id || null,
+        cycle_start_date: p?.cycle_start_date || null,
         created_at: p?.created_at || new Date().toISOString(),
         updated_at: p?.updated_at || new Date().toISOString(),
         next_booking_date: nextBookingMap[uid]?.booking_date || null,
