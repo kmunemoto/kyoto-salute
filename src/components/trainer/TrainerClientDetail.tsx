@@ -82,7 +82,97 @@ interface MealRecord {
   created_at: string;
 }
 
-const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
+const TrainingGrowthChart = ({ workoutRecords, loadingRecords }: { workoutRecords: WorkoutRecord[]; loadingRecords: boolean }) => {
+  const exerciseNames = useMemo(() => {
+    const names = new Set<string>();
+    workoutRecords.forEach((w) => { if (w.exercise_name) names.add(w.exercise_name); });
+    return Array.from(names).sort();
+  }, [workoutRecords]);
+
+  const [selectedExercise, setSelectedExercise] = useState("");
+
+  useEffect(() => {
+    if (exerciseNames.length > 0 && !selectedExercise) {
+      setSelectedExercise(exerciseNames[0]);
+    }
+  }, [exerciseNames, selectedExercise]);
+
+  const chartData = useMemo(() => {
+    const points: { date: string; weight: number; reps: number }[] = [];
+    [...workoutRecords].reverse().forEach((w) => {
+      if (w.exercise_name === selectedExercise) {
+        const setsData = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
+        if (setsData.length === 0) return;
+        const best = setsData.reduce((a, b) => (b.weight > a.weight ? b : a), setsData[0]);
+        if (best.weight == null || best.reps == null) return;
+        const d = new Date(w.workout_date);
+        points.push({ date: `${d.getMonth() + 1}/${d.getDate()}`, weight: best.weight, reps: best.reps });
+      }
+    });
+    return points;
+  }, [selectedExercise, workoutRecords]);
+
+  if (loadingRecords) return null;
+  if (workoutRecords.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+        <TrendingUp className="w-3.5 h-3.5" />
+        トレーニング成長グラフ
+      </h2>
+      <Card>
+        <CardContent className="p-3 sm:p-4 space-y-3">
+          <Select value={selectedExercise} onValueChange={setSelectedExercise}>
+            <SelectTrigger className="w-full h-11 text-sm font-medium">
+              <SelectValue placeholder="種目を選択" />
+            </SelectTrigger>
+            <SelectContent>
+              {exerciseNames.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {chartData.length > 1 ? (
+            <div className="h-44 sm:h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} unit="kg" domain={["dataMin - 5", "dataMax + 5"]} width={42} />
+                  <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} unit="回" width={38} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "11px" }} />
+                  <Line yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2.5} isAnimationActive={false} dot={{ r: 4, fill: "hsl(36, 50%, 55%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} activeDot={{ r: 6 }} name="重量(kg)" />
+                  <Line yAxisId="r" type="monotone" dataKey="reps" stroke="hsl(210, 40%, 58%)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} dot={{ r: 3, fill: "hsl(210, 40%, 58%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} name="回数" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-28 flex items-center justify-center text-sm text-muted-foreground">
+              {chartData.length === 0 ? "この種目の記録がありません" : "データが2件以上あるとグラフが表示されます"}
+            </div>
+          )}
+
+          {chartData.length > 0 && (
+            <div className="flex justify-center gap-6 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-0.5 rounded bg-[hsl(36,50%,55%)]" />
+                重量(kg)
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-0.5 rounded" style={{ borderTop: "2px dashed hsl(210,40%,58%)", height: 0 }} />
+                回数
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  );
+};
+
+
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [clientPlan, setClientPlan] = useState<string>('');
