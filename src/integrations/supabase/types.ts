@@ -272,6 +272,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          line_user_id: string | null
           paid_this_month: boolean
           plan: string | null
           trial_completed: boolean
@@ -283,6 +284,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          line_user_id?: string | null
           paid_this_month?: boolean
           plan?: string | null
           trial_completed?: boolean
@@ -294,6 +296,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          line_user_id?: string | null
           paid_this_month?: boolean
           plan?: string | null
           trial_completed?: boolean

@@ -117,6 +117,14 @@ const CustomerBooking = () => {
     // Fire-and-forget notification email to trainer
     sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
 
+    // Fire-and-forget LINE message to customer
+    supabase.functions.invoke("send-line-message", {
+      body: {
+        user_id: user.id,
+        message: `✅ ご予約を受け付けました！\n\n📅 ${format(selectedDate!, "M月d日（E）", { locale: ja })} ${slot.time}〜${endTime}\n📋 ${selectedPlan}\n\nお気をつけてお越しください！\nパーソナルジムSalute御所南`,
+      },
+    }).catch((e) => console.error("LINE message failed:", e));
+
     // Fire-and-forget push notification to trainer
     supabase.from("user_roles").select("user_id").eq("role", "trainer").then(({ data: trainers }) => {
       if (trainers && trainers.length > 0) {
