@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LogOut } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 
 import BottomNav from "./BottomNav";
 import CustomerHome from "./CustomerHome";
