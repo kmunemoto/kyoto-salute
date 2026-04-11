@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2, Ban } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAllBookings, checkSlotBlocked, createBooking, cancelBooking } from "@/hooks/useBookings";
 import { useAllCustomerProfiles } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
