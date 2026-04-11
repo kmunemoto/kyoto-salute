@@ -64,7 +64,7 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
-        toast.success("ログインしました！");
+        // Login success — navigate silently
         navigate("/");
       }
     } catch (err: any) {
