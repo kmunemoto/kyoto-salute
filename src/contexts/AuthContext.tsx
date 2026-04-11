@@ -40,15 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         setRole((data?.role as AppRole) ?? "customer");
         setLoading(false);
-      })
-      .catch(() => {
-        setRole("customer");
-        setLoading(false);
       });
-  };
-
-  useEffect(() => {
-    // 1. Restore session from storage first
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);

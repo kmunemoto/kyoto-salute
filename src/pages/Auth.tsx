@@ -12,10 +12,18 @@ type AuthMode = "login" | "signup";
 type LoginTarget = "customer" | "trainer";
 
 const Auth = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [loginTarget, setLoginTarget] = useState<LoginTarget>("customer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Already authenticated → redirect to home
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
@@ -25,14 +33,6 @@ const Auth = () => {
   if (user) {
     return <Navigate to="/" replace />;
   }
-  const [mode, setMode] = useState<AuthMode>("login");
-  const [loginTarget, setLoginTarget] = useState<LoginTarget>("customer");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const passwordMismatch = mode === "signup" && !isTrainerTarget() && passwordConfirm.length > 0 && password !== passwordConfirm;
 
