@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { MessageSquare } from "lucide-react";
 
 import TrainerSidebar from "./TrainerSidebar";
 import TrainerDashboard from "./TrainerDashboard";
