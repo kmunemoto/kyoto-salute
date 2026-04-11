@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 
 
 const TrainerSchedule = () => {
+  const { user } = useAuth();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [proxyDialogOpen, setProxyDialogOpen] = useState(false);
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
@@ -24,8 +25,11 @@ const TrainerSchedule = () => {
   const [proxyClient, setProxyClient] = useState<string>("");
   const [proxyBookingType, setProxyBookingType] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; clientName: string; date: string; startTime: string; isBlocked?: boolean } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blockDate, setBlockDate] = useState<Date | undefined>();
+  const [blockTime, setBlockTime] = useState<string>("");
 
   const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
