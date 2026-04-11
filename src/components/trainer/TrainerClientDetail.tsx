@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil, Clock, RotateCcw } from "lucide-react";
 import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, addMonths, differenceInDays, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -197,6 +197,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const [editingRecordIds, setEditingRecordIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
+  const [cycleStartDate, setCycleStartDate] = useState<string>("");
 
   // Fetch profile
   useEffect(() => {
@@ -210,6 +211,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         setProfile(data);
         setClientPlan(data.plan || '初回無料体験');
         setIsPaid(data.paid_this_month);
+        setCycleStartDate(data.cycle_start_date || "");
       }
       setLoadingProfile(false);
     };
@@ -447,6 +449,18 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     setIsPaid(checked);
     toast.success(checked ? `${displayName}さんの今月分を「支払済」にしました` : `${displayName}さんの今月分を「未払い」に戻しました`);
   };
+
+  const handleCycleStartDateChange = async (newDate: string) => {
+    const { error } = await supabase.from("profiles").update({ cycle_start_date: newDate || null }).eq("user_id", clientId);
+    if (error) { toast.error("起算日の更新に失敗しました"); return; }
+    setCycleStartDate(newDate);
+    toast.success("起算日を更新しました");
+  };
+
+  const handleResetCycleToToday = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await handleCycleStartDateChange(today);
+  };
   const openEdit = (dateKey: string) => {
     const records = groupedRecords[dateKey] || [];
     if (records.length === 0) return;
@@ -543,6 +557,37 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 </span>
                 <Switch checked={isPaid} onCheckedChange={handlePaymentToggle} />
               </div>
+            </div>
+
+            {/* Cycle Start Date */}
+            <div className="pt-2 border-t border-border space-y-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">利用期間（起算日）</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={cycleStartDate}
+                  onChange={(e) => handleCycleStartDateChange(e.target.value)}
+                  className="flex-1 h-9 text-sm"
+                />
+                <Button variant="outline" size="sm" onClick={handleResetCycleToToday} className="shrink-0 h-9 text-xs gap-1">
+                  <RotateCcw className="w-3 h-3" />
+                  今日にリセット
+                </Button>
+              </div>
+              {cycleStartDate && (
+                <p className="text-xs text-muted-foreground">
+                  有効期限：{format(addMonths(parseISO(cycleStartDate), 1), "yyyy年M月d日", { locale: ja })}
+                  {(() => {
+                    const remaining = differenceInDays(addMonths(parseISO(cycleStartDate), 1), new Date());
+                    if (remaining < 0) return <span className="text-destructive font-bold ml-1">（期限切れ）</span>;
+                    if (remaining <= 3) return <span className="text-warning font-bold ml-1">（残り{remaining}日）</span>;
+                    return <span className="ml-1">（残り{remaining}日）</span>;
+                  })()}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

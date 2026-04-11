@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Bell } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Bell, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { useProfile } from "@/hooks/useProfile";
@@ -6,7 +6,7 @@ import { useMyBookings } from "@/hooks/useBookings";
 import { useMeasurements } from "@/hooks/useMeasurements";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addMonths, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
 
 const planMaxSessions: Record<string, number> = {
@@ -118,6 +118,34 @@ const CustomerHome = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Membership Period Card */}
+      {hasPlan && profile?.cycle_start_date && (() => {
+        const startDate = parseISO(profile.cycle_start_date);
+        const endDate = addMonths(startDate, 1);
+        const remaining = differenceInDays(endDate, now);
+        const isExpiringSoon = remaining >= 0 && remaining <= 3;
+        const isExpired = remaining < 0;
+        return (
+          <Card className={`border-l-4 ${isExpired ? 'border-l-destructive bg-destructive/5' : isExpiringSoon ? 'border-l-warning bg-warning/5' : 'border-l-accent bg-accent/5'}`}>
+            <CardContent className="p-3 flex items-center gap-2">
+              <Clock className={`w-4 h-4 ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-accent'}`} />
+              <div className="flex-1">
+                <p className="text-sm font-bold">
+                  現在の利用期間：{format(startDate, "M月d日", { locale: ja })} 〜 {format(endDate, "M月d日", { locale: ja })}
+                </p>
+                {isExpired ? (
+                  <p className="text-xs font-bold text-destructive mt-0.5">利用期限が過ぎています</p>
+                ) : isExpiringSoon ? (
+                  <p className="text-xs font-bold text-warning mt-0.5">残り{remaining}日で期限切れ</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">残り{remaining}日</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Next Booking - real data */}
       <section>
