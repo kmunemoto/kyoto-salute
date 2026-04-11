@@ -35,7 +35,7 @@ const CustomerBooking = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // Booked slots fetched via SECURITY DEFINER RPC — sees ALL bookings regardless of RLS
-  const [bookedSlots, setBookedSlots] = useState<{ date: string; startTime: string }[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<{ date: string; startTime: string; isBlock: boolean }[]>([]);
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
@@ -44,11 +44,12 @@ const CustomerBooking = () => {
     if (!data) { setBookedSlots([]); return; }
     const slots = data
       .filter((r: { status: string }) => r.status !== "キャンセル済み")
-      .map((r: { booking_date: string }) => {
+      .map((r: { booking_date: string; status: string }) => {
         const dt = new Date(r.booking_date);
         return {
           date: format(dt, "yyyy-MM-dd"),
           startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
+          isBlock: r.status === "ブロック済み",
         };
       });
     setBookedSlots(slots);
@@ -68,7 +69,10 @@ const CustomerBooking = () => {
     return bookedSlots.some((b) => {
       if (b.date !== date) return false;
       const bMin = timeToMin(b.startTime);
-      return newMin < bMin + 75 && bMin < newMin + 75;
+      // Blocked slots are 15-min records: a new 75-min booking overlaps if newMin < bMin+15 && bMin < newMin+75
+      // Regular bookings occupy 75 min: overlap if newMin < bMin+75 && bMin < newMin+75
+      const existingDuration = b.isBlock ? 15 : 75;
+      return newMin < bMin + existingDuration && bMin < newMin + 75;
     });
   };
 
