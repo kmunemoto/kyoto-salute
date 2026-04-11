@@ -10,8 +10,7 @@ Deno.serve(async (req) => {
     const error = url.searchParams.get("error");
 
     if (error || !code || !state) {
-      return new Response(redirectHtml(state, false, "LINEログインがキャンセルされました"), {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
+      return respondHtml(redirectHtml(state, false, "LINEログインがキャンセルされました"));
       });
     }
 
