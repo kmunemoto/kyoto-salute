@@ -243,14 +243,13 @@ const CustomerMeals = () => {
   };
 
   const groupedMeals = useMemo(() => {
-    const groups: { dateKey: string; meals: Meal[]; totals: { calories: number; protein: number; fat: number; carbs: number } }[] = [];
+    const groups: { dateKey: string; meals: Meal[]; totals: { calories: number; protein: number; fat: number; carbs: number }; pfc: { pPct: number; fPct: number; cPct: number } }[] = [];
     const map = new Map<string, Meal[]>();
     for (const meal of meals) {
       const key = getDateKey(meal.created_at);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(meal);
     }
-    // Sort date keys descending
     const sortedKeys = [...map.keys()].sort((a, b) => b.localeCompare(a));
     for (const dateKey of sortedKeys) {
       const dayMeals = map.get(dateKey)!;
@@ -263,7 +262,14 @@ const CustomerMeals = () => {
           totals.carbs += m.carbs ?? 0;
         }
       }
-      groups.push({ dateKey, meals: dayMeals, totals });
+      const pKcal = totals.protein * 4;
+      const fKcal = totals.fat * 9;
+      const cKcal = totals.carbs * 4;
+      const totalKcal = pKcal + fKcal + cKcal;
+      const pfc = totalKcal > 0
+        ? { pPct: Math.round((pKcal / totalKcal) * 100), fPct: Math.round((fKcal / totalKcal) * 100), cPct: Math.round((cKcal / totalKcal) * 100) }
+        : { pPct: 0, fPct: 0, cPct: 0 };
+      groups.push({ dateKey, meals: dayMeals, totals, pfc });
     }
     return groups;
   }, [meals]);
@@ -310,12 +316,11 @@ const CustomerMeals = () => {
         </Card>
       ) : (
         <div className="space-y-6">
-          {groupedMeals.map(({ dateKey, meals: dayMeals, totals }) => (
+          {groupedMeals.map(({ dateKey, meals: dayMeals, totals, pfc }) => (
             <div key={dateKey} className="space-y-3">
-              {/* Daily Summary Header */}
               <div className="text-sm font-bold text-foreground">{formatDateLabel(dateKey)}</div>
               <Card className="border-accent/30 bg-accent/5">
-                <CardContent className="p-4">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-end gap-4">
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground mb-1">合計カロリー</p>
@@ -329,17 +334,28 @@ const CustomerMeals = () => {
                       <div>
                         <p className="text-[10px] text-muted-foreground">P</p>
                         <p className="text-sm font-bold text-accent">{totals.protein.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                        <p className="text-[10px] font-semibold text-accent">{pfc.pPct}%</p>
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground">F</p>
                         <p className="text-sm font-bold text-warning">{totals.fat.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                        <p className="text-[10px] font-semibold text-warning">{pfc.fPct}%</p>
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground">C</p>
                         <p className="text-sm font-bold text-info">{totals.carbs.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                        <p className="text-[10px] font-semibold text-info">{pfc.cPct}%</p>
                       </div>
                     </div>
                   </div>
+                  {/* PFC Balance Bar */}
+                  {(pfc.pPct + pfc.fPct + pfc.cPct) > 0 && (
+                    <div className="flex h-2.5 rounded-full overflow-hidden">
+                      <div className="bg-accent transition-all" style={{ width: `${pfc.pPct}%` }} />
+                      <div className="bg-warning transition-all" style={{ width: `${pfc.fPct}%` }} />
+                      <div className="bg-info transition-all" style={{ width: `${pfc.cPct}%` }} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
