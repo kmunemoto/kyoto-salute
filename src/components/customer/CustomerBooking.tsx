@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarDays, Clock, Check, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMyBookings, checkSlotBlocked, createBooking, cancelBooking, useAllBookings, BookingWithTime } from "@/hooks/useBookings";
+import { useMyBookings, createBooking, cancelBooking, BookingWithTime } from "@/hooks/useBookings";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
@@ -27,7 +27,6 @@ const CustomerBooking = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { bookings: myBookings, loading: bookingsLoading, refetch } = useMyBookings();
-  const { bookings: allBookings, refetch: refetchAll } = useAllBookings();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -35,12 +34,43 @@ const CustomerBooking = () => {
   const [lastBooked, setLastBooked] = useState<BookingWithTime | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Booked slots fetched via SECURITY DEFINER RPC — sees ALL bookings regardless of RLS
+  const [bookedSlots, setBookedSlots] = useState<{ date: string; startTime: string }[]>([]);
+
+  const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+
+  const fetchBookedSlots = useCallback(async (dateStr: string) => {
+    const { data } = await supabase.rpc("get_booked_slots", { check_date: dateStr });
+    if (!data) { setBookedSlots([]); return; }
+    const slots = data
+      .filter((r: { status: string }) => r.status !== "キャンセル済み")
+      .map((r: { booking_date: string }) => {
+        const dt = new Date(r.booking_date);
+        return {
+          date: format(dt, "yyyy-MM-dd"),
+          startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
+        };
+      });
+    setBookedSlots(slots);
+  }, []);
+
+  useEffect(() => {
+    if (dateKey) fetchBookedSlots(dateKey);
+  }, [dateKey, fetchBookedSlots]);
+
   // Logged-in customers always use their contract plan from profiles.
-  // "初回無料体験" is only for the guest /trial page — never auto-assigned here.
   const customerPlan = profile?.plan || null;
   const selectedPlan = customerPlan;
 
-  const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+  const isSlotBlocked = (date: string, time: string): boolean => {
+    const timeToMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+    const newMin = timeToMin(time);
+    return bookedSlots.some((b) => {
+      if (b.date !== date) return false;
+      const bMin = timeToMin(b.startTime);
+      return newMin < bMin + 75 && bMin < newMin + 75;
+    });
+  };
 
   const isSlotWithin24Hours = (date: string, time: string): boolean => {
     const now = new Date();
@@ -57,7 +87,7 @@ const CustomerBooking = () => {
       const h = Math.floor(totalMin / 60);
       const m = totalMin % 60;
       const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-      const blocked = checkSlotBlocked(allBookings, dateKey, time);
+      const blocked = isSlotBlocked(dateKey, time);
       const tooSoon = isSlotWithin24Hours(dateKey, time);
       slots.push({ id: `${dateKey}-${time}`, time, available: !blocked && !tooSoon });
     }
@@ -77,7 +107,7 @@ const CustomerBooking = () => {
       return;
     }
 
-    if (checkSlotBlocked(allBookings, dateKey, slot.time)) {
+    if (isSlotBlocked(dateKey, slot.time)) {
       toast.error("この時間帯はすでに予約が入っています");
       setSelectedSlot(null);
       return;
@@ -114,7 +144,7 @@ const CustomerBooking = () => {
     // plan is auto-assigned, no need to reset
     setSubmitting(false);
     refetch();
-    refetchAll();
+    fetchBookedSlots(dateKey);
 
     // Fire-and-forget notification email to trainer
     sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
@@ -172,7 +202,7 @@ const CustomerBooking = () => {
     toast.success("予約をキャンセルしました");
     setCancelTarget(null);
     refetch();
-    refetchAll();
+    if (dateKey) fetchBookedSlots(dateKey);
   };
 
   const activeBookings = myBookings.filter((b) => b.status !== "キャンセル済み");
