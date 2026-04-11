@@ -449,6 +449,18 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     setIsPaid(checked);
     toast.success(checked ? `${displayName}さんの今月分を「支払済」にしました` : `${displayName}さんの今月分を「未払い」に戻しました`);
   };
+
+  const handleCycleStartDateChange = async (newDate: string) => {
+    const { error } = await supabase.from("profiles").update({ cycle_start_date: newDate || null }).eq("user_id", clientId);
+    if (error) { toast.error("起算日の更新に失敗しました"); return; }
+    setCycleStartDate(newDate);
+    toast.success("起算日を更新しました");
+  };
+
+  const handleResetCycleToToday = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await handleCycleStartDateChange(today);
+  };
   const openEdit = (dateKey: string) => {
     const records = groupedRecords[dateKey] || [];
     if (records.length === 0) return;
