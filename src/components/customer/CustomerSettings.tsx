@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, BellRing, Settings, User, Pencil, Shield, MessageCircle, CheckCircle2, Unlink } from "lucide-react";
+import { Bell, BellOff, BellRing, Settings, User, Pencil, Shield, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 const CustomerSettings = () => {
   const { profile, loading, updateDisplayName, refetch } = useProfile();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { isSupported, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [displayName, setDisplayName] = useState("");
@@ -268,6 +267,13 @@ const CustomerSettings = () => {
             )}
           </CardContent>
         </Card>
+      </section>
+      {/* Logout */}
+      <section className="pt-2">
+        <Button variant="outline" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10" onClick={signOut}>
+          <LogOut className="w-4 h-4 mr-2" />
+          ログアウト
+        </Button>
       </section>
     </div>
   );

@@ -9,7 +9,6 @@ import CustomerChat from "./CustomerChat";
 import CustomerTraining from "./CustomerTraining";
 import CustomerSettings from "./CustomerSettings";
 import PwaInstallBanner from "./PwaInstallBanner";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
@@ -18,7 +17,6 @@ export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
-  const { signOut } = useAuth();
   const { count: unreadChat, refetch: refetchUnread } = useUnreadCount();
 
   // Refetch unread when leaving chat
