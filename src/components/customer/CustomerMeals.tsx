@@ -227,6 +227,47 @@ const CustomerMeals = () => {
     return `${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   };
 
+  const getDateKey = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const formatDateLabel = (key: string) => {
+    const [y, m, d] = key.split("-");
+    const today = getDateKey(new Date().toISOString());
+    const yesterday = getDateKey(new Date(Date.now() - 86400000).toISOString());
+    const label = `${parseInt(m)}月${parseInt(d)}日`;
+    if (key === today) return `📅 今日 (${label})`;
+    if (key === yesterday) return `📅 昨日 (${label})`;
+    return `📅 ${label}`;
+  };
+
+  const groupedMeals = useMemo(() => {
+    const groups: { dateKey: string; meals: Meal[]; totals: { calories: number; protein: number; fat: number; carbs: number } }[] = [];
+    const map = new Map<string, Meal[]>();
+    for (const meal of meals) {
+      const key = getDateKey(meal.created_at);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(meal);
+    }
+    // Sort date keys descending
+    const sortedKeys = [...map.keys()].sort((a, b) => b.localeCompare(a));
+    for (const dateKey of sortedKeys) {
+      const dayMeals = map.get(dateKey)!;
+      const totals = { calories: 0, protein: 0, fat: 0, carbs: 0 };
+      for (const m of dayMeals) {
+        if (m.analyzed) {
+          totals.calories += m.calories ?? 0;
+          totals.protein += m.protein ?? 0;
+          totals.fat += m.fat ?? 0;
+          totals.carbs += m.carbs ?? 0;
+        }
+      }
+      groups.push({ dateKey, meals: dayMeals, totals });
+    }
+    return groups;
+  }, [meals]);
+
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
       <div className="flex items-center justify-between">
