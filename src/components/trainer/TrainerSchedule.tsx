@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Loader2, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,16 @@ const TrainerSchedule = () => {
     const target = deleteTarget;
     setDeleting(true);
 
-    const { error } = await cancelBooking(target.id);
+    // Trial guest bookings are in trial_bookings table
+    const booking = bookings.find((b) => b.id === target.id);
+    let error: any;
+    if (booking?.user_id === "trial-guest") {
+      const res = await supabase.from("trial_bookings").delete().eq("id", target.id);
+      error = res.error;
+    } else {
+      const res = await cancelBooking(target.id);
+      error = res.error;
+    }
 
     if (error) {
       console.error("Failed to delete booking:", error);

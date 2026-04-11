@@ -356,6 +356,36 @@ export type Database = {
         }
         Relationships: []
       }
+      trial_bookings: {
+        Row: {
+          booking_date: string
+          booking_type: string
+          created_at: string
+          guest_contact: string
+          guest_name: string
+          id: string
+          status: string
+        }
+        Insert: {
+          booking_date: string
+          booking_type?: string
+          created_at?: string
+          guest_contact: string
+          guest_name: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          booking_date?: string
+          booking_type?: string
+          created_at?: string
+          guest_contact?: string
+          guest_name?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       user_measurements: {
         Row: {
           body_fat: number | null
