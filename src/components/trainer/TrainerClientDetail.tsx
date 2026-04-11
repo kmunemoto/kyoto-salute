@@ -31,11 +31,15 @@ interface TrainerClientDetailProps {
   onBack: () => void;
 }
 
+interface SetEntry {
+  weight: string;
+  reps: string;
+}
+
 interface ExerciseEntry {
   exerciseId: string;
   name: string;
-  weight: string;
-  reps: string;
+  sets: SetEntry[];
 }
 
 interface ExerciseMaster {
