@@ -197,6 +197,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const [editingRecordIds, setEditingRecordIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
+  const [cycleStartDate, setCycleStartDate] = useState<string>("");
 
   // Fetch profile
   useEffect(() => {
