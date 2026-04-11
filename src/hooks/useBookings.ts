@@ -186,9 +186,14 @@ export const createBooking = async (
     .select()
     .single();
 
-  // If trainer made a proxy booking, notify the customer via LINE
-  if (!error && data && isProxyBooking) {
-    sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
+  if (!error && data) {
+    if (isProxyBooking) {
+      // Trainer made proxy booking → notify customer
+      sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
+    } else {
+      // Customer booked → notify trainer
+      sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
+    }
   }
 
   return { data, error };
@@ -214,6 +219,34 @@ async function sendProxyBookingLineNotification(
     body: {
       user_id: userId,
       message: `📅 予約のお知らせ\n\n${name}様、下記の予約が確定しました。\n\n日時：${dateStr}\nプラン：${bookingType}\n\nお気をつけてお越しください！\nパーソナルジムSalute御所南`,
+    },
+  });
+}
+
+async function sendNewBookingLineToTrainer(
+  userId: string,
+  date: string,
+  startTime: string,
+  bookingType: string,
+) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const customerName = profile?.display_name || "顧客";
+
+  const { data: trainerIds } = await supabase.rpc("get_trainer_ids");
+  const trainerId = trainerIds?.[0]?.user_id;
+  if (!trainerId) return;
+
+  const dt = new Date(`${date}T${startTime}:00+09:00`);
+  const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
+
+  await supabase.functions.invoke("send-line-message", {
+    body: {
+      user_id: trainerId,
+      message: `📅 新規予約通知\n\n${customerName}様から予約が入りました。\n\n日時：${dateStr}\nプラン：${bookingType}\n\nパーソナルジムSalute御所南`,
     },
   });
 }
