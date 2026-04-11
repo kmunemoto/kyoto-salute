@@ -327,17 +327,10 @@ async function sendCancelLineNotification(
 
   if (cancelledByTrainer) {
     // Trainer cancelled → notify customer via LINE
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("user_id", booking.user_id)
-      .maybeSingle();
-    const name = profile?.display_name || "お客";
-
     await supabase.functions.invoke("send-line-message", {
       body: {
         user_id: booking.user_id,
-        message: `❌ 予約キャンセルのお知らせ\n\n${name}様、${dateStr}の予約（${booking.booking_type}）がキャンセルされました。\n\nご不明な点がございましたらお問い合わせください。\nパーソナルジムSalute御所南`,
+        message: `【Salute御所南】ご予約キャンセルのご連絡\n\nトレーナーにより、以下のご予約がキャンセルされました。\n\n・日時：${dateStr}〜\n\nお手数ですが、別の日程でのご予約をアプリよりご検討ください。\nまたのご来館をお待ちしております。`,
       },
     });
   } else {
