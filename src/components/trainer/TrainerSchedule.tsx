@@ -447,10 +447,12 @@ const TrainerSchedule = () => {
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}>
         <DialogContent className="max-w-[90vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>予約を削除しますか？</DialogTitle>
+            <DialogTitle>{deleteTarget?.isBlocked ? "ブロックを解除しますか？" : "予約を削除しますか？"}</DialogTitle>
             <p className="text-sm text-muted-foreground pt-1">
-              {deleteTarget && `${deleteTarget.clientName}さんの予約（${deleteTarget.date} ${deleteTarget.startTime}）を削除します。`}
-              本当にこの予約を削除しますか？元に戻すことはできません。
+              {deleteTarget?.isBlocked
+                ? `${deleteTarget.date} ${deleteTarget.startTime} のブロックを解除します。この時間帯に予約が入れられるようになります。`
+                : deleteTarget && `${deleteTarget.clientName}さんの予約（${deleteTarget.date} ${deleteTarget.startTime}）を削除します。本当にこの予約を削除しますか？元に戻すことはできません。`
+              }
             </p>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
@@ -464,7 +466,74 @@ const TrainerSchedule = () => {
               className="w-full sm:w-auto"
             >
               {deleting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
-              はい、削除する
+              {deleteTarget?.isBlocked ? "はい、解除する" : "はい、削除する"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Block slot dialog */}
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>時間帯をブロック</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-1">
+              選択した時間帯に予約が入らないようにブロックします。
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-1 block">日付</label>
+              <Calendar
+                mode="single"
+                selected={blockDate}
+                onSelect={(d) => { setBlockDate(d); setBlockTime(""); }}
+                locale={ja}
+                className="pointer-events-auto border rounded-lg mx-auto"
+              />
+            </div>
+            {blockDate && (
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">ブロックする時間</label>
+                <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
+                  {(() => {
+                    const blockDateKey = format(blockDate, "yyyy-MM-dd");
+                    const slots: { time: string; blocked: boolean }[] = [];
+                    for (let totalMin = 600; totalMin <= 1215; totalMin += 15) {
+                      const h = Math.floor(totalMin / 60);
+                      const m = totalMin % 60;
+                      const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                      const blocked = checkSlotBlocked(bookings, blockDateKey, time);
+                      slots.push({ time, blocked });
+                    }
+                    return slots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        type="button"
+                        disabled={slot.blocked}
+                        onClick={() => setBlockTime(slot.time)}
+                        className={`rounded-lg p-2.5 text-xs font-semibold transition-all min-h-[44px] ${
+                          slot.blocked
+                            ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                            : blockTime === slot.time
+                              ? "bg-destructive text-destructive-foreground shadow-md"
+                              : "bg-card border border-border hover:border-destructive"
+                        }`}
+                      >
+                        {slot.time}
+                        {slot.blocked && <span className="block text-[9px] text-destructive/70">使用中</span>}
+                      </button>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setBlockDialogOpen(false)} className="w-full sm:w-auto">キャンセル</Button>
+            <Button variant="destructive" onClick={handleBlockSlot} disabled={!blockDate || !blockTime || submitting} className="w-full sm:w-auto">
+              {submitting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              ブロックする
             </Button>
           </DialogFooter>
         </DialogContent>
