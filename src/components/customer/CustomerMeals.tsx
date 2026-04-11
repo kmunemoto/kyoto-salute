@@ -1,11 +1,30 @@
 import { useState, useRef, useEffect } from "react";
-import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf } from "lucide-react";
+import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Trash2, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveMealPhotoUrls } from "@/lib/mealPhotoUrl";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Meal {
   id: string;
@@ -36,6 +55,16 @@ const CustomerMeals = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<Meal | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Edit time state
+  const [editTarget, setEditTarget] = useState<Meal | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const fetchMeals = async () => {
     const { data, error } = await supabase
@@ -86,17 +115,13 @@ const CustomerMeals = () => {
 
     setUploading(true);
     try {
-      // Convert to JPEG if needed (HEIC etc.)
       const convertedFile = await convertToJpeg(file);
-
-      // Upload to storage (user-scoped path)
       const storagePath = `${user!.id}/${Date.now()}-${convertedFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from("meal-photos")
         .upload(storagePath, convertedFile);
       if (uploadError) throw uploadError;
 
-      // Insert meal record with storage path
       const { data: mealData, error: insertError } = await supabase
         .from("meals")
         .insert({ image_url: storagePath, user_id: user?.id })
@@ -110,7 +135,6 @@ const CustomerMeals = () => {
       setMeals((prev) => [newMeal, ...prev]);
       toast.success("写真をアップロードしました。AI分析中...");
 
-      // Trigger AI analysis
       const { data: fnData, error: fnError } = await supabase.functions.invoke("analyze-meal", {
         body: { mealId: newMeal.id, imageUrl: storagePath },
       });
@@ -119,7 +143,6 @@ const CustomerMeals = () => {
 
       if (isFallback) {
         console.warn("AI analysis failed, using dummy data:", fnError || fnData?.error);
-        // Fallback: update with dummy data so UI doesn't stay stuck
         const dummyAnalysis = {
           meal_type: "食事",
           calories: 500,
@@ -142,6 +165,60 @@ const CustomerMeals = () => {
       toast.error("アップロードに失敗しました");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      // Delete storage file if it's a storage path (not a full URL)
+      const imgUrl = deleteTarget.image_url;
+      if (!imgUrl.startsWith("http://") && !imgUrl.startsWith("https://")) {
+        await supabase.storage.from("meal-photos").remove([imgUrl]);
+      }
+      const { error } = await supabase.from("meals").delete().eq("id", deleteTarget.id);
+      if (error) throw error;
+      setMeals((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      toast.success("食事記録を削除しました");
+    } catch (err) {
+      console.error(err);
+      toast.error("削除に失敗しました");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  const openEditTime = (meal: Meal) => {
+    const d = new Date(meal.created_at);
+    // Format for date input (YYYY-MM-DD) in local timezone
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    setEditDate(`${year}-${month}-${day}`);
+    setEditTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+    setEditTarget(meal);
+  };
+
+  const handleSaveTime = async () => {
+    if (!editTarget || !editDate || !editTime) return;
+    setSaving(true);
+    try {
+      const newDateTime = new Date(`${editDate}T${editTime}:00`);
+      const { error } = await supabase
+        .from("meals")
+        .update({ created_at: newDateTime.toISOString() })
+        .eq("id", editTarget.id);
+      if (error) throw error;
+      toast.success("日時を変更しました");
+      fetchMeals();
+    } catch (err) {
+      console.error(err);
+      toast.error("日時の変更に失敗しました");
+    } finally {
+      setSaving(false);
+      setEditTarget(null);
     }
   };
 
@@ -205,15 +282,26 @@ const CustomerMeals = () => {
                   <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
                     {mealTypeEmoji[meal.meal_type] || "🍽️"} {meal.meal_type}
                   </div>
-                  <div className="absolute top-2 right-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs backdrop-blur-sm">
+                  {/* Date + edit button */}
+                  <button
+                    onClick={() => openEditTime(meal)}
+                    className="absolute top-2 right-12 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs backdrop-blur-sm flex items-center gap-1 hover:bg-foreground/90 transition-colors"
+                  >
                     {formatDate(meal.created_at)}
-                  </div>
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                  {/* Delete button */}
+                  <button
+                    onClick={() => setDeleteTarget(meal)}
+                    className="absolute top-2 right-2 bg-destructive/80 text-destructive-foreground p-1.5 rounded-lg backdrop-blur-sm hover:bg-destructive transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
                 {/* Analysis Results */}
                 {meal.analyzed ? (
                   <div className="p-4 space-y-3">
-                    {/* Nutrient Grid */}
                     <div className="grid grid-cols-5 gap-2">
                       <NutrientBadge icon={Flame} label="カロリー" value={`${meal.calories ?? 0}`} unit="kcal" color="text-destructive" />
                       <NutrientBadge icon={Beef} label="タンパク質" value={`${meal.protein ?? 0}`} unit="g" color="text-accent" />
@@ -221,8 +309,6 @@ const CustomerMeals = () => {
                       <NutrientBadge icon={Wheat} label="炭水化物" value={`${meal.carbs ?? 0}`} unit="g" color="text-info" />
                       <NutrientBadge icon={Leaf} label="食物繊維" value={`${meal.fiber ?? 0}`} unit="g" color="text-success" />
                     </div>
-
-                    {/* AI Feedback */}
                     {meal.feedback && (
                       <div className="bg-accent/10 rounded-xl p-3">
                         <p className="text-xs font-bold text-accent mb-1">🤖 AIアドバイス</p>
@@ -241,6 +327,51 @@ const CustomerMeals = () => {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>この食事記録を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              削除すると元に戻すことはできません。写真と分析データが完全に削除されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit DateTime Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <DialogContent className="max-w-[340px] rounded-xl">
+          <DialogHeader>
+            <DialogTitle>食事の日時を変更</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>日付</Label>
+              <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>時間</Label>
+              <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)} disabled={saving}>キャンセル</Button>
+            <Button onClick={handleSaveTime} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
