@@ -99,7 +99,7 @@ const TrainerSchedule = () => {
       const res = await supabase.from("trial_bookings").delete().eq("id", target.id);
       error = res.error;
     } else {
-      const res = await cancelBooking(target.id);
+      const res = await cancelBooking(target.id, true);
       error = res.error;
     }
 
