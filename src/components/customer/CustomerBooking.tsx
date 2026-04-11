@@ -190,10 +190,7 @@ const CustomerBooking = () => {
     );
   }
 
-  const planLabel = (type: string) => {
-    const opt = PLAN_OPTIONS.find((p) => p.value === type);
-    return opt?.label || type;
-  };
+  const planLabel = (type: string) => PLAN_LABELS[type] || type;
 
   
 
