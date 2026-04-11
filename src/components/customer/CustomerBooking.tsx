@@ -35,10 +35,9 @@ const CustomerBooking = () => {
   const [lastBooked, setLastBooked] = useState<BookingWithTime | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const isTrialUser = profile ? !profile.trial_completed : false;
-
-  // Auto-assign plan from profile; trial users get 初回無料体験
-  const customerPlan = isTrialUser ? "初回無料体験" : (profile?.plan || null);
+  // Logged-in customers always use their contract plan from profiles.
+  // "初回無料体験" is only for the guest /trial page — never auto-assigned here.
+  const customerPlan = profile?.plan || null;
   const selectedPlan = customerPlan;
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
