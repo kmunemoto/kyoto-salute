@@ -29,7 +29,8 @@ const TrainerSchedule = () => {
   const [deleting, setDeleting] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blockDate, setBlockDate] = useState<Date | undefined>();
-  const [blockTime, setBlockTime] = useState<string>("");
+  const [blockStartTime, setBlockStartTime] = useState<string>("");
+  const [blockEndTime, setBlockEndTime] = useState<string>("");
 
   const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
@@ -138,21 +139,37 @@ const TrainerSchedule = () => {
   };
 
   const handleBlockSlot = async () => {
-    if (!blockDate || !blockTime || !user) return;
+    if (!blockDate || !blockStartTime || !blockEndTime || !user) return;
     const dateStr = format(blockDate, "yyyy-MM-dd");
 
-    if (checkSlotBlocked(bookings, dateStr, blockTime)) {
-      toast.error("この時間帯はすでに予約またはブロックが入っています");
+    // Generate all 15-min slots from start to end (exclusive)
+    const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+    const startMin = toMin(blockStartTime);
+    const endMin = toMin(blockEndTime);
+    if (endMin <= startMin) {
+      toast.error("終了時間は開始時間より後にしてください");
       return;
     }
 
+    // Check all slots in range
+    const slotsToBlock: string[] = [];
+    for (let m = startMin; m < endMin; m += 15) {
+      const time = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+      if (checkSlotBlocked(bookings, dateStr, time)) {
+        toast.error(`${time} はすでに予約またはブロックが入っています`);
+        return;
+      }
+      slotsToBlock.push(time);
+    }
+
     setSubmitting(true);
-    const blockedDate = `${dateStr}T${blockTime}:00+09:00`;
-    const { error } = await supabase.from("blocked_slots").insert({
-      blocked_date: blockedDate,
+    const rows = slotsToBlock.map((time) => ({
+      blocked_date: `${dateStr}T${time}:00+09:00`,
       created_by: user.id,
-      reason: "ブロック",
-    });
+      reason: `ブロック（${blockStartTime}〜${blockEndTime}）`,
+    }));
+
+    const { error } = await supabase.from("blocked_slots").insert(rows);
 
     if (error) {
       toast.error("ブロックに失敗しました");
@@ -160,10 +177,11 @@ const TrainerSchedule = () => {
       return;
     }
 
-    toast.success(`${format(blockDate, "M/d")} ${blockTime} をブロックしました`);
+    toast.success(`${format(blockDate, "M/d")} ${blockStartTime}〜${blockEndTime} をブロックしました`);
     setBlockDialogOpen(false);
     setBlockDate(undefined);
-    setBlockTime("");
+    setBlockStartTime("");
+    setBlockEndTime("");
     setSubmitting(false);
     void refetch();
   };
@@ -487,51 +505,90 @@ const TrainerSchedule = () => {
               <Calendar
                 mode="single"
                 selected={blockDate}
-                onSelect={(d) => { setBlockDate(d); setBlockTime(""); }}
+                onSelect={(d) => { setBlockDate(d); setBlockStartTime(""); setBlockEndTime(""); }}
                 locale={ja}
                 className="pointer-events-auto border rounded-lg mx-auto"
               />
             </div>
             {blockDate && (
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">ブロックする時間</label>
-                <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
-                  {(() => {
-                    const blockDateKey = format(blockDate, "yyyy-MM-dd");
-                    const slots: { time: string; blocked: boolean }[] = [];
-                    for (let totalMin = 600; totalMin <= 1215; totalMin += 15) {
-                      const h = Math.floor(totalMin / 60);
-                      const m = totalMin % 60;
-                      const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                      const blocked = checkSlotBlocked(bookings, blockDateKey, time);
-                      slots.push({ time, blocked });
-                    }
-                    return slots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        type="button"
-                        disabled={slot.blocked}
-                        onClick={() => setBlockTime(slot.time)}
-                        className={`rounded-lg p-2.5 text-xs font-semibold transition-all min-h-[44px] ${
-                          slot.blocked
-                            ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
-                            : blockTime === slot.time
-                              ? "bg-destructive text-destructive-foreground shadow-md"
-                              : "bg-card border border-border hover:border-destructive"
-                        }`}
-                      >
-                        {slot.time}
-                        {slot.blocked && <span className="block text-[9px] text-destructive/70">使用中</span>}
-                      </button>
-                    ));
-                  })()}
+              <>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">開始時間</label>
+                  <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
+                    {(() => {
+                      const blockDateKey = format(blockDate, "yyyy-MM-dd");
+                      const slots: { time: string; blocked: boolean }[] = [];
+                      for (let totalMin = 600; totalMin <= 1275; totalMin += 15) {
+                        const h = Math.floor(totalMin / 60);
+                        const m = totalMin % 60;
+                        const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                        const blocked = checkSlotBlocked(bookings, blockDateKey, time);
+                        slots.push({ time, blocked });
+                      }
+                      return slots.map((slot) => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          disabled={slot.blocked}
+                          onClick={() => { setBlockStartTime(slot.time); if (blockEndTime && blockEndTime <= slot.time) setBlockEndTime(""); }}
+                          className={`rounded-lg p-2.5 text-xs font-semibold transition-all min-h-[44px] ${
+                            slot.blocked
+                              ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                              : blockStartTime === slot.time
+                                ? "bg-destructive text-destructive-foreground shadow-md"
+                                : "bg-card border border-border hover:border-destructive"
+                          }`}
+                        >
+                          {slot.time}
+                          {slot.blocked && <span className="block text-[9px] text-destructive/70">使用中</span>}
+                        </button>
+                      ));
+                    })()}
+                  </div>
                 </div>
-              </div>
+                {blockStartTime && (
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">終了時間</label>
+                    <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
+                      {(() => {
+                        const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+                        const startMin = toMin(blockStartTime);
+                        const slots: { time: string; label: string }[] = [];
+                        for (let totalMin = startMin + 15; totalMin <= 1290; totalMin += 15) {
+                          const h = Math.floor(totalMin / 60);
+                          const m = totalMin % 60;
+                          const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                          const dur = totalMin - startMin;
+                          const durH = Math.floor(dur / 60);
+                          const durM = dur % 60;
+                          const label = durH > 0 ? (durM > 0 ? `${durH}h${durM}m` : `${durH}h`) : `${durM}m`;
+                          slots.push({ time, label });
+                        }
+                        return slots.map((slot) => (
+                          <button
+                            key={slot.time}
+                            type="button"
+                            onClick={() => setBlockEndTime(slot.time)}
+                            className={`rounded-lg p-2.5 text-xs font-semibold transition-all min-h-[44px] ${
+                              blockEndTime === slot.time
+                                ? "bg-destructive text-destructive-foreground shadow-md"
+                                : "bg-card border border-border hover:border-destructive"
+                            }`}
+                          >
+                            {slot.time}
+                            <span className="block text-[9px] opacity-60">{slot.label}</span>
+                          </button>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setBlockDialogOpen(false)} className="w-full sm:w-auto">キャンセル</Button>
-            <Button variant="destructive" onClick={handleBlockSlot} disabled={!blockDate || !blockTime || submitting} className="w-full sm:w-auto">
+            <Button variant="destructive" onClick={handleBlockSlot} disabled={!blockDate || !blockStartTime || !blockEndTime || submitting} className="w-full sm:w-auto">
               {submitting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
               ブロックする
             </Button>
