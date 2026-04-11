@@ -218,15 +218,35 @@ const CustomerTraining = () => {
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        {records.map((r) => (
-                          <div key={r.id} className="flex items-center justify-between text-sm py-1.5 px-3 rounded-lg bg-muted/50">
-                            <span className="font-medium">{r.exercise_name}</span>
-                            <span className="text-muted-foreground">
-                              <span className="font-bold text-foreground">{r.weight}</span>kg ×{" "}
-                              <span className="font-bold text-foreground">{r.reps}</span>回
-                            </span>
+                        {records.map((r) => {
+                          const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight!, reps: r.reps! }] : []);
+                          return (
+                          <div key={r.id} className="text-sm py-1.5 px-3 rounded-lg bg-muted/50">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{r.exercise_name}</span>
+                              {setsData.length === 1 && (
+                                <span className="text-muted-foreground">
+                                  <span className="font-bold text-foreground">{setsData[0].weight}</span>kg ×{" "}
+                                  <span className="font-bold text-foreground">{setsData[0].reps}</span>回
+                                </span>
+                              )}
+                            </div>
+                            {setsData.length > 1 && (
+                              <div className="mt-1 space-y-0.5">
+                                {setsData.map((s, si) => (
+                                  <div key={si} className="flex items-center justify-between text-xs text-muted-foreground pl-2">
+                                    <span>セット{s.set}</span>
+                                    <span>
+                                      <span className="font-bold text-foreground">{s.weight}</span>kg ×{" "}
+                                      <span className="font-bold text-foreground">{s.reps}</span>回
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
