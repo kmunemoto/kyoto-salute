@@ -54,6 +54,7 @@ interface WorkoutRecord {
   exercise_id: string;
   weight: number | null;
   reps: number | null;
+  sets: { set: number; weight: number; reps: number }[] | null;
   exercise_name?: string;
 }
 
