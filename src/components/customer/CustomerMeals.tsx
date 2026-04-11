@@ -166,8 +166,8 @@ const CustomerMeals = () => {
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
         >
-          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-          {uploading ? "分析中..." : "写真を撮る"}
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+          {uploading ? "分析中..." : "写真を追加"}
         </Button>
       </div>
 
@@ -175,7 +175,6 @@ const CustomerMeals = () => {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -187,7 +186,7 @@ const CustomerMeals = () => {
       ) : meals.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <Camera className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+            <ImagePlus className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">食事の写真を撮って記録を始めましょう</p>
           </CardContent>
         </Card>
