@@ -316,12 +316,11 @@ const CustomerMeals = () => {
         </Card>
       ) : (
         <div className="space-y-6">
-          {groupedMeals.map(({ dateKey, meals: dayMeals, totals }) => (
+          {groupedMeals.map(({ dateKey, meals: dayMeals, totals, pfc }) => (
             <div key={dateKey} className="space-y-3">
-              {/* Daily Summary Header */}
               <div className="text-sm font-bold text-foreground">{formatDateLabel(dateKey)}</div>
               <Card className="border-accent/30 bg-accent/5">
-                <CardContent className="p-4">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-end gap-4">
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground mb-1">合計カロリー</p>
@@ -335,17 +334,28 @@ const CustomerMeals = () => {
                       <div>
                         <p className="text-[10px] text-muted-foreground">P</p>
                         <p className="text-sm font-bold text-accent">{totals.protein.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                        <p className="text-[10px] font-semibold text-accent">{pfc.pPct}%</p>
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground">F</p>
                         <p className="text-sm font-bold text-warning">{totals.fat.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                        <p className="text-[10px] font-semibold text-warning">{pfc.fPct}%</p>
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground">C</p>
                         <p className="text-sm font-bold text-info">{totals.carbs.toFixed(1)}<span className="text-[10px] text-muted-foreground ml-0.5">g</span></p>
+                        <p className="text-[10px] font-semibold text-info">{pfc.cPct}%</p>
                       </div>
                     </div>
                   </div>
+                  {/* PFC Balance Bar */}
+                  {(pfc.pPct + pfc.fPct + pfc.cPct) > 0 && (
+                    <div className="flex h-2.5 rounded-full overflow-hidden">
+                      <div className="bg-accent transition-all" style={{ width: `${pfc.pPct}%` }} />
+                      <div className="bg-warning transition-all" style={{ width: `${pfc.fPct}%` }} />
+                      <div className="bg-info transition-all" style={{ width: `${pfc.cPct}%` }} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
