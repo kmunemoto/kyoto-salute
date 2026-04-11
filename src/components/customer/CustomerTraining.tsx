@@ -20,11 +20,18 @@ import {
   CartesianGrid,
 } from "recharts";
 
+interface SetData {
+  set: number;
+  weight: number;
+  reps: number;
+}
+
 interface WorkoutWithExercise {
   id: string;
   workout_date: string;
   weight: number | null;
   reps: number | null;
+  sets: SetData[] | null;
   exercise_name: string;
 }
 
