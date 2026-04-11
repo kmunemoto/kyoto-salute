@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, Clock, Check, CreditCard, Trash2, ExternalLink, Sparkles, Loader2, ChevronLeft, Crown } from "lucide-react";
+import { CalendarDays, Clock, Check, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -195,7 +195,7 @@ const CustomerBooking = () => {
     return opt?.label || type;
   };
 
-  const availablePlans = PLAN_OPTIONS;
+  
 
   return (
     <>
