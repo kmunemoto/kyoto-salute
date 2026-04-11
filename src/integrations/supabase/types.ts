@@ -19,6 +19,7 @@ export type Database = {
           booking_date: string
           booking_type: string
           created_at: string
+          google_event_id: string | null
           id: string
           status: string
           user_id: string
@@ -27,6 +28,7 @@ export type Database = {
           booking_date: string
           booking_type?: string
           created_at?: string
+          google_event_id?: string | null
           id?: string
           status?: string
           user_id: string
@@ -35,6 +37,7 @@ export type Database = {
           booking_date?: string
           booking_type?: string
           created_at?: string
+          google_event_id?: string | null
           id?: string
           status?: string
           user_id?: string
@@ -146,6 +149,39 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          refresh_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          refresh_token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          refresh_token?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
