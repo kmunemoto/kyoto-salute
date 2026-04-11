@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { LogOut, Settings } from "lucide-react";
 
 import TrainerSidebar from "./TrainerSidebar";
 import TrainerDashboard from "./TrainerDashboard";
@@ -7,17 +6,15 @@ import TrainerClientList from "./TrainerClientList";
 import TrainerClientDetail from "./TrainerClientDetail";
 import TrainerSchedule from "./TrainerSchedule";
 import TrainerMessages from "./TrainerMessages";
-import TrainerNotificationSettings from "./TrainerNotificationSettings";
 import TrainerExerciseManager from "./TrainerExerciseManager";
 import TrainerGymSettings from "./TrainerGymSettings";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
 
-export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "settings" | "exercises" | "gym-settings";
+export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "gym-settings";
 
 const TrainerView = () => {
   const [tab, setTab] = useState<TrainerTab>("dashboard");
@@ -84,15 +81,6 @@ const TrainerView = () => {
             <GymLogo size="sm" />
             <span className="text-xs sm:text-sm font-bold truncate">パーソナルジムSalute御所南 <span className="hidden sm:inline">管理画面</span></span>
           </div>
-          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => setTab("settings")} className="text-muted-foreground h-9 w-9 p-0 sm:h-auto sm:w-auto sm:p-2">
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground h-9 px-2 sm:px-3">
-              <LogOut className="w-4 h-4 sm:mr-1" />
-              <span className="hidden sm:inline">ログアウト</span>
-            </Button>
-          </div>
         </div>
       </div>
       <div className="pt-12">
@@ -109,8 +97,7 @@ const TrainerView = () => {
               {tab === "schedule" && <TrainerSchedule />}
               {tab === "messages" && <TrainerMessages />}
               {tab === "exercises" && <TrainerExerciseManager />}
-              {tab === "gym-settings" && <TrainerGymSettings />}
-              {tab === "settings" && <TrainerNotificationSettings />}
+              {tab === "gym-settings" && <TrainerGymSettings onSignOut={signOut} />}
             </main>
         </div>
       </div>
