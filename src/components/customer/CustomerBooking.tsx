@@ -158,7 +158,7 @@ const CustomerBooking = () => {
     }).catch((e) => console.error("LINE message failed:", e));
 
     // Fire-and-forget push notification to trainer
-    supabase.from("user_roles").select("user_id").eq("role", "trainer").then(({ data: trainers }) => {
+    supabase.rpc("get_trainer_ids").then(({ data: trainers }) => {
       if (trainers && trainers.length > 0) {
         const trainerIds = trainers.map((t) => t.user_id);
         supabase.functions.invoke("send-push-notification", {

@@ -145,11 +145,8 @@ export const useAllCustomerProfiles = () => {
     roles?.forEach((r) => allUserIds.add(r.user_id));
     bookingUsers?.forEach((b) => allUserIds.add(b.user_id));
 
-    // Remove trainer ids
-    const { data: trainerRoles } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "trainer");
+    // Remove trainer ids (using secure RPC to avoid exposing user_roles)
+    const { data: trainerRoles } = await supabase.rpc("get_trainer_ids");
     trainerRoles?.forEach((t) => allUserIds.delete(t.user_id));
 
     if (allUserIds.size === 0) {

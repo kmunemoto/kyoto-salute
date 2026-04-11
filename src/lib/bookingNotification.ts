@@ -15,12 +15,9 @@ export const sendBookingNotification = async (
   planName: string,
 ) => {
   try {
-    // Find the trainer's email by looking up user_roles
-    const { data: trainerRole } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "trainer")
-      .maybeSingle();
+    // Find the trainer via secure RPC (avoids exposing user_roles table)
+    const { data: trainerRoles } = await supabase.rpc("get_trainer_ids");
+    const trainerRole = trainerRoles?.[0] ?? null;
 
     if (!trainerRole) {
       console.warn("No trainer found for booking notification");
