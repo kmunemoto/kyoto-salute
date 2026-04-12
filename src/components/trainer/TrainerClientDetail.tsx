@@ -1004,25 +1004,57 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         <TabsContent value="chat">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <MessageSquare className="w-3.5 h-3.5" />
-            チャット履歴
+            チャット
           </h2>
-          {messages.length > 0 ? (
-            <div className="space-y-2">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'trainer' ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                    msg.sender === 'trainer'
-                      ? 'bg-muted text-foreground rounded-bl-md'
-                      : 'accent-gradient text-accent-foreground rounded-br-md'
-                  }`}>
-                    <p>{msg.text}</p>
-                    <p className="text-[10px] opacity-60 mt-1">{msg.date} {msg.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {!isRegistered ? (
+            <Card>
+              <CardContent className="p-6 text-center space-y-2">
+                <AlertCircle className="w-8 h-8 text-muted-foreground mx-auto" />
+                <p className="text-sm text-muted-foreground">この顧客はまだアプリに登録していないため、チャット機能は利用できません。</p>
+              </CardContent>
+            </Card>
+          ) : loadingChat ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
           ) : (
-            <Card><CardContent className="p-4 text-sm text-muted-foreground text-center">メッセージなし</CardContent></Card>
+            <div className="space-y-3">
+              <Card>
+                <CardContent className="p-3 max-h-[400px] overflow-y-auto">
+                  {chatMessages.length > 0 ? (
+                    <div className="space-y-2">
+                      {chatMessages.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.sender_id !== clientId ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                            msg.sender_id !== clientId
+                              ? 'accent-gradient text-accent-foreground rounded-br-md'
+                              : 'bg-muted text-foreground rounded-bl-md'
+                          }`}>
+                            <p>{msg.content}</p>
+                            <p className="text-[10px] opacity-60 mt-1">
+                              {new Date(msg.created_at).toLocaleString("ja-JP", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef} />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">メッセージなし</p>
+                  )}
+                </CardContent>
+              </Card>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="メッセージを入力..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }}
+                  className="flex-1 h-11"
+                />
+                <Button onClick={handleSendChat} disabled={!chatInput.trim()} className="h-11 px-4">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </TabsContent>
       </Tabs>
