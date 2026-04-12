@@ -190,6 +190,23 @@ const DiagnosisHistorySection = ({ userId }: Props) => {
                   {/* Expanded detail */}
                   {isExpanded && (
                     <div className="mt-3 pt-3 border-t border-border/50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {/* Overlay photo */}
+                      {d.image_url && (
+                        <div className="rounded-lg overflow-hidden border border-border/30">
+                          {signedUrls[d.id] ? (
+                            <img
+                              src={signedUrls[d.id]}
+                              alt="骨格オーバーレイ"
+                              className="w-full h-auto"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center py-8 bg-muted/30">
+                              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Score bars */}
                       <div className="space-y-1.5">
                         {(["straight", "wave", "natural"] as const).map((t) => {
