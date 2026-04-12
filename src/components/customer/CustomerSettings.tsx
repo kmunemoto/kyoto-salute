@@ -411,6 +411,9 @@ const CustomerSettings = () => {
         })()}
       </section>
 
+      {/* 骨格診断履歴 */}
+      <DiagnosisHistorySection userId={user?.id} />
+
       {/* Logout */}
       <section className="pt-2">
         <Button variant="outline" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10" onClick={signOut}>
