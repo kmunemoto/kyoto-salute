@@ -105,8 +105,10 @@ const TrialBooking = () => {
       toast.error("お名前を入力してください");
       return;
     }
-    if (!guestContact.trim()) {
-      toast.error("メールアドレスまたは電話番号を入力してください");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!guestEmail.trim() || !emailRegex.test(guestEmail.trim())) {
+      toast.error("正しいメールアドレスを入力してください");
+      setEmailError("正しいメールアドレスを入力してください");
       return;
     }
     if (!selectedDate || !selectedSlot) return;
@@ -120,7 +122,7 @@ const TrialBooking = () => {
 
     const { error } = await supabase.from("trial_bookings").insert({
       guest_name: guestName.trim(),
-      guest_contact: guestContact.trim(),
+      guest_contact: guestEmail.trim(),
       booking_date: bookingDate,
     });
 
@@ -243,18 +245,22 @@ const TrialBooking = () => {
             </div>
             <div>
               <Label htmlFor="guest-contact" className="text-sm font-medium">
-                メールアドレス または 電話番号 <span className="text-destructive">*</span>
+                メールアドレス <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="guest-contact"
-                placeholder="例：example@mail.com / 090-1234-5678"
-                value={guestContact}
-                onChange={(e) => setGuestContact(e.target.value)}
-                className="mt-1"
+                type="email"
+                placeholder="例：example@mail.com"
+                value={guestEmail}
+                onChange={(e) => {
+                  setGuestEmail(e.target.value);
+                  setEmailError("");
+                }}
+                className={`mt-1 ${emailError ? "border-destructive" : ""}`}
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                ※ ご予約確認のためにご連絡する場合がございます
-              </p>
+              {emailError && (
+                <p className="text-[11px] text-destructive mt-1">{emailError}</p>
+              )}
             </div>
           </div>
         </section>
@@ -341,7 +347,7 @@ const TrialBooking = () => {
                     size="lg"
                     className="w-full"
                     onClick={handleSubmit}
-                    disabled={submitting || !guestName.trim() || !guestContact.trim()}
+                    disabled={submitting || !guestName.trim() || !guestEmail.trim()}
                   >
                     {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     無料体験を予約する
