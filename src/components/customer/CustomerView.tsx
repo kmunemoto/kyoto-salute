@@ -48,7 +48,7 @@ const CustomerView = () => {
         </div>
       </div>
       <div className="pt-12" key={tab}>
-        {tab === "home" && <CustomerHome />}
+        {tab === "home" && <CustomerHome onNavigate={setTab} />}
         {tab === "booking" && <CustomerBooking />}
         {tab === "training" && <CustomerTraining />}
         {tab === "meals" && <CustomerMeals />}
