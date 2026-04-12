@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
 
-export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings";
+export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings" | "posture";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
@@ -53,6 +53,7 @@ const CustomerView = () => {
         {tab === "meals" && <CustomerMeals />}
         {tab === "chat" && <CustomerChat />}
         {tab === "settings" && <CustomerSettings />}
+        {tab === "posture" && <CustomerPosture />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
       <PwaInstallBanner />
