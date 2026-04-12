@@ -140,6 +140,9 @@ const TrialBooking = () => {
     setCompletedInfo({
       date: format(selectedDate, "M月d日（E）", { locale: ja }),
       time: `${slot.time}〜${endTime}`,
+      rawDate: dateKey,
+      rawStartTime: slot.time,
+      rawEndTime: endTime,
     });
     setCompleted(true);
     setSubmitting(false);
