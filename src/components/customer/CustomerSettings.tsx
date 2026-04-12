@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
