@@ -16,6 +16,10 @@ const CustomerSettings = () => {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
 
+  // Google Calendar state
+  const [gcalLinked, setGcalLinked] = useState(false);
+  const [gcalLoading, setGcalLoading] = useState(true);
+
   const isLineLinked = !!profile?.line_user_id;
 
 
