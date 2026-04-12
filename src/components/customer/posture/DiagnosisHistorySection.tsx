@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { Bone, Loader2, ChevronDown, Dumbbell, Target } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Bone, Loader2, ChevronDown, Dumbbell, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import type { SkeletalType } from "./types";
 
 type DiagnosisRow = {
