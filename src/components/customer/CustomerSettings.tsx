@@ -29,7 +29,22 @@ const CustomerSettings = () => {
     setDisplayName(profile?.display_name || "");
   }, [profile?.display_name]);
 
-  // Listen for LINE link callback
+  // Check Google Calendar link status
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      setGcalLoading(true);
+      const { data } = await supabase
+        .from("google_calendar_tokens" as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setGcalLinked(!!data);
+      setGcalLoading(false);
+    })();
+  }, [user]);
+
+  // Listen for LINE link callback & Google Calendar callback
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "line-link-result") {
@@ -38,6 +53,14 @@ const CustomerSettings = () => {
           refetch();
         } else {
           toast.error("LINE連携に失敗しました");
+        }
+      }
+      if (e.data?.type === "google-calendar-result") {
+        if (e.data.success) {
+          toast.success("Googleカレンダー連携が完了しました！");
+          setGcalLinked(true);
+        } else {
+          toast.error("Googleカレンダー連携に失敗しました");
         }
       }
     };
