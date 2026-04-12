@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import DiagnosisHistorySection from "./posture/DiagnosisHistorySection";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",

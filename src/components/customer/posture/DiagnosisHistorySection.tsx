@@ -37,7 +37,7 @@ const DiagnosisHistorySection = ({ userId }: Props) => {
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(10);
-      setDiagnoses((data as DiagnosisRow[] | null) ?? []);
+      setDiagnoses((data as unknown as DiagnosisRow[] | null) ?? []);
       setLoading(false);
     };
     fetch();
