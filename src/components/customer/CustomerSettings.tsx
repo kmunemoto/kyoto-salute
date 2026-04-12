@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell, Award } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell, Award, Bone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import DiagnosisHistorySection from "./posture/DiagnosisHistorySection";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",
@@ -410,6 +411,9 @@ const CustomerSettings = () => {
           );
         })()}
       </section>
+
+      {/* 骨格診断履歴 */}
+      <DiagnosisHistorySection userId={user?.id} />
 
       {/* Logout */}
       <section className="pt-2">

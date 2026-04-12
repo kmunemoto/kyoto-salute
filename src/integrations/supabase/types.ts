@@ -398,6 +398,36 @@ export type Database = {
         }
         Relationships: []
       }
+      skeletal_diagnoses: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          metrics: Json
+          scores: Json
+          skeletal_type: string
+          user_id: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          id?: string
+          metrics?: Json
+          scores?: Json
+          skeletal_type: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          metrics?: Json
+          scores?: Json
+          skeletal_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string

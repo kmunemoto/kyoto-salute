@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Camera, Upload, Loader2, RotateCcw, AlertCircle } from "lucide-react";
+import { Camera, Upload, Loader2, RotateCcw, AlertCircle, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import PostureFeedbackCard from "./posture/PostureFeedbackCard";
 import SkeletalTypeCard from "./posture/SkeletalTypeCard";
 import TrainingRecommendationCard from "./posture/TrainingRecommendationCard";
@@ -41,11 +43,13 @@ const SKELETON_EDGES: [number, number][] = [
 const MIN_SCORE = 0.3;
 
 const CustomerPosture = () => {
+  const { user } = useAuth();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [modelLoading, setModelLoading] = useState(false);
   const [keypoints, setKeypoints] = useState<Keypoint[]>([]);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0, natW: 0, natH: 0 });
+  const [saved, setSaved] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -173,10 +177,30 @@ const CustomerPosture = () => {
     [keypoints, imgSize.natH]
   );
 
+  const saveDiagnosis = useCallback(async () => {
+    if (!user || !skeletalDiagnosis || saved) return;
+    try {
+      const { error } = await supabase.from("skeletal_diagnoses" as any).insert({
+        user_id: user.id,
+        skeletal_type: skeletalDiagnosis.type,
+        confidence: skeletalDiagnosis.confidence,
+        scores: skeletalDiagnosis.scores,
+        metrics: skeletalDiagnosis.metrics,
+      });
+      if (error) throw error;
+      setSaved(true);
+      toast.success("診断結果を保存しました");
+    } catch (e) {
+      console.error("Save diagnosis error:", e);
+      toast.error("診断結果の保存に失敗しました");
+    }
+  }, [user, skeletalDiagnosis, saved]);
+
   const reset = () => {
     if (imageUrl) URL.revokeObjectURL(imageUrl);
     setImageUrl(null);
     setKeypoints([]);
+    setSaved(false);
   };
 
   const isLoading = analyzing || modelLoading;
@@ -269,7 +293,18 @@ const CustomerPosture = () => {
               <RotateCcw className="w-4 h-4 mr-1" />
               やり直す
             </Button>
-            <Button onClick={analyze} disabled={isLoading} className="flex-1">
+            {skeletalDiagnosis && user && (
+              <Button
+                onClick={saveDiagnosis}
+                disabled={saved}
+                variant={saved ? "outline" : "default"}
+                className="flex-1"
+              >
+                <Save className="w-4 h-4 mr-1" />
+                {saved ? "保存済み" : "結果を保存"}
+              </Button>
+            )}
+            <Button onClick={analyze} disabled={isLoading} variant="outline" className="flex-1">
               再解析
             </Button>
           </div>
