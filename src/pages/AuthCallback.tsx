@@ -1,54 +1,70 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const processed = useRef(false);
 
   useEffect(() => {
+    if (processed.current) return;
+    processed.current = true;
+
     const handleCallback = async () => {
       try {
-        // Handle the auth callback - exchange code for session or process hash tokens
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
         // PKCE flow: exchange code for session
         const code = queryParams.get("code");
         if (code) {
+          console.log("[AuthCallback] Exchanging code for session...");
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
-            console.error("Code exchange error:", error.message);
+            console.error("[AuthCallback] Code exchange error:", error.message);
+          } else {
+            console.log("[AuthCallback] Code exchange successful");
           }
-          navigate("/", { replace: true });
+          // Force hard navigation to ensure fresh state
+          window.location.replace("/");
           return;
         }
 
         // Implicit flow: tokens in hash
         const accessToken = hashParams.get("access_token");
         if (accessToken) {
-          // Supabase client will pick up tokens from the URL automatically
-          // Just wait briefly for the auth state to update
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          navigate("/", { replace: true });
+          console.log("[AuthCallback] Access token found in hash, waiting for session...");
+          // Wait for Supabase client to pick up the tokens
+          const { data, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error("[AuthCallback] Session error:", error.message);
+          } else if (data.session) {
+            console.log("[AuthCallback] Session established");
+          }
+          window.location.replace("/");
           return;
         }
 
         // Handle error in URL
-        const error = hashParams.get("error_description") || queryParams.get("error_description");
+        const error =
+          hashParams.get("error_description") ||
+          queryParams.get("error_description");
         if (error) {
-          console.error("Auth callback error:", error);
+          console.error("[AuthCallback] Auth error:", error);
         }
 
-        navigate("/auth", { replace: true });
+        // No code or token found - redirect to auth
+        console.warn("[AuthCallback] No code or token found, redirecting to /auth");
+        window.location.replace("/auth");
       } catch (err) {
-        console.error("Auth callback failed:", err);
-        navigate("/auth", { replace: true });
+        console.error("[AuthCallback] Unexpected error:", err);
+        window.location.replace("/auth");
       }
     };
 
     handleCallback();
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
