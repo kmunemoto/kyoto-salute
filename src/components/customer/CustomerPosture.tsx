@@ -43,11 +43,13 @@ const SKELETON_EDGES: [number, number][] = [
 const MIN_SCORE = 0.3;
 
 const CustomerPosture = () => {
+  const { user } = useAuth();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [modelLoading, setModelLoading] = useState(false);
   const [keypoints, setKeypoints] = useState<Keypoint[]>([]);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0, natW: 0, natH: 0 });
+  const [saved, setSaved] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
