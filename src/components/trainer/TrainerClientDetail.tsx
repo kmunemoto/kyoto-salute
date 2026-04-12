@@ -177,6 +177,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
+  const [showUsagePeriod, setShowUsagePeriod] = useState(true);
   const [clientPlan, setClientPlan] = useState<string>('初回無料体験');
   const [isPaid, setIsPaid] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
@@ -221,6 +222,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         setClientPlan(data.plan || '初回無料体験');
         setIsPaid(data.paid_this_month);
         setCycleStartDate(data.cycle_start_date || "");
+        setShowUsagePeriod(data.show_usage_period ?? true);
       } else {
         setHasProfile(false);
       }
@@ -486,6 +488,14 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     const today = new Date().toISOString().slice(0, 10);
     await handleCycleStartDateChange(today);
   };
+
+  const handleShowUsagePeriodToggle = async (checked: boolean) => {
+    const { error } = await supabase.from("profiles").update({ show_usage_period: checked }).eq("user_id", clientId);
+    if (error) { toast.error("更新に失敗しました"); return; }
+    setShowUsagePeriod(checked);
+    toast.success(checked ? "利用期間を表示にしました" : "利用期間を非表示にしました");
+  };
+
   const openEdit = (dateKey: string) => {
     const records = groupedRecords[dateKey] || [];
     if (records.length === 0) return;
@@ -613,6 +623,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                   })()}
                 </p>
               )}
+            </div>
+
+            {/* Show Usage Period Toggle */}
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">利用期間の表示</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold ${showUsagePeriod ? 'text-success' : 'text-muted-foreground'}`}>
+                  {showUsagePeriod ? '表示' : '非表示'}
+                </span>
+                <Switch checked={showUsagePeriod} onCheckedChange={handleShowUsagePeriodToggle} />
+              </div>
             </div>
           </CardContent>
         </Card>

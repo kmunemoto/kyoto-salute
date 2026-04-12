@@ -118,7 +118,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       )}
 
       {/* Membership Period Card */}
-      {hasPlan && profile?.cycle_start_date && (() => {
+      {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
         const startDate = parseISO(profile.cycle_start_date);
         const endDate = addMonths(startDate, 1);
         const remaining = differenceInDays(endDate, now);

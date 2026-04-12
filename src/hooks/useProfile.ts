@@ -12,6 +12,7 @@ export interface Profile {
   trial_completed: boolean;
   line_user_id: string | null;
   cycle_start_date: string | null;
+  show_usage_period: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -202,6 +203,7 @@ export const useAllCustomerProfiles = () => {
         trial_completed: p?.trial_completed || false,
         line_user_id: p?.line_user_id || null,
         cycle_start_date: p?.cycle_start_date || null,
+        show_usage_period: p?.show_usage_period ?? true,
         created_at: p?.created_at || new Date().toISOString(),
         updated_at: p?.updated_at || new Date().toISOString(),
         next_booking_date: nextBookingMap[uid]?.booking_date || null,

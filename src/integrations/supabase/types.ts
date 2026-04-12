@@ -339,6 +339,7 @@ export type Database = {
           line_user_id: string | null
           paid_this_month: boolean
           plan: string | null
+          show_usage_period: boolean
           trial_completed: boolean
           updated_at: string
           user_id: string
@@ -352,6 +353,7 @@ export type Database = {
           line_user_id?: string | null
           paid_this_month?: boolean
           plan?: string | null
+          show_usage_period?: boolean
           trial_completed?: boolean
           updated_at?: string
           user_id: string
@@ -365,6 +367,7 @@ export type Database = {
           line_user_id?: string | null
           paid_this_month?: boolean
           plan?: string | null
+          show_usage_period?: boolean
           trial_completed?: boolean
           updated_at?: string
           user_id?: string
