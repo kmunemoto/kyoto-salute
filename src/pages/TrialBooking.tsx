@@ -189,6 +189,21 @@ const TrialBooking = () => {
   };
 
   if (completed && completedInfo) {
+    const calendarUrl = (() => {
+      const dateClean = completedInfo.rawDate.replace(/-/g, "");
+      const startClean = completedInfo.rawStartTime.replace(":", "") + "00";
+      const endClean = completedInfo.rawEndTime.replace(":", "") + "00";
+      const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: "【初回無料体験】パーソナルジムSalute御所南",
+        dates: `${dateClean}T${startClean}/${dateClean}T${endClean}`,
+        ctz: "Asia/Tokyo",
+        details: "初回無料体験（カウンセリング＋トレーニング）。\n当日は動きやすい服装でお越しください。\nご不明な点がございましたらお気軽にお問い合わせください。",
+        location: "パーソナルジムSalute御所南",
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    })();
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md slide-up">
@@ -207,6 +222,15 @@ const TrialBooking = () => {
               <p className="text-sm">{completedInfo.time}（60分）</p>
               <p className="text-xs text-muted-foreground mt-2">カウンセリング＋トレーニング体験</p>
             </div>
+            <a
+              href={calendarUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 w-full h-12 rounded-xl text-base font-semibold border-2 border-accent text-accent-foreground bg-accent/10 hover:bg-accent/20 transition-all duration-200"
+            >
+              <CalendarPlus className="w-5 h-5" />
+              Googleカレンダーに登録
+            </a>
             <div className="text-xs text-muted-foreground space-y-1">
               <p>当日は動きやすい服装でお越しください。</p>
               <p>ご不明な点がございましたらお気軽にお問い合わせください。</p>
