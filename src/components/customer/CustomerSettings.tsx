@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
-import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMyBookings, BookingWithTime } from "@/hooks/useBookings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 const CustomerSettings = () => {
   const { profile, loading, updateDisplayName, refetch } = useProfile();
