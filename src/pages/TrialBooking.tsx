@@ -226,7 +226,7 @@ const TrialBooking = () => {
               href={calendarUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 w-full h-12 rounded-xl text-base font-semibold border-2 border-accent text-accent-foreground bg-accent/10 hover:bg-accent/20 transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 w-full h-12 rounded-xl text-base font-semibold border-2 border-primary text-foreground bg-background hover:bg-secondary transition-all duration-200"
             >
               <CalendarPlus className="w-5 h-5" />
               Googleカレンダーに登録
