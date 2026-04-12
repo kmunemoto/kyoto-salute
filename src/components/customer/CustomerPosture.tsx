@@ -1,19 +1,20 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Camera, Upload, Loader2, RotateCcw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-
-type Keypoint = { x: number; y: number; score?: number; name?: string };
+import PostureFeedbackCard from "./posture/PostureFeedbackCard";
+import { analyzePosture } from "./posture/postureAnalysis";
+import type { Keypoint } from "./posture/types";
 
 // MoveNet skeleton edges (COCO keypoints)
 const SKELETON_EDGES: [number, number][] = [
-  [0, 1], [0, 2], [1, 3], [2, 4],       // head
-  [5, 6],                                 // shoulders
-  [5, 7], [7, 9], [6, 8], [8, 10],       // arms
-  [5, 11], [6, 12],                       // torso
-  [11, 12],                               // hips
-  [11, 13], [13, 15], [12, 14], [14, 16], // legs
+  [0, 1], [0, 2], [1, 3], [2, 4],
+  [5, 6],
+  [5, 7], [7, 9], [6, 8], [8, 10],
+  [5, 11], [6, 12],
+  [11, 12],
+  [11, 13], [13, 15], [12, 14], [14, 16],
 ];
 
 const MIN_SCORE = 0.3;
@@ -29,7 +30,6 @@ const CustomerPosture = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const detectorRef = useRef<any>(null);
 
-  // Load model lazily
   const getDetector = useCallback(async () => {
     if (detectorRef.current) return detectorRef.current;
     setModelLoading(true);
@@ -57,8 +57,7 @@ const CustomerPosture = () => {
       toast.error("画像ファイルを選択してください");
       return;
     }
-    const url = URL.createObjectURL(file);
-    setImageUrl(url);
+    setImageUrl(URL.createObjectURL(file));
     setKeypoints([]);
   };
 
@@ -89,7 +88,6 @@ const CustomerPosture = () => {
     }
   }, [getDetector]);
 
-  // Auto-analyze when image loads
   const onImgLoad = useCallback(() => {
     const img = imgRef.current;
     if (!img) return;
@@ -102,7 +100,7 @@ const CustomerPosture = () => {
     analyze();
   }, [analyze]);
 
-  // Draw skeleton on canvas
+  // Draw skeleton
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || keypoints.length === 0 || imgSize.w === 0) return;
@@ -115,7 +113,6 @@ const CustomerPosture = () => {
     const scaleX = imgSize.w / imgSize.natW;
     const scaleY = imgSize.h / imgSize.natH;
 
-    // Draw edges
     ctx.strokeStyle = "hsl(36, 50%, 55%)";
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
@@ -130,7 +127,6 @@ const CustomerPosture = () => {
       ctx.stroke();
     }
 
-    // Draw keypoints
     for (const kp of keypoints) {
       if ((kp.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
@@ -142,6 +138,11 @@ const CustomerPosture = () => {
       ctx.stroke();
     }
   }, [keypoints, imgSize]);
+
+  const feedbacks = useMemo(
+    () => (keypoints.length > 0 ? analyzePosture(keypoints, imgSize.natH) : []),
+    [keypoints, imgSize.natH]
+  );
 
   const reset = () => {
     if (imageUrl) URL.revokeObjectURL(imageUrl);
@@ -162,11 +163,7 @@ const CustomerPosture = () => {
         <Card>
           <CardContent className="p-6 space-y-4">
             <div className="flex flex-col items-center gap-3">
-              <Button
-                onClick={() => fileRef.current?.click()}
-                className="w-full"
-                size="lg"
-              >
+              <Button onClick={() => fileRef.current?.click()} className="w-full" size="lg">
                 <Upload className="w-4 h-4 mr-2" />
                 写真をアップロード
               </Button>
@@ -228,16 +225,15 @@ const CustomerPosture = () => {
             </Card>
           )}
 
+          {/* Posture feedback */}
+          <PostureFeedbackCard feedbacks={feedbacks} />
+
           <div className="flex gap-2">
             <Button variant="outline" onClick={reset} className="flex-1">
               <RotateCcw className="w-4 h-4 mr-1" />
               やり直す
             </Button>
-            <Button
-              onClick={analyze}
-              disabled={isLoading}
-              className="flex-1"
-            >
+            <Button onClick={analyze} disabled={isLoading} className="flex-1">
               再解析
             </Button>
           </div>
