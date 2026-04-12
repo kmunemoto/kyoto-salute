@@ -1,9 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 const AuthCallback = () => {
+  const hasHandledRef = useRef(false);
+
   useEffect(() => {
+    if (hasHandledRef.current) return;
+    hasHandledRef.current = true;
+
     const handleCallback = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
@@ -14,12 +19,20 @@ const AuthCallback = () => {
       }
 
       try {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (error) {
           console.error("[AuthCallback] Code exchange error:", error.message);
           window.location.replace("/auth");
           return;
+        }
+
+        if (!data.session) {
+          for (let i = 0; i < 5; i += 1) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData.session) break;
+            await new Promise((resolve) => window.setTimeout(resolve, 250));
+          }
         }
 
         window.location.replace("/");
