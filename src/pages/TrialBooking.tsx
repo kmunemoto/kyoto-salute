@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, Clock, Check, Loader2, User, Mail, Phone, Sparkles } from "lucide-react";
+import { CalendarDays, Clock, Check, Loader2, User, CalendarPlus, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
