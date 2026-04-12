@@ -4,17 +4,37 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import PostureFeedbackCard from "./posture/PostureFeedbackCard";
+import SkeletalTypeCard from "./posture/SkeletalTypeCard";
 import { analyzePosture } from "./posture/postureAnalysis";
+import { diagnoseSkeletalType } from "./posture/skeletalDiagnosis";
 import type { Keypoint } from "./posture/types";
 
-// MoveNet skeleton edges (COCO keypoints)
+// BlazePose 33-keypoint skeleton edges
 const SKELETON_EDGES: [number, number][] = [
-  [0, 1], [0, 2], [1, 3], [2, 4],
-  [5, 6],
-  [5, 7], [7, 9], [6, 8], [8, 10],
-  [5, 11], [6, 12],
+  // Face
+  [0, 1], [1, 2], [2, 3], [3, 7],
+  [0, 4], [4, 5], [5, 6], [6, 8],
+  [9, 10],
+  // Shoulders
   [11, 12],
-  [11, 13], [13, 15], [12, 14], [14, 16],
+  // Left arm
+  [11, 13], [13, 15],
+  // Right arm
+  [12, 14], [14, 16],
+  // Left hand
+  [15, 17], [15, 19], [15, 21],
+  // Right hand
+  [16, 18], [16, 20], [16, 22],
+  // Torso
+  [11, 23], [12, 24], [23, 24],
+  // Left leg
+  [23, 25], [25, 27],
+  // Right leg
+  [24, 26], [26, 28],
+  // Left foot
+  [27, 29], [29, 31], [27, 31],
+  // Right foot
+  [28, 30], [30, 32], [28, 32],
 ];
 
 const MIN_SCORE = 0.3;
@@ -38,8 +58,11 @@ const CustomerPosture = () => {
       await tf.ready();
       const poseDetection = await import("@tensorflow-models/pose-detection");
       const detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MoveNet,
-        { modelType: (poseDetection as any).movenet.modelType.SINGLEPOSE_LIGHTNING }
+        poseDetection.SupportedModels.BlazePose,
+        {
+          runtime: "tfjs" as const,
+          modelType: "lite",
+        }
       );
       detectorRef.current = detector;
       return detector;
@@ -130,7 +153,7 @@ const CustomerPosture = () => {
     for (const kp of keypoints) {
       if ((kp.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.arc(kp.x * scaleX, kp.y * scaleY, 6, 0, 2 * Math.PI);
+      ctx.arc(kp.x * scaleX, kp.y * scaleY, 5, 0, 2 * Math.PI);
       ctx.fillStyle = "hsl(36, 40%, 42%)";
       ctx.fill();
       ctx.strokeStyle = "white";
@@ -144,6 +167,11 @@ const CustomerPosture = () => {
     [keypoints, imgSize.natH]
   );
 
+  const skeletalDiagnosis = useMemo(
+    () => (keypoints.length > 0 ? diagnoseSkeletalType(keypoints, imgSize.natH) : null),
+    [keypoints, imgSize.natH]
+  );
+
   const reset = () => {
     if (imageUrl) URL.revokeObjectURL(imageUrl);
     setImageUrl(null);
@@ -154,9 +182,9 @@ const CustomerPosture = () => {
 
   return (
     <div className="px-4 py-4 space-y-4 slide-up">
-      <h2 className="text-lg font-bold">姿勢チェック（AI）</h2>
+      <h2 className="text-lg font-bold">姿勢チェック・骨格診断（AI）</h2>
       <p className="text-xs text-muted-foreground">
-        全身が映った写真をアップロードすると、AIが関節のポイントを自動解析し、骨格ラインを表示します。
+        全身が映った写真をアップロードすると、AIが33箇所の関節ポイントを解析し、姿勢チェックと骨格タイプ診断を行います。
       </p>
 
       {!imageUrl ? (
@@ -185,7 +213,7 @@ const CustomerPosture = () => {
             </div>
             <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              <span>全身が映った正面または横向きの写真が最適です。体の一部が隠れていると検出精度が下がる場合があります。</span>
+              <span>全身が映った正面の写真が最適です。骨格タイプ診断には肩・腰・足首が見える写真が必要です。</span>
             </div>
           </CardContent>
         </Card>
@@ -209,7 +237,7 @@ const CustomerPosture = () => {
                 <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-accent" />
                   <span className="text-sm font-medium">
-                    {modelLoading ? "AIモデル読み込み中…" : "姿勢を解析中…"}
+                    {modelLoading ? "AIモデル読み込み中…" : "姿勢・骨格を解析中…"}
                   </span>
                 </div>
               )}
@@ -225,6 +253,9 @@ const CustomerPosture = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Skeletal type diagnosis */}
+          <SkeletalTypeCard diagnosis={skeletalDiagnosis} />
 
           {/* Posture feedback */}
           <PostureFeedbackCard feedbacks={feedbacks} />

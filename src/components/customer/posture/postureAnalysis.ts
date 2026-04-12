@@ -2,15 +2,15 @@ import type { Keypoint } from "./types";
 
 const MIN_SCORE = 0.3;
 
-// MoveNet COCO keypoint indices
+// BlazePose 33 keypoint indices
 const KP = {
   NOSE: 0,
-  LEFT_EAR: 3,
-  RIGHT_EAR: 4,
-  LEFT_SHOULDER: 5,
-  RIGHT_SHOULDER: 6,
-  LEFT_HIP: 11,
-  RIGHT_HIP: 12,
+  LEFT_EAR: 7,
+  RIGHT_EAR: 8,
+  LEFT_SHOULDER: 11,
+  RIGHT_SHOULDER: 12,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24,
 } as const;
 
 type Feedback = {
@@ -40,7 +40,6 @@ export function analyzePosture(
   if (isValid(ls) && isValid(rs)) {
     const diff = relDiff(ls, rs, imgNatHeight);
     if (Math.abs(diff) > THRESHOLD) {
-      // In image coords, larger Y = lower position
       feedback.push({
         type: "warning",
         message:
