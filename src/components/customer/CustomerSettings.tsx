@@ -311,6 +311,7 @@ const CustomerSettings = () => {
           <History className="w-3.5 h-3.5" />
           過去の受講履歴
         </h2>
+
         {bookingsLoading ? (
           <div className="flex items-center justify-center py-6">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -325,41 +326,87 @@ const CustomerSettings = () => {
             })
             .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
 
-          return pastBookings.length === 0 ? (
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">まだ受講履歴はありません</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {pastBookings.map((b) => {
-                const dt = new Date(`${b.date}T${b.startTime}:00+09:00`);
-                const dateLabel = format(dt, "M月d日（E）", { locale: ja });
-                const planLabel = PLAN_LABELS[b.booking_type] || b.booking_type;
-                return (
-                  <Card key={b.id} className="opacity-75">
-                    <CardContent className="p-3 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Dumbbell className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-muted-foreground">{dateLabel}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {b.startTime}〜{b.endTime}
-                          </span>
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            {planLabel}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+          // Compute cycle-based count
+          const cycleStart = profile?.cycle_start_date ? new Date(profile.cycle_start_date) : null;
+          const cycleEnd = cycleStart ? new Date(new Date(cycleStart).setMonth(cycleStart.getMonth() + 1)) : null;
+          const cycleCount = cycleStart && cycleEnd
+            ? pastBookings.filter((b) => {
+                const d = new Date(b.date);
+                return d >= cycleStart && d < cycleEnd;
+              }).length
+            : pastBookings.length;
+
+          const planMax: Record<string, number> = { "月4回": 4, "月6回": 6, "月8回": 8 };
+          const maxSessions = profile?.plan ? planMax[profile.plan] : null;
+          const isUnlimited = profile?.plan === "通い放題";
+
+          return (
+            <>
+              {/* Summary card */}
+              <Card className="mb-3 border-accent/30 bg-gradient-to-br from-accent/5 to-accent/10">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
+                    <Award className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">今回の受講回数</p>
+                    {maxSessions ? (
+                      <p className="text-2xl font-extrabold tracking-tight">
+                        <span className="text-accent">{cycleCount}</span>
+                        <span className="text-base font-bold text-muted-foreground"> / {maxSessions} 回</span>
+                      </p>
+                    ) : isUnlimited ? (
+                      <p className="text-2xl font-extrabold tracking-tight">
+                        <span className="text-accent">{cycleCount}</span>
+                        <span className="text-base font-bold text-muted-foreground"> 回</span>
+                      </p>
+                    ) : (
+                      <p className="text-2xl font-extrabold tracking-tight">
+                        <span className="text-accent">{pastBookings.length}</span>
+                        <span className="text-base font-bold text-muted-foreground"> 回</span>
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {pastBookings.length === 0 ? (
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">まだ受講履歴はありません</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {pastBookings.map((b) => {
+                    const dt = new Date(`${b.date}T${b.startTime}:00+09:00`);
+                    const dateLabel = format(dt, "M月d日（E）", { locale: ja });
+                    const planLabel = PLAN_LABELS[b.booking_type] || b.booking_type;
+                    return (
+                      <Card key={b.id} className="opacity-75">
+                        <CardContent className="p-3 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-muted-foreground">{dateLabel}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {b.startTime}〜{b.endTime}
+                              </span>
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                {planLabel}
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           );
         })()}
       </section>
