@@ -488,6 +488,14 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     const today = new Date().toISOString().slice(0, 10);
     await handleCycleStartDateChange(today);
   };
+
+  const handleShowUsagePeriodToggle = async (checked: boolean) => {
+    const { error } = await supabase.from("profiles").update({ show_usage_period: checked }).eq("user_id", clientId);
+    if (error) { toast.error("更新に失敗しました"); return; }
+    setShowUsagePeriod(checked);
+    toast.success(checked ? "利用期間を表示にしました" : "利用期間を非表示にしました");
+  };
+
   const openEdit = (dateKey: string) => {
     const records = groupedRecords[dateKey] || [];
     if (records.length === 0) return;
