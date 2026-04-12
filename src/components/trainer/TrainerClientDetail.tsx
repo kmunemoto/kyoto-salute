@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil, Clock, RotateCcw } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil, Clock, RotateCcw, Send, AlertCircle } from "lucide-react";
 import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  clientChatMessages,
-  planOptions, planPrices, PlanType, ChatMessage,
+  planOptions, planPrices, PlanType,
 } from "@/lib/dummyData";
 import { useMeasurements } from "@/hooks/useMeasurements";
+import { useMessages } from "@/hooks/useMessages";
 import { Switch } from "@/components/ui/switch";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import {
@@ -175,7 +175,8 @@ const TrainingGrowthChart = ({ workoutRecords, loadingRecords }: { workoutRecord
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [clientPlan, setClientPlan] = useState<string>('');
+  const [hasProfile, setHasProfile] = useState(false);
+  const [clientPlan, setClientPlan] = useState<string>('初回無料体験');
   const [isPaid, setIsPaid] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
@@ -198,8 +199,14 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [editingRecordIds, setEditingRecordIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
   const [cycleStartDate, setCycleStartDate] = useState<string>("");
+  const [chatInput, setChatInput] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch profile
+  // Check if client has an auth account (user_roles entry)
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const { messages: chatMessages, loading: loadingChat, sendMessage, markAsRead } = useMessages(isRegistered ? clientId : null);
+
+  // Fetch profile and check registration
   useEffect(() => {
     const fetchProfile = async () => {
       const { data } = await supabase
@@ -209,10 +216,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         .maybeSingle();
       if (data) {
         setProfile(data);
+        setHasProfile(true);
         setClientPlan(data.plan || '初回無料体験');
         setIsPaid(data.paid_this_month);
         setCycleStartDate(data.cycle_start_date || "");
+      } else {
+        setHasProfile(false);
       }
+      // Check if this user has a role (meaning they have an auth account)
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("user_id", clientId)
+        .limit(1);
+      setIsRegistered(!!(roles && roles.length > 0));
       setLoadingProfile(false);
     };
     fetchProfile();
@@ -300,6 +317,18 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     fetchBookings();
   }, [clientId]);
 
+  // Mark chat as read when viewing
+  useEffect(() => {
+    if (isRegistered && chatMessages.length > 0) {
+      markAsRead();
+    }
+  }, [chatMessages.length, isRegistered]);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages.length]);
+
   if (loadingProfile) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -308,16 +337,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     );
   }
 
-  if (!profile) {
-    return (
-      <div className="text-center py-20 text-muted-foreground">
-        <p>顧客情報が見つかりません</p>
-        <Button variant="ghost" onClick={onBack} className="mt-4">戻る</Button>
-      </div>
-    );
-  }
-
-  const displayName = profile.display_name || "名前未設定";
+  const displayName = profile?.display_name || "名前未設定";
   const initial = displayName[0];
 
   const getPrice = (plan: string): number => {
@@ -327,9 +347,13 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     return 0;
   };
 
-  // Dummy data for non-DB features
   const bookings = clientBookings2;
-  const messages = clientChatMessages[clientId] || [];
+
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || !isRegistered) return;
+    await sendMessage(chatInput.trim(), clientId);
+    setChatInput("");
+  };
 
   const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
   const updateExerciseSet = (exIdx: number, setIdx: number, field: keyof SetEntry, value: string) => {
@@ -980,25 +1004,57 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         <TabsContent value="chat">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <MessageSquare className="w-3.5 h-3.5" />
-            チャット履歴
+            チャット
           </h2>
-          {messages.length > 0 ? (
-            <div className="space-y-2">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'trainer' ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                    msg.sender === 'trainer'
-                      ? 'bg-muted text-foreground rounded-bl-md'
-                      : 'accent-gradient text-accent-foreground rounded-br-md'
-                  }`}>
-                    <p>{msg.text}</p>
-                    <p className="text-[10px] opacity-60 mt-1">{msg.date} {msg.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {!isRegistered ? (
+            <Card>
+              <CardContent className="p-6 text-center space-y-2">
+                <AlertCircle className="w-8 h-8 text-muted-foreground mx-auto" />
+                <p className="text-sm text-muted-foreground">この顧客はまだアプリに登録していないため、チャット機能は利用できません。</p>
+              </CardContent>
+            </Card>
+          ) : loadingChat ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
           ) : (
-            <Card><CardContent className="p-4 text-sm text-muted-foreground text-center">メッセージなし</CardContent></Card>
+            <div className="space-y-3">
+              <Card>
+                <CardContent className="p-3 max-h-[400px] overflow-y-auto">
+                  {chatMessages.length > 0 ? (
+                    <div className="space-y-2">
+                      {chatMessages.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.sender_id !== clientId ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                            msg.sender_id !== clientId
+                              ? 'accent-gradient text-accent-foreground rounded-br-md'
+                              : 'bg-muted text-foreground rounded-bl-md'
+                          }`}>
+                            <p>{msg.content}</p>
+                            <p className="text-[10px] opacity-60 mt-1">
+                              {new Date(msg.created_at).toLocaleString("ja-JP", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef} />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">メッセージなし</p>
+                  )}
+                </CardContent>
+              </Card>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="メッセージを入力..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }}
+                  className="flex-1 h-11"
+                />
+                <Button onClick={handleSendChat} disabled={!chatInput.trim()} className="h-11 px-4">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </TabsContent>
       </Tabs>
