@@ -209,7 +209,11 @@ const CustomerBooking = () => {
     if (dateKey) fetchBookedSlots(dateKey);
   };
 
-  const activeBookings = myBookings.filter((b) => b.status !== "キャンセル済み");
+  const activeBookings = myBookings.filter((b) => {
+    if (b.status === "キャンセル済み") return false;
+    const bookingDateTime = new Date(`${b.date}T${b.endTime}:00+09:00`);
+    return bookingDateTime > new Date();
+  });
 
   const cancelDescription = cancelTarget
     ? `${format(new Date(cancelTarget.date), "M月d日（E）", { locale: ja })} ${cancelTarget.startTime}〜${cancelTarget.endTime} の予約をキャンセルします。`
