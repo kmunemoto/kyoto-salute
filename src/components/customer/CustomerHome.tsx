@@ -1,6 +1,8 @@
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
+import { Button } from "@/components/ui/button";
+import type { CustomerTab } from "./CustomerView";
 import { useProfile } from "@/hooks/useProfile";
 import { useMyBookings } from "@/hooks/useBookings";
 import { useMeasurements } from "@/hooks/useMeasurements";
@@ -16,7 +18,7 @@ const planMaxSessions: Record<string, number> = {
   '通い放題': 15,
 };
 
-const CustomerHome = () => {
+const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void }) => {
   const { user } = useAuth();
   const { profile, loading } = useProfile();
   const { bookings, loading: bookingsLoading } = useMyBookings();
@@ -299,6 +301,18 @@ const CustomerHome = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Posture Check CTA */}
+      <section>
+        <Button
+          variant="outline"
+          className="w-full h-14 text-base font-bold gap-2"
+          onClick={() => onNavigate?.("posture")}
+        >
+          <ScanLine className="w-5 h-5" />
+          姿勢チェック（AI）
+        </Button>
+      </section>
     </div>
   );
 };

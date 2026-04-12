@@ -8,12 +8,13 @@ import CustomerMeals from "./CustomerMeals";
 import CustomerChat from "./CustomerChat";
 import CustomerTraining from "./CustomerTraining";
 import CustomerSettings from "./CustomerSettings";
+import CustomerPosture from "./CustomerPosture";
 import PwaInstallBanner from "./PwaInstallBanner";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
 
-export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings";
+export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings" | "posture";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
@@ -47,12 +48,13 @@ const CustomerView = () => {
         </div>
       </div>
       <div className="pt-12" key={tab}>
-        {tab === "home" && <CustomerHome />}
+        {tab === "home" && <CustomerHome onNavigate={setTab} />}
         {tab === "booking" && <CustomerBooking />}
         {tab === "training" && <CustomerTraining />}
         {tab === "meals" && <CustomerMeals />}
         {tab === "chat" && <CustomerChat />}
         {tab === "settings" && <CustomerSettings />}
+        {tab === "posture" && <CustomerPosture />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
       <PwaInstallBanner />

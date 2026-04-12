@@ -1,0 +1,258 @@
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Camera, Upload, Loader2, RotateCcw, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+
+type Keypoint = { x: number; y: number; score?: number; name?: string };
+
+// MoveNet skeleton edges (COCO keypoints)
+const SKELETON_EDGES: [number, number][] = [
+  [0, 1], [0, 2], [1, 3], [2, 4],       // head
+  [5, 6],                                 // shoulders
+  [5, 7], [7, 9], [6, 8], [8, 10],       // arms
+  [5, 11], [6, 12],                       // torso
+  [11, 12],                               // hips
+  [11, 13], [13, 15], [12, 14], [14, 16], // legs
+];
+
+const MIN_SCORE = 0.3;
+
+const CustomerPosture = () => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [keypoints, setKeypoints] = useState<Keypoint[]>([]);
+  const [imgSize, setImgSize] = useState({ w: 0, h: 0, natW: 0, natH: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const detectorRef = useRef<any>(null);
+
+  // Load model lazily
+  const getDetector = useCallback(async () => {
+    if (detectorRef.current) return detectorRef.current;
+    setModelLoading(true);
+    try {
+      const tf = await import("@tensorflow/tfjs");
+      await tf.ready();
+      const poseDetection = await import("@tensorflow-models/pose-detection");
+      const detector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet,
+        { modelType: (poseDetection as any).movenet.modelType.SINGLEPOSE_LIGHTNING }
+      );
+      detectorRef.current = detector;
+      return detector;
+    } catch (e) {
+      console.error("Model load error:", e);
+      toast.error("AIモデルの読み込みに失敗しました");
+      return null;
+    } finally {
+      setModelLoading(false);
+    }
+  }, []);
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("画像ファイルを選択してください");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setImageUrl(url);
+    setKeypoints([]);
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) handleFile(f);
+    e.target.value = "";
+  };
+
+  const analyze = useCallback(async () => {
+    if (!imgRef.current) return;
+    setAnalyzing(true);
+    try {
+      const detector = await getDetector();
+      if (!detector) return;
+      const poses = await detector.estimatePoses(imgRef.current);
+      if (poses.length === 0 || !poses[0].keypoints?.length) {
+        toast.error("姿勢を検出できませんでした。全身が映った写真をお試しください。");
+        return;
+      }
+      setKeypoints(poses[0].keypoints);
+      toast.success("姿勢解析が完了しました！");
+    } catch (e) {
+      console.error("Pose estimation error:", e);
+      toast.error("解析中にエラーが発生しました");
+    } finally {
+      setAnalyzing(false);
+    }
+  }, [getDetector]);
+
+  // Auto-analyze when image loads
+  const onImgLoad = useCallback(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    setImgSize({
+      w: img.clientWidth,
+      h: img.clientHeight,
+      natW: img.naturalWidth,
+      natH: img.naturalHeight,
+    });
+    analyze();
+  }, [analyze]);
+
+  // Draw skeleton on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || keypoints.length === 0 || imgSize.w === 0) return;
+    canvas.width = imgSize.w;
+    canvas.height = imgSize.h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const scaleX = imgSize.w / imgSize.natW;
+    const scaleY = imgSize.h / imgSize.natH;
+
+    // Draw edges
+    ctx.strokeStyle = "hsl(150, 80%, 50%)";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    for (const [i, j] of SKELETON_EDGES) {
+      const a = keypoints[i];
+      const b = keypoints[j];
+      if (!a || !b) continue;
+      if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
+      ctx.beginPath();
+      ctx.moveTo(a.x * scaleX, a.y * scaleY);
+      ctx.lineTo(b.x * scaleX, b.y * scaleY);
+      ctx.stroke();
+    }
+
+    // Draw keypoints
+    for (const kp of keypoints) {
+      if ((kp.score ?? 1) < MIN_SCORE) continue;
+      ctx.beginPath();
+      ctx.arc(kp.x * scaleX, kp.y * scaleY, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = "hsl(36, 60%, 55%)";
+      ctx.fill();
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }, [keypoints, imgSize]);
+
+  const reset = () => {
+    if (imageUrl) URL.revokeObjectURL(imageUrl);
+    setImageUrl(null);
+    setKeypoints([]);
+  };
+
+  const isLoading = analyzing || modelLoading;
+
+  return (
+    <div className="px-4 py-4 space-y-4 slide-up">
+      <h2 className="text-lg font-bold">姿勢チェック（AI）</h2>
+      <p className="text-xs text-muted-foreground">
+        全身が映った写真をアップロードすると、AIが関節のポイントを自動解析し、骨格ラインを表示します。
+      </p>
+
+      {!imageUrl ? (
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex flex-col items-center gap-3">
+              <Button
+                onClick={() => fileRef.current?.click()}
+                className="w-full"
+                size="lg"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                写真をアップロード
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (fileRef.current) {
+                    fileRef.current.setAttribute("capture", "environment");
+                    fileRef.current.click();
+                    fileRef.current.removeAttribute("capture");
+                  }
+                }}
+                className="w-full"
+                size="lg"
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                カメラで撮影
+              </Button>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>全身が映った正面または横向きの写真が最適です。体の一部が隠れていると検出精度が下がる場合があります。</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          <Card className="overflow-hidden">
+            <div className="relative">
+              <img
+                ref={imgRef}
+                src={imageUrl}
+                alt="姿勢解析用画像"
+                className="w-full h-auto block"
+                onLoad={onImgLoad}
+              />
+              <canvas
+                ref={canvasRef}
+                className="absolute top-0 left-0 w-full h-full pointer-events-none"
+              />
+              {isLoading && (
+                <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                  <span className="text-sm font-medium">
+                    {modelLoading ? "AIモデル読み込み中…" : "姿勢を解析中…"}
+                  </span>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {keypoints.length > 0 && (
+            <Card>
+              <CardContent className="p-3">
+                <p className="text-xs text-muted-foreground">
+                  検出ポイント：{keypoints.filter((k) => (k.score ?? 1) >= MIN_SCORE).length} / {keypoints.length}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={reset} className="flex-1">
+              <RotateCcw className="w-4 h-4 mr-1" />
+              やり直す
+            </Button>
+            <Button
+              onClick={analyze}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              再解析
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onFileChange}
+      />
+    </div>
+  );
+};
+
+export default CustomerPosture;
