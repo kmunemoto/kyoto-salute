@@ -8,6 +8,7 @@ import CustomerMeals from "./CustomerMeals";
 import CustomerChat from "./CustomerChat";
 import CustomerTraining from "./CustomerTraining";
 import CustomerSettings from "./CustomerSettings";
+import CustomerPosture from "./CustomerPosture";
 import PwaInstallBanner from "./PwaInstallBanner";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
