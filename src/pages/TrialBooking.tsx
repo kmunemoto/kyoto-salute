@@ -144,6 +144,29 @@ const TrialBooking = () => {
     setCompleted(true);
     setSubmitting(false);
 
+    const formattedDate = format(selectedDate, "M月d日（E）", { locale: ja });
+
+    // Fire-and-forget: send booking confirmation email to customer
+    (async () => {
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "booking-confirmation",
+            recipientEmail: guestEmail.trim(),
+            idempotencyKey: `trial-confirm-${guestEmail.trim()}-${bookingDate}`,
+            templateData: {
+              customerName: guestName.trim(),
+              bookingDate: formattedDate,
+              bookingTime: `${slot.time}〜${endTime}`,
+              planName: "初回無料体験（カウンセリング＋トレーニング）",
+            },
+          },
+        });
+      } catch (e) {
+        console.error("Booking confirmation email failed:", e);
+      }
+    })();
+
     // Fire-and-forget: notify trainer via LINE
     (async () => {
       try {
@@ -151,7 +174,6 @@ const TrialBooking = () => {
         const trainerId = trainerRoles?.[0]?.user_id;
         if (!trainerId) return;
 
-        const formattedDate = format(selectedDate, "M月d日（E）", { locale: ja });
         const message = `【Salute御所南】🎉 新規の体験予約が入りました！\n\n・お名前：${guestName.trim()} 様\n・日時：${formattedDate} ${slot.time}〜${endTime}\n\nアプリの予約管理画面から詳細を確認してください。`;
 
         await supabase.functions.invoke("send-line-message", {
