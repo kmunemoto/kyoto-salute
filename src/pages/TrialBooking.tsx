@@ -19,7 +19,8 @@ interface TrialSlotBooking {
 
 const TrialBooking = () => {
   const [guestName, setGuestName] = useState("");
-  const [guestContact, setGuestContact] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
