@@ -177,15 +177,54 @@ const CustomerPosture = () => {
     [keypoints, imgSize.natH]
   );
 
+  /** Merge the photo and skeleton canvas into a single image blob */
+  const captureOverlayBlob = useCallback(async (): Promise<Blob | null> => {
+    const img = imgRef.current;
+    const skeletonCanvas = canvasRef.current;
+    if (!img || !skeletonCanvas) return null;
+
+    const offscreen = document.createElement("canvas");
+    offscreen.width = img.naturalWidth;
+    offscreen.height = img.naturalHeight;
+    const ctx = offscreen.getContext("2d");
+    if (!ctx) return null;
+
+    // Draw original image at natural size
+    ctx.drawImage(img, 0, 0);
+    // Draw skeleton canvas scaled up to natural size
+    ctx.drawImage(skeletonCanvas, 0, 0, offscreen.width, offscreen.height);
+
+    return new Promise((resolve) =>
+      offscreen.toBlob((blob) => resolve(blob), "image/jpeg", 0.85)
+    );
+  }, []);
+
   const saveDiagnosis = useCallback(async () => {
     if (!user || !skeletalDiagnosis || saved) return;
     try {
+      // 1. Capture overlay image
+      let imageUrlToSave: string | null = null;
+      const blob = await captureOverlayBlob();
+      if (blob) {
+        const fileName = `${user.id}/${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("posture-photos")
+          .upload(fileName, blob, { contentType: "image/jpeg" });
+        if (uploadError) {
+          console.warn("Image upload failed:", uploadError);
+        } else {
+          imageUrlToSave = fileName;
+        }
+      }
+
+      // 2. Save diagnosis record
       const { error } = await supabase.from("skeletal_diagnoses" as any).insert({
         user_id: user.id,
         skeletal_type: skeletalDiagnosis.type,
         confidence: skeletalDiagnosis.confidence,
         scores: skeletalDiagnosis.scores,
         metrics: skeletalDiagnosis.metrics,
+        image_url: imageUrlToSave,
       });
       if (error) throw error;
       setSaved(true);
@@ -194,7 +233,7 @@ const CustomerPosture = () => {
       console.error("Save diagnosis error:", e);
       toast.error("診断結果の保存に失敗しました");
     }
-  }, [user, skeletalDiagnosis, saved]);
+  }, [user, skeletalDiagnosis, saved, captureOverlayBlob]);
 
   const reset = () => {
     if (imageUrl) URL.revokeObjectURL(imageUrl);

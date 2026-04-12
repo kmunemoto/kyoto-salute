@@ -403,6 +403,7 @@ export type Database = {
           confidence: number
           created_at: string
           id: string
+          image_url: string | null
           metrics: Json
           scores: Json
           skeletal_type: string
@@ -412,6 +413,7 @@ export type Database = {
           confidence: number
           created_at?: string
           id?: string
+          image_url?: string | null
           metrics?: Json
           scores?: Json
           skeletal_type: string
@@ -421,6 +423,7 @@ export type Database = {
           confidence?: number
           created_at?: string
           id?: string
+          image_url?: string | null
           metrics?: Json
           scores?: Json
           skeletal_type?: string
