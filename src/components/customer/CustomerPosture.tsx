@@ -293,7 +293,18 @@ const CustomerPosture = () => {
               <RotateCcw className="w-4 h-4 mr-1" />
               やり直す
             </Button>
-            <Button onClick={analyze} disabled={isLoading} className="flex-1">
+            {skeletalDiagnosis && user && (
+              <Button
+                onClick={saveDiagnosis}
+                disabled={saved}
+                variant={saved ? "outline" : "default"}
+                className="flex-1"
+              >
+                <Save className="w-4 h-4 mr-1" />
+                {saved ? "保存済み" : "結果を保存"}
+              </Button>
+            )}
+            <Button onClick={analyze} disabled={isLoading} variant="outline" className="flex-1">
               再解析
             </Button>
           </div>
