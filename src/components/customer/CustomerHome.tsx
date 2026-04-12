@@ -112,7 +112,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         <Card className="border-l-4 border-l-accent bg-accent/5">
           <CardContent className="p-3 flex items-center gap-2">
             <CreditCard className="w-4 h-4 text-accent" />
-            <span className="text-sm font-bold">現在のプラン：{currentPlan}</span>
+            <span className="text-sm font-bold">現在のプラン：{currentPlan?.endsWith("プラン") ? currentPlan : `${currentPlan}プラン`}</span>
           </CardContent>
         </Card>
       )}
