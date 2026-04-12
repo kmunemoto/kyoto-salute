@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import PostureFeedbackCard from "./posture/PostureFeedbackCard";
 import SkeletalTypeCard from "./posture/SkeletalTypeCard";
+import TrainingRecommendationCard from "./posture/TrainingRecommendationCard";
 import { analyzePosture } from "./posture/postureAnalysis";
 import { diagnoseSkeletalType } from "./posture/skeletalDiagnosis";
 import type { Keypoint } from "./posture/types";
@@ -256,6 +257,9 @@ const CustomerPosture = () => {
 
           {/* Skeletal type diagnosis */}
           <SkeletalTypeCard diagnosis={skeletalDiagnosis} />
+
+          {/* Training recommendations */}
+          <TrainingRecommendationCard skeletalType={skeletalDiagnosis?.type ?? null} />
 
           {/* Posture feedback */}
           <PostureFeedbackCard feedbacks={feedbacks} />
