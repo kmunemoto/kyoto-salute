@@ -116,7 +116,7 @@ const CustomerPosture = () => {
     const scaleY = imgSize.h / imgSize.natH;
 
     // Draw edges
-    ctx.strokeStyle = "hsl(150, 80%, 50%)";
+    ctx.strokeStyle = "hsl(36, 50%, 55%)";
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     for (const [i, j] of SKELETON_EDGES) {
@@ -134,8 +134,8 @@ const CustomerPosture = () => {
     for (const kp of keypoints) {
       if ((kp.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.arc(kp.x * scaleX, kp.y * scaleY, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = "hsl(36, 60%, 55%)";
+      ctx.arc(kp.x * scaleX, kp.y * scaleY, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = "hsl(36, 40%, 42%)";
       ctx.fill();
       ctx.strokeStyle = "white";
       ctx.lineWidth = 2;
