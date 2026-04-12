@@ -141,15 +141,23 @@ const TrialBooking = () => {
     setCompleted(true);
     setSubmitting(false);
 
-    // Fire-and-forget: notify trainer via push
-    supabase.functions.invoke("send-push-notification", {
-      body: {
-        title: "🆕 初回体験予約",
-        body: `${guestName.trim()}様が${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime}の体験予約をしました`,
-        url: "/",
-        tag: `trial-${Date.now()}`,
-      },
-    }).catch((e) => console.error("Push notification failed:", e));
+    // Fire-and-forget: notify trainer via LINE
+    (async () => {
+      try {
+        const { data: trainerRoles } = await supabase.rpc("get_trainer_ids");
+        const trainerId = trainerRoles?.[0]?.user_id;
+        if (!trainerId) return;
+
+        const formattedDate = format(selectedDate, "M月d日（E）", { locale: ja });
+        const message = `【Salute御所南】🎉 新規の体験予約が入りました！\n\n・お名前：${guestName.trim()} 様\n・日時：${formattedDate} ${slot.time}〜${endTime}\n\nアプリの予約管理画面から詳細を確認してください。`;
+
+        await supabase.functions.invoke("send-line-message", {
+          body: { user_id: trainerId, message },
+        });
+      } catch (e) {
+        console.error("LINE notification failed:", e);
+      }
+    })();
   };
 
   if (completed && completedInfo) {
