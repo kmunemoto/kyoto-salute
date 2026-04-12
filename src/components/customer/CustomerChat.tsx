@@ -118,7 +118,7 @@ const CustomerChat = () => {
                       : "bg-card border border-border rounded-bl-md shadow-sm"
                   }`}
                 >
-                  <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                   <p className={`text-[10px] mt-1 ${isMe ? "text-accent-foreground/60" : "text-muted-foreground"}`}>
                     {format(new Date(msg.created_at), "HH:mm")}
                   </p>
