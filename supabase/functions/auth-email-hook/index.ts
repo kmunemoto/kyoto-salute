@@ -217,18 +217,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     )
   }
 
-  // Rewrite the confirmation URL to ensure redirect_to points to our app
-  const APP_CALLBACK_URL = "https://kyoto-salute.lovable.app/auth/callback";
-  let confirmationUrl = payload.data.url || '';
-  if (confirmationUrl) {
-    try {
-      const parsed = new URL(confirmationUrl);
-      parsed.searchParams.set('redirect_to', APP_CALLBACK_URL);
-      confirmationUrl = parsed.toString();
-    } catch {
-      // If URL parsing fails, use as-is
-    }
-  }
+  const confirmationUrl = payload.data.url || '';
 
   // Build template props from payload.data (HookData structure)
   const templateProps = {
