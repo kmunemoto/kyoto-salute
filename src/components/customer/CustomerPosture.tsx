@@ -177,10 +177,30 @@ const CustomerPosture = () => {
     [keypoints, imgSize.natH]
   );
 
+  const saveDiagnosis = useCallback(async () => {
+    if (!user || !skeletalDiagnosis || saved) return;
+    try {
+      const { error } = await supabase.from("skeletal_diagnoses" as any).insert({
+        user_id: user.id,
+        skeletal_type: skeletalDiagnosis.type,
+        confidence: skeletalDiagnosis.confidence,
+        scores: skeletalDiagnosis.scores,
+        metrics: skeletalDiagnosis.metrics,
+      });
+      if (error) throw error;
+      setSaved(true);
+      toast.success("診断結果を保存しました");
+    } catch (e) {
+      console.error("Save diagnosis error:", e);
+      toast.error("診断結果の保存に失敗しました");
+    }
+  }, [user, skeletalDiagnosis, saved]);
+
   const reset = () => {
     if (imageUrl) URL.revokeObjectURL(imageUrl);
     setImageUrl(null);
     setKeypoints([]);
+    setSaved(false);
   };
 
   const isLoading = analyzing || modelLoading;
