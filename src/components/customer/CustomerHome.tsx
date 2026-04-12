@@ -45,15 +45,26 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   // Compute cycle-based session count for nextBooking
   const maxSessions = hasPlan ? (planMaxSessions[currentPlan] || 4) : 0;
 
+  // Determine which cycle a given date belongs to, advancing from cycle_start_date
+  const getCycleWindow = (targetDate: Date) => {
+    if (!profile?.cycle_start_date) return null;
+    let cycleStart = parseISO(profile.cycle_start_date);
+    // Advance cycle window until target falls within [cycleStart, cycleEnd)
+    while (addMonths(cycleStart, 1) <= targetDate) {
+      cycleStart = addMonths(cycleStart, 1);
+    }
+    return { start: cycleStart, end: addMonths(cycleStart, 1) };
+  };
+
+  const nextBookingCycle = nextBooking ? getCycleWindow(parseISO(nextBooking.date)) : null;
+
   const cycleBookings = (() => {
-    if (!profile?.cycle_start_date) return [];
-    const cycleStart = parseISO(profile.cycle_start_date);
-    const cycleEnd = addMonths(cycleStart, 1);
+    if (!nextBookingCycle) return [];
     return bookings
       .filter((b) => {
         if (b.status === "キャンセル済み") return false;
         const d = parseISO(b.date);
-        return d >= cycleStart && d < cycleEnd;
+        return d >= nextBookingCycle.start && d < nextBookingCycle.end;
       })
       .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
   })();
