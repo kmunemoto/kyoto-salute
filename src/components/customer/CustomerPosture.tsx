@@ -202,7 +202,8 @@ const CustomerPosture = () => {
               />
               <canvas
                 ref={canvasRef}
-                className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                className="absolute top-0 left-0 pointer-events-none"
+                style={{ width: imgSize.w || '100%', height: imgSize.h || '100%' }}
               />
               {isLoading && (
                 <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
