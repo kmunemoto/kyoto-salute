@@ -305,6 +305,65 @@ const CustomerSettings = () => {
       </section>
 
 
+      {/* 過去の受講履歴 */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <History className="w-3.5 h-3.5" />
+          過去の受講履歴
+        </h2>
+        {bookingsLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (() => {
+          const now = new Date();
+          const pastBookings = myBookings
+            .filter((b) => {
+              if (b.status === "キャンセル済み") return false;
+              const endDt = new Date(`${b.date}T${b.endTime}:00+09:00`);
+              return endDt <= now;
+            })
+            .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
+
+          return pastBookings.length === 0 ? (
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-sm text-muted-foreground">まだ受講履歴はありません</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {pastBookings.map((b) => {
+                const dt = new Date(`${b.date}T${b.startTime}:00+09:00`);
+                const dateLabel = format(dt, "M月d日（E）", { locale: ja });
+                const planLabel = PLAN_LABELS[b.booking_type] || b.booking_type;
+                return (
+                  <Card key={b.id} className="opacity-75">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-muted-foreground">{dateLabel}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {b.startTime}〜{b.endTime}
+                          </span>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {planLabel}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </section>
+
       {/* Logout */}
       <section className="pt-2">
         <Button variant="outline" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10" onClick={signOut}>
