@@ -222,6 +222,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         setClientPlan(data.plan || '初回無料体験');
         setIsPaid(data.paid_this_month);
         setCycleStartDate(data.cycle_start_date || "");
+        setShowUsagePeriod(data.show_usage_period ?? true);
       } else {
         setHasProfile(false);
       }
