@@ -48,6 +48,7 @@ const DiagnosisHistorySection = ({ userId }: Props) => {
   const [diagnoses, setDiagnoses] = useState<DiagnosisRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!userId) return;
