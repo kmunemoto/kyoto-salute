@@ -160,7 +160,7 @@ const CustomerHome = () => {
                   </p>
                   {hasPlan && maxSessions > 0 && (
                     <p className="text-xs font-semibold text-accent mt-1.5">
-                      今月 {monthSessions}/{maxSessions}回目
+                      今月 {nextBookingOrdinal > 0 ? nextBookingOrdinal : "?"}/{maxSessions}回目
                     </p>
                   )}
                 </div>
