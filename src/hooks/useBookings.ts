@@ -241,11 +241,12 @@ export const createBooking = async (
   return { data, error };
 };
 
-async function sendProxyBookingLineNotification(
+async function sendBookingConfirmationToCustomer(
   userId: string,
   date: string,
   startTime: string,
   bookingType: string,
+  isProxyBooking: boolean,
 ) {
   const { data: profile } = await supabase
     .from("profiles")
@@ -257,10 +258,12 @@ async function sendProxyBookingLineNotification(
   const dt = new Date(`${date}T${startTime}:00+09:00`);
   const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
 
+  const proxyNote = isProxyBooking ? "\n※トレーナーが代理で予約を登録しました。" : "";
+
   await supabase.functions.invoke("send-line-message", {
     body: {
       user_id: userId,
-      message: `📅 予約のお知らせ\n\n${name}様、下記の予約が確定しました。\n\n日時：${dateStr}\nプラン：${bookingType}\n\nお気をつけてお越しください！\nパーソナルジムSalute御所南`,
+      message: `📅 予約完了のお知らせ\n\n${name}様、下記の予約が確定しました。\n\n日時：${dateStr}\nプラン：${bookingType}${proxyNote}\n\nお気をつけてお越しください！\nパーソナルジムSalute御所南`,
     },
   });
 }
