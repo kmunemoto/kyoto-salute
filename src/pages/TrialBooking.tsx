@@ -25,7 +25,7 @@ const TrialBooking = () => {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [completedInfo, setCompletedInfo] = useState<{ date: string; time: string } | null>(null);
+  const [completedInfo, setCompletedInfo] = useState<{ date: string; time: string; rawDate: string; rawStartTime: string; rawEndTime: string } | null>(null);
   const [existingBookings, setExistingBookings] = useState<TrialSlotBooking[]>([]);
 
   // Fetch all existing bookings via secure RPC (no PII exposed)
