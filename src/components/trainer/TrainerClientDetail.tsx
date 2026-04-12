@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil, Clock, RotateCcw } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil, Clock, RotateCcw, Send, AlertCircle } from "lucide-react";
 import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  clientChatMessages,
-  planOptions, planPrices, PlanType, ChatMessage,
+  planOptions, planPrices, PlanType,
 } from "@/lib/dummyData";
 import { useMeasurements } from "@/hooks/useMeasurements";
+import { useMessages } from "@/hooks/useMessages";
 import { Switch } from "@/components/ui/switch";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import {
@@ -175,7 +175,8 @@ const TrainingGrowthChart = ({ workoutRecords, loadingRecords }: { workoutRecord
 const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [clientPlan, setClientPlan] = useState<string>('');
+  const [hasProfile, setHasProfile] = useState(false);
+  const [clientPlan, setClientPlan] = useState<string>('初回無料体験');
   const [isPaid, setIsPaid] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
@@ -198,8 +199,14 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [editingRecordIds, setEditingRecordIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
   const [cycleStartDate, setCycleStartDate] = useState<string>("");
+  const [chatInput, setChatInput] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch profile
+  // Check if client has an auth account (user_roles entry)
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const { messages: chatMessages, loading: loadingChat, sendMessage, markAsRead } = useMessages(isRegistered ? clientId : null);
+
+  // Fetch profile and check registration
   useEffect(() => {
     const fetchProfile = async () => {
       const { data } = await supabase
@@ -209,10 +216,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         .maybeSingle();
       if (data) {
         setProfile(data);
+        setHasProfile(true);
         setClientPlan(data.plan || '初回無料体験');
         setIsPaid(data.paid_this_month);
         setCycleStartDate(data.cycle_start_date || "");
+      } else {
+        setHasProfile(false);
       }
+      // Check if this user has a role (meaning they have an auth account)
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("user_id", clientId)
+        .limit(1);
+      setIsRegistered(!!(roles && roles.length > 0));
       setLoadingProfile(false);
     };
     fetchProfile();
@@ -300,6 +317,18 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     fetchBookings();
   }, [clientId]);
 
+  // Mark chat as read when viewing
+  useEffect(() => {
+    if (isRegistered && chatMessages.length > 0) {
+      markAsRead();
+    }
+  }, [chatMessages.length, isRegistered]);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages.length]);
+
   if (loadingProfile) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -308,16 +337,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     );
   }
 
-  if (!profile) {
-    return (
-      <div className="text-center py-20 text-muted-foreground">
-        <p>顧客情報が見つかりません</p>
-        <Button variant="ghost" onClick={onBack} className="mt-4">戻る</Button>
-      </div>
-    );
-  }
-
-  const displayName = profile.display_name || "名前未設定";
+  const displayName = profile?.display_name || "名前未設定";
   const initial = displayName[0];
 
   const getPrice = (plan: string): number => {
@@ -327,9 +347,13 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     return 0;
   };
 
-  // Dummy data for non-DB features
   const bookings = clientBookings2;
-  const messages = clientChatMessages[clientId] || [];
+
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || !isRegistered) return;
+    await sendMessage(chatInput.trim(), clientId);
+    setChatInput("");
+  };
 
   const addExercise = () => setExercises([...exercises, { exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
   const updateExerciseSet = (exIdx: number, setIdx: number, field: keyof SetEntry, value: string) => {
