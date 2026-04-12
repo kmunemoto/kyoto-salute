@@ -77,6 +77,39 @@ const CustomerSettings = () => {
     window.open(lineAuthUrl, "line-link", "width=500,height=700");
   };
 
+  const handleGcalLink = async () => {
+    if (!user) return;
+    const popup = window.open("", "gcal-link", "width=500,height=700");
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth-url", {
+        body: { user_id: user.id },
+      });
+      if (error || !data?.url) {
+        popup?.close();
+        toast.error("認証URLの取得に失敗しました");
+        return;
+      }
+      if (popup) popup.location.href = data.url;
+    } catch {
+      popup?.close();
+      toast.error("エラーが発生しました");
+    }
+  };
+
+  const handleGcalUnlink = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("google_calendar_tokens" as any)
+      .delete()
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("連携の解除に失敗しました");
+    } else {
+      toast.success("Googleカレンダー連携を解除しました");
+      setGcalLinked(false);
+    }
+  };
+
   const handleLineUnlink = async () => {
     if (!user) return;
     const { error } = await supabase
