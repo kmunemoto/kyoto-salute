@@ -65,6 +65,20 @@ const DiagnosisHistorySection = ({ userId }: Props) => {
     };
     fetchData();
   }, [userId]);
+  // Fetch signed URL when expanding a card with an image
+  useEffect(() => {
+    if (!expandedId) return;
+    const d = diagnoses.find((x) => x.id === expandedId);
+    if (!d?.image_url || signedUrls[d.id]) return;
+    supabase.storage
+      .from("posture-photos")
+      .createSignedUrl(d.image_url, 300)
+      .then(({ data }) => {
+        if (data?.signedUrl) {
+          setSignedUrls((prev) => ({ ...prev, [d.id]: data.signedUrl }));
+        }
+      });
+  }, [expandedId, diagnoses, signedUrls]);
 
   return (
     <section>
