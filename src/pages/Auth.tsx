@@ -68,6 +68,7 @@ const Auth = () => {
             data: {
               display_name: displayName || email,
             },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
         if (error) throw error;
