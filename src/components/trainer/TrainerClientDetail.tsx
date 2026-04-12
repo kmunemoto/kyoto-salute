@@ -564,7 +564,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 {planOptions.map((p) => (
-                  <option key={p} value={p}>{p}（¥{planPrices[p as PlanType]?.toLocaleString() ?? 0}）</option>
+                  <option key={p} value={p}>{p}</option>
                 ))}
               </select>
               <p className="text-sm font-bold mt-2">月額: ¥{getPrice(clientPlan).toLocaleString()}</p>
