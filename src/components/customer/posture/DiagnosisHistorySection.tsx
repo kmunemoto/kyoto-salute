@@ -14,6 +14,7 @@ type DiagnosisRow = {
   confidence: number;
   scores: { straight: number; wave: number; natural: number };
   metrics: { shoulderHipRatio?: number; upperBodyRatio?: number; limbTorsoRatio?: number };
+  image_url: string | null;
   created_at: string;
 };
 
