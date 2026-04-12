@@ -24,6 +24,7 @@ const PLAN_LABELS: Record<string, string> = {
 const CustomerSettings = () => {
   const { profile, loading, updateDisplayName, refetch } = useProfile();
   const { user, signOut } = useAuth();
+  const { bookings: myBookings, loading: bookingsLoading } = useMyBookings();
   
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
