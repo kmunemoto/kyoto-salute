@@ -74,7 +74,8 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast.success("アカウントを作成しました！メールを確認してください。");
+        toast.success("アカウントを作成しました！");
+        navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
