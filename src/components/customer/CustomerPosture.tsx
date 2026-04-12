@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Camera, Upload, Loader2, RotateCcw, AlertCircle } from "lucide-react";
+import { Camera, Upload, Loader2, RotateCcw, AlertCircle, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import PostureFeedbackCard from "./posture/PostureFeedbackCard";
 import SkeletalTypeCard from "./posture/SkeletalTypeCard";
 import TrainingRecommendationCard from "./posture/TrainingRecommendationCard";
