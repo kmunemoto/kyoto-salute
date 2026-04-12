@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 type AuthMode = "login" | "signup";
 type LoginTarget = "customer" | "trainer";
 
+const EMAIL_CALLBACK_URL = "https://kyoto-salute.lovable.app/auth/callback";
+
 const Auth = () => {
   const { user, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>("login");
@@ -68,7 +70,7 @@ const Auth = () => {
             data: {
               display_name: displayName || email,
             },
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: EMAIL_CALLBACK_URL,
           },
         });
         if (error) throw error;
