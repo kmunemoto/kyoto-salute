@@ -624,6 +624,20 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 </p>
               )}
             </div>
+
+            {/* Show Usage Period Toggle */}
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">利用期間の表示</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold ${showUsagePeriod ? 'text-success' : 'text-muted-foreground'}`}>
+                  {showUsagePeriod ? '表示' : '非表示'}
+                </span>
+                <Switch checked={showUsagePeriod} onCheckedChange={handleShowUsagePeriodToggle} />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </section>
