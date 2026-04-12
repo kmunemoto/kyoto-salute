@@ -40,12 +40,25 @@ const CustomerHome = () => {
 
   const nextBooking = futureBookings.length > 0 ? futureBookings[0] : null;
 
-  // Count this month's completed/upcoming sessions
-  const currentMonth = format(now, "yyyy-MM");
-  const monthSessions = bookings.filter(
-    (b) => b.date.startsWith(currentMonth) && b.status !== "キャンセル済み"
-  ).length;
+  // Compute cycle-based session count for nextBooking
   const maxSessions = hasPlan ? (planMaxSessions[currentPlan] || 4) : 0;
+
+  const cycleBookings = (() => {
+    if (!profile?.cycle_start_date) return [];
+    const cycleStart = parseISO(profile.cycle_start_date);
+    const cycleEnd = addMonths(cycleStart, 1);
+    return bookings
+      .filter((b) => {
+        if (b.status === "キャンセル済み") return false;
+        const d = parseISO(b.date);
+        return d >= cycleStart && d < cycleEnd;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+  })();
+
+  const nextBookingOrdinal = nextBooking
+    ? cycleBookings.findIndex((b) => b.id === nextBooking.id) + 1
+    : 0;
 
   if (loading || bookingsLoading || metricsLoading) {
     return (
