@@ -214,11 +214,10 @@ export const createBooking = async (
     .single();
 
   if (!error && data) {
-    if (isProxyBooking) {
-      sendProxyBookingLineNotification(userId, date, startTime, bookingType).catch(console.error);
-    } else {
-      sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
-    }
+    // Always notify customer about their booking
+    sendBookingConfirmationToCustomer(userId, date, startTime, bookingType, isProxyBooking).catch(console.error);
+    // Always notify trainer about new bookings (skip if trainer is the one booking for themselves)
+    sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
 
     // Sync to Google Calendar (fire-and-forget)
     supabase
