@@ -203,12 +203,25 @@ const TrainerMessages = () => {
 
             {/* Input */}
             <div className="p-2 sm:p-3 border-t border-border flex gap-2">
-              <Input
+              <textarea
                 placeholder="メッセージを入力..."
                 value={newMsg}
-                onChange={(e) => setNewMsg(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1 h-11"
+                onChange={(e) => {
+                  setNewMsg(e.target.value);
+                  const el = e.target;
+                  el.style.height = "auto";
+                  el.style.height = Math.min(el.scrollHeight, 120) + "px";
+                }}
+                onKeyDown={(e) => {
+                  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+                  if (e.key === "Enter" && !e.shiftKey && !isMobile && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                rows={1}
+                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none overflow-y-auto"
+                style={{ maxHeight: 120 }}
               />
               <Button variant="accent" size="icon" onClick={handleSend} className="shrink-0 h-11 w-11">
                 <Send className="w-4 h-4" />

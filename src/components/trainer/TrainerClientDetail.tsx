@@ -1042,15 +1042,28 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                   )}
                 </CardContent>
               </Card>
-              <div className="flex gap-2">
-                <Input
+              <div className="flex items-end gap-2">
+                <textarea
                   placeholder="メッセージを入力..."
                   value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }}
-                  className="flex-1 h-11"
+                  onChange={(e) => {
+                    setChatInput(e.target.value);
+                    const el = e.target;
+                    el.style.height = "auto";
+                    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+                  }}
+                  onKeyDown={(e) => {
+                    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+                    if (e.key === "Enter" && !e.shiftKey && !isMobile && !e.nativeEvent.isComposing) {
+                      e.preventDefault();
+                      handleSendChat();
+                    }
+                  }}
+                  rows={1}
+                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none overflow-y-auto"
+                  style={{ maxHeight: 120 }}
                 />
-                <Button onClick={handleSendChat} disabled={!chatInput.trim()} className="h-11 px-4">
+                <Button onClick={handleSendChat} disabled={!chatInput.trim()} className="h-10 w-10 p-0 shrink-0">
                   <Send className="w-4 h-4" />
                 </Button>
               </div>

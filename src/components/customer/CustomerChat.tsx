@@ -49,10 +49,20 @@ const CustomerChat = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // On mobile, Enter always inserts newline. On PC, Enter sends, Shift+Enter inserts newline.
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (e.key === "Enter" && !e.shiftKey && !isMobile && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    // Auto-resize
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
   };
 
   // Group messages by date
@@ -123,13 +133,14 @@ const CustomerChat = () => {
       {/* Input */}
       <div className="px-4 py-3 border-t border-border glass">
         <div className="flex items-center gap-2">
-          <input
-            type="text"
+          <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="メッセージを入力..."
-            className="flex-1 bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-muted-foreground"
+            rows={1}
+            className="flex-1 bg-secondary rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-muted-foreground resize-none overflow-y-auto"
+            style={{ maxHeight: 120 }}
           />
           <button
             onClick={handleSend}
