@@ -1002,6 +1002,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           )}
         </TabsContent>
 
+        {/* Skeletal Diagnosis History */}
+        <TabsContent value="skeletal">
+          <DiagnosisHistorySection userId={clientId} />
+        </TabsContent>
+
         {/* Chat */}
         <TabsContent value="chat">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
