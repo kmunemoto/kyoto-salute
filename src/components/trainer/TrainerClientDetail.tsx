@@ -532,7 +532,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const sortedDates = Object.keys(groupedRecords).sort((a, b) => b.localeCompare(a));
 
   return (
-    <div className="pb-24 md:pb-0">
+    <div className="pb-24 md:pb-0 max-w-full overflow-x-hidden">
       {/* Header */}
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px]">
         <ArrowLeft className="w-4 h-4" />
@@ -727,7 +727,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {groupedRecords[date].map((r) => {
                           const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : []);
                           return (
-                            <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1">
+                            <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1 break-all">
                               {r.exercise_name} {setsData.map((s: any) => `${s.weight}kg×${s.reps}`).join(", ")}
                             </span>
                           );
@@ -886,14 +886,14 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                           <span>編集</span>
                         </button>
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 overflow-hidden">
                         {groupedRecords[date].map((r) => {
                           const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : []);
                           return (
-                          <div key={r.id} className="flex items-center gap-2 text-sm">
-                            <Dumbbell className="w-3 h-3 text-accent shrink-0" />
-                            <span className="font-medium truncate">{r.exercise_name}</span>
-                            <span className="text-muted-foreground whitespace-nowrap">
+                          <div key={r.id} className="flex items-start gap-2 text-sm min-w-0">
+                            <Dumbbell className="w-3 h-3 text-accent shrink-0 mt-1" />
+                            <span className="font-medium break-all min-w-0">{r.exercise_name}</span>
+                            <span className="text-muted-foreground whitespace-nowrap shrink-0">
                               {setsData.map((s: any, si: number) => (
                                 <span key={si}>{si > 0 && " / "}{s.weight}kg×{s.reps}</span>
                               ))}
