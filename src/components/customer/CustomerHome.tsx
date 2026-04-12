@@ -130,9 +130,10 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* Membership Period Card */}
       {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
-        const startDate = parseISO(profile.cycle_start_date);
-        const endDate = addMonths(startDate, 1);
-        const remaining = differenceInDays(endDate, now);
+        const currentCycle = getCycleWindow(now);
+        if (!currentCycle) return null;
+        const { start: cycleStart, end: cycleEnd } = currentCycle;
+        const remaining = differenceInDays(cycleEnd, now);
         const isExpiringSoon = remaining >= 0 && remaining <= 3;
         const isExpired = remaining < 0;
         return (
@@ -141,7 +142,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
               <Clock className={`w-4 h-4 ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-accent'}`} />
               <div className="flex-1">
                 <p className="text-sm font-bold">
-                  今回の利用期間：{format(startDate, "M月d日", { locale: ja })} 〜 {format(endDate, "M月d日", { locale: ja })}
+                  今回の利用期間：{format(cycleStart, "M月d日", { locale: ja })} 〜 {format(cycleEnd, "M月d日", { locale: ja })}
                 </p>
                 {isExpired ? (
                   <p className="text-xs font-bold text-destructive mt-0.5">利用期限が過ぎています</p>
