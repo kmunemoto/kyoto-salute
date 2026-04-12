@@ -131,18 +131,21 @@ const CustomerPosture = () => {
   // Draw skeleton
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || keypoints.length === 0 || imgSize.w === 0) return;
-    canvas.width = imgSize.w;
-    canvas.height = imgSize.h;
+    const img = imgRef.current;
+    if (!canvas || !img || keypoints.length === 0 || imgSize.natW === 0) return;
+    // Set canvas internal resolution to image's natural size
+    canvas.width = imgSize.natW;
+    canvas.height = imgSize.natH;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const scaleX = imgSize.w / imgSize.natW;
-    const scaleY = imgSize.h / imgSize.natH;
+    // Draw using raw coordinates — CSS handles scaling
+    const lineW = Math.max(3, imgSize.natW / 200);
+    const dotR = Math.max(5, imgSize.natW / 150);
 
     ctx.strokeStyle = "hsl(36, 50%, 55%)";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = lineW;
     ctx.lineCap = "round";
     for (const [i, j] of SKELETON_EDGES) {
       const a = keypoints[i];
@@ -150,19 +153,19 @@ const CustomerPosture = () => {
       if (!a || !b) continue;
       if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.moveTo(a.x * scaleX, a.y * scaleY);
-      ctx.lineTo(b.x * scaleX, b.y * scaleY);
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
       ctx.stroke();
     }
 
     for (const kp of keypoints) {
       if ((kp.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.arc(kp.x * scaleX, kp.y * scaleY, 5, 0, 2 * Math.PI);
+      ctx.arc(kp.x, kp.y, dotR, 0, 2 * Math.PI);
       ctx.fillStyle = "hsl(36, 40%, 42%)";
       ctx.fill();
       ctx.strokeStyle = "white";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = Math.max(2, lineW * 0.6);
       ctx.stroke();
     }
   }, [keypoints, imgSize]);
@@ -284,7 +287,7 @@ const CustomerPosture = () => {
       ) : (
         <div className="space-y-3">
           <Card className="overflow-hidden">
-            <div className="relative">
+            <div className="relative inline-block w-full">
               <img
                 ref={imgRef}
                 src={imageUrl}
@@ -294,8 +297,7 @@ const CustomerPosture = () => {
               />
               <canvas
                 ref={canvasRef}
-                className="absolute top-0 left-0 pointer-events-none"
-                style={{ width: imgSize.w || '100%', height: imgSize.h || '100%' }}
+                className="absolute top-0 left-0 w-full h-full pointer-events-none"
               />
               {isLoading && (
                 <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
