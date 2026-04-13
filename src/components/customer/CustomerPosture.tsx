@@ -80,13 +80,41 @@ const CustomerPosture = () => {
     }
   }, []);
 
-  const handleFile = (file: File) => {
+  const normalizeImage = useCallback(async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const tempImg = new Image();
+      tempImg.onload = () => {
+        const offscreen = document.createElement("canvas");
+        offscreen.width = tempImg.naturalWidth;
+        offscreen.height = tempImg.naturalHeight;
+        const ctx = offscreen.getContext("2d");
+        if (!ctx) { reject(new Error("Canvas context failed")); return; }
+        // Drawing from <img> applies EXIF rotation automatically
+        ctx.drawImage(tempImg, 0, 0);
+        offscreen.toBlob((blob) => {
+          URL.revokeObjectURL(tempImg.src);
+          if (!blob) { reject(new Error("Blob creation failed")); return; }
+          resolve(URL.createObjectURL(blob));
+        }, "image/jpeg", 0.92);
+      };
+      tempImg.onerror = () => { URL.revokeObjectURL(tempImg.src); reject(new Error("Image load failed")); };
+      tempImg.src = URL.createObjectURL(file);
+    });
+  }, []);
+
+  const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("画像ファイルを選択してください");
       return;
     }
-    setImageUrl(URL.createObjectURL(file));
     setKeypoints([]);
+    try {
+      const normalized = await normalizeImage(file);
+      setImageUrl(normalized);
+    } catch (e) {
+      console.error("Image normalization error:", e);
+      toast.error("画像の読み込みに失敗しました");
+    }
   };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
