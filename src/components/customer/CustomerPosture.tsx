@@ -305,13 +305,12 @@ const CustomerPosture = () => {
       ) : (
         <div className="space-y-3">
           <Card className="overflow-hidden">
-            <div className="relative w-fit mx-auto">
+            <div className="relative w-full">
               <img
                 ref={imgRef}
                 src={imageUrl}
                 alt="姿勢解析用画像"
-                className="w-full h-auto block max-w-full"
-                style={{ objectFit: "none", objectPosition: "unset" }}
+                className="block w-full h-auto"
                 onLoad={onImgLoad}
               />
               <canvas
