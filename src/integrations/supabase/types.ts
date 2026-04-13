@@ -311,6 +311,7 @@ export type Database = {
           calories: number | null
           carbs: number | null
           created_at: string
+          dishes: Json | null
           fat: number | null
           feedback: string | null
           fiber: number | null
@@ -325,6 +326,7 @@ export type Database = {
           calories?: number | null
           carbs?: number | null
           created_at?: string
+          dishes?: Json | null
           fat?: number | null
           feedback?: string | null
           fiber?: number | null
@@ -339,6 +341,7 @@ export type Database = {
           calories?: number | null
           carbs?: number | null
           created_at?: string
+          dishes?: Json | null
           fat?: number | null
           feedback?: string | null
           fiber?: number | null
