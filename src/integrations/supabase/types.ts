@@ -401,6 +401,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          calendar_token: string
           created_at: string
           cycle_start_date: string | null
           display_name: string | null
@@ -415,6 +416,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          calendar_token?: string
           created_at?: string
           cycle_start_date?: string | null
           display_name?: string | null
@@ -429,6 +431,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          calendar_token?: string
           created_at?: string
           cycle_start_date?: string | null
           display_name?: string | null
