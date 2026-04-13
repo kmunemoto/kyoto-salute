@@ -1,6 +1,6 @@
 import type { Keypoint, SkeletalDiagnosis, SkeletalType } from "./types";
 
-const MIN_SCORE = 0.3;
+const MIN_SCORE = 0.2;
 
 // BlazePose 33 keypoint indices
 const BP = {
