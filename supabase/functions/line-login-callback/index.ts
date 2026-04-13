@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       return respondHtml(redirectHtml(state, true));
     } catch (e) {
       console.error("line-login-callback error:", e);
-      return respondHtml(redirectHtml(state, false, e.message));
+      return respondHtml(redirectHtml(state, false, (e as Error).message));
     }
   }
 

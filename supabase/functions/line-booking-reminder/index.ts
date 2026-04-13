@@ -94,6 +94,6 @@ Deno.serve(async (_req) => {
     return new Response(JSON.stringify({ sent, total: bookings.length }), { status: 200 });
   } catch (e) {
     console.error("line-booking-reminder error:", e);
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500 });
   }
 });
