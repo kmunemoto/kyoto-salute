@@ -1,8 +1,13 @@
 export type Keypoint = { x: number; y: number; z?: number; score?: number; name?: string };
 
+export type PostureFeedbackSeverity = "good" | "warning" | "bad";
+
 export type PostureFeedback = {
   type: "good" | "warning";
+  severity: PostureFeedbackSeverity;
+  category: string;
   message: string;
+  exercises?: string[];
 };
 
 export type SkeletalType = "straight" | "wave" | "natural";
@@ -19,7 +24,7 @@ export type SkeletalDiagnosis = {
     shoulderWidth: number;
     hipWidth: number;
     shoulderHipRatio: number;
-    upperBodyRatio: number; // upper / total height
+    upperBodyRatio: number;
     limbTorsoRatio: number;
   };
 };
