@@ -84,6 +84,20 @@ const Auth = () => {
           if (signInError) throw signInError;
         }
 
+        // Fire-and-forget: notify trainer via LINE about new signup
+        const now = new Date();
+        const formattedDate = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const nameForNotification = displayName?.trim() || email;
+        const lineMessage = `【新規会員登録】\n新しいお客様がアカウントを登録しました。\n\nお名前：${nameForNotification}\n登録日時：${formattedDate}\n\n顧客一覧からご確認ください。`;
+
+        supabase.rpc("get_trainer_ids").then(({ data: trainerIds }) => {
+          trainerIds?.forEach((t) => {
+            supabase.functions.invoke("send-line-message", {
+              body: { user_id: t.user_id, message: lineMessage },
+            });
+          });
+        });
+
         toast.success("アカウントを作成しました。");
         navigate("/");
       } else {
