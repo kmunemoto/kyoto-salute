@@ -5,7 +5,6 @@ import { planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { useAllCustomerProfiles, useProfile } from "@/hooks/useProfile";
 import { useAllBookings } from "@/hooks/useBookings";
-import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
