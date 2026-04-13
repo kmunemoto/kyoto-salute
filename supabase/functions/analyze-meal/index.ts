@@ -30,7 +30,7 @@ serve(async (req) => {
     if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
       const { data: signedData, error: signError } = await supabase.storage
         .from("meal-photos")
-        .createSignedUrl(imageUrl, 600); // 10 min
+        .createSignedUrl(imageUrl, 600);
       if (signError || !signedData?.signedUrl) {
         console.error("Failed to create signed URL:", signError);
         throw new Error("Could not access uploaded image");
@@ -50,28 +50,52 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `あなたは管理栄養士レベルの専門知識を持つ食事解析AIです。食事の写真を分析し、以下のJSON形式のみで返答してください。
+            content: `あなたは管理栄養士の資格を持つ食事分析の専門家です。写真に映っている食事を正確に分析してください。
 
-分析の指針：
-- 料理の種類、食材の色・質感・量感から栄養素を推定する
-- 見えない調味料（砂糖・油・塩分）や調理法（揚げ・炒め・蒸し等）も考慮する
-- ポーションサイズは皿や器との比率から推定する
+【分析手順】
+Step 1: 写真に映っている料理を一品ずつすべて特定してください。
+Step 2: 各料理の量を、器のサイズや一般的な一人前の量を基準に推定してください（グラム単位）。
+Step 3: 各料理の主な食材を特定し、それぞれの栄養素を日本食品標準成分表（八訂）に基づいて計算してください。
+Step 4: 全料理の合計を算出してください。
 
-feedbackの記述ルール（250文字以内、日本語）：
-1. 【良い点】この食事の栄養面での長所を1つ具体的に挙げる
-2. 【改善点】不足または過剰な栄養素を1つ指摘し、具体的な食材名で補完案を示す（例：「ブロッコリーやほうれん草を追加すると食物繊維とビタミンCを補えます」）
-3. 【PFCバランス】タンパク質・脂質・炭水化物の比率が理想（P:15-20%, F:20-25%, C:50-60%）からどう偏っているかを一言で述べる
+【重要な推定ルール】
+- 白米1膳 = 約150g（252kcal, P3.8g, F0.5g, C55.7g）
+- 味噌汁1杯 = 約200ml（40kcal前後、具材により変動）
+- 揚げ物は吸油率を考慮すること（とんかつ: 衣が油を10-15%吸収）
+- 調味料（醤油・砂糖・みりん・油）の栄養素も必ず加算すること
+- ポーションサイズは器との比率から慎重に推定すること
 
-必ず以下のJSON形式のみで返答してください。それ以外のテキストは不要です。
+【回答形式】
+以下のJSON形式のみで回答してください。それ以外のテキストは不要です。
 {
-  "meal_type": "朝食 or 昼食 or 夕食 or 間食",
-  "calories": 推定カロリー(整数),
-  "protein": タンパク質g(小数点1桁),
-  "fat": 脂質g(小数点1桁),
-  "carbs": 炭水化物g(小数点1桁),
-  "fiber": 食物繊維g(小数点1桁),
-  "feedback": "上記ルールに従った具体的アドバイス（日本語、250文字以内）"
-}`
+  "dishes": [
+    {
+      "name": "料理名",
+      "estimated_weight_g": 推定グラム数(整数),
+      "calories": カロリー(整数),
+      "protein": タンパク質(小数点1桁),
+      "fat": 脂質(小数点1桁),
+      "carbs": 炭水化物(小数点1桁),
+      "fiber": 食物繊維(小数点1桁)
+    }
+  ],
+  "total": {
+    "meal_type": "朝食 or 昼食 or 夕食 or 間食",
+    "calories": 合計カロリー(整数),
+    "protein": 合計タンパク質(小数点1桁),
+    "fat": 合計脂質(小数点1桁),
+    "carbs": 合計炭水化物(小数点1桁),
+    "fiber": 合計食物繊維(小数点1桁)
+  },
+  "feedback": "アドバイス（下記ルール参照）"
+}
+
+【アドバイスのルール（250文字以内）】
+- 良い点と改善点を必ず両方含めること
+- 改善点には具体的な代替食材・料理を提示すること（例：「フランクフルトの代わりに鶏むね肉のグリルにすると脂質を抑えられます」）
+- PFCバランス（理想: P15-20%, F20-25%, C50-60%）について一言コメントすること
+- 日本の一般的な食事を前提とすること
+- 簡潔に3〜4文でまとめること`
           },
           {
             role: "user",
@@ -82,7 +106,7 @@ feedbackの記述ルール（250文字以内、日本語）：
               },
               {
                 type: "text",
-                text: "この食事の写真を分析してください。"
+                text: "この食事の写真を一品ずつ分析し、合計の栄養素を算出してください。"
               }
             ]
           }
@@ -127,17 +151,22 @@ feedbackの記述ルール（250文字以内、日本語）：
       });
     }
 
+    // Extract totals - support both new (dishes+total) and legacy flat format
+    const total = analysis.total || analysis;
+    const dishes = analysis.dishes || null;
+
     // Update the meal record in DB
     const { error: updateError } = await supabase
       .from("meals")
       .update({
-        meal_type: analysis.meal_type || "食事",
-        calories: analysis.calories || 0,
-        protein: analysis.protein || 0,
-        fat: analysis.fat || 0,
-        carbs: analysis.carbs || 0,
-        fiber: analysis.fiber || 0,
+        meal_type: total.meal_type || "食事",
+        calories: total.calories || 0,
+        protein: total.protein || 0,
+        fat: total.fat || 0,
+        carbs: total.carbs || 0,
+        fiber: total.fiber || 0,
         feedback: analysis.feedback || "",
+        dishes: dishes,
         analyzed: true,
       })
       .eq("id", mealId);
@@ -147,7 +176,7 @@ feedbackの記述ルール（250文字以内、日本語）：
       throw new Error("Database update failed");
     }
 
-    return new Response(JSON.stringify({ success: true, analysis }), {
+    return new Response(JSON.stringify({ success: true, analysis: { ...total, dishes, feedback: analysis.feedback } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
