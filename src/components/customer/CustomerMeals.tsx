@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Trash2, Pencil } from "lucide-react";
+import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Trash2, Pencil, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -25,6 +25,21 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
+interface DishDetail {
+  name: string;
+  weight_g: number;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  fiber: number;
+}
 
 interface Meal {
   id: string;
@@ -39,6 +54,7 @@ interface Meal {
   feedback: string | null;
   analyzed: boolean;
   created_at: string;
+  dishes?: DishDetail[] | null;
 }
 
 const mealTypeEmoji: Record<string, string> = {
@@ -49,6 +65,8 @@ const mealTypeEmoji: Record<string, string> = {
   "食事": "🍽️",
 };
 
+const mealTypeOptions = ["朝食", "昼食", "夕食", "間食"];
+
 const PFC_GOALS = { p: 30, f: 20, c: 50 };
 
 const CustomerMeals = () => {
@@ -57,6 +75,12 @@ const CustomerMeals = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Upload options
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [selectedMealType, setSelectedMealType] = useState("");
+  const [quantityNote, setQuantityNote] = useState("");
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<Meal | null>(null);
@@ -110,14 +134,29 @@ const CustomerMeals = () => {
     });
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    // Auto-detect meal type based on current time
+    const hour = new Date().getHours();
+    let autoType = "";
+    if (hour >= 5 && hour < 10) autoType = "朝食";
+    else if (hour >= 10 && hour < 15) autoType = "昼食";
+    else if (hour >= 15 && hour < 21) autoType = "夕食";
+    else autoType = "間食";
+    setSelectedMealType(autoType);
+    setQuantityNote("");
+    setPendingFile(file);
+    setShowUploadDialog(true);
+  };
 
+  const handleUploadConfirm = async () => {
+    if (!pendingFile) return;
+    setShowUploadDialog(false);
     setUploading(true);
     try {
-      const convertedFile = await convertToJpeg(file);
+      const convertedFile = await convertToJpeg(pendingFile);
       const storagePath = `${user!.id}/${Date.now()}-${convertedFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from("meal-photos")
@@ -138,7 +177,12 @@ const CustomerMeals = () => {
       toast.success("写真をアップロードしました。AI分析中...");
 
       const { data: fnData, error: fnError } = await supabase.functions.invoke("analyze-meal", {
-        body: { mealId: newMeal.id, imageUrl: storagePath },
+        body: {
+          mealId: newMeal.id,
+          imageUrl: storagePath,
+          mealTypeHint: selectedMealType || undefined,
+          quantityNote: quantityNote.trim() || undefined,
+        },
       });
 
       const isFallback = fnError || fnData?.fallback || fnData?.error;
@@ -146,7 +190,7 @@ const CustomerMeals = () => {
       if (isFallback) {
         console.warn("AI analysis failed, using dummy data:", fnError || fnData?.error);
         const dummyAnalysis = {
-          meal_type: "食事",
+          meal_type: selectedMealType || "食事",
           calories: 500,
           protein: 20.0,
           fat: 15.0,
@@ -167,6 +211,7 @@ const CustomerMeals = () => {
       toast.error("アップロードに失敗しました");
     } finally {
       setUploading(false);
+      setPendingFile(null);
     }
   };
 
@@ -174,7 +219,6 @@ const CustomerMeals = () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      // Delete storage file if it's a storage path (not a full URL)
       const imgUrl = deleteTarget.image_url;
       if (!imgUrl.startsWith("http://") && !imgUrl.startsWith("https://")) {
         await supabase.storage.from("meal-photos").remove([imgUrl]);
@@ -194,7 +238,6 @@ const CustomerMeals = () => {
 
   const openEditTime = (meal: Meal) => {
     const d = new Date(meal.created_at);
-    // Format for date input (YYYY-MM-DD) in local timezone
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
@@ -235,7 +278,7 @@ const CustomerMeals = () => {
   };
 
   const formatDateLabel = (key: string) => {
-    const [y, m, d] = key.split("-");
+    const [, m, d] = key.split("-");
     const today = getDateKey(new Date().toISOString());
     const yesterday = getDateKey(new Date(Date.now() - 86400000).toISOString());
     const label = `${parseInt(m)}月${parseInt(d)}日`;
@@ -302,7 +345,7 @@ const CustomerMeals = () => {
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={handleFileChange}
+        onChange={handleFileSelect}
       />
 
       {loading ? (
@@ -353,7 +396,6 @@ const CustomerMeals = () => {
                       </div>
                     </div>
                   </div>
-                  {/* PFC Balance Bar with goal markers */}
                   {(pfc.pPct + pfc.fPct + pfc.cPct) > 0 && (
                     <div className="space-y-1">
                       <div className="relative">
@@ -362,7 +404,6 @@ const CustomerMeals = () => {
                           <div className="bg-warning transition-all" style={{ width: `${pfc.fPct}%` }} />
                           <div className="bg-info transition-all" style={{ width: `${pfc.cPct}%` }} />
                         </div>
-                        {/* Goal marker lines */}
                         <div className="absolute top-0 h-full w-0.5 bg-foreground/60 rounded" style={{ left: `${PFC_GOALS.p}%` }} title="P目標" />
                         <div className="absolute top-0 h-full w-0.5 bg-foreground/60 rounded" style={{ left: `${PFC_GOALS.p + PFC_GOALS.f}%` }} title="F目標" />
                       </div>
@@ -375,63 +416,112 @@ const CustomerMeals = () => {
                 </CardContent>
               </Card>
 
-              {/* Meal Cards for this day */}
               {dayMeals.map((meal) => (
-            <Card key={meal.id} className="overflow-hidden card-hover">
-              <CardContent className="p-0">
-                <div className="relative">
-                  <img
-                    src={meal.resolved_image_url || meal.image_url}
-                    alt="食事写真"
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
-                    {mealTypeEmoji[meal.meal_type] || "🍽️"} {meal.meal_type}
-                  </div>
-                  <button
-                    onClick={() => openEditTime(meal)}
-                    className="absolute top-2 right-12 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs backdrop-blur-sm flex items-center gap-1 hover:bg-foreground/90 transition-colors"
-                  >
-                    {formatDate(meal.created_at)}
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(meal)}
-                    className="absolute top-2 right-2 bg-destructive/80 text-destructive-foreground p-1.5 rounded-lg backdrop-blur-sm hover:bg-destructive transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {meal.analyzed ? (
-                  <div className="p-4 space-y-3">
-                    <div className="grid grid-cols-5 gap-2">
-                      <NutrientBadge icon={Flame} label="カロリー" value={`${meal.calories ?? 0}`} unit="kcal" color="text-destructive" />
-                      <NutrientBadge icon={Beef} label="タンパク質" value={`${meal.protein ?? 0}`} unit="g" color="text-accent" />
-                      <NutrientBadge icon={Droplets} label="脂質" value={`${meal.fat ?? 0}`} unit="g" color="text-warning" />
-                      <NutrientBadge icon={Wheat} label="炭水化物" value={`${meal.carbs ?? 0}`} unit="g" color="text-info" />
-                      <NutrientBadge icon={Leaf} label="食物繊維" value={`${meal.fiber ?? 0}`} unit="g" color="text-success" />
+                <Card key={meal.id} className="overflow-hidden card-hover">
+                  <CardContent className="p-0">
+                    <div className="relative">
+                      <img
+                        src={meal.resolved_image_url || meal.image_url}
+                        alt="食事写真"
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
+                        {mealTypeEmoji[meal.meal_type] || "🍽️"} {meal.meal_type}
+                      </div>
+                      <button
+                        onClick={() => openEditTime(meal)}
+                        className="absolute top-2 right-12 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs backdrop-blur-sm flex items-center gap-1 hover:bg-foreground/90 transition-colors"
+                      >
+                        {formatDate(meal.created_at)}
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(meal)}
+                        className="absolute top-2 right-2 bg-destructive/80 text-destructive-foreground p-1.5 rounded-lg backdrop-blur-sm hover:bg-destructive transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    {meal.feedback && (
-                      <div className="bg-accent/10 rounded-xl p-3">
-                        <p className="text-xs font-bold text-accent mb-1">🤖 AIアドバイス</p>
-                        <p className="text-sm text-foreground leading-relaxed">{meal.feedback}</p>
+
+                    {meal.analyzed ? (
+                      <div className="p-4 space-y-3">
+                        <div className="grid grid-cols-5 gap-2">
+                          <NutrientBadge icon={Flame} label="カロリー" value={`${meal.calories ?? 0}`} unit="kcal" color="text-destructive" />
+                          <NutrientBadge icon={Beef} label="タンパク質" value={`${meal.protein ?? 0}`} unit="g" color="text-accent" />
+                          <NutrientBadge icon={Droplets} label="脂質" value={`${meal.fat ?? 0}`} unit="g" color="text-warning" />
+                          <NutrientBadge icon={Wheat} label="炭水化物" value={`${meal.carbs ?? 0}`} unit="g" color="text-info" />
+                          <NutrientBadge icon={Leaf} label="食物繊維" value={`${meal.fiber ?? 0}`} unit="g" color="text-success" />
+                        </div>
+
+                        {/* Dishes breakdown accordion */}
+                        {meal.dishes && Array.isArray(meal.dishes) && meal.dishes.length > 0 && (
+                          <DishesBreakdown dishes={meal.dishes} />
+                        )}
+
+                        {meal.feedback && (
+                          <div className="bg-accent/10 rounded-xl p-3">
+                            <p className="text-xs font-bold text-accent mb-1">🤖 AIアドバイス</p>
+                            <p className="text-sm text-foreground leading-relaxed">{meal.feedback}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">AI分析中...</span>
                       </div>
                     )}
-                  </div>
-                ) : (
-                  <div className="p-4 flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">AI分析中...</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ))}
         </div>
       )}
+
+      {/* Upload Options Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={(open) => { if (!open) { setShowUploadDialog(false); setPendingFile(null); } }}>
+        <DialogContent className="max-w-[340px] rounded-xl">
+          <DialogHeader>
+            <DialogTitle>食事の情報（任意）</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>食事タイプ</Label>
+              <div className="flex gap-2 flex-wrap">
+                {mealTypeOptions.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setSelectedMealType(t)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedMealType === t
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {mealTypeEmoji[t]} {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>量の補足（任意）</Label>
+              <Input
+                placeholder="例：大盛り、半分残した、2人前"
+                value={quantityNote}
+                onChange={(e) => setQuantityNote(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">入力するとAIの推定精度が向上します</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowUploadDialog(false); setPendingFile(null); }}>キャンセル</Button>
+            <Button onClick={handleUploadConfirm} disabled={uploading}>
+              分析開始
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -478,6 +568,36 @@ const CustomerMeals = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+const DishesBreakdown = ({ dishes }: { dishes: DishDetail[] }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="flex items-center gap-1 text-xs text-accent font-medium hover:text-accent/80 transition-colors w-full">
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        内訳を見る（{dishes.length}品）
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="mt-2 space-y-1.5">
+          {dishes.map((dish, i) => (
+            <div key={i} className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2 text-xs">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground truncate">{dish.name}</p>
+                <p className="text-muted-foreground">{dish.weight_g}g</p>
+              </div>
+              <div className="flex gap-3 text-right shrink-0 ml-2">
+                <span className="text-destructive font-semibold">{dish.calories}<span className="text-muted-foreground font-normal">kcal</span></span>
+                <span className="text-accent">P{dish.protein}</span>
+                <span className="text-warning">F{dish.fat}</span>
+                <span className="text-info">C{dish.carbs}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 
