@@ -40,7 +40,8 @@ const SKELETON_EDGES: [number, number][] = [
   [28, 30], [30, 32], [28, 32],
 ];
 
-const MIN_SCORE = 0.3;
+const MIN_SCORE_DETECT = 0.2; // 解析に使用する閾値
+const MIN_SCORE_DRAW = 0.3;   // 描画に使用する閾値
 
 const CustomerPosture = () => {
   const { user } = useAuth();
@@ -60,13 +61,14 @@ const CustomerPosture = () => {
     setModelLoading(true);
     try {
       const tf = await import("@tensorflow/tfjs");
+      await tf.setBackend("webgl");
       await tf.ready();
       const poseDetection = await import("@tensorflow-models/pose-detection");
       const detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.BlazePose,
         {
           runtime: "tfjs" as const,
-          modelType: "full",
+          modelType: "heavy",
         }
       );
       detectorRef.current = detector;
@@ -130,26 +132,58 @@ const CustomerPosture = () => {
       const detector = await getDetector();
       if (!detector) return;
 
-      // === KEY FIX ===
-      // Create an offscreen canvas at the DISPLAY size and draw the image onto it.
-      // By passing this canvas (instead of the <img> element) to BlazePose,
-      // we guarantee that returned keypoint coordinates are in display-pixel space.
-      // This eliminates all ambiguity about coordinate systems.
-      const displayW = img.clientWidth;
-      const displayH = img.clientHeight;
+      // High-res input: use natural size capped at 1280px
+      const MAX_INPUT = 1280;
+      const natW = img.naturalWidth;
+      const natH = img.naturalHeight;
+      const scale = Math.min(MAX_INPUT / Math.max(natW, natH), 1);
+      const inputW = Math.round(natW * scale);
+      const inputH = Math.round(natH * scale);
+
       const inputCanvas = document.createElement("canvas");
-      inputCanvas.width = displayW;
-      inputCanvas.height = displayH;
+      inputCanvas.width = inputW;
+      inputCanvas.height = inputH;
       const ictx = inputCanvas.getContext("2d");
       if (!ictx) return;
-      ictx.drawImage(img, 0, 0, displayW, displayH);
+      ictx.drawImage(img, 0, 0, inputW, inputH);
 
-      const poses = await detector.estimatePoses(inputCanvas);
-      if (poses.length === 0 || !poses[0].keypoints?.length) {
+      // Run estimation 3 times and average for stability
+      const NUM_RUNS = 3;
+      const allPoses: Keypoint[][] = [];
+      for (let i = 0; i < NUM_RUNS; i++) {
+        const poses = await detector.estimatePoses(inputCanvas);
+        if (poses.length > 0 && poses[0].keypoints?.length) {
+          allPoses.push(poses[0].keypoints as Keypoint[]);
+        }
+      }
+
+      if (allPoses.length === 0) {
         toast.error("姿勢を検出できませんでした。全身が映った写真をお試しください。");
         return;
       }
-      setKeypoints(poses[0].keypoints);
+
+      // Average keypoints across runs
+      const averaged = allPoses[0].map((kp, idx) => {
+        const validPoints = allPoses.filter(p => (p[idx].score ?? 0) >= MIN_SCORE_DETECT);
+        if (validPoints.length === 0) return kp;
+        return {
+          ...kp,
+          x: validPoints.reduce((sum, p) => sum + p[idx].x, 0) / validPoints.length,
+          y: validPoints.reduce((sum, p) => sum + p[idx].y, 0) / validPoints.length,
+          score: validPoints.reduce((sum, p) => sum + (p[idx].score ?? 0), 0) / validPoints.length,
+        };
+      });
+
+      // Scale coordinates from input canvas to display size
+      const sx = img.clientWidth / inputW;
+      const sy = img.clientHeight / inputH;
+      const scaledKeypoints = averaged.map(kp => ({
+        ...kp,
+        x: kp.x * sx,
+        y: kp.y * sy,
+      }));
+
+      setKeypoints(scaledKeypoints);
       toast.success("姿勢解析が完了しました！");
     } catch (e) {
       console.error("Pose estimation error:", e);
@@ -206,7 +240,7 @@ const CustomerPosture = () => {
       const a = keypoints[i];
       const b = keypoints[j];
       if (!a || !b) continue;
-      if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
+      if ((a.score ?? 1) < MIN_SCORE_DRAW || (b.score ?? 1) < MIN_SCORE_DRAW) continue;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -215,7 +249,7 @@ const CustomerPosture = () => {
 
     // Draw keypoint dots
     for (const kp of keypoints) {
-      if ((kp.score ?? 1) < MIN_SCORE) continue;
+      if ((kp.score ?? 1) < MIN_SCORE_DRAW) continue;
       ctx.beginPath();
       ctx.arc(kp.x, kp.y, dotR, 0, 2 * Math.PI);
       ctx.fillStyle = "hsl(36, 40%, 42%)";
@@ -388,7 +422,7 @@ const CustomerPosture = () => {
                 <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-accent" />
                   <span className="text-sm font-medium">
-                    {modelLoading ? "AIモデル読み込み中…" : "姿勢・骨格を解析中…"}
+                    {modelLoading ? "高精度AIモデルを読み込み中…（初回のみ時間がかかります）" : "高精度モードで解析中…"}
                   </span>
                 </div>
               )}
@@ -399,7 +433,7 @@ const CustomerPosture = () => {
             <Card>
               <CardContent className="p-3">
                 <p className="text-xs text-muted-foreground">
-                  検出ポイント：{keypoints.filter((k) => (k.score ?? 1) >= MIN_SCORE).length} / {keypoints.length}
+                  検出ポイント：{keypoints.filter((k) => (k.score ?? 1) >= MIN_SCORE_DETECT).length} / {keypoints.length}
                 </p>
               </CardContent>
             </Card>
