@@ -340,7 +340,7 @@ const CustomerPosture = () => {
         }
       }
 
-      const { error } = await supabase.from("skeletal_diagnoses" as any).insert({
+      const { error } = await supabase.from("skeletal_diagnoses").insert({
         user_id: user.id,
         skeletal_type: skeletalDiagnosis.type,
         confidence: skeletalDiagnosis.confidence,
