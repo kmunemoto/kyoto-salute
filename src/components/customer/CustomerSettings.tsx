@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell, Award, Bone } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell, Award, Bone, Smartphone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -305,8 +305,47 @@ const CustomerSettings = () => {
         </Card>
       </section>
 
+      {/* iPhoneカレンダー購読 */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <Smartphone className="w-3.5 h-3.5" />
+          iPhoneカレンダー購読
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-muted">
+                <Smartphone className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold">iPhoneカレンダーに連携</p>
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  一度購読すると、今後の予約がiPhoneのカレンダーに自動反映されます
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!profile?.calendar_token) {
+                      toast.error("カレンダートークンが見つかりません");
+                      return;
+                    }
+                    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                    const httpsUrl = `${supabaseUrl}/functions/v1/calendar-feed?token=${profile.calendar_token}`;
+                    const webcalUrl = httpsUrl.replace(/^https:\/\//, "webcal://");
+                    window.location.href = webcalUrl;
+                  }}
+                  className="text-xs"
+                  variant="outline"
+                >
+                  <Smartphone className="w-3.5 h-3.5 mr-1" />
+                  カレンダーを購読する
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
-      {/* 過去の受講履歴 */}
       <section>
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
           <History className="w-3.5 h-3.5" />
