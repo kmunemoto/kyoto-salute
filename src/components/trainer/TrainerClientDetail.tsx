@@ -187,7 +187,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [bodyFat, setBodyFat] = useState("");
   const [savingMeasurement, setSavingMeasurement] = useState(false);
   const [measurementDate, setMeasurementDate] = useState<Date>(new Date());
-  const { measurements, chartData: measurementChartData, saveMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
+  const { measurements, chartData: measurementChartData, saveMeasurement, deleteMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
+  const [deleteMeasurementTarget, setDeleteMeasurementTarget] = useState<string | null>(null);
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
   const [memo, setMemo] = useState("");
@@ -758,7 +759,73 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
             </Card>
           </section>
 
-          {/* Recent records from DB */}
+          {/* Measurement History */}
+          {measurements.length > 0 && (
+            <section>
+              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5" />
+                計測記録一覧
+              </h2>
+              <Card>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="space-y-1">
+                    {[...measurements].reverse().map((m) => {
+                      const d = new Date(m.measured_date);
+                      return (
+                        <div key={m.id} className="flex items-center justify-between py-2 border-b border-border last:border-b-0">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-sm font-medium whitespace-nowrap">
+                              {format(d, "M/d (E)", { locale: ja })}
+                            </span>
+                            <div className="flex gap-3 text-xs text-muted-foreground">
+                              {m.weight != null && <span>{m.weight} kg</span>}
+                              {m.body_fat != null && <span>{m.body_fat}%</span>}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => setDeleteMeasurementTarget(m.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {/* Delete Measurement Confirmation */}
+          <AlertDialog open={!!deleteMeasurementTarget} onOpenChange={(open) => !open && setDeleteMeasurementTarget(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>この記録を削除しますか？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  削除した計測データは元に戻せません。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    if (deleteMeasurementTarget) {
+                      await deleteMeasurement(deleteMeasurementTarget);
+                      setDeleteMeasurementTarget(null);
+                    }
+                  }}
+                >
+                  削除する
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+
           <section>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <Dumbbell className="w-3.5 h-3.5" />
