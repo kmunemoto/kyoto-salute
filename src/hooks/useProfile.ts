@@ -12,6 +12,7 @@ export interface Profile {
   trial_completed: boolean;
   line_user_id: string | null;
   cycle_start_date: string | null;
+  show_usage_period: boolean;
   calendar_token: string | null;
   created_at: string;
   updated_at: string;
