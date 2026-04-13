@@ -58,7 +58,6 @@ export function diagnoseSkeletalType(
 
   const shoulderMid = mid(ls, rs);
   const hipMid = mid(lh, rh);
-  const ankleMid = mid(la, ra);
 
   const shoulderWidth = dist(ls, rs);
   const hipWidth = dist(lh, rh);
