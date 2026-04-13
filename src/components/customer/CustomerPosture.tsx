@@ -146,20 +146,13 @@ const CustomerPosture = () => {
 
   const syncCanvasSize = useCallback(() => {
     const img = imgRef.current;
-    const canvas = canvasRef.current;
     if (!img) return;
-    const w = img.clientWidth;
-    const h = img.clientHeight;
     setImgSize({
-      w,
-      h,
+      w: img.clientWidth,
+      h: img.clientHeight,
       natW: img.naturalWidth,
       natH: img.naturalHeight,
     });
-    if (canvas) {
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
-    }
   }, []);
 
   const onImgLoad = useCallback(() => {
@@ -174,22 +167,28 @@ const CustomerPosture = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [syncCanvasSize]);
 
-  // Draw skeleton
+  // Draw skeleton — use DISPLAY coordinates with explicit scaling
   useEffect(() => {
     const canvas = canvasRef.current;
     const img = imgRef.current;
-    if (!canvas || !img || keypoints.length === 0 || imgSize.natW === 0) return;
-    // Set canvas internal resolution to image's natural size
-    canvas.width = imgSize.natW;
-    canvas.height = imgSize.natH;
+    if (!canvas || !img || keypoints.length === 0 || imgSize.natW === 0 || imgSize.w === 0) return;
+
+    // Canvas internal resolution = display size (1:1 pixel mapping, no CSS scaling needed)
+    canvas.width = imgSize.w;
+    canvas.height = imgSize.h;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw using raw coordinates — CSS handles scaling
-    const lineW = Math.max(3, imgSize.natW / 200);
-    const dotR = Math.max(5, imgSize.natW / 150);
+    // Scale factor: BlazePose returns coords in natural-image space → convert to display space
+    const sx = imgSize.w / imgSize.natW;
+    const sy = imgSize.h / imgSize.natH;
 
+    const lineW = Math.max(2, imgSize.w / 200);
+    const dotR = Math.max(4, imgSize.w / 150);
+
+    // Draw skeleton edges
     ctx.strokeStyle = "hsl(36, 50%, 55%)";
     ctx.lineWidth = lineW;
     ctx.lineCap = "round";
@@ -199,19 +198,20 @@ const CustomerPosture = () => {
       if (!a || !b) continue;
       if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
+      ctx.moveTo(a.x * sx, a.y * sy);
+      ctx.lineTo(b.x * sx, b.y * sy);
       ctx.stroke();
     }
 
+    // Draw keypoint dots
     for (const kp of keypoints) {
       if ((kp.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.arc(kp.x, kp.y, dotR, 0, 2 * Math.PI);
+      ctx.arc(kp.x * sx, kp.y * sy, dotR, 0, 2 * Math.PI);
       ctx.fillStyle = "hsl(36, 40%, 42%)";
       ctx.fill();
       ctx.strokeStyle = "white";
-      ctx.lineWidth = Math.max(2, lineW * 0.6);
+      ctx.lineWidth = Math.max(1.5, lineW * 0.6);
       ctx.stroke();
     }
   }, [keypoints, imgSize]);
@@ -226,11 +226,10 @@ const CustomerPosture = () => {
     [keypoints, imgSize.natH]
   );
 
-  /** Merge the photo and skeleton canvas into a single image blob */
+  /** Merge the photo and skeleton canvas into a single image blob (at natural resolution) */
   const captureOverlayBlob = useCallback(async (): Promise<Blob | null> => {
     const img = imgRef.current;
-    const skeletonCanvas = canvasRef.current;
-    if (!img || !skeletonCanvas) return null;
+    if (!img || keypoints.length === 0 || imgSize.natW === 0) return null;
 
     const offscreen = document.createElement("canvas");
     offscreen.width = img.naturalWidth;
@@ -240,13 +239,39 @@ const CustomerPosture = () => {
 
     // Draw original image at natural size
     ctx.drawImage(img, 0, 0);
-    // Draw skeleton canvas scaled up to natural size
-    ctx.drawImage(skeletonCanvas, 0, 0, offscreen.width, offscreen.height);
+
+    // Re-draw skeleton at natural resolution for high-quality capture
+    const lineW = Math.max(3, img.naturalWidth / 200);
+    const dotR = Math.max(5, img.naturalWidth / 150);
+
+    ctx.strokeStyle = "hsl(36, 50%, 55%)";
+    ctx.lineWidth = lineW;
+    ctx.lineCap = "round";
+    for (const [i, j] of SKELETON_EDGES) {
+      const a = keypoints[i];
+      const b = keypoints[j];
+      if (!a || !b) continue;
+      if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    for (const kp of keypoints) {
+      if ((kp.score ?? 1) < MIN_SCORE) continue;
+      ctx.beginPath();
+      ctx.arc(kp.x, kp.y, dotR, 0, 2 * Math.PI);
+      ctx.fillStyle = "hsl(36, 40%, 42%)";
+      ctx.fill();
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = Math.max(2, lineW * 0.6);
+      ctx.stroke();
+    }
 
     return new Promise((resolve) =>
       offscreen.toBlob((blob) => resolve(blob), "image/jpeg", 0.85)
     );
-  }, []);
+  }, [keypoints, imgSize.natW]);
 
   const saveDiagnosis = useCallback(async () => {
     if (!user || !skeletalDiagnosis || saved) return;
@@ -333,7 +358,7 @@ const CustomerPosture = () => {
       ) : (
         <div className="space-y-3">
           <Card className="overflow-hidden">
-            <div className="relative w-full">
+            <div className="relative w-fit mx-auto">
               <img
                 ref={imgRef}
                 src={imageUrl}
@@ -343,7 +368,7 @@ const CustomerPosture = () => {
               />
               <canvas
                 ref={canvasRef}
-                className="absolute top-0 left-0 pointer-events-none"
+                className="absolute top-0 left-0 w-full h-full pointer-events-none"
               />
               {isLoading && (
                 <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
