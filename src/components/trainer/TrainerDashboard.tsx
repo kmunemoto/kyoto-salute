@@ -1,12 +1,13 @@
-import { Users, CalendarDays, TrendingUp, Clock, BarChart3 } from "lucide-react";
+import { Users, CalendarDays, TrendingUp, Clock, BarChart3, ClipboardList, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { useAllCustomerProfiles, useProfile } from "@/hooks/useProfile";
 import { useAllBookings } from "@/hooks/useBookings";
-import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import CounselingResponseList from "./CounselingResponseList";
+import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
@@ -15,6 +16,7 @@ interface TrainerDashboardProps {
 const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const { profiles, loading } = useAllCustomerProfiles();
   const { bookings, loading: bookingsLoading } = useAllBookings();
+  const { unreadCount: counselingUnread } = useCounselingResponses();
   const { profile: trainerProfile } = useProfile();
   const trainerName = trainerProfile?.display_name || "トレーナー";
 
@@ -118,6 +120,20 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                 ))}
             </div>
           )}
+        </section>
+
+        {/* Counseling Responses */}
+        <section>
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <ClipboardList className="w-3.5 h-3.5" />
+            新規カウンセリング回答
+            {counselingUnread > 0 && (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 ml-1">
+                {counselingUnread}件
+              </Badge>
+            )}
+          </h2>
+          <CounselingResponseList />
         </section>
 
         {/* Revenue Chart */}

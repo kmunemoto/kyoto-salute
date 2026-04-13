@@ -71,6 +71,75 @@ export type Database = {
         }
         Relationships: []
       }
+      counseling_responses: {
+        Row: {
+          age: string | null
+          created_at: string
+          diet_pattern: string | null
+          email: string | null
+          exercise_habit: string | null
+          experience_level: string | null
+          first_name: string
+          first_name_kana: string | null
+          gender: string | null
+          id: string
+          last_name: string
+          last_name_kana: string | null
+          medical_history: string | null
+          notes: string | null
+          pain_areas: string[] | null
+          phone: string | null
+          purposes: string[] | null
+          reviewed: boolean
+          sleep_hours: string | null
+          target_frequency: string | null
+        }
+        Insert: {
+          age?: string | null
+          created_at?: string
+          diet_pattern?: string | null
+          email?: string | null
+          exercise_habit?: string | null
+          experience_level?: string | null
+          first_name: string
+          first_name_kana?: string | null
+          gender?: string | null
+          id?: string
+          last_name: string
+          last_name_kana?: string | null
+          medical_history?: string | null
+          notes?: string | null
+          pain_areas?: string[] | null
+          phone?: string | null
+          purposes?: string[] | null
+          reviewed?: boolean
+          sleep_hours?: string | null
+          target_frequency?: string | null
+        }
+        Update: {
+          age?: string | null
+          created_at?: string
+          diet_pattern?: string | null
+          email?: string | null
+          exercise_habit?: string | null
+          experience_level?: string | null
+          first_name?: string
+          first_name_kana?: string | null
+          gender?: string | null
+          id?: string
+          last_name?: string
+          last_name_kana?: string | null
+          medical_history?: string | null
+          notes?: string | null
+          pain_areas?: string[] | null
+          phone?: string | null
+          purposes?: string[] | null
+          reviewed?: boolean
+          sleep_hours?: string | null
+          target_frequency?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
