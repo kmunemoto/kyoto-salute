@@ -20,15 +20,65 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { user_id, line_user_id, message } = await req.json();
+    const { user_id, line_user_id, to, message } = await req.json();
 
-    // If line_user_id not provided, look it up from profiles
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // If to === "trainer", send to all trainers with LINE linked
+    if (to === "trainer") {
+      const { data: trainerIds } = await supabase.rpc("get_trainer_ids");
+      if (!trainerIds || trainerIds.length === 0) {
+        return new Response(JSON.stringify({ skipped: true, reason: "no trainers found" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const results = [];
+      for (const t of trainerIds) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("line_user_id")
+          .eq("user_id", t.user_id)
+          .maybeSingle();
+
+        const tid = profile?.line_user_id;
+        if (!tid) {
+          results.push({ user_id: t.user_id, skipped: true, reason: "no LINE linked" });
+          continue;
+        }
+
+        const res = await fetch(LINE_API, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            to: tid,
+            messages: [{ type: "text", text: message }],
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          console.error("LINE API error for trainer:", t.user_id, err);
+          results.push({ user_id: t.user_id, error: err });
+        } else {
+          results.push({ user_id: t.user_id, success: true });
+        }
+      }
+
+      return new Response(JSON.stringify({ results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Single user mode
     let targetLineId = line_user_id;
     if (!targetLineId && user_id) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, serviceRoleKey);
-
       const { data: profile } = await supabase
         .from("profiles")
         .select("line_user_id")
