@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil, Clock, RotateCcw, Send, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, Dumbbell, Weight, Activity, Plus, Trash2, CalendarDays, CreditCard, MessageSquare, CheckCircle2, X, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Pencil, Clock, RotateCcw, Send, AlertCircle, CalendarIcon } from "lucide-react";
 import { exerciseCategories } from "@/lib/dummyData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -183,6 +186,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [savingMeasurement, setSavingMeasurement] = useState(false);
+  const [measurementDate, setMeasurementDate] = useState<Date>(new Date());
   const { measurements, chartData: measurementChartData, saveMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
@@ -699,10 +703,31 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           <section>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <Weight className="w-3.5 h-3.5" />
-              今日の計測
+              計測データ入力
             </h2>
             <Card>
               <CardContent className="p-3 sm:p-4 space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">計測日</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-full h-11 justify-start text-left font-normal", !measurementDate && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {measurementDate ? format(measurementDate, "yyyy年M月d日", { locale: ja }) : "日付を選択"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={measurementDate}
+                        onSelect={(d) => d && setMeasurementDate(d)}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1 block">体重 (kg)</label>
@@ -718,11 +743,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                   disabled={savingMeasurement || (!bodyWeight && !bodyFat)}
                   onClick={async () => {
                     setSavingMeasurement(true);
-                    const today = new Date().toISOString().slice(0, 10);
+                    const dateStr = format(measurementDate, "yyyy-MM-dd");
                     const w = bodyWeight ? parseFloat(bodyWeight) : null;
                     const f = bodyFat ? parseFloat(bodyFat) : null;
-                    const ok = await saveMeasurement(today, w, f);
-                    if (ok) { setBodyWeight(""); setBodyFat(""); }
+                    const ok = await saveMeasurement(dateStr, w, f);
+                    if (ok) { setBodyWeight(""); setBodyFat(""); setMeasurementDate(new Date()); }
                     setSavingMeasurement(false);
                   }}
                 >
