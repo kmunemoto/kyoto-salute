@@ -183,6 +183,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [savingMeasurement, setSavingMeasurement] = useState(false);
+  const [measurementDate, setMeasurementDate] = useState<Date>(new Date());
   const { measurements, chartData: measurementChartData, saveMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
   const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
   const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
