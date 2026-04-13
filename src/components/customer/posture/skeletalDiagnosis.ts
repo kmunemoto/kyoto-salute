@@ -51,9 +51,10 @@ export function diagnoseSkeletalType(
   const lw = keypoints[BP.LEFT_WRIST];
   const rw = keypoints[BP.RIGHT_WRIST];
 
-  // Require at least shoulders, hips, and ankles
+  // Require at least shoulders and hips
   if (!valid(ls) || !valid(rs) || !valid(lh) || !valid(rh)) return null;
-  if (!valid(la) || !valid(ra)) return null;
+  const hasAnkles = valid(la) && valid(ra);
+  const hasKnees = valid(lk) && valid(rk);
 
   const shoulderMid = mid(ls, rs);
   const hipMid = mid(lh, rh);
