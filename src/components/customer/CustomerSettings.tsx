@@ -305,11 +305,11 @@ const CustomerSettings = () => {
         </Card>
       </section>
 
-      {/* iPhoneカレンダー購読 */}
+      {/* Appleカレンダー連携 */}
       <section>
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
           <Smartphone className="w-3.5 h-3.5" />
-          iPhoneカレンダー購読
+          Appleカレンダー連携
         </h2>
         <Card>
           <CardContent className="p-4">
@@ -318,9 +318,9 @@ const CustomerSettings = () => {
                 <Smartphone className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-bold">iPhoneカレンダーに連携</p>
+                <p className="text-sm font-bold">Appleカレンダー連携</p>
                 <p className="text-[11px] text-muted-foreground mb-2">
-                  一度購読すると、今後の予約がiPhoneのカレンダーに自動反映されます
+                  一度連携すると、今後の予約がiPhoneの純正カレンダーに自動反映されます
                 </p>
                 <Button
                   size="sm"
@@ -338,7 +338,7 @@ const CustomerSettings = () => {
                   variant="outline"
                 >
                   <Smartphone className="w-3.5 h-3.5 mr-1" />
-                  カレンダーを購読する
+                  Appleカレンダーと連携する
                 </Button>
               </div>
             </div>
