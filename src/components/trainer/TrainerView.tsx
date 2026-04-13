@@ -25,6 +25,7 @@ const TrainerView = () => {
   const { signOut } = useAuth();
   const { user } = useAuth();
   const { count: unreadMessages, refetch: refetchUnread } = useUnreadCount();
+  const { unreadCount: unreadCounseling } = useCounselingResponses();
 
   const handleSelectClient = (clientId: string) => {
     setSelectedClientId(clientId);
@@ -104,6 +105,7 @@ const TrainerView = () => {
             activeTab={tab}
             onTabChange={(t) => { setTab(t); setSelectedClientId(null); }}
             unreadMessages={unreadMessages}
+            unreadCounseling={unreadCounseling}
           />
           <main className="flex-1 ml-0 md:ml-60 p-3 sm:p-4 md:p-8 max-w-6xl" key={`${tab}-${selectedClientId}`}>
               {tab === "dashboard" && <TrainerDashboard onSelectClient={handleSelectClient} />}
@@ -112,6 +114,7 @@ const TrainerView = () => {
               {tab === "schedule" && <TrainerSchedule />}
               {tab === "messages" && <TrainerMessages />}
               {tab === "exercises" && <TrainerExerciseManager />}
+              {tab === "counseling" && <CounselingResponseList />}
               {tab === "gym-settings" && <TrainerGymSettings onSignOut={signOut} />}
             </main>
         </div>
