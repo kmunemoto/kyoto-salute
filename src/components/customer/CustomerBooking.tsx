@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarDays, Clock, Check, Trash2, CalendarPlus, ExternalLink, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
