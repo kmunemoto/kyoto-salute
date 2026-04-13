@@ -1,10 +1,11 @@
-import { LayoutDashboard, Users, CalendarDays, MessageCircle, Dumbbell, Settings2 } from "lucide-react";
+import { LayoutDashboard, Users, CalendarDays, MessageCircle, Dumbbell, Settings2, ClipboardList } from "lucide-react";
 import type { TrainerTab } from "./TrainerView";
 
 interface TrainerSidebarProps {
   activeTab: TrainerTab;
   onTabChange: (tab: TrainerTab) => void;
   unreadMessages?: number;
+  unreadCounseling?: number;
 }
 
 const desktopTabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard }[] = [
@@ -13,6 +14,7 @@ const desktopTabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard
   { id: "schedule", label: "予約管理", icon: CalendarDays },
   { id: "messages", label: "メッセージ", icon: MessageCircle },
   { id: "exercises", label: "種目設定", icon: Dumbbell },
+  { id: "counseling", label: "カウンセリング", icon: ClipboardList },
   { id: "gym-settings", label: "ジム設定", icon: Settings2 },
 ];
 
@@ -20,11 +22,17 @@ const mobileTabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard 
   { id: "dashboard", label: "ダッシュボード", icon: LayoutDashboard },
   { id: "clients", label: "顧客一覧", icon: Users },
   { id: "schedule", label: "予約管理", icon: CalendarDays },
-  { id: "exercises", label: "種目設定", icon: Dumbbell },
+  { id: "counseling", label: "カウンセリング", icon: ClipboardList },
   { id: "gym-settings", label: "ジム設定", icon: Settings2 },
 ];
 
-const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerSidebarProps) => {
+const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0, unreadCounseling = 0 }: TrainerSidebarProps) => {
+  const getBadgeCount = (tabId: TrainerTab) => {
+    if (tabId === "messages") return unreadMessages;
+    if (tabId === "counseling") return unreadCounseling;
+    return 0;
+  };
+
   return (
     <>
       {/* Desktop sidebar */}
@@ -32,7 +40,7 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-3">メニュー</p>
         {desktopTabs.map((t) => {
           const active = activeTab === t.id;
-          const showBadge = t.id === "messages" && unreadMessages > 0;
+          const badgeCount = getBadgeCount(t.id);
           return (
             <button
               key={t.id}
@@ -45,9 +53,9 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
             >
               <t.icon className="w-4.5 h-4.5" />
               {t.label}
-              {showBadge && (
+              {badgeCount > 0 && (
                 <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                  {unreadMessages}
+                  {badgeCount}
                 </span>
               )}
             </button>
@@ -60,6 +68,7 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
         <div className="flex">
           {mobileTabs.map((t) => {
             const active = activeTab === t.id;
+            const badgeCount = getBadgeCount(t.id);
             return (
               <button
                 key={t.id}
@@ -70,6 +79,11 @@ const TrainerSidebar = ({ activeTab, onTabChange, unreadMessages = 0 }: TrainerS
               >
                 <div className="relative">
                   <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""} transition-transform`} />
+                  {badgeCount > 0 && (
+                    <span className="absolute -top-1 -right-2 bg-destructive text-destructive-foreground text-[8px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
+                      {badgeCount}
+                    </span>
+                  )}
                 </div>
                 <span className="text-[10px] font-semibold">{t.label}</span>
               </button>
