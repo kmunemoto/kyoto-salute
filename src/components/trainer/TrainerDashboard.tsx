@@ -1,4 +1,4 @@
-import { Users, CalendarDays, TrendingUp, Clock, BarChart3, ClipboardList } from "lucide-react";
+import { Users, CalendarDays, TrendingUp, Clock, BarChart3, ClipboardList, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { planPrices, PlanType } from "@/lib/dummyData";
@@ -8,7 +8,6 @@ import { useAllBookings } from "@/hooks/useBookings";
 import { format } from "date-fns";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
-import { format } from "date-fns";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
