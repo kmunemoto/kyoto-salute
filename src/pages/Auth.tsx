@@ -94,9 +94,9 @@ const Auth = () => {
           trainerIds?.forEach((t) => {
             supabase.functions.invoke("send-line-message", {
               body: { user_id: t.user_id, message: lineMessage },
-            }).catch(() => {});
+            });
           });
-        }).catch(() => {});
+        });
 
         toast.success("アカウントを作成しました。");
         navigate("/");
