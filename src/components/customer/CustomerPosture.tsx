@@ -89,7 +89,6 @@ const CustomerPosture = () => {
         offscreen.height = tempImg.naturalHeight;
         const ctx = offscreen.getContext("2d");
         if (!ctx) { reject(new Error("Canvas context failed")); return; }
-        // Drawing from <img> applies EXIF rotation automatically
         ctx.drawImage(tempImg, 0, 0);
         offscreen.toBlob((blob) => {
           URL.revokeObjectURL(tempImg.src);
@@ -124,12 +123,28 @@ const CustomerPosture = () => {
   };
 
   const analyze = useCallback(async () => {
-    if (!imgRef.current) return;
+    const img = imgRef.current;
+    if (!img) return;
     setAnalyzing(true);
     try {
       const detector = await getDetector();
       if (!detector) return;
-      const poses = await detector.estimatePoses(imgRef.current);
+
+      // === KEY FIX ===
+      // Create an offscreen canvas at the DISPLAY size and draw the image onto it.
+      // By passing this canvas (instead of the <img> element) to BlazePose,
+      // we guarantee that returned keypoint coordinates are in display-pixel space.
+      // This eliminates all ambiguity about coordinate systems.
+      const displayW = img.clientWidth;
+      const displayH = img.clientHeight;
+      const inputCanvas = document.createElement("canvas");
+      inputCanvas.width = displayW;
+      inputCanvas.height = displayH;
+      const ictx = inputCanvas.getContext("2d");
+      if (!ictx) return;
+      ictx.drawImage(img, 0, 0, displayW, displayH);
+
+      const poses = await detector.estimatePoses(inputCanvas);
       if (poses.length === 0 || !poses[0].keypoints?.length) {
         toast.error("姿勢を検出できませんでした。全身が映った写真をお試しください。");
         return;
@@ -167,23 +182,18 @@ const CustomerPosture = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [syncCanvasSize]);
 
-  // Draw skeleton — use DISPLAY coordinates with explicit scaling
+  // Draw skeleton — coordinates are in display space, draw directly (no scaling)
   useEffect(() => {
     const canvas = canvasRef.current;
-    const img = imgRef.current;
-    if (!canvas || !img || keypoints.length === 0 || imgSize.natW === 0 || imgSize.w === 0) return;
+    if (!canvas || keypoints.length === 0 || imgSize.w === 0) return;
 
-    // Canvas internal resolution = display size (1:1 pixel mapping, no CSS scaling needed)
+    // Canvas internal resolution = display size → 1:1 pixel mapping with CSS
     canvas.width = imgSize.w;
     canvas.height = imgSize.h;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Scale factor: BlazePose returns coords in natural-image space → convert to display space
-    const sx = imgSize.w / imgSize.natW;
-    const sy = imgSize.h / imgSize.natH;
 
     const lineW = Math.max(2, imgSize.w / 200);
     const dotR = Math.max(4, imgSize.w / 150);
@@ -198,8 +208,8 @@ const CustomerPosture = () => {
       if (!a || !b) continue;
       if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.moveTo(a.x * sx, a.y * sy);
-      ctx.lineTo(b.x * sx, b.y * sy);
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
       ctx.stroke();
     }
 
@@ -207,7 +217,7 @@ const CustomerPosture = () => {
     for (const kp of keypoints) {
       if ((kp.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.arc(kp.x * sx, kp.y * sy, dotR, 0, 2 * Math.PI);
+      ctx.arc(kp.x, kp.y, dotR, 0, 2 * Math.PI);
       ctx.fillStyle = "hsl(36, 40%, 42%)";
       ctx.fill();
       ctx.strokeStyle = "white";
@@ -217,32 +227,38 @@ const CustomerPosture = () => {
   }, [keypoints, imgSize]);
 
   const feedbacks = useMemo(
-    () => (keypoints.length > 0 ? analyzePosture(keypoints, imgSize.natH) : []),
-    [keypoints, imgSize.natH]
+    () => (keypoints.length > 0 ? analyzePosture(keypoints, imgSize.h) : []),
+    [keypoints, imgSize.h]
   );
 
   const skeletalDiagnosis = useMemo(
-    () => (keypoints.length > 0 ? diagnoseSkeletalType(keypoints, imgSize.natH) : null),
-    [keypoints, imgSize.natH]
+    () => (keypoints.length > 0 ? diagnoseSkeletalType(keypoints, imgSize.h) : null),
+    [keypoints, imgSize.h]
   );
 
-  /** Merge the photo and skeleton canvas into a single image blob (at natural resolution) */
+  /** Merge the photo and skeleton into a single image at natural resolution */
   const captureOverlayBlob = useCallback(async (): Promise<Blob | null> => {
     const img = imgRef.current;
-    if (!img || keypoints.length === 0 || imgSize.natW === 0) return null;
+    if (!img || keypoints.length === 0 || imgSize.w === 0) return null;
+
+    const natW = img.naturalWidth;
+    const natH = img.naturalHeight;
 
     const offscreen = document.createElement("canvas");
-    offscreen.width = img.naturalWidth;
-    offscreen.height = img.naturalHeight;
+    offscreen.width = natW;
+    offscreen.height = natH;
     const ctx = offscreen.getContext("2d");
     if (!ctx) return null;
 
-    // Draw original image at natural size
+    // Draw original image at natural resolution
     ctx.drawImage(img, 0, 0);
 
-    // Re-draw skeleton at natural resolution for high-quality capture
-    const lineW = Math.max(3, img.naturalWidth / 200);
-    const dotR = Math.max(5, img.naturalWidth / 150);
+    // Scale keypoints from display space → natural space for high-res capture
+    const sx = natW / imgSize.w;
+    const sy = natH / imgSize.h;
+
+    const lineW = Math.max(3, natW / 200);
+    const dotR = Math.max(5, natW / 150);
 
     ctx.strokeStyle = "hsl(36, 50%, 55%)";
     ctx.lineWidth = lineW;
@@ -253,14 +269,14 @@ const CustomerPosture = () => {
       if (!a || !b) continue;
       if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
+      ctx.moveTo(a.x * sx, a.y * sy);
+      ctx.lineTo(b.x * sx, b.y * sy);
       ctx.stroke();
     }
     for (const kp of keypoints) {
       if ((kp.score ?? 1) < MIN_SCORE) continue;
       ctx.beginPath();
-      ctx.arc(kp.x, kp.y, dotR, 0, 2 * Math.PI);
+      ctx.arc(kp.x * sx, kp.y * sy, dotR, 0, 2 * Math.PI);
       ctx.fillStyle = "hsl(36, 40%, 42%)";
       ctx.fill();
       ctx.strokeStyle = "white";
@@ -271,12 +287,11 @@ const CustomerPosture = () => {
     return new Promise((resolve) =>
       offscreen.toBlob((blob) => resolve(blob), "image/jpeg", 0.85)
     );
-  }, [keypoints, imgSize.natW]);
+  }, [keypoints, imgSize]);
 
   const saveDiagnosis = useCallback(async () => {
     if (!user || !skeletalDiagnosis || saved) return;
     try {
-      // 1. Capture overlay image
       let imageUrlToSave: string | null = null;
       const blob = await captureOverlayBlob();
       if (blob) {
@@ -291,7 +306,6 @@ const CustomerPosture = () => {
         }
       }
 
-      // 2. Save diagnosis record
       const { error } = await supabase.from("skeletal_diagnoses" as any).insert({
         user_id: user.id,
         skeletal_type: skeletalDiagnosis.type,
@@ -391,13 +405,8 @@ const CustomerPosture = () => {
             </Card>
           )}
 
-          {/* Skeletal type diagnosis */}
           <SkeletalTypeCard diagnosis={skeletalDiagnosis} />
-
-          {/* Training recommendations */}
           <TrainingRecommendationCard skeletalType={skeletalDiagnosis?.type ?? null} />
-
-          {/* Posture feedback */}
           <PostureFeedbackCard feedbacks={feedbacks} />
 
           <div className="flex gap-2">
