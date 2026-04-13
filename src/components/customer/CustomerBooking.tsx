@@ -37,6 +37,16 @@ const CustomerBooking = () => {
   // Booked slots fetched via SECURITY DEFINER RPC — sees ALL bookings regardless of RLS
   const [bookedSlots, setBookedSlots] = useState<{ date: string; startTime: string; endTime: string; isBlock: boolean }[]>([]);
 
+  // Set of dates (yyyy-MM-dd) where this customer has future bookings — for calendar dots
+  const bookedDateSet = useMemo(() => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const set = new Set<string>();
+    myBookings.forEach((b) => {
+      if (b.status !== "キャンセル済み" && b.date >= today) set.add(b.date);
+    });
+    return set;
+  }, [myBookings]);
+
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
   const fetchBookedSlots = useCallback(async (dateStr: string) => {
