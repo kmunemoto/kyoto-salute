@@ -325,14 +325,24 @@ const CustomerSettings = () => {
                 <Button
                   size="sm"
                   onClick={() => {
-                    if (!profile?.calendar_token) {
-                      toast.error("カレンダートークンが見つかりません");
-                      return;
+                    try {
+                      if (!profile?.calendar_token) {
+                        toast.error("カレンダートークンが見つかりません。ページを再読み込みしてください。");
+                        return;
+                      }
+                      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                      if (!supabaseUrl) {
+                        toast.error("カレンダー連携に失敗しました");
+                        return;
+                      }
+                      const httpsUrl = `${supabaseUrl}/functions/v1/calendar-feed?token=${profile.calendar_token}`;
+                      const webcalUrl = httpsUrl.replace(/^https:\/\//, "webcal://");
+                      window.location.href = webcalUrl;
+                      toast.success("カレンダー購読画面が表示されます");
+                    } catch (err) {
+                      console.error("Calendar link error:", err);
+                      toast.error("カレンダー連携に失敗しました");
                     }
-                    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-                    const httpsUrl = `${supabaseUrl}/functions/v1/calendar-feed?token=${profile.calendar_token}`;
-                    const webcalUrl = httpsUrl.replace(/^https:\/\//, "webcal://");
-                    window.location.href = webcalUrl;
                   }}
                   className="text-xs"
                   variant="outline"
