@@ -298,11 +298,15 @@ async function sendNewBookingLineToTrainer(
 
 export const cancelBooking = async (bookingId: string, cancelledByTrainer = false) => {
   // Fetch booking details before deleting
-  const { data: booking } = await supabase
+  const { data: booking, error: fetchError } = await supabase
     .from("bookings")
     .select("id, user_id, booking_date, booking_type, google_event_id")
     .eq("id", bookingId)
     .maybeSingle();
+
+  if (fetchError || !booking) {
+    console.error("cancelBooking: 予約情報の取得に失敗", fetchError, bookingId);
+  }
 
   const { error } = await supabase
     .from("bookings")
@@ -310,8 +314,11 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
     .eq("id", bookingId);
 
   if (!error && booking) {
+    console.log("LINE通知送信開始", booking.id, { cancelledByTrainer });
     // Send LINE cancel notification (fire-and-forget)
-    sendCancelLineNotification(booking, cancelledByTrainer).catch(console.error);
+    sendCancelLineNotification(booking, cancelledByTrainer).catch((e) =>
+      console.error("sendCancelLineNotification failed:", e)
+    );
 
     // Delete from Google Calendar (fire-and-forget)
     if (booking.google_event_id) {
@@ -319,6 +326,8 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
         body: { action: "delete", google_event_id: booking.google_event_id },
       }).catch(console.error);
     }
+  } else if (error) {
+    console.error("cancelBooking: 削除エラー", error);
   }
 
   return { error };
@@ -331,27 +340,40 @@ async function sendCancelLineNotification(
   const dt = new Date(booking.booking_date);
   const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
 
+  // Always fetch customer name & trainer id (needed for both paths)
+  const [{ data: profile }, { data: trainerIds }] = await Promise.all([
+    supabase.from("profiles").select("display_name").eq("user_id", booking.user_id).maybeSingle(),
+    supabase.rpc("get_trainer_ids"),
+  ]);
+  const customerName = profile?.display_name || "顧客";
+  const trainerId = trainerIds?.[0]?.user_id;
+
   if (cancelledByTrainer) {
-    // Trainer cancelled → notify customer via LINE
-    await supabase.functions.invoke("send-line-message", {
+    // Notify customer
+    console.log("LINE送信: 顧客へキャンセル通知", booking.user_id);
+    const custRes = await supabase.functions.invoke("send-line-message", {
       body: {
         user_id: booking.user_id,
         message: `【Salute御所南】ご予約キャンセルのご連絡\n\nトレーナーにより、以下のご予約がキャンセルされました。\n\n・日時：${dateStr}〜\n\nお手数ですが、別の日程でのご予約をアプリよりご検討ください。\nまたのご来館をお待ちしております。`,
       },
     });
-  } else {
-    // Customer cancelled → notify both trainer and customer via LINE
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("user_id", booking.user_id)
-      .maybeSingle();
-    const customerName = profile?.display_name || "顧客";
+    console.log("LINE送信結果(顧客):", custRes);
 
-    // Notify trainer
-    const { data: trainerIds } = await supabase.rpc("get_trainer_ids");
-    const trainerId = trainerIds?.[0]?.user_id;
+    // Notify trainer (self-confirmation)
     if (trainerId) {
+      console.log("LINE送信: トレーナーへキャンセル確認通知", trainerId);
+      const trRes = await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: trainerId,
+          message: `✅ キャンセル処理完了\n\n${customerName}様の予約をキャンセルしました。\n\n・日時：${dateStr}\n・プラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
+        },
+      });
+      console.log("LINE送信結果(トレーナー):", trRes);
+    }
+  } else {
+    // Customer cancelled → notify both
+    if (trainerId) {
+      console.log("LINE送信: トレーナーへキャンセル通知", trainerId);
       await supabase.functions.invoke("send-line-message", {
         body: {
           user_id: trainerId,
@@ -361,6 +383,7 @@ async function sendCancelLineNotification(
     }
 
     // Notify customer (cancellation confirmation)
+    console.log("LINE送信: 顧客へキャンセル確認通知", booking.user_id);
     await supabase.functions.invoke("send-line-message", {
       body: {
         user_id: booking.user_id,
