@@ -66,7 +66,7 @@ const CustomerPosture = () => {
         poseDetection.SupportedModels.BlazePose,
         {
           runtime: "tfjs" as const,
-          modelType: "lite",
+          modelType: "full",
         }
       );
       detectorRef.current = detector;
