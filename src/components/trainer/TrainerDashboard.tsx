@@ -16,6 +16,7 @@ interface TrainerDashboardProps {
 const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const { profiles, loading } = useAllCustomerProfiles();
   const { bookings, loading: bookingsLoading } = useAllBookings();
+  const { unreadCount: counselingUnread } = useCounselingResponses();
   const { profile: trainerProfile } = useProfile();
   const trainerName = trainerProfile?.display_name || "トレーナー";
 
