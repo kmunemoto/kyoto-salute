@@ -1,4 +1,4 @@
-import { Users, CalendarDays, TrendingUp, Clock, BarChart3 } from "lucide-react";
+import { Users, CalendarDays, TrendingUp, Clock, BarChart3, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { planPrices, PlanType } from "@/lib/dummyData";
@@ -6,6 +6,9 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGri
 import { useAllCustomerProfiles, useProfile } from "@/hooks/useProfile";
 import { useAllBookings } from "@/hooks/useBookings";
 import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import CounselingResponseList from "./CounselingResponseList";
+import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import { format } from "date-fns";
 
 interface TrainerDashboardProps {
