@@ -260,8 +260,8 @@ const CustomerPosture = () => {
     }
   }, [keypoints, imgSize]);
 
-  const feedbacks = useMemo(
-    () => (keypoints.length > 0 ? analyzePosture(keypoints, imgSize.h) : []),
+  const postureResult = useMemo(
+    () => (keypoints.length > 0 ? analyzePosture(keypoints, imgSize.h) : { feedbacks: [], score: 100 }),
     [keypoints, imgSize.h]
   );
 
@@ -440,8 +440,8 @@ const CustomerPosture = () => {
           )}
 
           <SkeletalTypeCard diagnosis={skeletalDiagnosis} />
-          <TrainingRecommendationCard skeletalType={skeletalDiagnosis?.type ?? null} />
-          <PostureFeedbackCard feedbacks={feedbacks} />
+          <TrainingRecommendationCard skeletalType={skeletalDiagnosis?.type ?? null} feedbacks={postureResult.feedbacks} />
+          <PostureFeedbackCard feedbacks={postureResult.feedbacks} score={postureResult.score} />
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={reset} className="flex-1">
