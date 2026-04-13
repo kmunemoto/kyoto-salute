@@ -67,6 +67,23 @@ export function useMeasurements(userId: string | undefined) {
     [userId, measurements, fetchMeasurements]
   );
 
+  const deleteMeasurement = useCallback(
+    async (id: string) => {
+      const { error } = await supabase
+        .from("user_measurements")
+        .delete()
+        .eq("id", id);
+      if (error) {
+        toast.error("削除に失敗しました");
+        return false;
+      }
+      await fetchMeasurements();
+      toast.success("計測データを削除しました");
+      return true;
+    },
+    [fetchMeasurements]
+  );
+
   const chartData = measurements
     .filter((m) => m.weight != null || m.body_fat != null)
     .map((m) => {
@@ -80,5 +97,5 @@ export function useMeasurements(userId: string | undefined) {
 
   const latest = measurements.length > 0 ? measurements[measurements.length - 1] : null;
 
-  return { measurements, loading, saveMeasurement, chartData, latest, refetch: fetchMeasurements };
+  return { measurements, loading, saveMeasurement, deleteMeasurement, chartData, latest, refetch: fetchMeasurements };
 }
