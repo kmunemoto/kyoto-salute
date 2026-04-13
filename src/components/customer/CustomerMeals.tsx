@@ -98,7 +98,7 @@ const CustomerMeals = () => {
       .select("*")
       .order("created_at", { ascending: false });
     if (!error && data) {
-      const resolved = await resolveMealPhotoUrls(data as Meal[]);
+      const resolved = await resolveMealPhotoUrls(data as unknown as Meal[]);
       setMeals(resolved);
     }
     setLoading(false);
@@ -172,7 +172,7 @@ const CustomerMeals = () => {
 
       const { getMealPhotoUrl } = await import("@/lib/mealPhotoUrl");
       const resolvedUrl = await getMealPhotoUrl(storagePath);
-      const newMeal = { ...mealData as Meal, resolved_image_url: resolvedUrl };
+      const newMeal = { ...(mealData as unknown as Meal), resolved_image_url: resolvedUrl };
       setMeals((prev) => [newMeal, ...prev]);
       toast.success("写真をアップロードしました。AI分析中...");
 
