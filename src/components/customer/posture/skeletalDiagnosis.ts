@@ -66,8 +66,16 @@ export function diagnoseSkeletalType(
 
   // Upper body = shoulder midpoint to hip midpoint
   const upperLen = dist(shoulderMid, hipMid);
-  // Lower body = hip midpoint to ankle midpoint
-  const lowerLen = dist(hipMid, ankleMid);
+
+  // Lower body = hip midpoint to ankle midpoint (or knee if ankles missing)
+  let lowerLen = upperLen; // fallback to equal
+  if (hasAnkles) {
+    const ankleMid = mid(la, ra);
+    lowerLen = dist(hipMid, ankleMid);
+  } else if (hasKnees) {
+    const kneeMid = mid(lk, rk);
+    lowerLen = dist(hipMid, kneeMid) * 2; // estimate full leg from thigh
+  }
   const totalLen = upperLen + lowerLen;
   const upperBodyRatio = totalLen > 0 ? upperLen / totalLen : 0.5;
 
