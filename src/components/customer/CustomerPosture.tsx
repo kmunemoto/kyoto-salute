@@ -301,14 +301,14 @@ const CustomerPosture = () => {
       const a = keypoints[i];
       const b = keypoints[j];
       if (!a || !b) continue;
-      if ((a.score ?? 1) < MIN_SCORE || (b.score ?? 1) < MIN_SCORE) continue;
+      if ((a.score ?? 1) < MIN_SCORE_DRAW || (b.score ?? 1) < MIN_SCORE_DRAW) continue;
       ctx.beginPath();
       ctx.moveTo(a.x * sx, a.y * sy);
       ctx.lineTo(b.x * sx, b.y * sy);
       ctx.stroke();
     }
     for (const kp of keypoints) {
-      if ((kp.score ?? 1) < MIN_SCORE) continue;
+      if ((kp.score ?? 1) < MIN_SCORE_DRAW) continue;
       ctx.beginPath();
       ctx.arc(kp.x * sx, kp.y * sy, dotR, 0, 2 * Math.PI);
       ctx.fillStyle = "hsl(36, 40%, 42%)";
