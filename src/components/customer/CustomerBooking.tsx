@@ -373,18 +373,51 @@ const CustomerBooking = () => {
                   mode="single"
                   selected={selectedDate}
                   onSelect={(d) => {
+                    if (d) {
+                      const key = format(d, "yyyy-MM-dd");
+                      // Show toast if customer already has a booking on this date
+                      const existing = myBookings.filter(
+                        (b) => b.date === key && b.status !== "キャンセル済み"
+                      );
+                      if (existing.length > 0) {
+                        const times = existing
+                          .map((b) => `${b.startTime}〜${b.endTime}`)
+                          .join("、");
+                        toast.info(`この日は ${times} に予約済みです`);
+                      }
+                    }
                     setSelectedDate(d);
                     setSelectedSlot(null);
                   }}
                   locale={ja}
                   disabled={(date) => {
                     const now = new Date();
-                    // Disable dates where the latest possible slot (20:15) is within 24 hours
                     const latestSlot = new Date(date);
                     latestSlot.setHours(20, 15, 0, 0);
                     return latestSlot.getTime() - now.getTime() < 24 * 60 * 60 * 1000;
                   }}
                   className="pointer-events-auto"
+                  components={{
+                    DayContent: ({ date: dayDate }) => {
+                      const key = format(dayDate, "yyyy-MM-dd");
+                      const hasBooking = bookedDateSet.has(key);
+                      return (
+                        <div className="relative flex flex-col items-center">
+                          <span>{dayDate.getDate()}</span>
+                          {hasBooking && (
+                            <span
+                              className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full"
+                              style={{
+                                width: 6,
+                                height: 6,
+                                backgroundColor: "#C4A265",
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    },
+                  }}
                 />
               </CardContent>
             </Card>
