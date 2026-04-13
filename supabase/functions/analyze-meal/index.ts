@@ -6,15 +6,36 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function callAI(apiKey: string, messages: unknown[], model = "google/gemini-2.5-flash") {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model, messages }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw Object.assign(new Error(`AI error ${res.status}: ${text}`), { status: res.status });
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+function parseJson(text: string) {
+  const m = text.match(/\{[\s\S]*\}/);
+  return m ? JSON.parse(m[0]) : null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { mealId, imageUrl } = await req.json();
+    const { mealId, imageUrl, mealTypeHint, quantityNote } = await req.json();
     if (!mealId || !imageUrl) {
       return new Response(JSON.stringify({ error: "mealId and imageUrl required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -25,7 +46,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Resolve storage path to a signed URL so the AI can access the image
+    // Resolve storage path to signed URL
     let resolvedImageUrl = imageUrl;
     if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
       const { data: signedData, error: signError } = await supabase.storage
@@ -38,120 +59,106 @@ serve(async (req) => {
       resolvedImageUrl = signedData.signedUrl;
     }
 
-    // Call Gemini via Lovable AI Gateway with image
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `あなたは管理栄養士の資格を持つ食事分析の専門家です。写真に映っている食事を正確に分析してください。
+    // Build extra context from user hints
+    let extraContext = "";
+    if (mealTypeHint) extraContext += `\nユーザーの申告：この食事は「${mealTypeHint}」です。`;
+    if (quantityNote) extraContext += `\n量の補足情報：「${quantityNote}」`;
 
-【分析手順】
-Step 1: 写真に映っている料理を一品ずつすべて特定してください。
-Step 2: 各料理の量を、器のサイズや一般的な一人前の量を基準に推定してください（グラム単位）。
-Step 3: 各料理の主な食材を特定し、それぞれの栄養素を日本食品標準成分表（八訂）に基づいて計算してください。
-Step 4: 全料理の合計を算出してください。
+    // ========== STAGE 1: Identify dishes ==========
+    const stage1System = `あなたは日本の食事写真を分析する専門家です。写真に映っているすべての料理と食材を正確に特定してください。
 
-【重要な推定ルール】
-- 白米1膳 = 約150g（252kcal, P3.8g, F0.5g, C55.7g）
-- 味噌汁1杯 = 約200ml（40kcal前後、具材により変動）
-- 揚げ物は吸油率を考慮すること（とんかつ: 衣が油を10-15%吸収）
-- 調味料（醤油・砂糖・みりん・油）の栄養素も必ず加算すること
-- ポーションサイズは器との比率から慎重に推定すること
+【ルール】
+- 料理名は具体的に書くこと（×「炒め物」→ ○「豚肉とキャベツの野菜炒め」）
+- 器のサイズから量を推定すること（茶碗1杯のご飯=約150g、味噌汁椀1杯=約200ml）
+- 調味料・油も考慮すること（炒め物には油約大さじ1=12g等）
+- ソース・ドレッシング・マヨネーズなどの付属調味料も含めること
+- 日本の一般的な外食・家庭料理の一人前サイズを基準にすること
+- 見落としがないよう、メインのおかず・副菜・汁物・主食・飲み物すべてリストアップすること${extraContext}
 
-【回答形式】
-以下のJSON形式のみで回答してください。それ以外のテキストは不要です。
+以下のJSON形式で回答してください（JSON以外のテキストは不要）：
 {
   "dishes": [
-    {
-      "name": "料理名",
-      "estimated_weight_g": 推定グラム数(整数),
-      "calories": カロリー(整数),
-      "protein": タンパク質(小数点1桁),
-      "fat": 脂質(小数点1桁),
-      "carbs": 炭水化物(小数点1桁),
-      "fiber": 食物繊維(小数点1桁)
-    }
-  ],
-  "total": {
-    "meal_type": "朝食 or 昼食 or 夕食 or 間食",
-    "calories": 合計カロリー(整数),
-    "protein": 合計タンパク質(小数点1桁),
-    "fat": 合計脂質(小数点1桁),
-    "carbs": 合計炭水化物(小数点1桁),
-    "fiber": 合計食物繊維(小数点1桁)
-  },
-  "feedback": "アドバイス（下記ルール参照）"
-}
+    { "name": "料理名", "weight_g": 推定グラム数, "ingredients": ["主な食材1", "食材2"] }
+  ]
+}`;
 
-【アドバイスのルール（250文字以内）】
-- 良い点と改善点を必ず両方含めること
-- 改善点には具体的な代替食材・料理を提示すること（例：「フランクフルトの代わりに鶏むね肉のグリルにすると脂質を抑えられます」）
-- PFCバランス（理想: P15-20%, F20-25%, C50-60%）について一言コメントすること
-- 日本の一般的な食事を前提とすること
-- 簡潔に3〜4文でまとめること`
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "image_url",
-                image_url: { url: resolvedImageUrl }
-              },
-              {
-                type: "text",
-                text: "この食事の写真を一品ずつ分析し、合計の栄養素を算出してください。"
-              }
-            ]
-          }
+    const stage1Content = await callAI(LOVABLE_API_KEY, [
+      { role: "system", content: stage1System },
+      {
+        role: "user",
+        content: [
+          { type: "image_url", image_url: { url: resolvedImageUrl, detail: "high" } },
+          { type: "text", text: "この食事の写真に映っているすべての料理を特定してください。" },
         ],
-      }),
-    });
+      },
+    ]);
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI Gateway error:", aiResponse.status, errText);
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "レート制限に達しました。しばらく待ってから再試行してください。" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "クレジットが不足しています。" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: `AI分析でエラーが発生しました (${aiResponse.status})`, fallback: true }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    let stage1Result;
+    try { stage1Result = parseJson(stage1Content); } catch { stage1Result = null; }
 
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
-
-    // Parse JSON from AI response
-    let analysis;
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-    } catch {
-      console.error("Failed to parse AI response:", content);
-      analysis = null;
-    }
-
-    if (!analysis) {
-      return new Response(JSON.stringify({ error: "AI分析に失敗しました。もう一度お試しください。" }), {
+    if (!stage1Result?.dishes?.length) {
+      console.error("Stage 1 failed:", stage1Content);
+      return new Response(JSON.stringify({ error: "料理の特定に失敗しました。もう一度お試しください。" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Extract totals - support both new (dishes+total) and legacy flat format
+    console.log("Stage 1 result:", JSON.stringify(stage1Result));
+
+    // ========== STAGE 2: Calculate nutrition ==========
+    const dishList = stage1Result.dishes.map((d: { name: string; weight_g: number; ingredients: string[] }, i: number) =>
+      `${i + 1}. ${d.name}（${d.weight_g}g）- 食材: ${d.ingredients.join("、")}`
+    ).join("\n");
+
+    const mealTypeInstruction = mealTypeHint
+      ? `\nユーザー申告の食事タイプ: ${mealTypeHint}（この情報を meal_type に使用してください）`
+      : "";
+
+    const stage2System = `あなたは管理栄養士です。以下の食事内容の栄養素を、日本食品標準成分表2020年版（八訂）に基づいて正確に計算してください。
+
+【食事内容】
+${dishList}
+${mealTypeInstruction}
+
+【計算ルール】
+- 各料理について食材ごとに栄養素を計算し、合算すること
+- 調理による栄養素の変化を考慮すること（揚げ物の吸油率10-15%、茹で野菜のビタミン損失等）
+- カロリーはアトウォーター係数（タンパク質4kcal/g、脂質9kcal/g、炭水化物4kcal/g）で検算すること
+- 推定値に自信がない場合は、少し多めに見積もること（ダイエット目的のユーザーが多いため）
+- 調味料（醤油・砂糖・みりん・油・マヨネーズ等）の栄養素も必ず加算すること
+
+【アドバイスのルール（250文字以内）】
+- 良い点を1つ、改善点を1〜2つ、具体的な代替案とセットで提示
+- 代替案は入手しやすい日本の食材で提案（例：「フランクフルトを鶏むね肉のグリルに置き換えると脂質が約15g減らせます」）
+- PFCバランスの偏りがあれば具体的な数値で指摘
+- 4文以内に簡潔にまとめる
+
+以下のJSON形式のみで回答（JSON以外のテキストは不要）：
+{
+  "dishes": [
+    { "name": "料理名", "weight_g": グラム(整数), "calories": kcal(整数), "protein": g(小数点1桁), "fat": g(小数点1桁), "carbs": g(小数点1桁), "fiber": g(小数点1桁) }
+  ],
+  "total": { "meal_type": "朝食 or 昼食 or 夕食 or 間食", "calories": 合計kcal(整数), "protein": g(小数点1桁), "fat": g(小数点1桁), "carbs": g(小数点1桁), "fiber": g(小数点1桁) },
+  "feedback": "アドバイステキスト"
+}`;
+
+    const stage2Content = await callAI(LOVABLE_API_KEY, [
+      { role: "system", content: stage2System },
+      { role: "user", content: "上記の食事内容の栄養素を計算してください。" },
+    ]);
+
+    let analysis;
+    try { analysis = parseJson(stage2Content); } catch { analysis = null; }
+
+    if (!analysis) {
+      console.error("Stage 2 failed:", stage2Content);
+      return new Response(JSON.stringify({ error: "栄養素の計算に失敗しました。もう一度お試しください。" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Stage 2 result:", JSON.stringify(analysis));
+
     const total = analysis.total || analysis;
     const dishes = analysis.dishes || null;
 
@@ -159,7 +166,7 @@ Step 4: 全料理の合計を算出してください。
     const { error: updateError } = await supabase
       .from("meals")
       .update({
-        meal_type: total.meal_type || "食事",
+        meal_type: total.meal_type || mealTypeHint || "食事",
         calories: total.calories || 0,
         protein: total.protein || 0,
         fat: total.fat || 0,
@@ -179,11 +186,21 @@ Step 4: 全料理の合計を算出してください。
     return new Response(JSON.stringify({ success: true, analysis: { ...total, dishes, feedback: analysis.feedback } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("analyze-meal error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const err = e as { status?: number; message?: string };
+    if (err.status === 429) {
+      return new Response(JSON.stringify({ error: "レート制限に達しました。しばらく待ってから再試行してください。" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (err.status === 402) {
+      return new Response(JSON.stringify({ error: "クレジットが不足しています。" }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ error: err.message || "Unknown error" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
