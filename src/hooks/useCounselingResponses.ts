@@ -11,6 +11,7 @@ export interface CounselingResponse {
   gender: string | null;
   phone: string | null;
   email: string | null;
+  ward: string | null;
   purposes: string[] | null;
   experience_level: string | null;
   target_frequency: string | null;

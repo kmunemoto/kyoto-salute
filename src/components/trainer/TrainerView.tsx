@@ -9,13 +9,15 @@ import TrainerSchedule from "./TrainerSchedule";
 import TrainerMessages from "./TrainerMessages";
 import TrainerExerciseManager from "./TrainerExerciseManager";
 import TrainerGymSettings from "./TrainerGymSettings";
+import CounselingResponseList from "./CounselingResponseList";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
+import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import { supabase } from "@/integrations/supabase/client";
 
-export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "gym-settings";
+export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "counseling" | "gym-settings";
 
 const TrainerView = () => {
   const [tab, setTab] = useState<TrainerTab>("dashboard");
@@ -23,6 +25,7 @@ const TrainerView = () => {
   const { signOut } = useAuth();
   const { user } = useAuth();
   const { count: unreadMessages, refetch: refetchUnread } = useUnreadCount();
+  const { unreadCount: unreadCounseling } = useCounselingResponses();
 
   const handleSelectClient = (clientId: string) => {
     setSelectedClientId(clientId);
@@ -102,6 +105,7 @@ const TrainerView = () => {
             activeTab={tab}
             onTabChange={(t) => { setTab(t); setSelectedClientId(null); }}
             unreadMessages={unreadMessages}
+            unreadCounseling={unreadCounseling}
           />
           <main className="flex-1 ml-0 md:ml-60 p-3 sm:p-4 md:p-8 max-w-6xl" key={`${tab}-${selectedClientId}`}>
               {tab === "dashboard" && <TrainerDashboard onSelectClient={handleSelectClient} />}
@@ -110,6 +114,7 @@ const TrainerView = () => {
               {tab === "schedule" && <TrainerSchedule />}
               {tab === "messages" && <TrainerMessages />}
               {tab === "exercises" && <TrainerExerciseManager />}
+              {tab === "counseling" && <CounselingResponseList />}
               {tab === "gym-settings" && <TrainerGymSettings onSignOut={signOut} />}
             </main>
         </div>
