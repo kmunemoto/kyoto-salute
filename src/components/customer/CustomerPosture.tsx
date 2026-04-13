@@ -116,17 +116,35 @@ const CustomerPosture = () => {
     }
   }, [getDetector]);
 
-  const onImgLoad = useCallback(() => {
+  const syncCanvasSize = useCallback(() => {
     const img = imgRef.current;
+    const canvas = canvasRef.current;
     if (!img) return;
+    const w = img.clientWidth;
+    const h = img.clientHeight;
     setImgSize({
-      w: img.clientWidth,
-      h: img.clientHeight,
+      w,
+      h,
       natW: img.naturalWidth,
       natH: img.naturalHeight,
     });
+    if (canvas) {
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+    }
+  }, []);
+
+  const onImgLoad = useCallback(() => {
+    syncCanvasSize();
     analyze();
-  }, [analyze]);
+  }, [analyze, syncCanvasSize]);
+
+  // Resize handler
+  useEffect(() => {
+    const handleResize = () => syncCanvasSize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [syncCanvasSize]);
 
   // Draw skeleton
   useEffect(() => {
@@ -287,17 +305,17 @@ const CustomerPosture = () => {
       ) : (
         <div className="space-y-3">
           <Card className="overflow-hidden">
-            <div className="relative inline-block w-full">
+            <div className="relative w-full">
               <img
                 ref={imgRef}
                 src={imageUrl}
                 alt="姿勢解析用画像"
-                className="w-full h-auto block"
+                className="block w-full h-auto"
                 onLoad={onImgLoad}
               />
               <canvas
                 ref={canvasRef}
-                className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                className="absolute top-0 left-0 pointer-events-none"
               />
               {isLoading && (
                 <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
