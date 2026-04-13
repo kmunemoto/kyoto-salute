@@ -15,7 +15,7 @@ import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
 import { supabase } from "@/integrations/supabase/client";
 
-export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "gym-settings";
+export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "counseling" | "gym-settings";
 
 const TrainerView = () => {
   const [tab, setTab] = useState<TrainerTab>("dashboard");
