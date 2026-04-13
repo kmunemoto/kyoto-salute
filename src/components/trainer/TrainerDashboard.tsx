@@ -122,6 +122,20 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
           )}
         </section>
 
+        {/* Counseling Responses */}
+        <section>
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <ClipboardList className="w-3.5 h-3.5" />
+            新規カウンセリング回答
+            {counselingUnread > 0 && (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 ml-1">
+                {counselingUnread}件
+              </Badge>
+            )}
+          </h2>
+          <CounselingResponseList />
+        </section>
+
         {/* Revenue Chart */}
         <section>
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
