@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, Calendar, History, Clock, Dumbbell, Award, Bone, Smartphone } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, History, Clock, Dumbbell, Award, Bone, Smartphone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,10 +31,6 @@ const CustomerSettings = () => {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  // Google Calendar state
-  const [gcalLinked, setGcalLinked] = useState(false);
-  const [gcalLoading, setGcalLoading] = useState(true);
-
   const isLineLinked = !!profile?.line_user_id;
 
 
@@ -44,22 +40,7 @@ const CustomerSettings = () => {
     setDisplayName(profile?.display_name || "");
   }, [profile?.display_name]);
 
-  // Check Google Calendar link status
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      setGcalLoading(true);
-      const { data } = await supabase
-        .from("google_calendar_tokens" as any)
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      setGcalLinked(!!data);
-      setGcalLoading(false);
-    })();
-  }, [user]);
-
-  // Listen for LINE link callback & Google Calendar callback
+  // Listen for LINE link callback
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "line-link-result") {
@@ -68,14 +49,6 @@ const CustomerSettings = () => {
           refetch();
         } else {
           toast.error("LINE連携に失敗しました");
-        }
-      }
-      if (e.data?.type === "google-calendar-result") {
-        if (e.data.success) {
-          toast.success("Googleカレンダー連携が完了しました！");
-          setGcalLinked(true);
-        } else {
-          toast.error("Googleカレンダー連携に失敗しました");
         }
       }
     };
@@ -90,39 +63,6 @@ const CustomerSettings = () => {
     const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${user.id}&scope=profile%20openid`;
     window.open(lineAuthUrl, "line-link", "width=500,height=700");
-  };
-
-  const handleGcalLink = async () => {
-    if (!user) return;
-    const popup = window.open("", "gcal-link", "width=500,height=700");
-    try {
-      const { data, error } = await supabase.functions.invoke("google-calendar-auth-url", {
-        body: { user_id: user.id },
-      });
-      if (error || !data?.url) {
-        popup?.close();
-        toast.error("認証URLの取得に失敗しました");
-        return;
-      }
-      if (popup) popup.location.href = data.url;
-    } catch {
-      popup?.close();
-      toast.error("エラーが発生しました");
-    }
-  };
-
-  const handleGcalUnlink = async () => {
-    if (!user) return;
-    const { error } = await supabase
-      .from("google_calendar_tokens" as any)
-      .delete()
-      .eq("user_id", user.id);
-    if (error) {
-      toast.error("連携の解除に失敗しました");
-    } else {
-      toast.success("Googleカレンダー連携を解除しました");
-      setGcalLinked(false);
-    }
   };
 
   const handleLineUnlink = async () => {
@@ -249,54 +189,6 @@ const CustomerSettings = () => {
                   >
                     <MessageCircle className="w-3.5 h-3.5 mr-1" />
                     LINEと連携する
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Googleカレンダー連携 */}
-      <section>
-        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5" />
-          Googleカレンダー連携
-        </h2>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${gcalLinked ? "bg-blue-500/10" : "bg-muted"}`}>
-                <Calendar className={`w-4 h-4 ${gcalLinked ? "text-blue-500" : "text-muted-foreground"}`} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold">Googleカレンダー</p>
-                <p className="text-[11px] text-muted-foreground mb-2">
-                  連携すると、予約がGoogleカレンダーに自動で追加されます
-                </p>
-                {gcalLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                ) : gcalLinked ? (
-                  <div className="space-y-2">
-                    <div className="bg-blue-500/5 rounded-lg p-2 border border-blue-500/20">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
-                        Googleカレンダー連携済み
-                      </p>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={handleGcalUnlink} className="text-xs h-7">
-                      <Unlink className="w-3 h-3 mr-1" />
-                      連携を解除
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={handleGcalLink}
-                    className="text-xs bg-blue-500 hover:bg-blue-600 text-white"
-                  >
-                    <Calendar className="w-3.5 h-3.5 mr-1" />
-                    Googleカレンダーと連携する
                   </Button>
                 )}
               </div>
