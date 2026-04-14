@@ -168,7 +168,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
     const parts: string[] = [];
 
     if (maxSessions > 0 && achieveRate >= 100) {
-      parts.push("今期の目標回数を達成しました！素晴らしいです🎉");
+      parts.push("今回の目標回数を達成しました！素晴らしいです🎉");
     } else if (maxSessions > 0 && isCurrentCycle && remainingSessions > 0 && remainingDays > 0) {
       const pace = remainingDays / remainingSessions;
       if (pace >= 7) {
@@ -179,7 +179,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         parts.push(`残り${remainingDays}日で${remainingSessions}回の来店が必要です。頑張りましょう！`);
       }
     } else if (sessionCount === 0) {
-      parts.push("今期はまだ来店がありません。一緒に頑張りましょう！");
+      parts.push("今回はまだ来店がありません。一緒に頑張りましょう！");
     }
 
     if (weightChange != null && weightChange < -0.5) {
@@ -228,7 +228,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-lg font-bold flex-1 text-center">今期のレポート</h1>
+        <h1 className="text-lg font-bold flex-1 text-center">今回のレポート</h1>
         <div className="w-8" />
       </div>
 
@@ -240,7 +240,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         <div className="flex items-center gap-2">
           <span className="text-base font-bold">{periodLabel}</span>
           {isCurrentCycle && (
-            <Badge variant="secondary" className="text-xs">今期</Badge>
+            <Badge variant="secondary" className="text-xs">今回</Badge>
           )}
         </div>
         <Button variant="ghost" size="icon" onClick={() => setCycleOffset(o => o + 1)} disabled={!canGoNext}>
@@ -276,14 +276,14 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
                     <CalendarDays className="w-3.5 h-3.5" />
-                    今期の予約予定
+                    今回の予約予定
                   </span>
                   <span className="text-sm font-bold">あと{scheduledBookings.length}回</span>
                 </div>
               )}
               {sessionDiff !== 0 && (
                 <p className="text-xs text-muted-foreground text-center">
-                  前期より{sessionDiff > 0 ? `+${sessionDiff}` : sessionDiff}回
+                  前回より{sessionDiff > 0 ? `+${sessionDiff}` : sessionDiff}回
                 </p>
               )}
               {currentStreak > 0 && isCurrentCycle && (
@@ -429,12 +429,12 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
               {latestDiag.image_url && prevDiag?.image_url && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">前期</p>
+                    <p className="text-xs text-muted-foreground mb-1">前回</p>
                     <img src={prevDiag.image_url} alt="前期" className="rounded-lg w-full aspect-[3/4] object-cover" />
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">今期</p>
-                    <img src={latestDiag.image_url} alt="今期" className="rounded-lg w-full aspect-[3/4] object-cover" />
+                    <p className="text-xs text-muted-foreground mb-1">今回</p>
+                    <img src={latestDiag.image_url} alt="今回" className="rounded-lg w-full aspect-[3/4] object-cover" />
                   </div>
                 </div>
               )}

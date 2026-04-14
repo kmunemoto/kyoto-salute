@@ -383,7 +383,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
                   <BarChart3 className="w-5 h-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm">📊 今期のレポート</p>
+                  <p className="font-bold text-sm">📊 今回のレポート</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {(() => {
                       const currentCycle = getCycleWindow(now);
