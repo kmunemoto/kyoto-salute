@@ -161,7 +161,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
             </div>
             <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-full px-3 py-1">
               <Flame className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">継続中</span>
+              <span className="text-xs font-medium">{currentStreak > 0 ? `${currentStreak}週連続` : '継続中'}</span>
             </div>
           </div>
         </div>
