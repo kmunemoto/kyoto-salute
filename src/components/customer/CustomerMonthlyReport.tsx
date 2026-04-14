@@ -434,7 +434,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">今回</p>
-                    <img src={latestDiag.image_url} alt="今期" className="rounded-lg w-full aspect-[3/4] object-cover" />
+                    <img src={latestDiag.image_url} alt="今回" className="rounded-lg w-full aspect-[3/4] object-cover" />
                   </div>
                 </div>
               )}
