@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -313,6 +313,30 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           </CardContent>
         </Card>
       )}
+
+      {/* Monthly Report Card */}
+      <section>
+        <Card className="card-hover border-l-4 border-l-accent cursor-pointer" onClick={() => onNavigate?.("report")}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-accent-foreground" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm">📊 今月のレポート</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {bookings.length > 0 ? `来店${bookings.length}回` : ""}
+                    {latest && latest.weight != null && weightChange ? ` / 体重${parseFloat(weightChange) <= 0 ? '' : '+'}${weightChange}kg` : ""}
+                    {!bookings.length && !latest ? "データを確認する" : ""}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Posture Check CTA */}
       <section>
