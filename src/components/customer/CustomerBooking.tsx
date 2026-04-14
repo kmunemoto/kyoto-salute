@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMyBookings, createBooking, cancelBooking, BookingWithTime } from "@/hooks/useBookings";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
-import { format } from "date-fns";
+import { format, addMonths, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
