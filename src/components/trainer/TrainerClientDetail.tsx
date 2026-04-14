@@ -38,6 +38,7 @@ import { format, addMonths, differenceInDays, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
+import TrainerMonthlyComment from "./TrainerMonthlyComment";
 
 interface TrainerClientDetailProps {
   clientId: string;
