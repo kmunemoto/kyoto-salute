@@ -79,6 +79,50 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
     ? cycleBookings.findIndex((b) => b.id === nextBooking.id) + 1
     : 0;
 
+  // Streak LINE notification
+  useEffect(() => {
+    if (!user || streakLoading || streakNotifiedRef.current || currentStreak < 4) return;
+    const checkAndNotify = async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("last_streak_notified, line_user_id")
+        .eq("user_id", user.id)
+        .single();
+      if (!prof?.line_user_id) return;
+
+      const lastNotified = (prof as any).last_streak_notified || 0;
+      const milestones = [4, 8, 12];
+      const hitMilestone = milestones.find(m => currentStreak >= m && lastNotified < m);
+      const isBestRecord = currentStreak > lastNotified && currentStreak > (profile?.best_streak || 0);
+
+      let message = "";
+      if (hitMilestone) {
+        const months = Math.floor(hitMilestone / 4);
+        if (hitMilestone === 4) message = `🔥 4週連続来店達成！1ヶ月間継続できています。この調子で頑張りましょう！`;
+        else if (hitMilestone === 8) message = `🔥 8週連続来店達成！2ヶ月間の継続、素晴らしいです！💪`;
+        else if (hitMilestone === 12) message = `🏆 12週連続来店達成！3ヶ月間の継続は本当にすごいことです！`;
+      } else if (isBestRecord) {
+        message = `🎉 自己ベスト更新！${currentStreak}週連続来店を達成しました！`;
+      }
+
+      if (message && currentStreak > lastNotified) {
+        streakNotifiedRef.current = true;
+        try {
+          await supabase.functions.invoke("send-line-message", {
+            body: { userId: prof.line_user_id, message },
+          });
+          await supabase
+            .from("profiles")
+            .update({ last_streak_notified: currentStreak } as any)
+            .eq("user_id", user.id);
+        } catch (e) {
+          // fire-and-forget
+        }
+      }
+    };
+    checkAndNotify();
+  }, [user, currentStreak, streakLoading]);
+
   if (loading || bookingsLoading || metricsLoading) {
     return (
       <div className="flex items-center justify-center py-20">
