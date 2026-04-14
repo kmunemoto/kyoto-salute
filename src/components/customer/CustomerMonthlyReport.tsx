@@ -24,6 +24,7 @@ interface Props {
 const CustomerMonthlyReport = ({ onBack }: Props) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { currentStreak, bestStreak } = useStreak(user?.id);
   const [targetMonth, setTargetMonth] = useState(() => startOfMonth(new Date()));
   const [bookings, setBookings] = useState<any[]>([]);
   const [measurements, setMeasurements] = useState<any[]>([]);
