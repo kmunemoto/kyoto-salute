@@ -1124,6 +1124,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           <DiagnosisHistorySection userId={clientId} />
         </TabsContent>
 
+        {/* Monthly Report */}
+        <TabsContent value="report">
+          <TrainerMonthlyComment clientId={clientId} />
+        </TabsContent>
+
         {/* Chat */}
         <TabsContent value="chat">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
