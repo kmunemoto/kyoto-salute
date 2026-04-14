@@ -178,7 +178,16 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         </Card>
       )}
 
-      {/* Membership Period Card */}
+      {/* Streak Card */}
+      {!streakLoading && (
+        <StreakCard
+          currentStreak={currentStreak}
+          bestStreak={bestStreak}
+          hasFutureBookingThisWeek={hasFutureBookingThisWeek}
+        />
+      )}
+
+
       {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
         const currentCycle = getCycleWindow(now);
         if (!currentCycle) return null;
