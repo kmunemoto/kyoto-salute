@@ -38,13 +38,16 @@ const CustomerBooking = () => {
   const [bookedSlots, setBookedSlots] = useState<{ date: string; startTime: string; endTime: string; isBlock: boolean }[]>([]);
 
   // Set of dates (yyyy-MM-dd) where this customer has future bookings — for calendar dots
-  const bookedDateSet = useMemo(() => {
+  const { futureDateSet, pastDateSet } = useMemo(() => {
     const today = format(new Date(), "yyyy-MM-dd");
-    const set = new Set<string>();
+    const future = new Set<string>();
+    const past = new Set<string>();
     myBookings.forEach((b) => {
-      if (b.status !== "キャンセル済み" && b.date >= today) set.add(b.date);
+      if (b.status === "キャンセル済み") return;
+      if (b.date >= today) future.add(b.date);
+      else past.add(b.date);
     });
-    return set;
+    return { futureDateSet: future, pastDateSet: past };
   }, [myBookings]);
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
@@ -401,17 +404,18 @@ const CustomerBooking = () => {
                   components={{
                     DayContent: ({ date: dayDate }) => {
                       const key = format(dayDate, "yyyy-MM-dd");
-                      const hasBooking = bookedDateSet.has(key);
+                      const isFuture = futureDateSet.has(key);
+                      const isPast = pastDateSet.has(key);
                       return (
                         <div className="relative flex flex-col items-center">
                           <span>{dayDate.getDate()}</span>
-                          {hasBooking && (
+                          {(isFuture || isPast) && (
                             <span
                               className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full"
                               style={{
                                 width: 6,
                                 height: 6,
-                                backgroundColor: "#C4A265",
+                                backgroundColor: isFuture ? "#C4A265" : "#999",
                               }}
                             />
                           )}
