@@ -14,6 +14,8 @@ export interface Profile {
   cycle_start_date: string | null;
   show_usage_period: boolean;
   calendar_token: string | null;
+  best_streak: number;
+  last_streak_notified: number;
   created_at: string;
   updated_at: string;
 }
