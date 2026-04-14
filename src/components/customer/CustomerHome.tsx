@@ -373,7 +373,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         </Card>
       )}
 
-      {/* Monthly Report Card */}
+      {/* Cycle Report Card */}
       <section>
         <Card className="card-hover border-l-4 border-l-accent cursor-pointer" onClick={() => onNavigate?.("report")}>
           <CardContent className="p-4">
@@ -383,12 +383,19 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
                   <BarChart3 className="w-5 h-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm">📊 今月のレポート</p>
+                  <p className="font-bold text-sm">📊 今期のレポート</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {(() => {
-                      const visitedCount = bookings.filter(b => b.status !== "キャンセル済み" && new Date(`${b.date}T${b.endTime || "00:00"}`) < now).length;
+                      const currentCycle = getCycleWindow(now);
+                      if (!currentCycle) return "データを確認する";
+                      const cycleVisited = bookings.filter(b => {
+                        if (b.status === "キャンセル済み") return false;
+                        const d = parseISO(b.date);
+                        const bTime = new Date(`${b.date}T${b.endTime || "00:00"}`);
+                        return d >= currentCycle.start && d < currentCycle.end && bTime < now;
+                      }).length;
                       const parts: string[] = [];
-                      if (visitedCount > 0) parts.push(`来店${visitedCount}回`);
+                      if (cycleVisited > 0) parts.push(`来店${cycleVisited}回`);
                       if (latest && latest.weight != null && weightChange) parts.push(`体重${parseFloat(weightChange) <= 0 ? '' : '+'}${weightChange}kg`);
                       return parts.length > 0 ? parts.join(" / ") : "データを確認する";
                     })()}
