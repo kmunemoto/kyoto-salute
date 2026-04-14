@@ -223,6 +223,12 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                   先月より{sessionDiff > 0 ? `+${sessionDiff}` : sessionDiff}回
                 </p>
               )}
+              {currentStreak > 0 && (
+                <div className="flex items-center justify-center gap-1.5 pt-1">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-bold">🔥 {currentStreak}週連続来店中！</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </section>
