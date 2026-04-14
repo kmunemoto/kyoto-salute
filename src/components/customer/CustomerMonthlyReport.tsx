@@ -73,7 +73,10 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const currentPlan = profile?.plan;
   const hasPlan = !!currentPlan && currentPlan !== '初回無料体験';
   const maxSessions = hasPlan ? (planMaxSessions[currentPlan] || 4) : 0;
-  const sessionCount = bookings.length;
+  const now = new Date();
+  const visitedBookings = bookings.filter(b => new Date(b.booking_date) < now);
+  const scheduledBookings = bookings.filter(b => new Date(b.booking_date) >= now);
+  const sessionCount = visitedBookings.length;
   const prevSessionCount = prevBookings.length;
   const achieveRate = maxSessions > 0 ? Math.min(100, Math.round((sessionCount / maxSessions) * 100)) : 0;
   const sessionDiff = sessionCount - prevSessionCount;
@@ -153,7 +156,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
     );
   }
 
-  const hasTraining = sessionCount > 0;
+  const hasTraining = sessionCount > 0 || scheduledBookings.length > 0;
   const hasMeasurements = measurements.length > 0;
   const hasMeals = meals.length > 0;
   const hasDiagnosis = !!latestDiag;
@@ -190,7 +193,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
           <Card>
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">来店回数</span>
+                <span className="text-sm font-medium">来店済み</span>
                 <span className="text-2xl font-extrabold">
                   {sessionCount}
                   {maxSessions > 0 && <span className="text-sm font-normal text-muted-foreground">/{maxSessions}回</span>}
@@ -203,6 +206,15 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                     {achieveRate >= 100 ? "達成！🎉" : `あと${maxSessions - sessionCount}回！`}
                   </p>
                 </>
+              )}
+              {scheduledBookings.length > 0 && (
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    今月の予約予定
+                  </span>
+                  <span className="text-sm font-bold">あと{scheduledBookings.length}回</span>
+                </div>
               )}
               {sessionDiff !== 0 && (
                 <p className="text-xs text-muted-foreground text-center">
