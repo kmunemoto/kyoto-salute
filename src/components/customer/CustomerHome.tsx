@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { Button } from "@/components/ui/button";
