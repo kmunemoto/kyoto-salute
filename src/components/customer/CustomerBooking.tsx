@@ -375,7 +375,6 @@ const CustomerBooking = () => {
                   onSelect={(d) => {
                     if (d) {
                       const key = format(d, "yyyy-MM-dd");
-                      // Show toast if customer already has a booking on this date
                       const existing = myBookings.filter(
                         (b) => b.date === key && b.status !== "キャンセル済み"
                       );
@@ -390,6 +389,8 @@ const CustomerBooking = () => {
                     setSelectedSlot(null);
                   }}
                   locale={ja}
+                  fromDate={startOfDay(new Date())}
+                  toDate={addMonths(startOfDay(new Date()), 1)}
                   disabled={(date) => {
                     const now = new Date();
                     const latestSlot = new Date(date);
