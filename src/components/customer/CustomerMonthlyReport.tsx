@@ -3,11 +3,12 @@ import { ArrowLeft, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useStreak } from "@/hooks/useStreak";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth, subMonths, addMonths, isBefore, parseISO } from "date-fns";
+import { format, addMonths, parseISO, differenceInDays, isBefore } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
 
@@ -21,11 +22,24 @@ interface Props {
   onBack: () => void;
 }
 
+/** Given a cycle_start_date and a target date, find the cycle window containing that date */
+const getCycleWindow = (cycleStartDate: string, targetDate: Date) => {
+  let cycleStart = parseISO(cycleStartDate);
+  while (addMonths(cycleStart, 1) <= targetDate) {
+    cycleStart = addMonths(cycleStart, 1);
+  }
+  // Also handle if target is before the first cycle start
+  while (cycleStart > targetDate) {
+    cycleStart = addMonths(cycleStart, -1);
+  }
+  return { start: cycleStart, end: addMonths(cycleStart, 1) };
+};
+
 const CustomerMonthlyReport = ({ onBack }: Props) => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { currentStreak, bestStreak } = useStreak(user?.id);
-  const [targetMonth, setTargetMonth] = useState(() => startOfMonth(new Date()));
+  const [cycleOffset, setCycleOffset] = useState(0); // 0 = current cycle, -1 = previous, etc.
   const [bookings, setBookings] = useState<any[]>([]);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [meals, setMeals] = useState<any[]>([]);
@@ -35,29 +49,63 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const [trainerComment, setTrainerComment] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const monthStart = startOfMonth(targetMonth);
-  const monthEnd = endOfMonth(targetMonth);
-  const prevMonthStart = startOfMonth(subMonths(targetMonth, 1));
-  const prevMonthEnd = endOfMonth(subMonths(targetMonth, 1));
-  const canGoNext = isBefore(addMonths(monthStart, 1), addMonths(startOfMonth(new Date()), 1));
+  const cycleStartDate = profile?.cycle_start_date;
+
+  // Compute current cycle window then apply offset
+  const { cycleStart, cycleEnd, prevCycleStart, prevCycleEnd, isCurrentCycle } = useMemo(() => {
+    if (!cycleStartDate) {
+      // Fallback to calendar month if no cycle_start_date
+      const now = new Date();
+      const base = new Date(now.getFullYear(), now.getMonth(), 1);
+      const shifted = addMonths(base, cycleOffset);
+      return {
+        cycleStart: shifted,
+        cycleEnd: addMonths(shifted, 1),
+        prevCycleStart: addMonths(shifted, -1),
+        prevCycleEnd: shifted,
+        isCurrentCycle: cycleOffset === 0,
+      };
+    }
+    const now = new Date();
+    const currentCycle = getCycleWindow(cycleStartDate, now);
+    const shifted = {
+      start: addMonths(currentCycle.start, cycleOffset),
+      end: addMonths(currentCycle.end, cycleOffset),
+    };
+    const prev = {
+      start: addMonths(shifted.start, -1),
+      end: shifted.start,
+    };
+    return {
+      cycleStart: shifted.start,
+      cycleEnd: shifted.end,
+      prevCycleStart: prev.start,
+      prevCycleEnd: prev.end,
+      isCurrentCycle: cycleOffset === 0,
+    };
+  }, [cycleStartDate, cycleOffset]);
+
+  const canGoNext = cycleOffset < 0;
 
   useEffect(() => {
     if (!user) return;
     const fetchAll = async () => {
       setLoading(true);
-      const msStr = format(monthStart, "yyyy-MM-dd");
-      const meStr = format(monthEnd, "yyyy-MM-dd");
-      const pmsStr = format(prevMonthStart, "yyyy-MM-dd");
-      const pmeStr = format(prevMonthEnd, "yyyy-MM-dd");
+      const csStr = cycleStart.toISOString();
+      const ceStr = cycleEnd.toISOString();
+      const pcsStr = prevCycleStart.toISOString();
+      const pceStr = prevCycleEnd.toISOString();
+      // For monthly_reports, use month as the first day of the cycle
+      const monthStr = format(cycleStart, "yyyy-MM-dd");
 
       const [bRes, mRes, mlRes, dRes, pdRes, pbRes, tcRes] = await Promise.all([
-        supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", msStr).lte("booking_date", meStr + "T23:59:59").neq("status", "キャンセル済み"),
-        supabase.from("user_measurements").select("*").eq("user_id", user.id).gte("measured_date", msStr).lte("measured_date", meStr).order("measured_date", { ascending: true }),
-        supabase.from("meals").select("*").eq("user_id", user.id).gte("created_at", msStr).lte("created_at", meStr + "T23:59:59"),
-        supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", msStr).lte("created_at", meStr + "T23:59:59").order("created_at", { ascending: true }),
-        supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", pmsStr).lte("created_at", pmeStr + "T23:59:59").order("created_at", { ascending: false }).limit(1),
-        supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", pmsStr).lte("booking_date", pmeStr + "T23:59:59").neq("status", "キャンセル済み"),
-        supabase.from("monthly_reports" as any).select("*").eq("user_id", user.id).eq("month", msStr).maybeSingle(),
+        supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", csStr).lt("booking_date", ceStr).neq("status", "キャンセル済み"),
+        supabase.from("user_measurements").select("*").eq("user_id", user.id).gte("measured_date", format(cycleStart, "yyyy-MM-dd")).lte("measured_date", format(cycleEnd, "yyyy-MM-dd")).order("measured_date", { ascending: true }),
+        supabase.from("meals").select("*").eq("user_id", user.id).gte("created_at", csStr).lt("created_at", ceStr),
+        supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", csStr).lt("created_at", ceStr).order("created_at", { ascending: true }),
+        supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", pcsStr).lt("created_at", pceStr).order("created_at", { ascending: false }).limit(1),
+        supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", pcsStr).lt("booking_date", pceStr).neq("status", "キャンセル済み"),
+        supabase.from("monthly_reports" as any).select("*").eq("user_id", user.id).eq("month", monthStr).maybeSingle(),
       ]);
 
       setBookings(bRes.data || []);
@@ -70,7 +118,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       setLoading(false);
     };
     fetchAll();
-  }, [user, targetMonth]);
+  }, [user, cycleStart, cycleEnd]);
 
   const currentPlan = profile?.plan;
   const hasPlan = !!currentPlan && currentPlan !== '初回無料体験';
@@ -82,6 +130,9 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const prevSessionCount = prevBookings.length;
   const achieveRate = maxSessions > 0 ? Math.min(100, Math.round((sessionCount / maxSessions) * 100)) : 0;
   const sessionDiff = sessionCount - prevSessionCount;
+  const cycleDays = differenceInDays(cycleEnd, cycleStart);
+  const remainingDays = Math.max(0, differenceInDays(cycleEnd, now));
+  const remainingSessions = Math.max(0, maxSessions - sessionCount);
 
   // Measurements
   const firstM = measurements.length > 0 ? measurements[0] : null;
@@ -91,13 +142,12 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
 
   const measurementChartData = measurements.filter(m => m.weight != null).map(m => {
     const d = new Date(m.measured_date);
-    return { date: `${d.getDate()}日`, weight: m.weight, bodyFat: m.body_fat };
+    return { date: `${d.getMonth() + 1}/${d.getDate()}`, weight: m.weight, bodyFat: m.body_fat };
   });
 
   // Meals
   const analyzedMeals = meals.filter(m => m.analyzed);
   const mealDays = new Set(meals.map(m => format(new Date(m.created_at), "yyyy-MM-dd"))).size;
-  const daysInMonth = monthEnd.getDate();
   const avgCalories = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.calories || 0), 0) / analyzedMeals.length) : null;
   const avgProtein = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.protein || 0), 0) / analyzedMeals.length * 10) / 10 : null;
   const avgFat = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.fat || 0), 0) / analyzedMeals.length * 10) / 10 : null;
@@ -113,17 +163,23 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const latestDiag = diagnoses.length > 0 ? diagnoses[diagnoses.length - 1] : null;
   const prevDiag = prevDiagnoses.length > 0 ? prevDiagnoses[0] : null;
 
-  // AI advice
+  // AI advice - cycle-aware
   const generateAdvice = () => {
     const parts: string[] = [];
+
     if (maxSessions > 0 && achieveRate >= 100) {
-      parts.push("素晴らしい！今月はプランの回数を全て達成しました。");
-    } else if (maxSessions > 0 && achieveRate >= 75) {
-      parts.push("良いペースです！あと少しで全回数達成できます。");
-    } else if (maxSessions > 0 && achieveRate < 50 && sessionCount > 0) {
-      parts.push("来月はもう少しペースを上げてみましょう。");
+      parts.push("今期の目標回数を達成しました！素晴らしいです🎉");
+    } else if (maxSessions > 0 && isCurrentCycle && remainingSessions > 0 && remainingDays > 0) {
+      const pace = remainingDays / remainingSessions;
+      if (pace >= 7) {
+        parts.push(`あと${remainingDays}日で${remainingSessions}回の来店が必要です。週1ペースで達成できます！`);
+      } else if (pace >= 3) {
+        parts.push(`あと${remainingDays}日で${remainingSessions}回の来店が必要です。ペースを上げていきましょう！`);
+      } else {
+        parts.push(`残り${remainingDays}日で${remainingSessions}回の来店が必要です。頑張りましょう！`);
+      }
     } else if (sessionCount === 0) {
-      parts.push("今月はお休みでしたね。来月はまた一緒に頑張りましょう！");
+      parts.push("今期はまだ来店がありません。一緒に頑張りましょう！");
     }
 
     if (weightChange != null && weightChange < -0.5) {
@@ -132,18 +188,20 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       parts.push("体重が少し増加していますが、筋肉量の増加の可能性もあります。");
     }
 
-    if (mealDays > daysInMonth * 0.7) {
+    if (mealDays > cycleDays * 0.7) {
       parts.push("食事記録もしっかりつけられていて素晴らしいです。");
-    } else if (mealDays > 0 && mealDays < daysInMonth * 0.3) {
+    } else if (mealDays > 0 && mealDays < cycleDays * 0.3) {
       parts.push("食事記録をもう少しこまめにつけると、より効果的です。");
     }
 
     if (parts.length === 0) {
-      parts.push("コツコツ続けることが大切です。来月も一緒に頑張りましょう！");
+      parts.push("コツコツ続けることが大切です。一緒に頑張りましょう！");
     }
 
     return parts.join(" ");
   };
+
+  const periodLabel = `${format(cycleStart, "M/d", { locale: ja })}〜${format(addMonths(cycleStart, 1), "M/d", { locale: ja })}`;
 
   if (loading) {
     return (
@@ -170,17 +228,22 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-lg font-bold flex-1 text-center">月間レポート</h1>
+        <h1 className="text-lg font-bold flex-1 text-center">今期のレポート</h1>
         <div className="w-8" />
       </div>
 
-      {/* Month selector */}
-      <div className="flex items-center justify-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => setTargetMonth(subMonths(targetMonth, 1))}>
+      {/* Cycle selector */}
+      <div className="flex items-center justify-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCycleOffset(o => o - 1)}>
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <span className="text-base font-bold">{format(targetMonth, "yyyy年M月", { locale: ja })}</span>
-        <Button variant="ghost" size="icon" onClick={() => setTargetMonth(addMonths(targetMonth, 1))} disabled={!canGoNext}>
+        <div className="flex items-center gap-2">
+          <span className="text-base font-bold">{periodLabel}</span>
+          {isCurrentCycle && (
+            <Badge variant="secondary" className="text-xs">今期</Badge>
+          )}
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => setCycleOffset(o => o + 1)} disabled={!canGoNext}>
           <ChevronRight className="w-5 h-5" />
         </Button>
       </div>
@@ -205,7 +268,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                 <>
                   <Progress value={achieveRate} className="h-2.5" />
                   <p className="text-sm font-bold text-center">
-                    {achieveRate >= 100 ? "達成！🎉" : `あと${maxSessions - sessionCount}回！`}
+                    {achieveRate >= 100 ? "達成！🎉" : `あと${remainingSessions}回！`}
                   </p>
                 </>
               )}
@@ -213,17 +276,17 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
                     <CalendarDays className="w-3.5 h-3.5" />
-                    今月の予約予定
+                    今期の予約予定
                   </span>
                   <span className="text-sm font-bold">あと{scheduledBookings.length}回</span>
                 </div>
               )}
               {sessionDiff !== 0 && (
                 <p className="text-xs text-muted-foreground text-center">
-                  先月より{sessionDiff > 0 ? `+${sessionDiff}` : sessionDiff}回
+                  前期より{sessionDiff > 0 ? `+${sessionDiff}` : sessionDiff}回
                 </p>
               )}
-              {currentStreak > 0 && (
+              {currentStreak > 0 && isCurrentCycle && (
                 <div className="flex items-center justify-center gap-1.5 pt-1">
                   <Flame className="w-4 h-4 text-orange-500" />
                   <span className="text-sm font-bold">🔥 {currentStreak}週連続来店中！</span>
@@ -304,7 +367,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm">記録日数</span>
-                <span className="text-base font-bold">{mealDays}/{daysInMonth}日</span>
+                <span className="text-base font-bold">{mealDays}/{cycleDays}日</span>
               </div>
               {avgCalories != null && (
                 <div className="flex items-center justify-between">
@@ -366,12 +429,12 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
               {latestDiag.image_url && prevDiag?.image_url && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">前月</p>
-                    <img src={prevDiag.image_url} alt="前月" className="rounded-lg w-full aspect-[3/4] object-cover" />
+                    <p className="text-xs text-muted-foreground mb-1">前期</p>
+                    <img src={prevDiag.image_url} alt="前期" className="rounded-lg w-full aspect-[3/4] object-cover" />
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">今月</p>
-                    <img src={latestDiag.image_url} alt="今月" className="rounded-lg w-full aspect-[3/4] object-cover" />
+                    <p className="text-xs text-muted-foreground mb-1">今期</p>
+                    <img src={latestDiag.image_url} alt="今期" className="rounded-lg w-full aspect-[3/4] object-cover" />
                   </div>
                 </div>
               )}
@@ -412,7 +475,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       {!hasTraining && !hasMeasurements && !hasMeals && !hasDiagnosis && (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            この月のデータはまだありません。
+            この期間のデータはまだありません。
           </CardContent>
         </Card>
       )}
