@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
         description: `プラン: ${booking_type}\nお客様: ${client_name}\n\nパーソナルジムSalute御所南`,
         start: { dateTime: startDt.toISOString(), timeZone: "Asia/Tokyo" },
         end: { dateTime: endDt.toISOString(), timeZone: "Asia/Tokyo" },
-        reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 30 }] },
+        reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 60 }] },
       };
 
       const createRes = await fetch(baseUrl, {
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
           description: `プラン: ${booking.booking_type}\nお客様: ${cName}\n\nパーソナルジムSalute御所南`,
           start: { dateTime: startDt.toISOString(), timeZone: "Asia/Tokyo" },
           end: { dateTime: endDt.toISOString(), timeZone: "Asia/Tokyo" },
-          reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 30 }] },
+          reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 60 }] },
         };
 
         const createRes = await fetch(baseUrl, {
