@@ -27,6 +27,8 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const { profile, loading } = useProfile();
   const { bookings, loading: bookingsLoading } = useMyBookings();
   const { chartData, latest, loading: metricsLoading } = useMeasurements(user?.id);
+  const { currentStreak, bestStreak, loading: streakLoading, hasFutureBookingThisWeek } = useStreak(user?.id);
+  const streakNotifiedRef = useRef(false);
 
   const displayName = profile?.display_name || "ゲスト";
   const currentPlan = profile?.plan;
