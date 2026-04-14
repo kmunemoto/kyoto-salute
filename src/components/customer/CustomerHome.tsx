@@ -326,9 +326,13 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
                 <div>
                   <p className="font-bold text-sm">📊 今月のレポート</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {bookings.length > 0 ? `来店${bookings.length}回` : ""}
-                    {latest && latest.weight != null && weightChange ? ` / 体重${parseFloat(weightChange) <= 0 ? '' : '+'}${weightChange}kg` : ""}
-                    {!bookings.length && !latest ? "データを確認する" : ""}
+                    {(() => {
+                      const visitedCount = bookings.filter(b => b.status !== "キャンセル済み" && new Date(`${b.date}T${b.endTime || "00:00"}`) < now).length;
+                      const parts: string[] = [];
+                      if (visitedCount > 0) parts.push(`来店${visitedCount}回`);
+                      if (latest && latest.weight != null && weightChange) parts.push(`体重${parseFloat(weightChange) <= 0 ? '' : '+'}${weightChange}kg`);
+                      return parts.length > 0 ? parts.join(" / ") : "データを確認する";
+                    })()}
                   </p>
                 </div>
               </div>
