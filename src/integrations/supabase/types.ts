@@ -434,11 +434,13 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          best_streak: number
           calendar_token: string
           created_at: string
           cycle_start_date: string | null
           display_name: string | null
           id: string
+          last_streak_notified: number
           line_user_id: string | null
           paid_this_month: boolean
           plan: string | null
@@ -449,11 +451,13 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          best_streak?: number
           calendar_token?: string
           created_at?: string
           cycle_start_date?: string | null
           display_name?: string | null
           id?: string
+          last_streak_notified?: number
           line_user_id?: string | null
           paid_this_month?: boolean
           plan?: string | null
@@ -464,11 +468,13 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          best_streak?: number
           calendar_token?: string
           created_at?: string
           cycle_start_date?: string | null
           display_name?: string | null
           id?: string
+          last_streak_notified?: number
           line_user_id?: string | null
           paid_this_month?: boolean
           plan?: string | null

@@ -14,6 +14,8 @@ export interface Profile {
   cycle_start_date: string | null;
   show_usage_period: boolean;
   calendar_token: string | null;
+  best_streak: number;
+  last_streak_notified: number;
   created_at: string;
   updated_at: string;
 }
@@ -206,6 +208,8 @@ export const useAllCustomerProfiles = () => {
         cycle_start_date: p?.cycle_start_date || null,
         show_usage_period: p?.show_usage_period ?? true,
         calendar_token: (p as any)?.calendar_token || null,
+        best_streak: p?.best_streak || 0,
+        last_streak_notified: p?.last_streak_notified || 0,
         created_at: p?.created_at || new Date().toISOString(),
         updated_at: p?.updated_at || new Date().toISOString(),
         next_booking_date: nextBookingMap[uid]?.booking_date || null,

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
@@ -7,9 +8,12 @@ import { useProfile } from "@/hooks/useProfile";
 import { useMyBookings } from "@/hooks/useBookings";
 import { useMeasurements } from "@/hooks/useMeasurements";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStreak } from "@/hooks/useStreak";
+import StreakCard from "./StreakCard";
 import { Loader2 } from "lucide-react";
 import { format, parseISO, addMonths, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4,
@@ -23,6 +27,8 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const { profile, loading } = useProfile();
   const { bookings, loading: bookingsLoading } = useMyBookings();
   const { chartData, latest, loading: metricsLoading } = useMeasurements(user?.id);
+  const { currentStreak, bestStreak, loading: streakLoading, hasFutureBookingThisWeek } = useStreak(user?.id);
+  const streakNotifiedRef = useRef(false);
 
   const displayName = profile?.display_name || "ゲスト";
   const currentPlan = profile?.plan;
@@ -73,6 +79,50 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
     ? cycleBookings.findIndex((b) => b.id === nextBooking.id) + 1
     : 0;
 
+  // Streak LINE notification
+  useEffect(() => {
+    if (!user || streakLoading || streakNotifiedRef.current || currentStreak < 4) return;
+    const checkAndNotify = async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("last_streak_notified, line_user_id")
+        .eq("user_id", user.id)
+        .single();
+      if (!prof?.line_user_id) return;
+
+      const lastNotified = (prof as any).last_streak_notified || 0;
+      const milestones = [4, 8, 12];
+      const hitMilestone = milestones.find(m => currentStreak >= m && lastNotified < m);
+      const isBestRecord = currentStreak > lastNotified && currentStreak > (profile?.best_streak || 0);
+
+      let message = "";
+      if (hitMilestone) {
+        const months = Math.floor(hitMilestone / 4);
+        if (hitMilestone === 4) message = `🔥 4週連続来店達成！1ヶ月間継続できています。この調子で頑張りましょう！`;
+        else if (hitMilestone === 8) message = `🔥 8週連続来店達成！2ヶ月間の継続、素晴らしいです！💪`;
+        else if (hitMilestone === 12) message = `🏆 12週連続来店達成！3ヶ月間の継続は本当にすごいことです！`;
+      } else if (isBestRecord) {
+        message = `🎉 自己ベスト更新！${currentStreak}週連続来店を達成しました！`;
+      }
+
+      if (message && currentStreak > lastNotified) {
+        streakNotifiedRef.current = true;
+        try {
+          await supabase.functions.invoke("send-line-message", {
+            body: { userId: prof.line_user_id, message },
+          });
+          await supabase
+            .from("profiles")
+            .update({ last_streak_notified: currentStreak } as any)
+            .eq("user_id", user.id);
+        } catch (e) {
+          // fire-and-forget
+        }
+      }
+    };
+    checkAndNotify();
+  }, [user, currentStreak, streakLoading]);
+
   if (loading || bookingsLoading || metricsLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -111,7 +161,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
             </div>
             <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-full px-3 py-1">
               <Flame className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">継続中</span>
+              <span className="text-xs font-medium">{currentStreak > 0 ? `${currentStreak}週連続` : '継続中'}</span>
             </div>
           </div>
         </div>
@@ -128,7 +178,16 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         </Card>
       )}
 
-      {/* Membership Period Card */}
+      {/* Streak Card */}
+      {!streakLoading && (
+        <StreakCard
+          currentStreak={currentStreak}
+          bestStreak={bestStreak}
+          hasFutureBookingThisWeek={hasFutureBookingThisWeek}
+        />
+      )}
+
+
       {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
         const currentCycle = getCycleWindow(now);
         if (!currentCycle) return null;

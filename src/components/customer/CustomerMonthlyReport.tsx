@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, Award, Utensils, Bone, MessageSquare, Sparkles, Loader2, CalendarDays } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, Award, Utensils, Bone, MessageSquare, Sparkles, Loader2, CalendarDays, Flame } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useStreak } from "@/hooks/useStreak";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, isBefore, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -23,6 +24,7 @@ interface Props {
 const CustomerMonthlyReport = ({ onBack }: Props) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { currentStreak, bestStreak } = useStreak(user?.id);
   const [targetMonth, setTargetMonth] = useState(() => startOfMonth(new Date()));
   const [bookings, setBookings] = useState<any[]>([]);
   const [measurements, setMeasurements] = useState<any[]>([]);
@@ -220,6 +222,12 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                 <p className="text-xs text-muted-foreground text-center">
                   先月より{sessionDiff > 0 ? `+${sessionDiff}` : sessionDiff}回
                 </p>
+              )}
+              {currentStreak > 0 && (
+                <div className="flex items-center justify-center gap-1.5 pt-1">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-bold">🔥 {currentStreak}週連続来店中！</span>
+                </div>
               )}
             </CardContent>
           </Card>
