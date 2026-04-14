@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
@@ -7,9 +8,12 @@ import { useProfile } from "@/hooks/useProfile";
 import { useMyBookings } from "@/hooks/useBookings";
 import { useMeasurements } from "@/hooks/useMeasurements";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStreak } from "@/hooks/useStreak";
+import StreakCard from "./StreakCard";
 import { Loader2 } from "lucide-react";
 import { format, parseISO, addMonths, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4,
