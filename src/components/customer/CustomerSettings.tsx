@@ -40,20 +40,18 @@ const CustomerSettings = () => {
     setDisplayName(profile?.display_name || "");
   }, [profile?.display_name]);
 
-  // Listen for LINE link callback
+  // Handle LINE link result from redirect
   useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type === "line-link-result") {
-        if (e.data.success) {
-          toast.success("LINE連携が完了しました！");
-          refetch();
-        } else {
-          toast.error("LINE連携に失敗しました");
-        }
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
+    const params = new URLSearchParams(window.location.search);
+    const linkResult = params.get("line_link");
+    if (linkResult === "success") {
+      toast.success("LINE連携が完了しました！");
+      refetch();
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (linkResult === "error") {
+      toast.error("LINE連携に失敗しました");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, [refetch]);
 
   const handleLineLink = () => {
@@ -62,7 +60,7 @@ const CustomerSettings = () => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/line-login-callback`);
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${user.id}&scope=profile%20openid`;
-    window.open(lineAuthUrl, "line-link", "width=500,height=700");
+    window.location.href = lineAuthUrl;
   };
 
   const handleLineUnlink = async () => {
