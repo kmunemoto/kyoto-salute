@@ -1,34 +1,28 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+function buildHtml(success: boolean, appUrl: string, errorMsg?: string): string {
+  const msg = success
+    ? "LINE連携が完了しました。画面を閉じてアプリにお戻りください。"
+    : (errorMsg || "LINE連携に失敗しました");
+  return `<!DOCTYPE html>
+<html lang="ja">
+<head><meta charset="utf-8"><title>LINE連携</title></head>
+<body>
+<p style="text-align:center;margin-top:40px;font-family:sans-serif;">${msg}</p>
+<script>
+  setTimeout(function() {
+    window.location.href = "${appUrl}";
+  }, 3000);
+</script>
+</body>
+</html>`;
+}
+
 function respondHtml(html: string): Response {
   return new Response(html, {
     status: 200,
     headers: { "Content-Type": "text/html; charset=utf-8" },
   });
-}
-
-function redirectHtml(state: string | null, success: boolean, errorMsg?: string): string {
-  const msg = success ? "LINE連携が完了しました！" : (errorMsg || "LINE連携に失敗しました");
-  const origin = state ? "*" : "*";
-  return `<!DOCTYPE html>
-<html lang="ja">
-<head><meta charset="utf-8"><title>LINE連携</title></head>
-<body>
-<p>${msg}</p>
-<script>
-  try {
-    if (window.opener) {
-      window.opener.postMessage({ type: "line-link-result", success: ${success} }, "*");
-      setTimeout(function() { window.close(); }, 500);
-    } else {
-      setTimeout(function() { window.location.href = "/"; }, 1500);
-    }
-  } catch(e) {
-    setTimeout(function() { window.location.href = "/"; }, 1500);
-  }
-</script>
-</body>
-</html>`;
 }
 
 Deno.serve(async (req) => {
@@ -39,8 +33,11 @@ Deno.serve(async (req) => {
     const state = url.searchParams.get("state");
     const error = url.searchParams.get("error");
 
+    // App URL for redirect
+    const appUrl = Deno.env.get("APP_URL") || "https://kyoto-salute.lovable.app";
+
     if (error || !code || !state) {
-      return respondHtml(redirectHtml(state, false, "LINEログインがキャンセルされました"));
+      return respondHtml(buildHtml(false, appUrl, "LINEログインがキャンセルされました"));
     }
 
     try {
@@ -64,7 +61,7 @@ Deno.serve(async (req) => {
       if (!tokenRes.ok) {
         const err = await tokenRes.text();
         console.error("LINE token error:", err);
-        return respondHtml(redirectHtml(state, false, "LINEトークン取得に失敗しました"));
+        return respondHtml(buildHtml(false, appUrl, "LINEトークン取得に失敗しました"));
       }
 
       const tokenData = await tokenRes.json();
@@ -75,7 +72,7 @@ Deno.serve(async (req) => {
       });
 
       if (!profileRes.ok) {
-        return respondHtml(redirectHtml(state, false, "LINEプロフィール取得に失敗しました"));
+        return respondHtml(buildHtml(false, appUrl, "LINEプロフィール取得に失敗しました"));
       }
 
       const lineProfile = await profileRes.json();
@@ -89,13 +86,13 @@ Deno.serve(async (req) => {
 
       if (updateError) {
         console.error("Profile update error:", updateError);
-        return respondHtml(redirectHtml(state, false, "プロフィール更新に失敗しました"));
+        return respondHtml(buildHtml(false, appUrl, "プロフィール更新に失敗しました"));
       }
 
-      return respondHtml(redirectHtml(state, true));
+      return respondHtml(buildHtml(true, appUrl));
     } catch (e) {
       console.error("line-login-callback error:", e);
-      return respondHtml(redirectHtml(state, false, (e as Error).message));
+      return respondHtml(buildHtml(false, appUrl, (e as Error).message));
     }
   }
 
