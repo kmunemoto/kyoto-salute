@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight } from "lucide-react";
+import ProgressCharts from "./ProgressCharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -294,84 +295,8 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         </div>
       )}
 
-      {/* Weight Chart */}
-      {chartData.length > 0 && (
-        <section>
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">体重推移</h2>
-          <Card>
-            <CardContent className="p-4">
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
-                    <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
-                    <Tooltip
-                      contentStyle={{
-                        background: 'hsl(0, 0%, 100%)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                        fontSize: '12px',
-                      }}
-                    />
-                    <Area type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2.5} fill="url(#weightGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(36, 50%, 55%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} name="体重(kg)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      {/* Body Fat Chart */}
-      {chartData.some(d => d.bodyFat != null) && (
-        <section>
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">体脂肪率推移</h2>
-          <Card>
-            <CardContent className="p-4">
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="fatGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
-                    <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} width={35} />
-                    <Tooltip
-                      contentStyle={{
-                        background: 'hsl(0, 0%, 100%)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                        fontSize: '12px',
-                      }}
-                    />
-                    <Area type="monotone" dataKey="bodyFat" stroke="hsl(210, 40%, 58%)" strokeWidth={2.5} fill="url(#fatGradient)" isAnimationActive={false} dot={{ r: 4, fill: "hsl(210, 40%, 58%)", strokeWidth: 2, stroke: "hsl(0, 0%, 100%)" }} name="体脂肪率(%)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      {/* No data message */}
-      {chartData.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            まだ計測データがありません。トレーナーがデータを入力すると、ここに表示されます。
-          </CardContent>
-        </Card>
-      )}
+      {/* Progress Charts (Weight + Training) */}
+      <ProgressCharts />
 
       {/* Cycle Report Card */}
       <section>
