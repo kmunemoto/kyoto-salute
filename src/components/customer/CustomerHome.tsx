@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight } from "lucide-react";
 import ProgressCharts from "./ProgressCharts";
 import { Card, CardContent } from "@/components/ui/card";
-import { XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import { Button } from "@/components/ui/button";
 import type { CustomerTab } from "./CustomerView";
 import { useProfile } from "@/hooks/useProfile";
