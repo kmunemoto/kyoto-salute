@@ -19,10 +19,9 @@ function buildHtml(success: boolean, appUrl: string, errorMsg?: string): string 
 }
 
 function respondHtml(html: string): Response {
-  return new Response(html, {
-    status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
-  });
+  const headers = new Headers();
+  headers.set("Content-Type", "text/html; charset=utf-8");
+  return new Response(html, { status: 200, headers });
 }
 
 Deno.serve(async (req) => {
