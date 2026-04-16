@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, booking_id, booking_date, booking_type, client_name, google_event_id } = await req.json();
+    const { action, booking_id, booking_date, booking_type, client_name, google_event_id, is_trial } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -105,8 +105,9 @@ Deno.serve(async (req) => {
 
       // Save event ID to booking
       if (booking_id && created.id) {
+        const table = is_trial ? "trial_bookings" : "bookings";
         await supabase
-          .from("bookings")
+          .from(table)
           .update({ google_event_id: created.id })
           .eq("id", booking_id);
       }
