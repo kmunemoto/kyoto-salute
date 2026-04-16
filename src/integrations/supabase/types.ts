@@ -93,6 +93,7 @@ export type Database = {
           reviewed: boolean
           sleep_hours: string | null
           target_frequency: string | null
+          trainer_memo: string | null
           ward: string | null
         }
         Insert: {
@@ -116,6 +117,7 @@ export type Database = {
           reviewed?: boolean
           sleep_hours?: string | null
           target_frequency?: string | null
+          trainer_memo?: string | null
           ward?: string | null
         }
         Update: {
@@ -139,6 +141,7 @@ export type Database = {
           reviewed?: boolean
           sleep_hours?: string | null
           target_frequency?: string | null
+          trainer_memo?: string | null
           ward?: string | null
         }
         Relationships: []
