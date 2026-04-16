@@ -21,6 +21,7 @@ export interface CounselingResponse {
   pain_areas: string[] | null;
   medical_history: string | null;
   notes: string | null;
+  trainer_memo: string | null;
   reviewed: boolean;
   created_at: string;
 }
@@ -51,7 +52,18 @@ export const useCounselingResponses = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["counseling_responses"] }),
   });
 
+  const updateMemo = useMutation({
+    mutationFn: async ({ id, memo }: { id: string; memo: string }) => {
+      const { error } = await supabase
+        .from("counseling_responses")
+        .update({ trainer_memo: memo } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["counseling_responses"] }),
+  });
+
   const unreadCount = responses.filter((r) => !r.reviewed).length;
 
-  return { responses, isLoading, markReviewed, unreadCount };
+  return { responses, isLoading, markReviewed, updateMemo, unreadCount };
 };
