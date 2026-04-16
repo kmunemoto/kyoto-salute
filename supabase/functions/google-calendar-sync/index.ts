@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, booking_id, booking_date, booking_type, client_name, google_event_id } = await req.json();
+    const { action, booking_id, booking_date, booking_type, client_name, google_event_id, is_trial } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -105,8 +105,9 @@ Deno.serve(async (req) => {
 
       // Save event ID to booking
       if (booking_id && created.id) {
+        const table = is_trial ? "trial_bookings" : "bookings";
         await supabase
-          .from("bookings")
+          .from(table)
           .update({ google_event_id: created.id })
           .eq("id", booking_id);
       }
@@ -147,30 +148,48 @@ Deno.serve(async (req) => {
         .neq("status", "キャンセル済み")
         .gte("booking_date", new Date().toISOString());
 
-      if (!bookings || bookings.length === 0) {
+      // Also sync trial bookings
+      const { data: trialBookings } = await supabase
+        .from("trial_bookings")
+        .select("id, booking_date, booking_type, guest_name, google_event_id")
+        .is("google_event_id", null)
+        .neq("status", "キャンセル済み")
+        .gte("booking_date", new Date().toISOString());
+
+      const allItems = [
+        ...(bookings || []).map((b) => ({ ...b, source: "bookings" as const })),
+        ...(trialBookings || []).map((t) => ({ ...t, user_id: null, source: "trial_bookings" as const, guest_name: t.guest_name })),
+      ];
+
+      if (allItems.length === 0) {
         return new Response(JSON.stringify({ success: true, synced: 0 }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Get customer names
-      const userIds = [...new Set(bookings.map((b) => b.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .in("user_id", userIds);
+      // Get customer names for regular bookings
+      const userIds = [...new Set(allItems.filter((b) => b.source === "bookings" && b.user_id).map((b) => b.user_id!))];
       const nameMap: Record<string, string> = {};
-      profiles?.forEach((p) => (nameMap[p.user_id] = p.display_name || "顧客"));
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", userIds);
+        profiles?.forEach((p) => (nameMap[p.user_id] = p.display_name || "顧客"));
+      }
 
       let synced = 0;
-      for (const booking of bookings) {
-        const startDt = new Date(booking.booking_date);
+      for (const item of allItems) {
+        const startDt = new Date(item.booking_date);
         const endDt = new Date(startDt.getTime() + 60 * 60 * 1000);
-        const cName = nameMap[booking.user_id] || "顧客";
+        const cName = item.source === "trial_bookings"
+          ? (item as any).guest_name || "体験ゲスト"
+          : nameMap[item.user_id!] || "顧客";
+        const label = item.source === "trial_bookings" ? "🆕 初回体験" : "🏋️";
 
         const event = {
-          summary: `🏋️ ${cName} - ${booking.booking_type || "トレーニング"}`,
-          description: `プラン: ${booking.booking_type}\nお客様: ${cName}\n\nパーソナルジムSalute御所南`,
+          summary: `${label} ${cName} - ${item.booking_type || "トレーニング"}`,
+          description: `プラン: ${item.booking_type}\nお客様: ${cName}\n\nパーソナルジムSalute御所南`,
           start: { dateTime: startDt.toISOString(), timeZone: "Asia/Tokyo" },
           end: { dateTime: endDt.toISOString(), timeZone: "Asia/Tokyo" },
           reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 60 }] },
@@ -188,13 +207,13 @@ Deno.serve(async (req) => {
         if (createRes.ok) {
           const created = await createRes.json();
           await supabase
-            .from("bookings")
+            .from(item.source)
             .update({ google_event_id: created.id })
-            .eq("id", booking.id);
+            .eq("id", item.id);
           synced++;
         } else {
           const errText = await createRes.text();
-          console.error(`Failed to sync booking ${booking.id}:`, errText);
+          console.error(`Failed to sync ${item.source} ${item.id}:`, errText);
         }
       }
 

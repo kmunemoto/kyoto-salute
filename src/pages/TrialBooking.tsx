@@ -120,17 +120,31 @@ const TrialBooking = () => {
 
     const bookingDate = `${dateKey}T${slot.time}:00+09:00`;
 
-    const { error } = await supabase.from("trial_bookings").insert({
+    const { data: insertedBooking, error } = await supabase.from("trial_bookings").insert({
       guest_name: guestName.trim(),
       guest_contact: guestEmail.trim(),
       booking_date: bookingDate,
-    });
+    }).select().single();
 
     if (error) {
       console.error("Trial booking failed:", error);
       toast.error("予約に失敗しました。もう一度お試しください。");
       setSubmitting(false);
       return;
+    }
+
+    // Sync to Google Calendar (fire-and-forget)
+    if (insertedBooking) {
+      supabase.functions.invoke("google-calendar-sync", {
+        body: {
+          action: "create",
+          booking_id: insertedBooking.id,
+          booking_date: insertedBooking.booking_date,
+          booking_type: "初回無料体験",
+          client_name: `🆕 ${guestName.trim()}`,
+          is_trial: true,
+        },
+      }).catch(console.error);
     }
 
     const [h, m] = slot.time.split(":").map(Number);

@@ -577,6 +577,7 @@ export type Database = {
           booking_date: string
           booking_type: string
           created_at: string
+          google_event_id: string | null
           guest_contact: string
           guest_name: string
           id: string
@@ -586,6 +587,7 @@ export type Database = {
           booking_date: string
           booking_type?: string
           created_at?: string
+          google_event_id?: string | null
           guest_contact: string
           guest_name: string
           id?: string
@@ -595,6 +597,7 @@ export type Database = {
           booking_date?: string
           booking_type?: string
           created_at?: string
+          google_event_id?: string | null
           guest_contact?: string
           guest_name?: string
           id?: string

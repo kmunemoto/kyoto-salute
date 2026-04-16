@@ -117,8 +117,22 @@ const TrainerSchedule = () => {
     const booking = bookings.find((b) => b.id === target.id);
     let error: any;
     if (booking?.user_id === "trial-guest") {
+      // Fetch google_event_id before deleting
+      const { data: trialData } = await supabase
+        .from("trial_bookings")
+        .select("google_event_id")
+        .eq("id", target.id)
+        .maybeSingle();
+
       const res = await supabase.from("trial_bookings").delete().eq("id", target.id);
       error = res.error;
+
+      // Delete from Google Calendar if synced
+      if (!res.error && trialData?.google_event_id) {
+        supabase.functions.invoke("google-calendar-sync", {
+          body: { action: "delete", google_event_id: trialData.google_event_id },
+        }).catch(console.error);
+      }
     } else {
       const res = await cancelBooking(target.id, true);
       error = res.error;
