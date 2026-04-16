@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ClipboardList, Loader2, ChevronRight, User, Target, Heart, FileText } from "lucide-react";
+import { ClipboardList, Loader2, ChevronRight, User, Target, Heart, FileText, StickyNote, Save } from "lucide-react";
 import { useCounselingResponses, type CounselingResponse } from "@/hooks/useCounselingResponses";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 const purposeLabels: Record<string, string> = {
@@ -13,7 +16,7 @@ const purposeLabels: Record<string, string> = {
 };
 
 const CounselingResponseList = () => {
-  const { responses, isLoading, markReviewed } = useCounselingResponses();
+  const { responses, isLoading, markReviewed, updateMemo } = useCounselingResponses();
   const [selected, setSelected] = useState<CounselingResponse | null>(null);
 
   const handleOpen = (r: CounselingResponse) => {
@@ -90,7 +93,7 @@ const CounselingResponseList = () => {
               カウンセリング回答詳細
             </DialogTitle>
           </DialogHeader>
-          {selected && <CounselingDetail data={selected} />}
+          {selected && <CounselingDetail data={selected} updateMemo={updateMemo} />}
         </DialogContent>
       </Dialog>
     </div>
@@ -120,9 +123,42 @@ const SectionCard = ({ icon: Icon, title, children }: { icon: typeof User; title
   </Card>
 );
 
-const CounselingDetail = ({ data }: { data: CounselingResponse }) => {
+const CounselingDetail = ({ data, updateMemo }: { data: CounselingResponse; updateMemo: ReturnType<typeof useCounselingResponses>["updateMemo"] }) => {
+  const [memo, setMemo] = useState(data.trainer_memo || "");
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveMemo = async () => {
+    setSaving(true);
+    try {
+      await updateMemo.mutateAsync({ id: data.id, memo });
+      toast.success("メモを保存しました");
+    } catch {
+      toast.error("メモの保存に失敗しました");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
+      {/* メモ */}
+      <SectionCard icon={StickyNote} title="トレーナーメモ">
+        <div className="space-y-2 pt-1">
+          <Textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="このお客様に関するメモを入力..."
+            className="min-h-[80px] text-sm"
+          />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={handleSaveMemo} disabled={saving} className="gap-1.5">
+              <Save className="w-3.5 h-3.5" />
+              {saving ? "保存中..." : "保存"}
+            </Button>
+          </div>
+        </div>
+      </SectionCard>
+
       {/* 基本情報 */}
       <SectionCard icon={User} title="基本情報">
         <DetailRow label="氏名" value={`${data.last_name} ${data.first_name}`} />
