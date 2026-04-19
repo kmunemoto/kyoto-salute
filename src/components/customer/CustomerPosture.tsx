@@ -51,6 +51,8 @@ const CustomerPosture = () => {
   const [keypoints, setKeypoints] = useState<Keypoint[]>([]);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0, natW: 0, natH: 0 });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -324,20 +326,27 @@ const CustomerPosture = () => {
   }, [keypoints, imgSize]);
 
   const saveDiagnosis = useCallback(async () => {
-    if (!user || !skeletalDiagnosis || saved) return;
+    if (!user || !skeletalDiagnosis || saved || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
     try {
       let imageUrlToSave: string | null = null;
-      const blob = await captureOverlayBlob();
-      if (blob) {
-        const fileName = `${user.id}/${Date.now()}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from("posture-photos")
-          .upload(fileName, blob, { contentType: "image/jpeg" });
-        if (uploadError) {
-          console.warn("Image upload failed:", uploadError);
-        } else {
-          imageUrlToSave = fileName;
+      try {
+        const blob = await captureOverlayBlob();
+        if (blob) {
+          const fileName = `${user.id}/${Date.now()}.jpg`;
+          const { error: uploadError } = await supabase.storage
+            .from("posture-photos")
+            .upload(fileName, blob, { contentType: "image/jpeg" });
+          if (uploadError) {
+            console.warn("Image upload failed:", uploadError);
+          } else {
+            imageUrlToSave = fileName;
+          }
         }
+      } catch (uploadErr) {
+        // Don't fail the save if image upload fails — diagnosis data is more important
+        console.warn("Overlay capture/upload error:", uploadErr);
       }
 
       const { error } = await supabase.from("skeletal_diagnoses").insert({
@@ -351,9 +360,13 @@ const CustomerPosture = () => {
       if (error) throw error;
       setSaved(true);
       toast.success("診断結果を保存しました");
-    } catch (e) {
+    } catch (e: any) {
       console.error("Save diagnosis error:", e);
-      toast.error("診断結果の保存に失敗しました");
+      const msg = e?.message || e?.error_description || "不明なエラー";
+      toast.error(`診断結果の保存に失敗しました: ${msg}`);
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
   }, [user, skeletalDiagnosis, saved, captureOverlayBlob]);
 
@@ -451,12 +464,16 @@ const CustomerPosture = () => {
             {skeletalDiagnosis && user && (
               <Button
                 onClick={saveDiagnosis}
-                disabled={saved}
+                disabled={saved || saving}
                 variant={saved ? "outline" : "default"}
                 className="flex-1"
               >
-                <Save className="w-4 h-4 mr-1" />
-                {saved ? "保存済み" : "結果を保存"}
+                {saving ? (
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-1" />
+                )}
+                {saved ? "保存済み" : saving ? "保存中…" : "結果を保存"}
               </Button>
             )}
             <Button onClick={analyze} disabled={isLoading} variant="outline" className="flex-1">
