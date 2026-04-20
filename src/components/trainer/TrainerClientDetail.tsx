@@ -39,6 +39,8 @@ import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
+import CourseProgressBadge from "./CourseProgressBadge";
+import { computeCourseProgress, BookingForProgress } from "@/lib/courseProgress";
 
 interface TrainerClientDetailProps {
   clientId: string;
