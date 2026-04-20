@@ -459,6 +459,46 @@ const DiagnosisHistorySection = ({ userId, allowDelete = false }: Props) => {
                           ))}
                         </div>
                       )}
+
+                      {/* Trainer-only delete */}
+                      {allowDelete && (
+                        <div className="pt-2 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 h-8 text-xs"
+                                disabled={deletingId === d.id}
+                              >
+                                {deletingId === d.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                )}
+                                この診断を削除
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>骨格診断を削除しますか？</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {format(dt, "yyyy年M月d日 HH:mm", { locale: ja })}の診断結果と画像が完全に削除されます。この操作は取り消せません。
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(d)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  削除する
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
