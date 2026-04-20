@@ -38,7 +38,7 @@ const TrainerSchedule = () => {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const timeSlots = (() => {
     const slots: string[] = [];
-    for (let min = 600; min <= 1230; min += 15) {
+    for (let min = 600; min <= 1215; min += 15) {
       const h = Math.floor(min / 60);
       const m = min % 60;
       slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);

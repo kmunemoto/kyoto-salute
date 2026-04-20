@@ -87,7 +87,7 @@ const TrialBooking = () => {
 
   const generateSlots = () => {
     const slots: { id: string; time: string; available: boolean }[] = [];
-    for (let totalMin = 600; totalMin <= 1230; totalMin += 15) {
+    for (let totalMin = 600; totalMin <= 1215; totalMin += 15) {
       const h = Math.floor(totalMin / 60);
       const m = totalMin % 60;
       const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
