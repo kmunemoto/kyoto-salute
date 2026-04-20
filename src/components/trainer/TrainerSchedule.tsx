@@ -14,6 +14,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
+import CourseProgressBadge from "./CourseProgressBadge";
+import { getBookingProgressIndex, BookingForProgress } from "@/lib/courseProgress";
 
 
 const TrainerSchedule = () => {
@@ -34,6 +36,28 @@ const TrainerSchedule = () => {
 
   const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
+
+  // 各お客様ごとの予約をBookingForProgress形式で集約（進捗計算用）
+  const bookingsByUser = (() => {
+    const map = new Map<string, BookingForProgress[]>();
+    for (const b of bookings) {
+      if (b.isBlocked || b.user_id === "trial-guest" || b.user_id === "blocked") continue;
+      // date + startTime をISO化
+      const iso = `${b.date}T${b.startTime}:00+09:00`;
+      const arr = map.get(b.user_id) ?? [];
+      arr.push({ id: b.id, booking_date: iso, status: b.status });
+      map.set(b.user_id, arr);
+    }
+    return map;
+  })();
+
+  const getProgressForBooking = (booking: typeof bookings[number]) => {
+    if (booking.isBlocked || booking.user_id === "trial-guest" || booking.user_id === "blocked") return null;
+    const profile = profiles.find((p) => p.user_id === booking.user_id);
+    if (!profile) return null;
+    const userBookings = bookingsByUser.get(booking.user_id) ?? [];
+    return getBookingProgressIndex(booking.id, profile.cycle_start_date, profile.plan, userBookings);
+  };
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const timeSlots = (() => {
@@ -290,6 +314,15 @@ const TrainerSchedule = () => {
                                   <p className="font-bold truncate">{session.isBlocked ? "🚫 ブロック" : session.clientName}</p>
                                   <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
                                   {!session.isBlocked && <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>}
+                                  {!session.isBlocked && (() => {
+                                    const progress = getProgressForBooking(session);
+                                    if (!progress) return null;
+                                    return (
+                                      <div className="mt-1 -ml-0.5">
+                                        <CourseProgressBadge {...progress} size="sm" />
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               )}
                             </td>
@@ -334,6 +367,15 @@ const TrainerSchedule = () => {
                               <p className="text-sm font-bold truncate">{booking.isBlocked ? "ブロック" : booking.clientName}</p>
                               <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
                               {!booking.isBlocked && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>}
+                              {!booking.isBlocked && (() => {
+                                const progress = getProgressForBooking(booking);
+                                if (!progress) return null;
+                                return (
+                                  <div className="mt-1">
+                                    <CourseProgressBadge {...progress} size="sm" />
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                           <div className="mt-3 flex justify-end">
