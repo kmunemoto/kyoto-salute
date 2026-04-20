@@ -483,6 +483,17 @@ const CustomerSettings = () => {
           ログアウト
         </Button>
       </section>
+
+      {/* Legal links */}
+      <section className="pt-2 pb-4 text-center text-xs text-muted-foreground space-x-3">
+        <a href="/privacy" className="hover:text-foreground transition-colors underline underline-offset-2">
+          プライバシーポリシー
+        </a>
+        <span>·</span>
+        <a href="/terms" className="hover:text-foreground transition-colors underline underline-offset-2">
+          利用規約
+        </a>
+      </section>
     </div>
   );
 };
