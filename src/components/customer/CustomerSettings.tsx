@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, History, Clock, Dumbbell, Award, Bone, Smartphone, Calendar } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, History, Clock, Dumbbell, Award, Bone, Smartphone, Calendar, FileText, Shield as ShieldIcon, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -475,6 +476,38 @@ const CustomerSettings = () => {
 
       {/* 骨格診断履歴 */}
       <DiagnosisHistorySection userId={user?.id} />
+
+      {/* 規約・ポリシー */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <FileText className="w-3.5 h-3.5" />
+          規約・ポリシー
+        </h2>
+        <Card>
+          <CardContent className="p-0 divide-y">
+            <Link
+              to="/terms"
+              className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors"
+            >
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                利用規約
+              </span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </Link>
+            <Link
+              to="/privacy"
+              className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors"
+            >
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <ShieldIcon className="w-4 h-4 text-muted-foreground" />
+                プライバシーポリシー
+              </span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </Link>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Logout */}
       <section className="pt-2">
