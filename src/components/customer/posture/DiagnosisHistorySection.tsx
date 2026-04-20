@@ -54,7 +54,7 @@ const TRAINING_TIPS: Record<string, { area: string; exercises: string[] }[]> = {
   ],
 };
 
-type Props = { userId: string | undefined };
+type Props = { userId: string | undefined; allowDelete?: boolean };
 
 /* ─── Compare view ─── */
 const CompareView = ({
