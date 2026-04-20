@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -281,6 +281,24 @@ const Auth = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Legal links */}
+        <div className="text-center text-xs text-muted-foreground">
+          {mode === "signup" && !isTrainer && (
+            <p className="mb-2">
+              アカウント作成により、以下に同意したものとみなされます。
+            </p>
+          )}
+          <div className="flex items-center justify-center gap-3">
+            <Link to="/terms" className="hover:text-accent underline transition-colors">
+              利用規約
+            </Link>
+            <span>·</span>
+            <Link to="/privacy" className="hover:text-accent underline transition-colors">
+              プライバシーポリシー
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
