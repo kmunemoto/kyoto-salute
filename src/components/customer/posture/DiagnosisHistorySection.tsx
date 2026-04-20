@@ -1,8 +1,20 @@
 import { useState, useEffect } from "react";
-import { Bone, Loader2, ChevronDown, Dumbbell, Target, TrendingUp, ArrowLeftRight, X } from "lucide-react";
+import { Bone, Loader2, ChevronDown, Dumbbell, Target, TrendingUp, ArrowLeftRight, X, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
