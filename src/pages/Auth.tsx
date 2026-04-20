@@ -22,6 +22,7 @@ const Auth = () => {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
 
   // Already authenticated → redirect to home
@@ -45,6 +46,10 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === "signup" && !isTrainerTarget()) {
+      if (!agreedToTerms) {
+        toast.error("利用規約とプライバシーポリシーへの同意が必要です");
+        return;
+      }
       if (password.length < 6) {
         toast.error("パスワードは6文字以上にしてください");
         return;
