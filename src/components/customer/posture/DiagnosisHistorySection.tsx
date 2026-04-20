@@ -141,13 +141,34 @@ const CompareView = ({
   );
 };
 
-const DiagnosisHistorySection = ({ userId }: Props) => {
+const DiagnosisHistorySection = ({ userId, allowDelete = false }: Props) => {
   const [diagnoses, setDiagnoses] = useState<DiagnosisRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [compareMode, setCompareMode] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (d: DiagnosisRow) => {
+    setDeletingId(d.id);
+    try {
+      // Try to remove image from storage (non-fatal)
+      if (d.image_url) {
+        await supabase.storage.from("posture-photos").remove([d.image_url]).catch(() => {});
+      }
+      const { error } = await supabase.from("skeletal_diagnoses").delete().eq("id", d.id);
+      if (error) throw error;
+      setDiagnoses((prev) => prev.filter((x) => x.id !== d.id));
+      setCompareIds((prev) => prev.filter((x) => x !== d.id));
+      if (expandedId === d.id) setExpandedId(null);
+      toast({ title: "削除しました", description: "骨格診断を削除しました" });
+    } catch (e: any) {
+      toast({ title: "削除に失敗しました", description: e?.message ?? "もう一度お試しください", variant: "destructive" });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
