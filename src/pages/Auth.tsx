@@ -267,7 +267,25 @@ const Auth = () => {
                 </div>
               )}
 
-              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading || passwordMismatch}>
+              {/* Terms & Privacy agreement (customer signup only) */}
+              {mode === "signup" && !isTrainer && (
+                <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-accent flex-shrink-0"
+                  />
+                  <span>
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2 hover:text-accent/80">利用規約</a>
+                    と
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2 hover:text-accent/80">プライバシーポリシー</a>
+                    に同意します
+                  </span>
+                </label>
+              )}
+
+              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading || passwordMismatch || (mode === "signup" && !isTrainer && !agreedToTerms)}>
                 {loading ? "処理中..." : mode === "login" ? "ログイン" : "アカウント作成"}
               </Button>
             </form>
