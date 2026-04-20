@@ -37,6 +37,28 @@ const TrainerSchedule = () => {
   const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
 
+  // 各お客様ごとの予約をBookingForProgress形式で集約（進捗計算用）
+  const bookingsByUser = (() => {
+    const map = new Map<string, BookingForProgress[]>();
+    for (const b of bookings) {
+      if (b.isBlocked || b.user_id === "trial-guest" || b.user_id === "blocked") continue;
+      // date + startTime をISO化
+      const iso = `${b.date}T${b.startTime}:00+09:00`;
+      const arr = map.get(b.user_id) ?? [];
+      arr.push({ id: b.id, booking_date: iso, status: b.status });
+      map.set(b.user_id, arr);
+    }
+    return map;
+  })();
+
+  const getProgressForBooking = (booking: typeof bookings[number]) => {
+    if (booking.isBlocked || booking.user_id === "trial-guest" || booking.user_id === "blocked") return null;
+    const profile = profiles.find((p) => p.user_id === booking.user_id);
+    if (!profile) return null;
+    const userBookings = bookingsByUser.get(booking.user_id) ?? [];
+    return getBookingProgressIndex(booking.id, profile.cycle_start_date, profile.plan, userBookings);
+  };
+
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const timeSlots = (() => {
     const slots: string[] = [];
