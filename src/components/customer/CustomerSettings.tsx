@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, History, Clock, Dumbbell, Award, Bone, Smartphone } from "lucide-react";
+import { Settings, User, Pencil, MessageCircle, CheckCircle2, Unlink, LogOut, Loader2, History, Clock, Dumbbell, Award, Bone, Smartphone, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,12 +33,86 @@ const CustomerSettings = () => {
 
   const isLineLinked = !!profile?.line_user_id;
 
-
-
+  // Google Calendar state
+  const [gcalLinked, setGcalLinked] = useState(false);
+  const [gcalLoading, setGcalLoading] = useState(true);
 
   useEffect(() => {
     setDisplayName(profile?.display_name || "");
   }, [profile?.display_name]);
+
+  // Check Google Calendar link status
+  useEffect(() => {
+    const checkGcalStatus = async () => {
+      if (!user) {
+        setGcalLoading(false);
+        return;
+      }
+      setGcalLoading(true);
+      const { data } = await supabase
+        .from("google_calendar_tokens" as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setGcalLinked(!!data);
+      setGcalLoading(false);
+    };
+    checkGcalStatus();
+  }, [user]);
+
+  // Listen for Google Calendar callback
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "google-calendar-result") {
+        if (e.data.success) {
+          toast.success("Googleカレンダー連携が完了しました！");
+          setGcalLinked(true);
+        } else {
+          toast.error("Googleカレンダー連携に失敗しました");
+        }
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  const handleGcalLink = async () => {
+    if (!user) return;
+    const popup = window.open("about:blank", "gcal-link", "width=500,height=700");
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth-url", {
+        body: { user_id: user.id },
+      });
+      if (error || !data?.url) {
+        popup?.close();
+        toast.error("Google認証URLの取得に失敗しました");
+        return;
+      }
+      if (popup) {
+        popup.location.href = data.url;
+      } else {
+        window.location.href = data.url;
+      }
+    } catch (e) {
+      popup?.close();
+      console.error(e);
+      toast.error("エラーが発生しました");
+    }
+  };
+
+  const handleGcalUnlink = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("google_calendar_tokens" as any)
+      .delete()
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("連携解除に失敗しました");
+    } else {
+      toast.success("Googleカレンダー連携を解除しました");
+      setGcalLinked(false);
+    }
+  };
 
   // Handle LINE link result from redirect
   useEffect(() => {
