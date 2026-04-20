@@ -650,6 +650,80 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         </Card>
       </section>
 
+      {/* コース進捗 */}
+      {(() => {
+        const progressBookings: BookingForProgress[] = clientBookings2.map((b) => ({
+          id: b.id,
+          booking_date: `${b.date}T${b.startTime}:00+09:00`,
+          status: b.status,
+        }));
+        const progress = computeCourseProgress(cycleStartDate || null, clientPlan, progressBookings);
+        const nextIndex = progress.completedCount + 1;
+        const total = progress.monthlyTotal;
+        const isOverflow = !progress.isUnlimited && total !== null && progress.totalUsed > total;
+        return (
+          <section>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5" />
+              コース進捗
+            </h2>
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                {progress.isUnconfigured ? (
+                  <div className="text-center py-2">
+                    <p className="text-sm text-muted-foreground mb-1">コース未設定</p>
+                    <p className="text-xs text-muted-foreground">
+                      上の「契約・支払い」セクションでプランと起算日を設定してください
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p className="text-xs text-muted-foreground">
+                        今期（{progress.cycle ? format(progress.cycle.start, "M/d", { locale: ja }) : "-"} 〜{" "}
+                        {progress.cycle ? format(new Date(progress.cycle.end.getTime() - 86400000), "M/d", { locale: ja }) : "-"}）
+                      </p>
+                      <CourseProgressBadge
+                        index={progress.isUnlimited ? progress.totalUsed : Math.min(progress.totalUsed, nextIndex)}
+                        total={total}
+                        isUnlimited={progress.isUnlimited}
+                        isUnconfigured={false}
+                        isOverflow={isOverflow}
+                        size="md"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
+                      <div className="text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">実施済み</p>
+                        <p className="text-lg font-extrabold text-foreground">{progress.completedCount}<span className="text-xs text-muted-foreground ml-0.5">回</span></p>
+                      </div>
+                      <div className="text-center border-x border-border">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">予約済み</p>
+                        <p className="text-lg font-extrabold text-accent">{progress.upcomingCount}<span className="text-xs text-muted-foreground ml-0.5">回</span></p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">月間コース</p>
+                        <p className="text-lg font-extrabold text-foreground">
+                          {progress.isUnlimited ? "∞" : total}
+                          <span className="text-xs text-muted-foreground ml-0.5">{progress.isUnlimited ? "" : "回"}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {isOverflow && (
+                      <p className="text-xs text-destructive font-bold text-center pt-1">
+                        ⚠️ 月間コース回数を超過しています
+                      </p>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+        );
+      })()}
+
       {/* Tabbed sections */}
       <Tabs defaultValue="training" className="space-y-4">
         <TabsList className="grid grid-cols-7 w-full">
