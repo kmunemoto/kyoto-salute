@@ -38,7 +38,7 @@ const TrainerSchedule = () => {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const timeSlots = (() => {
     const slots: string[] = [];
-    for (let min = 600; min <= 1215; min += 15) {
+    for (let min = 600; min <= 1335; min += 15) {
       const h = Math.floor(min / 60);
       const m = min % 60;
       slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
@@ -428,7 +428,7 @@ const TrainerSchedule = () => {
                 <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
                   {(() => {
                     const slots: { time: string; blocked: boolean }[] = [];
-                    for (let totalMin = 600; totalMin <= 1215; totalMin += 15) {
+                    for (let totalMin = 600; totalMin <= 1335; totalMin += 15) {
                       const h = Math.floor(totalMin / 60);
                       const m = totalMin % 60;
                       const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -524,7 +524,7 @@ const TrainerSchedule = () => {
                     {(() => {
                       const blockDateKey = format(blockDate, "yyyy-MM-dd");
                       const slots: { time: string; blocked: boolean }[] = [];
-                      for (let totalMin = 600; totalMin <= 1275; totalMin += 15) {
+                      for (let totalMin = 600; totalMin <= 1335; totalMin += 15) {
                         const h = Math.floor(totalMin / 60);
                         const m = totalMin % 60;
                         const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
