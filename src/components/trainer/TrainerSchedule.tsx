@@ -314,6 +314,15 @@ const TrainerSchedule = () => {
                                   <p className="font-bold truncate">{session.isBlocked ? "🚫 ブロック" : session.clientName}</p>
                                   <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
                                   {!session.isBlocked && <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>}
+                                  {!session.isBlocked && (() => {
+                                    const progress = getProgressForBooking(session);
+                                    if (!progress) return null;
+                                    return (
+                                      <div className="mt-1 -ml-0.5">
+                                        <CourseProgressBadge {...progress} size="sm" />
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               )}
                             </td>
@@ -358,6 +367,15 @@ const TrainerSchedule = () => {
                               <p className="text-sm font-bold truncate">{booking.isBlocked ? "ブロック" : booking.clientName}</p>
                               <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
                               {!booking.isBlocked && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>}
+                              {!booking.isBlocked && (() => {
+                                const progress = getProgressForBooking(booking);
+                                if (!progress) return null;
+                                return (
+                                  <div className="mt-1">
+                                    <CourseProgressBadge {...progress} size="sm" />
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                           <div className="mt-3 flex justify-end">
