@@ -1,0 +1,84 @@
+import { cn } from "@/lib/utils";
+
+interface CourseProgressBadgeProps {
+  index: number;
+  total: number | null;
+  isUnlimited: boolean;
+  isUnconfigured: boolean;
+  isOverflow: boolean;
+  /** トレーナー側「予約一覧」用の小さい表示 */
+  size?: "sm" | "md";
+  className?: string;
+}
+
+/**
+ * 予約カード等に表示するコース進捗チップ。
+ * - 通常: 「今期 3/8 回目」
+ * - 通い放題: 「今期 3 回目（通い放題）」
+ * - 未設定: 「コース未設定」
+ * - 超過: 「今期 9/8 回目（超過）」
+ * - 残り少：警告色
+ */
+const CourseProgressBadge = ({
+  index,
+  total,
+  isUnlimited,
+  isUnconfigured,
+  isOverflow,
+  size = "sm",
+  className,
+}: CourseProgressBadgeProps) => {
+  if (isUnconfigured) {
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground font-medium",
+          size === "sm" ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-0.5",
+          className,
+        )}
+      >
+        コース未設定
+      </span>
+    );
+  }
+
+  if (isUnlimited) {
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full bg-accent/15 text-accent font-bold border border-accent/30",
+          size === "sm" ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-0.5",
+          className,
+        )}
+      >
+        今期 {index} 回（通い放題）
+      </span>
+    );
+  }
+
+  // 通常
+  const remaining = total !== null ? total - index : null;
+  const isLastSession = remaining === 0;
+  const isNearEnd = remaining !== null && remaining > 0 && remaining <= 1;
+
+  let style = "bg-accent/10 text-accent border border-accent/30";
+  if (isOverflow) style = "bg-destructive/10 text-destructive border border-destructive/30";
+  else if (isLastSession) style = "bg-warning/15 text-warning border border-warning/40";
+  else if (isNearEnd) style = "bg-warning/10 text-warning border border-warning/30";
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full font-bold",
+        style,
+        size === "sm" ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-0.5",
+        className,
+      )}
+    >
+      今期 {index}/{total} 回目
+      {isOverflow && "（超過）"}
+    </span>
+  );
+};
+
+export default CourseProgressBadge;
