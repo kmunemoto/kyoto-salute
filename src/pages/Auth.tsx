@@ -22,7 +22,6 @@ const Auth = () => {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
 
   // Already authenticated → redirect to home
@@ -46,10 +45,6 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === "signup" && !isTrainerTarget()) {
-      if (!agreedToTerms) {
-        toast.error("利用規約とプライバシーポリシーへの同意が必要です");
-        return;
-      }
       if (password.length < 6) {
         toast.error("パスワードは6文字以上にしてください");
         return;
@@ -267,25 +262,7 @@ const Auth = () => {
                 </div>
               )}
 
-              {/* Terms & Privacy agreement (customer signup only) */}
-              {mode === "signup" && !isTrainer && (
-                <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 accent-accent flex-shrink-0"
-                  />
-                  <span>
-                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2 hover:text-accent/80">利用規約</a>
-                    と
-                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2 hover:text-accent/80">プライバシーポリシー</a>
-                    に同意します
-                  </span>
-                </label>
-              )}
-
-              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading || passwordMismatch || (mode === "signup" && !isTrainer && !agreedToTerms)}>
+              <Button type="submit" variant={isTrainer ? "default" : "accent"} className="w-full" disabled={loading || passwordMismatch}>
                 {loading ? "処理中..." : mode === "login" ? "ログイン" : "アカウント作成"}
               </Button>
             </form>
