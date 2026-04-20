@@ -14,6 +14,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
+import CourseProgressBadge from "./CourseProgressBadge";
+import { getBookingProgressIndex, BookingForProgress } from "@/lib/courseProgress";
 
 
 const TrainerSchedule = () => {
