@@ -1122,7 +1122,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
         {/* Skeletal Diagnosis History */}
         <TabsContent value="skeletal">
-          <DiagnosisHistorySection userId={clientId} />
+          <DiagnosisHistorySection userId={clientId} allowDelete />
         </TabsContent>
 
         {/* Monthly Report */}

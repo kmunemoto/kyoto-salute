@@ -1,8 +1,20 @@
 import { useState, useEffect } from "react";
-import { Bone, Loader2, ChevronDown, Dumbbell, Target, TrendingUp, ArrowLeftRight, X } from "lucide-react";
+import { Bone, Loader2, ChevronDown, Dumbbell, Target, TrendingUp, ArrowLeftRight, X, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -42,7 +54,7 @@ const TRAINING_TIPS: Record<string, { area: string; exercises: string[] }[]> = {
   ],
 };
 
-type Props = { userId: string | undefined };
+type Props = { userId: string | undefined; allowDelete?: boolean };
 
 /* ─── Compare view ─── */
 const CompareView = ({
@@ -129,13 +141,34 @@ const CompareView = ({
   );
 };
 
-const DiagnosisHistorySection = ({ userId }: Props) => {
+const DiagnosisHistorySection = ({ userId, allowDelete = false }: Props) => {
   const [diagnoses, setDiagnoses] = useState<DiagnosisRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [compareMode, setCompareMode] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (d: DiagnosisRow) => {
+    setDeletingId(d.id);
+    try {
+      // Try to remove image from storage (non-fatal)
+      if (d.image_url) {
+        await supabase.storage.from("posture-photos").remove([d.image_url]).catch(() => {});
+      }
+      const { error } = await supabase.from("skeletal_diagnoses").delete().eq("id", d.id);
+      if (error) throw error;
+      setDiagnoses((prev) => prev.filter((x) => x.id !== d.id));
+      setCompareIds((prev) => prev.filter((x) => x !== d.id));
+      if (expandedId === d.id) setExpandedId(null);
+      toast({ title: "削除しました", description: "骨格診断を削除しました" });
+    } catch (e: any) {
+      toast({ title: "削除に失敗しました", description: e?.message ?? "もう一度お試しください", variant: "destructive" });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -424,6 +457,46 @@ const DiagnosisHistorySection = ({ userId }: Props) => {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Trainer-only delete */}
+                      {allowDelete && (
+                        <div className="pt-2 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 h-8 text-xs"
+                                disabled={deletingId === d.id}
+                              >
+                                {deletingId === d.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                )}
+                                この診断を削除
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>骨格診断を削除しますか？</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {format(dt, "yyyy年M月d日 HH:mm", { locale: ja })}の診断結果と画像が完全に削除されます。この操作は取り消せません。
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(d)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  削除する
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       )}
                     </div>
