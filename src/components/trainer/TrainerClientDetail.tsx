@@ -654,7 +654,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       {(() => {
         const progressBookings: BookingForProgress[] = clientBookings2.map((b) => ({
           id: b.id,
-          booking_date: `${b.date}T${b.startTime}:00+09:00`,
+          booking_date: b.date,
           status: b.status,
         }));
         const progress = computeCourseProgress(cycleStartDate || null, clientPlan, progressBookings);
