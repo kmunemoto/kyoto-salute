@@ -153,17 +153,44 @@ const DiagnosisHistorySection = ({ userId, allowDelete = false }: Props) => {
   const handleDelete = async (d: DiagnosisRow) => {
     setDeletingId(d.id);
     try {
-      // Try to remove image from storage (non-fatal)
-      if (d.image_url) {
-        await supabase.storage.from("posture-photos").remove([d.image_url]).catch(() => {});
-      }
-      const { error } = await supabase.from("skeletal_diagnoses").delete().eq("id", d.id);
+      // 1) Delete DB row first with .select() to detect RLS silent rejections
+      const { data, error } = await supabase
+        .from("skeletal_diagnoses")
+        .delete()
+        .eq("id", d.id)
+        .select();
+
+      console.log("[skeletal_diagnoses] delete result:", { data, error });
+
       if (error) throw error;
+
+      if (!data || data.length === 0) {
+        console.warn("[skeletal_diagnoses] 0 rows deleted — RLS拒否またはデータ不在の可能性");
+        toast({
+          title: "削除できませんでした",
+          description: "権限がないか、すでに削除されている可能性があります",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2) DB削除成功後にストレージ画像を削除（失敗しても致命的ではない）
+      if (d.image_url) {
+        const { error: storageError } = await supabase.storage
+          .from("posture-photos")
+          .remove([d.image_url]);
+        if (storageError) {
+          console.warn("[skeletal_diagnoses] storage delete failed:", storageError);
+        }
+      }
+
+      // 3) ローカルstateを更新
       setDiagnoses((prev) => prev.filter((x) => x.id !== d.id));
       setCompareIds((prev) => prev.filter((x) => x !== d.id));
       if (expandedId === d.id) setExpandedId(null);
       toast({ title: "削除しました", description: "骨格診断を削除しました" });
     } catch (e: any) {
+      console.error("[skeletal_diagnoses] delete error:", e);
       toast({ title: "削除に失敗しました", description: e?.message ?? "もう一度お試しください", variant: "destructive" });
     } finally {
       setDeletingId(null);
