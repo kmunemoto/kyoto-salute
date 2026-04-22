@@ -5,7 +5,7 @@ import {
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = "Salute御所南"
-const SITE_URL = "https://kyoto-salute.lovable.app"
+const SITE_URL = Deno.env.get("APP_URL") || "https://app.kyoto-salute.com"
 
 interface BookingConfirmationProps {
   customerName?: string
