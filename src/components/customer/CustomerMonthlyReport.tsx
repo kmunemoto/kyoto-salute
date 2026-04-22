@@ -16,7 +16,7 @@ const planMaxSessions: Record<string, number> = {
   '月4回': 4, '月6回': 6, '月8回': 8, '通い放題': 15,
 };
 
-const PIE_COLORS = ["hsl(36, 50%, 55%)", "hsl(210, 40%, 58%)", "hsl(150, 40%, 50%)"];
+const PIE_COLORS = ["hsl(175, 48%, 48%)", "hsl(179, 44%, 56%)", "hsl(175, 30%, 70%)"];
 
 interface Props {
   onBack: () => void;
@@ -339,14 +339,14 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                     <AreaChart data={measurementChartData}>
                       <defs>
                         <linearGradient id="rptWeightG" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(175, 48%, 48%)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(175, 48%, 48%)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
                       <YAxis domain={['dataMin - 0.5', 'dataMax + 0.5']} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={32} />
                       <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', fontSize: '11px' }} />
-                      <Area type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2} fill="url(#rptWeightG)" isAnimationActive={false} dot={{ r: 3, fill: "hsl(36, 50%, 55%)", strokeWidth: 1, stroke: "hsl(0,0%,100%)" }} name="体重(kg)" />
+                      <Area type="monotone" dataKey="weight" stroke="hsl(175, 48%, 48%)" strokeWidth={2} fill="url(#rptWeightG)" isAnimationActive={false} dot={{ r: 3, fill: "hsl(175, 48%, 48%)", strokeWidth: 1, stroke: "hsl(0,0%,100%)" }} name="体重(kg)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>

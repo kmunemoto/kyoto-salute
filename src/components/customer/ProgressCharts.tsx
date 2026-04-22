@@ -308,11 +308,11 @@ const ProgressCharts = () => {
                         yAxisId="w"
                         type="monotone"
                         dataKey="weight"
-                        stroke="#C4A265"
+                        stroke="#3FB6AC"
                         strokeWidth={2.5}
                         fill="url(#pgWeightGrad)"
                         isAnimationActive={false}
-                        dot={{ r: 3, fill: "#C4A265", strokeWidth: 2, stroke: "hsl(var(--background))" }}
+                        dot={{ r: 3, fill: "#3FB6AC", strokeWidth: 2, stroke: "hsl(var(--background))" }}
                         name="体重(kg)"
                         connectNulls
                       />
@@ -335,7 +335,7 @@ const ProgressCharts = () => {
                 </div>
                 <div className="flex justify-center gap-5 mt-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-0.5 rounded" style={{ background: "#C4A265" }} />
+                    <div className="w-3 h-0.5 rounded" style={{ background: "#3FB6AC" }} />
                     体重
                   </div>
                   {weightChartData.some((d) => d.bodyFat != null) && (
