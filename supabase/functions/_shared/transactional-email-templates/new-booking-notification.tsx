@@ -61,7 +61,7 @@ export const template = {
     bookingDate: '4月15日（火）',
     bookingTime: '14:00〜15:00',
     planName: '月4回プラン',
-    dashboardUrl: 'https://kyoto-salute.lovable.app',
+    dashboardUrl: 'https://app.kyoto-salute.com',
   },
 } satisfies TemplateEntry
 
