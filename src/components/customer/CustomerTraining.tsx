@@ -166,8 +166,8 @@ const CustomerTraining = () => {
                         <YAxis yAxisId="w" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} unit="kg" domain={["dataMin - 5", "dataMax + 5"]} width={45} />
                         <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} unit="回" width={40} />
                         <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} />
-                        <Line key={`${selectedExercise}-weight`} yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2.5} isAnimationActive={false} dot={{ r: 5, fill: "hsl(36, 50%, 55%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} activeDot={{ r: 7 }} name="重量(kg)" />
-                        <Line key={`${selectedExercise}-reps`} yAxisId="r" type="monotone" dataKey="reps" stroke="hsl(210, 40%, 58%)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} dot={{ r: 4, fill: "hsl(210, 40%, 58%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} name="回数" />
+                        <Line key={`${selectedExercise}-weight`} yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(175, 48%, 48%)" strokeWidth={2.5} isAnimationActive={false} dot={{ r: 5, fill: "hsl(175, 48%, 48%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} activeDot={{ r: 7 }} name="重量(kg)" />
+                        <Line key={`${selectedExercise}-reps`} yAxisId="r" type="monotone" dataKey="reps" stroke="hsl(220, 6%, 50%)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} dot={{ r: 4, fill: "hsl(220, 6%, 50%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} name="回数" />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -180,11 +180,11 @@ const CustomerTraining = () => {
                 {chartData.length > 0 && (
                   <div className="flex justify-center gap-6 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-0.5 rounded bg-[hsl(36,50%,55%)]" />
+                      <div className="w-3 h-0.5 rounded bg-[hsl(175,48%,48%)]" />
                       重量(kg)
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-0.5 rounded bg-[hsl(210,80%,55%)] border-dashed" style={{ borderTop: "2px dashed hsl(210,80%,55%)", height: 0 }} />
+                      <div className="w-3 h-0.5 rounded border-dashed" style={{ borderTop: "2px dashed hsl(220,6%,50%)", height: 0 }} />
                       回数
                     </div>
                   </div>
