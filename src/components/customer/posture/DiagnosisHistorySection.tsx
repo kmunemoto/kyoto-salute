@@ -31,7 +31,7 @@ type DiagnosisRow = {
 };
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  straight: { label: "ストレート", color: "hsl(36, 50%, 55%)" },
+  straight: { label: "ストレート", color: "hsl(175, 48%, 48%)" },
   wave: { label: "ウェーブ", color: "hsl(280, 45%, 55%)" },
   natural: { label: "ナチュラル", color: "hsl(160, 40%, 45%)" },
 };
@@ -314,7 +314,7 @@ const DiagnosisHistorySection = ({ userId, allowDelete = false }: Props) => {
                 </div>
                 <div className="flex gap-3 justify-center text-[10px]">
                   <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "hsl(36, 50%, 55%)" }} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "hsl(175, 48%, 48%)" }} />
                     ストレート
                   </span>
                   <span className="flex items-center gap-1">
@@ -345,7 +345,7 @@ const DiagnosisHistorySection = ({ userId, allowDelete = false }: Props) => {
                       contentStyle={{ fontSize: 11, borderRadius: 8 }}
                       formatter={(v: number) => `${v}%`}
                     />
-                    <Line type="monotone" dataKey="ストレート" stroke="hsl(36, 50%, 55%)" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="ストレート" stroke="hsl(175, 48%, 48%)" strokeWidth={2} dot={{ r: 3 }} />
                     <Line type="monotone" dataKey="ウェーブ" stroke="hsl(280, 45%, 55%)" strokeWidth={2} dot={{ r: 3 }} />
                     <Line type="monotone" dataKey="ナチュラル" stroke="hsl(160, 40%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
                   </LineChart>

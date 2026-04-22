@@ -150,8 +150,8 @@ const TrainingGrowthChart = ({ workoutRecords, loadingRecords }: { workoutRecord
                   <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} unit="kg" domain={["dataMin - 5", "dataMax + 5"]} width={42} />
                   <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} unit="回" width={38} />
                   <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "11px" }} />
-                  <Line yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" strokeWidth={2.5} isAnimationActive={false} dot={{ r: 4, fill: "hsl(36, 50%, 55%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} activeDot={{ r: 6 }} name="重量(kg)" />
-                  <Line yAxisId="r" type="monotone" dataKey="reps" stroke="hsl(210, 40%, 58%)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} dot={{ r: 3, fill: "hsl(210, 40%, 58%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} name="回数" />
+                  <Line yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(175, 48%, 48%)" strokeWidth={2.5} isAnimationActive={false} dot={{ r: 4, fill: "hsl(175, 48%, 48%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} activeDot={{ r: 6 }} name="重量(kg)" />
+                  <Line yAxisId="r" type="monotone" dataKey="reps" stroke="hsl(220, 6%, 50%)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} dot={{ r: 3, fill: "hsl(220, 6%, 50%)", strokeWidth: 2, stroke: "hsl(var(--background))" }} name="回数" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -164,11 +164,11 @@ const TrainingGrowthChart = ({ workoutRecords, loadingRecords }: { workoutRecord
           {chartData.length > 0 && (
             <div className="flex justify-center gap-6 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-0.5 rounded bg-[hsl(36,50%,55%)]" />
+                <div className="w-3 h-0.5 rounded bg-[hsl(175,48%,48%)]" />
                 重量(kg)
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-0.5 rounded" style={{ borderTop: "2px dashed hsl(210,40%,58%)", height: 0 }} />
+                <div className="w-3 h-0.5 rounded" style={{ borderTop: "2px dashed hsl(220,6%,50%)", height: 0 }} />
                 回数
               </div>
             </div>
@@ -751,8 +751,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       <AreaChart data={measurementChartData}>
                         <defs>
                           <linearGradient id={`wg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="hsl(36, 50%, 55%)" stopOpacity={0} />
+                            <stop offset="0%" stopColor="hsl(175, 48%, 48%)" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="hsl(175, 48%, 48%)" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id={`fg-${clientId}`} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="hsl(210, 40%, 58%)" stopOpacity={0.3} />
@@ -764,8 +764,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         <YAxis yAxisId="w" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="kg" width={38} />
                         <YAxis yAxisId="f" orientation="right" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} unit="%" width={38} />
                         <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }} />
-                        <Area yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(36, 50%, 55%)" fill={`url(#wg-${clientId})`} strokeWidth={2} name="体重(kg)" />
-                        <Area yAxisId="f" type="monotone" dataKey="bodyFat" stroke="hsl(210, 40%, 58%)" fill={`url(#fg-${clientId})`} strokeWidth={2} name="体脂肪率(%)" />
+                        <Area yAxisId="w" type="monotone" dataKey="weight" stroke="hsl(175, 48%, 48%)" fill={`url(#wg-${clientId})`} strokeWidth={2} name="体重(kg)" />
+                        <Area yAxisId="f" type="monotone" dataKey="bodyFat" stroke="hsl(220, 6%, 50%)" fill={`url(#fg-${clientId})`} strokeWidth={2} name="体脂肪率(%)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>

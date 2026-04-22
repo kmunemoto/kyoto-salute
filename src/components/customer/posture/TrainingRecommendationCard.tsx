@@ -54,7 +54,7 @@ const POSTURE_EXERCISES: Record<string, TrainingTip> = {
 };
 
 const TYPE_COLORS: Record<SkeletalType, string> = {
-  straight: "hsl(36, 50%, 55%)",
+  straight: "hsl(175, 48%, 48%)",
   wave: "hsl(280, 45%, 55%)",
   natural: "hsl(160, 40%, 45%)",
 };
