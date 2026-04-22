@@ -11,8 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 type AuthMode = "login" | "signup";
 type LoginTarget = "customer" | "trainer";
 
-const APP_URL = import.meta.env.VITE_APP_URL || "https://kyoto-salute.lovable.app";
-const EMAIL_CALLBACK_URL = `${APP_URL}/auth/callback`;
+const EMAIL_CALLBACK_URL = "https://app.kyoto-salute.com/auth/callback";
 
 const Auth = () => {
   const { user, loading: authLoading } = useAuth();
