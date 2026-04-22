@@ -6,7 +6,7 @@ import type { SkeletalDiagnosis, SkeletalType } from "./types";
 const TYPE_INFO: Record<SkeletalType, { label: string; color: string; desc: string; traits: string[] }> = {
   straight: {
     label: "ストレート",
-    color: "hsl(36, 50%, 55%)",
+    color: "hsl(175, 48%, 48%)",
     desc: "上半身に重心があり、立体的でメリハリのあるボディラインが特徴です。",
     traits: ["筋肉にハリがある", "上半身に厚みがある", "手足が身体に対して小さめ"],
   },
