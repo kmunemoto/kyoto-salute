@@ -28,7 +28,7 @@ const PERIODS = [
 
 type PeriodValue = (typeof PERIODS)[number]["value"];
 
-const EXERCISE_COLORS = ["#C4A265", "#6BA3BE", "#B07AA1", "#76B947", "#E8834A"];
+const EXERCISE_COLORS = ["#3FB6AC", "#5BC0BE", "#2A8C8A", "#7FD4D2", "#1A6B6A"];
 
 function getPeriodStart(period: PeriodValue): Date | null {
   const now = new Date();
@@ -195,7 +195,7 @@ const ProgressCharts = () => {
             onClick={() => setPeriod(p.value)}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
               period === p.value
-                ? "bg-[#C4A265] text-white"
+                ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
@@ -259,8 +259,8 @@ const ProgressCharts = () => {
                     <AreaChart data={weightChartData}>
                       <defs>
                         <linearGradient id="pgWeightGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#C4A265" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="#C4A265" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#3FB6AC" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#3FB6AC" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="pgFatGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#888" stopOpacity={0.15} />
