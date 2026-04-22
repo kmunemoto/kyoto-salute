@@ -9,7 +9,7 @@ function redirect(url: string): Response {
 
 Deno.serve(async (req) => {
   const url = new URL(req.url);
-  const appUrl = Deno.env.get("APP_URL") || "https://kyoto-salute.lovable.app";
+  const appUrl = Deno.env.get("APP_URL") || "https://app.kyoto-salute.com";
 
   if (req.method === "GET") {
     const code = url.searchParams.get("code");
