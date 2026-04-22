@@ -43,7 +43,7 @@ export const sendBookingNotification = async (
           bookingDate: formattedDate,
           bookingTime: `${startTime}〜${endTime}`,
           planName,
-          dashboardUrl: import.meta.env.VITE_APP_URL ?? window.location.origin,
+          dashboardUrl: window.location.origin,
           trainerUserId: trainerRole.user_id,
         },
       },
