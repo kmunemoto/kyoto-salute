@@ -22,8 +22,8 @@ html, body {
     --popover: 0 0% 100%;
     --popover-foreground: 220 10% 28%;
 
-    /* Champagne gold primary */
-    --primary: 36 40% 42%;
+    /* Tiffany blue primary */
+    --primary: 174 60% 45%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 30 15% 95%;
@@ -32,8 +32,8 @@ html, body {
     --muted: 30 10% 96%;
     --muted-foreground: 220 6% 55%;
 
-    /* Champagne gold accent */
-    --accent: 36 50% 55%;
+    /* Tiffany blue accent */
+    --accent: 174 65% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 45% 58%;
@@ -41,7 +41,7 @@ html, body {
 
     --border: 30 10% 92%;
     --input: 30 10% 92%;
-    --ring: 36 50% 55%;
+    --ring: 174 65% 50%;
 
     --radius: 0.75rem;
 
