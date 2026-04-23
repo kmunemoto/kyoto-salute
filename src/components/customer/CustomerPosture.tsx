@@ -235,7 +235,7 @@ const CustomerPosture = () => {
     const dotR = Math.max(4, imgSize.w / 150);
 
     // Draw skeleton edges
-    ctx.strokeStyle = "hsl(36, 50%, 55%)";
+    ctx.strokeStyle = "hsl(174, 65%, 50%)";
     ctx.lineWidth = lineW;
     ctx.lineCap = "round";
     for (const [i, j] of SKELETON_EDGES) {
@@ -254,7 +254,7 @@ const CustomerPosture = () => {
       if ((kp.score ?? 1) < MIN_SCORE_DRAW) continue;
       ctx.beginPath();
       ctx.arc(kp.x, kp.y, dotR, 0, 2 * Math.PI);
-      ctx.fillStyle = "hsl(36, 40%, 42%)";
+      ctx.fillStyle = "hsl(174, 60%, 45%)";
       ctx.fill();
       ctx.strokeStyle = "white";
       ctx.lineWidth = Math.max(1.5, lineW * 0.6);
@@ -296,7 +296,7 @@ const CustomerPosture = () => {
     const lineW = Math.max(3, natW / 200);
     const dotR = Math.max(5, natW / 150);
 
-    ctx.strokeStyle = "hsl(36, 50%, 55%)";
+    ctx.strokeStyle = "hsl(174, 65%, 50%)";
     ctx.lineWidth = lineW;
     ctx.lineCap = "round";
     for (const [i, j] of SKELETON_EDGES) {
@@ -313,7 +313,7 @@ const CustomerPosture = () => {
       if ((kp.score ?? 1) < MIN_SCORE_DRAW) continue;
       ctx.beginPath();
       ctx.arc(kp.x * sx, kp.y * sy, dotR, 0, 2 * Math.PI);
-      ctx.fillStyle = "hsl(36, 40%, 42%)";
+      ctx.fillStyle = "hsl(174, 60%, 45%)";
       ctx.fill();
       ctx.strokeStyle = "white";
       ctx.lineWidth = Math.max(2, lineW * 0.6);

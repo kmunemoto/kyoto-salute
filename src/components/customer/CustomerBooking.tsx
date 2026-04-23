@@ -415,7 +415,7 @@ const CustomerBooking = () => {
                               style={{
                                 width: 6,
                                 height: 6,
-                                backgroundColor: isFuture ? "#C4A265" : "#999",
+                                backgroundColor: isFuture ? "#3FB6AC" : "#999",
                               }}
                             />
                           )}

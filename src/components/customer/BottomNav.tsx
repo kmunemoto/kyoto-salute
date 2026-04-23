@@ -30,13 +30,11 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 className="flex-1 flex flex-col items-center -mt-4 pb-2 pt-0.5"
               >
                 <div
-                  className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 ${
-                    active
-                      ? "bg-gradient-to-br from-[hsl(var(--accent))] to-[hsl(35,40%,38%)] scale-105"
-                      : "bg-gradient-to-br from-[hsl(var(--accent))] to-[hsl(35,30%,45%)]"
+                  className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 bg-accent ${
+                    active ? "scale-105" : ""
                   }`}
                 >
-                  <t.icon className="w-6 h-6 text-white" strokeWidth={2.2} />
+                  <t.icon className="w-6 h-6 text-accent-foreground" strokeWidth={2.2} />
                 </div>
                 <span className={`text-[10px] font-bold mt-1 ${active ? "text-accent" : "text-muted-foreground"}`}>
                   {t.label}
