@@ -467,6 +467,14 @@ const TrainerSchedule = () => {
           <span className="text-xs text-muted-foreground">ブロック</span>
         </div>
       </div>
+        </>
+      )}
+
+      {viewMode === "month" && (
+        <div className="border rounded-xl bg-card p-8 text-center text-sm text-muted-foreground">
+          月間ビューは準備中です
+        </div>
+      )}
 
       <Dialog open={proxyDialogOpen} onOpenChange={setProxyDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
