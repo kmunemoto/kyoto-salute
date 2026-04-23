@@ -16,11 +16,13 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import CourseProgressBadge from "./CourseProgressBadge";
 import { getBookingProgressIndex, BookingForProgress } from "@/lib/courseProgress";
+import WeekTimelineView from "./WeekTimelineView";
 
 
 const TrainerSchedule = () => {
   const { user } = useAuth();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
   const [proxyDialogOpen, setProxyDialogOpen] = useState(false);
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
   const [proxyTime, setProxyTime] = useState<string>("");
@@ -256,9 +258,62 @@ const TrainerSchedule = () => {
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}>
             <ChevronRight className="w-4 h-4" />
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-1 h-8 px-2 text-xs"
+            onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+          >
+            今日
+          </Button>
         </div>
       </div>
 
+      {/* 表示モード切替 */}
+      <div className="flex items-center gap-1 mb-3 p-1 bg-muted/40 rounded-lg w-fit">
+        {([
+          { key: "day", label: "日別" },
+          { key: "week", label: "週間" },
+          { key: "month", label: "月間" },
+        ] as const).map((m) => (
+          <button
+            key={m.key}
+            type="button"
+            disabled={m.key === "month"}
+            onClick={() => setViewMode(m.key)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              viewMode === m.key
+                ? "bg-accent text-accent-foreground shadow-sm"
+                : m.key === "month"
+                  ? "text-muted-foreground/40 cursor-not-allowed"
+                  : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {m.label}
+            {m.key === "month" && <span className="ml-1 text-[9px]">(準備中)</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* 週間タイムライン表示 */}
+      {viewMode === "week" && (
+        <WeekTimelineView
+          weekStart={weekStart}
+          bookings={bookings}
+          onSelectBooking={(b) =>
+            setDeleteTarget({
+              id: b.id,
+              clientName: b.clientName,
+              date: b.date,
+              startTime: b.startTime,
+              isBlocked: b.isBlocked,
+            })
+          }
+        />
+      )}
+
+      {viewMode === "day" && (
+        <>
       <div className="hidden md:block">
         <Card>
           <CardContent className="p-0">
@@ -412,6 +467,14 @@ const TrainerSchedule = () => {
           <span className="text-xs text-muted-foreground">ブロック</span>
         </div>
       </div>
+        </>
+      )}
+
+      {viewMode === "month" && (
+        <div className="border rounded-xl bg-card p-8 text-center text-sm text-muted-foreground">
+          月間ビューは準備中です
+        </div>
+      )}
 
       <Dialog open={proxyDialogOpen} onOpenChange={setProxyDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
