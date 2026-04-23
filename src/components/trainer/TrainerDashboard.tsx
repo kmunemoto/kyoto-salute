@@ -192,7 +192,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                         fontSize: '12px',
                       }}
                     />
-                    <Bar dataKey="revenue" fill="hsl(36, 50%, 55%)" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="revenue" fill="hsl(174, 65%, 50%)" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
