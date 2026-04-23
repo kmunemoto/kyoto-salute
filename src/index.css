@@ -22,8 +22,8 @@ html, body {
     --popover: 0 0% 100%;
     --popover-foreground: 220 10% 28%;
 
-    /* Champagne gold primary */
-    --primary: 36 40% 42%;
+    /* Tiffany blue primary */
+    --primary: 174 60% 45%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 30 15% 95%;
@@ -32,8 +32,8 @@ html, body {
     --muted: 30 10% 96%;
     --muted-foreground: 220 6% 55%;
 
-    /* Champagne gold accent */
-    --accent: 36 50% 55%;
+    /* Tiffany blue accent */
+    --accent: 174 65% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 45% 58%;
@@ -41,7 +41,7 @@ html, body {
 
     --border: 30 10% 92%;
     --input: 30 10% 92%;
-    --ring: 36 50% 55%;
+    --ring: 174 65% 50%;
 
     --radius: 0.75rem;
 
@@ -56,12 +56,12 @@ html, body {
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 10% 28%;
-    --sidebar-primary: 36 40% 42%;
+    --sidebar-primary: 174 60% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 30 15% 96%;
     --sidebar-accent-foreground: 220 10% 28%;
     --sidebar-border: 30 10% 93%;
-    --sidebar-ring: 36 50% 55%;
+    --sidebar-ring: 174 65% 50%;
   }
 }
 
@@ -91,10 +91,10 @@ html, body {
 
 @layer utilities {
   .gym-gradient {
-    background: linear-gradient(135deg, hsl(36 40% 42%), hsl(36 50% 55%));
+    background: linear-gradient(135deg, hsl(174 60% 45%), hsl(174 65% 50%));
   }
   .accent-gradient {
-    background: linear-gradient(135deg, hsl(36 50% 55%), hsl(38 55% 62%));
+    background: linear-gradient(135deg, hsl(174 65% 50%), hsl(180 60% 55%));
   }
   .glass {
     @apply bg-card/80 backdrop-blur-xl;
@@ -121,8 +121,8 @@ html, body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(36 50% 55% / 0.3); }
-  50% { box-shadow: 0 0 0 8px hsl(36 50% 55% / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 hsl(174 65% 50% / 0.3); }
+  50% { box-shadow: 0 0 0 8px hsl(174 65% 50% / 0); }
 }
 
 .pulse-glow {
