@@ -16,11 +16,13 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import CourseProgressBadge from "./CourseProgressBadge";
 import { getBookingProgressIndex, BookingForProgress } from "@/lib/courseProgress";
+import WeekTimelineView from "./WeekTimelineView";
 
 
 const TrainerSchedule = () => {
   const { user } = useAuth();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
   const [proxyDialogOpen, setProxyDialogOpen] = useState(false);
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
   const [proxyTime, setProxyTime] = useState<string>("");
