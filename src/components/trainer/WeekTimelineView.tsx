@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { format, addDays, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { BookingWithTime } from "@/hooks/useBookings";
@@ -42,19 +42,10 @@ const WeekTimelineView = ({ weekStart, bookings, onSelectBooking }: WeekTimeline
   const nowOffset = (nowMin - START_HOUR * 60) * PX_PER_MIN;
   const showNowLine = nowMin >= START_HOUR * 60 && nowMin <= END_HOUR * 60;
 
-  // 初回スクロール：現在時刻 or 9:00 にスクロール
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    const target = showNowLine ? Math.max(0, nowOffset - 80) : 0;
-    scrollRef.current.scrollTop = target;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekStart.getTime()]);
-
   return (
     <div className="border rounded-xl overflow-hidden bg-card">
       {/* ヘッダー（曜日） */}
-      <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] border-b bg-muted/40 sticky top-0 z-10">
+      <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] border-b bg-muted/95 backdrop-blur sticky top-0 z-30">
         <div className="p-1.5 text-[10px] text-muted-foreground text-center font-semibold">時間</div>
         {weekDays.map((day) => {
           const isToday = isSameDay(day, now);
@@ -74,12 +65,11 @@ const WeekTimelineView = ({ weekStart, bookings, onSelectBooking }: WeekTimeline
         })}
       </div>
 
-      {/* タイムライン本体 */}
-      <div ref={scrollRef} className="overflow-y-auto max-h-[70vh]">
-        <div
-          className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] relative"
-          style={{ height: totalHeight }}
-        >
+      {/* タイムライン本体（ページ自体でスクロール） */}
+      <div
+        className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] relative"
+        style={{ height: totalHeight }}
+      >
           {/* 時間軸（左カラム） */}
           <div className="relative border-r">
             {hours.map((h) => {
@@ -168,7 +158,6 @@ const WeekTimelineView = ({ weekStart, bookings, onSelectBooking }: WeekTimeline
               </div>
             );
           })}
-        </div>
       </div>
     </div>
   );
