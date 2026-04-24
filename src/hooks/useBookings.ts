@@ -256,14 +256,16 @@ async function sendBookingConfirmationToCustomer(
   const name = profile?.display_name || "お客";
 
   const dt = new Date(`${date}T${startTime}:00+09:00`);
-  const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
+  const md = format(dt, "M/d", { locale: ja });
+  const dow = format(dt, "E", { locale: ja });
+  const hm = format(dt, "HH:mm", { locale: ja });
 
   const proxyNote = isProxyBooking ? "\n※トレーナーが代理で予約を登録しました。" : "";
 
   await supabase.functions.invoke("send-line-message", {
     body: {
       user_id: userId,
-      message: `📅 予約完了のお知らせ\n\n${name}様、下記の予約が確定しました。\n\n日時：${dateStr}\nプラン：${bookingType}${proxyNote}\n\nお気をつけてお越しください！\nパーソナルジムSalute御所南`,
+      message: `✅ 予約確定：${md}（${dow}）${hm}〜\n\n${name}様、トレーニングのご予約が完了しました。\n\nプラン：${bookingType}${proxyNote}\n\n変更・キャンセルはお早めにご連絡ください。\n\nパーソナルジムSalute御所南`,
     },
   });
 }
@@ -339,6 +341,9 @@ async function sendCancelLineNotification(
 ) {
   const dt = new Date(booking.booking_date);
   const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
+  const md = format(dt, "M/d", { locale: ja });
+  const dow = format(dt, "E", { locale: ja });
+  const hm = format(dt, "HH:mm", { locale: ja });
 
   // Always fetch customer name & trainer id (needed for both paths)
   const [{ data: profile }, { data: trainerIds }] = await Promise.all([
@@ -354,7 +359,7 @@ async function sendCancelLineNotification(
     const custRes = await supabase.functions.invoke("send-line-message", {
       body: {
         user_id: booking.user_id,
-        message: `【Salute御所南】ご予約キャンセルのご連絡\n\nトレーナーにより、以下のご予約がキャンセルされました。\n\n・日時：${dateStr}〜\n\nお手数ですが、別の日程でのご予約をアプリよりご検討ください。\nまたのご来館をお待ちしております。`,
+        message: `❌ キャンセル完了：${md}（${dow}）${hm}〜\n\n${customerName}様、上記ご予約をキャンセルしました。\n\n再予約をご希望の場合はお気軽にご連絡ください。\n\nパーソナルジムSalute御所南`,
       },
     });
     console.log("LINE送信結果(顧客):", custRes);
@@ -387,7 +392,7 @@ async function sendCancelLineNotification(
     await supabase.functions.invoke("send-line-message", {
       body: {
         user_id: booking.user_id,
-        message: `❌ キャンセル完了のお知らせ\n\n${customerName}様、${dateStr}の予約（${booking.booking_type}）のキャンセルが完了しました。\n\n再予約はアプリからお願いいたします。\nパーソナルジムSalute御所南`,
+        message: `❌ キャンセル完了：${md}（${dow}）${hm}〜\n\n${customerName}様、上記ご予約をキャンセルしました。\n\n再予約をご希望の場合はお気軽にご連絡ください。\n\nパーソナルジムSalute御所南`,
       },
     });
   }
