@@ -127,16 +127,17 @@ Deno.serve(async (req) => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      if (!deleteRes.ok && deleteRes.status !== 404) {
+      // Treat 404 (not found) and 410 (already deleted) as success — the event is gone either way
+      if (!deleteRes.ok && deleteRes.status !== 404 && deleteRes.status !== 410) {
         const errText = await deleteRes.text();
         console.error("Google Calendar delete error:", errText);
-        return new Response(JSON.stringify({ error: "Failed to delete event" }), {
-          status: 500,
+        return new Response(JSON.stringify({ error: "Failed to delete event", detail: errText }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
+      return new Response(JSON.stringify({ success: true, already_gone: deleteRes.status === 410 || deleteRes.status === 404 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } else if (action === "sync_all") {
