@@ -56,15 +56,9 @@ const CourseProgressBadge = ({
     );
   }
 
-  // 通常
-  const remaining = total !== null ? total - index : null;
-  const isLastSession = remaining === 0;
-  const isNearEnd = remaining !== null && remaining > 0 && remaining <= 1;
-
+  // 通常 — すべてティファニーブルー（accent）で統一
   let style = "bg-accent/10 text-accent border border-accent/30";
   if (isOverflow) style = "bg-destructive/10 text-destructive border border-destructive/30";
-  else if (isLastSession) style = "bg-warning/15 text-warning border border-warning/40";
-  else if (isNearEnd) style = "bg-warning/10 text-warning border border-warning/30";
 
   return (
     <span
