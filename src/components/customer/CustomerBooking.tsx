@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, Clock, Check, Trash2, CalendarPlus, ExternalLink, Loader2 } from "lucide-react";
+import { CalendarDays, Clock, Trash2, CalendarPlus, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -14,6 +14,7 @@ import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
 import { sendBookingNotification } from "@/lib/bookingNotification";
+import BookingCompleteDialog from "./BookingCompleteDialog";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",
@@ -155,7 +156,6 @@ const CustomerBooking = () => {
     };
 
     setLastBooked(newBooking);
-    toast.success(`${format(selectedDate, "M月d日", { locale: ja })} ${slot.time}〜${endTime} で予約しました！`);
     setSelectedSlot(null);
     setSelectedDate(undefined);
     // plan is auto-assigned, no need to reset
