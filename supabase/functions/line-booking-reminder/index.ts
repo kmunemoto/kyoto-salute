@@ -46,7 +46,7 @@ Deno.serve(async (_req) => {
     // Get profiles with line_user_id
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, display_name, line_user_id")
+      .select("user_id, display_name, line_user_id, plan")
       .in("user_id", userIds)
       .not("line_user_id", "is", null);
 
@@ -68,8 +68,11 @@ Deno.serve(async (_req) => {
       const mins = String(jstBooking.getMinutes()).padStart(2, "0");
       const month = jstBooking.getMonth() + 1;
       const day = jstBooking.getDate();
+      const dowChars = ["日", "月", "火", "水", "木", "金", "土"];
+      const dow = dowChars[jstBooking.getUTCDay()];
+      const planName = (profile as any).plan || booking.booking_type;
 
-      const message = `🔔 リマインド通知\n\n${profile.display_name || "お客"}様、明日${month}月${day}日 ${hours}:${mins}にトレーニングのご予約が入っております。\n\nプラン：${booking.booking_type}\n\nお気をつけてお越しください！\nパーソナルジムSalute御所南`;
+      const message = `🔔 明日 ${month}/${day}（${dow}）${hours}:${mins}〜 トレーニング予約\n\n${profile.display_name || "お客"}様、ご予約のリマインドです。\n\nプラン：${planName}\n\nお気をつけてお越しください！\n\nパーソナルジムSalute御所南`;
 
       const res = await fetch(LINE_API, {
         method: "POST",
