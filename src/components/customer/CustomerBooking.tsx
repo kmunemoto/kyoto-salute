@@ -478,6 +478,15 @@ const CustomerBooking = () => {
           </div>
         </div>
       )}
+
+      <BookingCompleteDialog
+        open={!!lastBooked}
+        onClose={() => setLastBooked(null)}
+        date={lastBooked?.date || ""}
+        startTime={lastBooked?.startTime || ""}
+        endTime={lastBooked?.endTime || ""}
+        planName={lastBooked ? planLabel(lastBooked.booking_type) : ""}
+      />
     </>
   );
 };
