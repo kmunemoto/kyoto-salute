@@ -57,16 +57,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // 2. Listen for subsequent auth changes (do NOT await inside)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setLoading(true);
-          fetchRole(session.user.id);
-        } else {
-          setRole(null);
-          setLoading(false);
-        }
+      (event, newSession) => {
+        // Always keep session/user in sync so tokens stay fresh
+        setSession(newSession);
+        setUser((prevUser) => {
+          const nextUser = newSession?.user ?? null;
+
+          if (event === "SIGNED_OUT" || !nextUser) {
+            setRole(null);
+            setLoading(false);
+            return nextUser;
+          }
+
+          // For TOKEN_REFRESHED / USER_UPDATED / INITIAL_SESSION on the same user,
+          // do NOT toggle loading or refetch the role — this would unmount the
+          // current view (e.g. when returning from another app) and reset tabs.
+          const isSameUser = prevUser?.id === nextUser.id;
+          if (event === "SIGNED_IN" && !isSameUser) {
+            setLoading(true);
+            fetchRole(nextUser.id);
+          }
+          return nextUser;
+        });
       }
     );
 
