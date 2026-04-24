@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, Clock, Trash2, CalendarPlus, Loader2 } from "lucide-react";
+import { CalendarDays, Clock, Check, Trash2, CalendarPlus, Loader2 } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -257,37 +257,6 @@ const CustomerBooking = () => {
           </p>
           <p className="text-xs text-muted-foreground/70 mt-1">※ご予約は24時間前までにお願いいたします</p>
         </div>
-
-        {/* Success banner */}
-        {lastBooked && (
-          <Card className="border-l-4 border-l-accent bg-accent/5 slide-up">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-accent" />
-                <span className="font-bold text-sm">予約が完了しました！</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {planLabel(lastBooked.booking_type)} — {format(new Date(lastBooked.date), "M月d日（E）", { locale: ja })} {lastBooked.startTime}〜{lastBooked.endTime}（60分）
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    window.open(buildGoogleCalendarUrl(lastBooked.date, lastBooked.startTime, lastBooked.endTime, planLabel(lastBooked.booking_type)), "_blank");
-                  }}
-                >
-                  <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                  Googleカレンダーに追加
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setLastBooked(null)}>
-                  閉じる
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Existing bookings */}
         {activeBookings.length > 0 && (
