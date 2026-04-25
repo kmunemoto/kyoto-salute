@@ -183,6 +183,7 @@ export const useAllBookings = () => {
 };
 
 export const checkSlotBlocked = (bookings: BookingWithTime[], date: string, startTime: string, endTimeOverride?: string): boolean => {
+  const BUFFER_MINUTES = 15;
   const timeToMin = (t: string) => {
     const [h, m] = t.split(":").map(Number);
     return h * 60 + m;
@@ -194,7 +195,7 @@ export const checkSlotBlocked = (bookings: BookingWithTime[], date: string, star
   return bookings.some((b) => {
     if (b.date !== date || b.status === "キャンセル済み") return false;
     const bMin = timeToMin(b.startTime);
-    const bEnd = timeToMin(b.endTime);
+    const bEnd = timeToMin(b.endTime) + (b.isBlocked ? 0 : BUFFER_MINUTES);
     return newMin < bEnd && bMin < newEnd;
   });
 };

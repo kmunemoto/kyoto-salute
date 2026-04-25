@@ -24,6 +24,8 @@ const PLAN_LABELS: Record<string, string> = {
   "通い放題": "通い放題プラン",
 };
 
+const BOOKING_BUFFER_MINUTES = 15;
+
 const CustomerBooking = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
@@ -85,7 +87,7 @@ const CustomerBooking = () => {
     return bookedSlots.some((b) => {
       if (b.date !== date) return false;
       const bMin = timeToMin(b.startTime);
-      const bEnd = timeToMin(b.endTime);
+      const bEnd = timeToMin(b.endTime) + (b.isBlock ? 0 : BOOKING_BUFFER_MINUTES);
       return newMin < bEnd && bMin < newMin + 75;
     });
   };
