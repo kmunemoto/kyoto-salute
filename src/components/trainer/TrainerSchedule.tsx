@@ -533,11 +533,11 @@ const TrainerSchedule = () => {
                 <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
                   {(() => {
                     const slots: { time: string; blocked: boolean }[] = [];
-                    for (let totalMin = 600; totalMin <= 1335; totalMin += 15) {
+                    for (let totalMin = 600; totalMin <= 1260; totalMin += 15) {
                       const h = Math.floor(totalMin / 60);
                       const m = totalMin % 60;
                       const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                    const blocked = checkSlotBlocked(bookings, proxyDateKey, time, undefined);
+                      const blocked = checkSlotBlocked(bookings, proxyDateKey, time, undefined);
                       slots.push({ time, blocked });
                     }
                     return slots.map((slot) => (
