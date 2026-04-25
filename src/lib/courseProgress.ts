@@ -24,14 +24,18 @@ export interface CycleWindow {
  */
 export const getCycleWindow = (cycleStartDate: string | null | undefined, targetDate: Date): CycleWindow | null => {
   if (!cycleStartDate) return null;
-  let start = parseISO(cycleStartDate);
-  // 過去すぎる場合は前進
+  const initialStart = parseISO(cycleStartDate);
+  let start = initialStart;
+
+  // 契約起算日より前に、架空の「前期」を作らない。
+  // 例: 起算日 2026-04-26 / 参照日 2026-04-25 の場合も、今期は 4/26〜5/25 とする。
+  if (targetDate < initialStart) {
+    return { start: initialStart, end: addMonths(initialStart, 1) };
+  }
+
+  // targetDate が属する、起算日ベースの [start, end) を求める
   while (addMonths(start, 1) <= targetDate) {
     start = addMonths(start, 1);
-  }
-  // 未来すぎる場合は後退（targetDate が cycleStartDate より前のケース）
-  while (start > targetDate) {
-    start = addMonths(start, -1);
   }
   return { start, end: addMonths(start, 1) };
 };
