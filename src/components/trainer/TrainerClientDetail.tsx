@@ -684,7 +684,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {progress.cycle ? format(new Date(progress.cycle.end.getTime() - 86400000), "M/d", { locale: ja }) : "-"}）
                       </p>
                       <CourseProgressBadge
-                        index={progress.isUnlimited ? progress.totalUsed : Math.min(progress.totalUsed, nextIndex)}
+                        index={progress.totalUsed}
                         total={total}
                         isUnlimited={progress.isUnlimited}
                         isUnconfigured={false}
