@@ -11,9 +11,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import StreakCard from "./StreakCard";
 import { Loader2 } from "lucide-react";
-import { format, parseISO, addMonths, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { getCycleWindow } from "@/lib/courseProgress";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4,
@@ -51,18 +52,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   // Compute cycle-based session count for nextBooking
   const maxSessions = hasPlan ? (planMaxSessions[currentPlan] || 4) : 0;
 
-  // Determine which cycle a given date belongs to, advancing from cycle_start_date
-  const getCycleWindow = (targetDate: Date) => {
-    if (!profile?.cycle_start_date) return null;
-    let cycleStart = parseISO(profile.cycle_start_date);
-    // Advance cycle window until target falls within [cycleStart, cycleEnd)
-    while (addMonths(cycleStart, 1) <= targetDate) {
-      cycleStart = addMonths(cycleStart, 1);
-    }
-    return { start: cycleStart, end: addMonths(cycleStart, 1) };
-  };
-
-  const nextBookingCycle = nextBooking ? getCycleWindow(parseISO(nextBooking.date)) : null;
+  const nextBookingCycle = nextBooking ? getCycleWindow(profile?.cycle_start_date, parseISO(nextBooking.date)) : null;
 
   const cycleBookings = (() => {
     if (!nextBookingCycle) return [];
@@ -189,7 +179,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
 
       {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
-        const currentCycle = getCycleWindow(now);
+        const currentCycle = getCycleWindow(profile.cycle_start_date, now);
         if (!currentCycle) return null;
         const { start: cycleStart, end: cycleEnd } = currentCycle;
         const remaining = differenceInDays(cycleEnd, now);
@@ -310,7 +300,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
                   <p className="font-bold text-sm">📊 今回のレポート</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {(() => {
-                      const currentCycle = getCycleWindow(now);
+                       const currentCycle = getCycleWindow(profile?.cycle_start_date, now);
                       if (!currentCycle) return "データを確認する";
                       const cycleVisited = bookings.filter(b => {
                         if (b.status === "キャンセル済み") return false;
