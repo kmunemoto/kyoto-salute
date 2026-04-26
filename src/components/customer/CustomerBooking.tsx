@@ -424,7 +424,12 @@ const CustomerBooking = () => {
                       key={slot.id}
                       type="button"
                       disabled={!slot.available}
-                      onClick={() => setSelectedSlot(slot.id)}
+                      onClick={() => {
+                        setSelectedSlot(slot.id);
+                        setTimeout(() => {
+                          document.getElementById("booking-confirm-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }, 100);
+                      }}
                       className={`relative rounded-lg p-2 text-center text-xs font-semibold transition-all duration-200 min-h-[44px] ${
                         !slot.available
                           ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
@@ -445,7 +450,7 @@ const CustomerBooking = () => {
                 </div>
 
                 {selectedSlot && (
-                  <div className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
+                  <div id="booking-confirm-section" className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
                     <p className="text-sm text-center mb-3">
                       <Badge variant="outline" className="mb-1.5">{planLabel(selectedPlan)}</Badge>
                       <br />
