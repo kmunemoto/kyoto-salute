@@ -260,6 +260,15 @@ const CustomerBooking = () => {
           <p className="text-xs text-muted-foreground/70 mt-1">※ご予約は24時間前までにお願いいたします</p>
         </div>
 
+        <Button
+          type="button"
+          onClick={() => document.getElementById("calendar-section")?.scrollIntoView({ behavior: "smooth" })}
+          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-base rounded-xl shadow-md"
+        >
+          <CalendarPlus className="w-5 h-5" />
+          新しい予約を取る
+        </Button>
+
         {/* Existing bookings */}
         {activeBookings.length > 0 && (
           <section>
@@ -328,7 +337,7 @@ const CustomerBooking = () => {
 
         {/* Date & time selection (plan auto-assigned) */}
         {selectedPlan && (
-          <section className="slide-up">
+          <section id="calendar-section" className="slide-up scroll-mt-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="flex-1">
                 <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
