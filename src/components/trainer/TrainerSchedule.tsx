@@ -522,13 +522,21 @@ const TrainerSchedule = () => {
               <Calendar
                 mode="single"
                 selected={proxyDate}
-                onSelect={(d) => { setProxyDate(d); setProxyTime(""); }}
+                onSelect={(d) => {
+                  setProxyDate(d);
+                  setProxyTime("");
+                  if (d) {
+                    setTimeout(() => {
+                      document.getElementById("proxy-time-slots-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 100);
+                  }
+                }}
                 locale={ja}
                 className="pointer-events-auto border rounded-lg mx-auto"
               />
             </div>
             {proxyDate && (
-              <div>
+              <div id="proxy-time-slots-section" className="scroll-mt-4">
                 <label className="text-xs font-semibold text-muted-foreground mb-1 block">開始時間</label>
                 <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
                   {(() => {
