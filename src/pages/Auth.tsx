@@ -12,6 +12,7 @@ type AuthMode = "login" | "signup";
 type LoginTarget = "customer" | "trainer";
 
 const EMAIL_CALLBACK_URL = "https://app.kyoto-salute.com/auth/callback";
+const TRAINER_LOGIN_EMAIL = "munekan2989@gmail.com";
 
 const Auth = () => {
   const { user, loading: authLoading } = useAuth();
@@ -101,6 +102,12 @@ const Auth = () => {
         toast.success("アカウントを作成しました。");
         navigate("/");
       } else {
+        if (isTrainerTarget() && email.trim().toLowerCase() !== TRAINER_LOGIN_EMAIL) {
+          toast.error("トレーナーとしてログインできるのは指定されたアカウントのみです。");
+          setLoading(false);
+          return;
+        }
+
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
