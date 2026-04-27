@@ -8,8 +8,6 @@ import { useAllBookings } from "@/hooks/useBookings";
 import { format } from "date-fns";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
-import CourseProgressBadge from "./CourseProgressBadge";
-import { getBookingProgressIndex, BookingForProgress } from "@/lib/courseProgress";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
@@ -24,27 +22,6 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
 
   const today = format(new Date(), "yyyy-MM-dd");
   const todayBookings = bookings.filter((b) => b.date === today && b.status !== "キャンセル済み");
-
-  // 各お客様ごとの予約をBookingForProgress形式で集約（進捗計算用）
-  const bookingsByUser = (() => {
-    const map = new Map<string, BookingForProgress[]>();
-    for (const b of bookings) {
-      if (b.isBlocked || b.user_id === "trial-guest" || b.user_id === "blocked") continue;
-      const iso = `${b.date}T${b.startTime}:00+09:00`;
-      const arr = map.get(b.user_id) ?? [];
-      arr.push({ id: b.id, booking_date: iso, status: b.status });
-      map.set(b.user_id, arr);
-    }
-    return map;
-  })();
-
-  const getProgressForBooking = (booking: typeof bookings[number]) => {
-    if (booking.isBlocked || booking.user_id === "trial-guest" || booking.user_id === "blocked") return null;
-    const profile = profiles.find((p) => p.user_id === booking.user_id);
-    if (!profile) return null;
-    const userBookings = bookingsByUser.get(booking.user_id) ?? [];
-    return getBookingProgressIndex(booking.id, profile.cycle_start_date, profile.plan, userBookings);
-  };
 
   const currentMonthRevenue = profiles.reduce((sum, p) => {
     if (!p.plan) return sum;
@@ -133,15 +110,6 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 mt-0.5">
                           {b.booking_type}
                         </Badge>
-                        {(() => {
-                          const progress = getProgressForBooking(b);
-                          if (!progress) return null;
-                          return (
-                            <div className="mt-1">
-                              <CourseProgressBadge {...progress} size="sm" />
-                            </div>
-                          );
-                        })()}
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold">{b.startTime}</p>
