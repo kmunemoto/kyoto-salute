@@ -344,6 +344,9 @@ const TrialBooking = () => {
                 onSelect={(d) => {
                   setSelectedDate(d);
                   setSelectedSlot(null);
+                  setTimeout(() => {
+                    document.getElementById("trial-time-slots")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 100);
                 }}
                 locale={ja}
                 disabled={(date) => {
@@ -358,7 +361,7 @@ const TrialBooking = () => {
           </Card>
 
           {selectedDate && (
-            <div className="mt-4 slide-up">
+            <div id="trial-time-slots" className="mt-4 slide-up">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 {format(selectedDate, "M月d日（E）", { locale: ja })} の空き枠
@@ -369,7 +372,12 @@ const TrialBooking = () => {
                     key={slot.id}
                     type="button"
                     disabled={!slot.available}
-                    onClick={() => setSelectedSlot(slot.id)}
+                    onClick={() => {
+                      setSelectedSlot(slot.id);
+                      setTimeout(() => {
+                        document.getElementById("trial-confirm-section")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 100);
+                    }}
                     className={`relative rounded-lg p-2 text-center text-xs font-semibold transition-all duration-200 min-h-[44px] ${
                       !slot.available
                         ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
@@ -390,7 +398,7 @@ const TrialBooking = () => {
               </div>
 
               {selectedSlot && (
-                <div className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
+                <div id="trial-confirm-section" className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
                   <p className="text-sm text-center mb-3">
                     <span className="font-bold">{slots.find((s) => s.id === selectedSlot)?.time}</span>
                     〜
