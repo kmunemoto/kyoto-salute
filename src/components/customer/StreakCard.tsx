@@ -30,7 +30,7 @@ const StreakCard = ({ currentStreak, bestStreak, hasFutureBookingThisWeek }: Str
             {isActive ? (
               <>
                 <p className="text-lg font-extrabold">
-                  🔥 {currentStreak}週連続来店{hasFutureBookingThisWeek && currentStreak > 0 ? '継続中' : '中'}！
+                  🔥 {currentStreak}週連続トレーニング{hasFutureBookingThisWeek && currentStreak > 0 ? '継続中' : '中'}！
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {getStreakMessage(currentStreak)}
