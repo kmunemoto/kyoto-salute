@@ -34,7 +34,8 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
   const renderCanvas = async (): Promise<HTMLCanvasElement | null> => {
     if (!cardRef.current) return null;
     return await html2canvas(cardRef.current, {
-      backgroundColor: theme === "transparent" ? null : null,
+      // Transparent theme must keep alpha channel; others render their own bg via the card itself
+      backgroundColor: null,
       scale: 1,
       useCORS: true,
       allowTaint: false,
@@ -190,6 +191,28 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
           共有
         </Button>
       </div>
+
+      {/* Full-screen loading overlay while html2canvas is rendering */}
+      {busy && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 110,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 16,
+            color: "#fff",
+          }}
+        >
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-sm font-bold">シェア画像を生成中...</p>
+        </div>
+      )}
     </div>
   );
 };
