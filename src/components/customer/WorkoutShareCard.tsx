@@ -151,23 +151,6 @@ const WorkoutShareCard = forwardRef<HTMLDivElement, Props>(
                     >
                       {ex.exercise_name}
                     </div>
-                    {ex.isPR && (
-                      <div
-                        style={{
-                          background: accent,
-                          color: "#FFFFFF",
-                          fontSize: 16,
-                          fontWeight: 700,
-                          padding: "4px 10px",
-                          borderRadius: 6,
-                          letterSpacing: "0.12em",
-                          textShadow: "none",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        PR
-                      </div>
-                    )}
                   </div>
                   <div
                     style={{
