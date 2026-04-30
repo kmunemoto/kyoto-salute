@@ -13,10 +13,10 @@ interface CourseProgressBadgeProps {
 
 /**
  * 予約カード等に表示するコース進捗チップ。
- * - 通常: 「今期 3/8 回目」
- * - 通い放題: 「今期 3 回目（通い放題）」
+ * - 通常: 「今回 3/8 回目」
+ * - 通い放題: 「今回 3 回目（通い放題）」
  * - 未設定: 「コース未設定」
- * - 超過: 「今期 9/8 回目（超過）」
+ * - 超過: 「今回 9/8 回目（超過）」
  * - 残り少：警告色
  */
 const CourseProgressBadge = ({
@@ -51,7 +51,7 @@ const CourseProgressBadge = ({
           className,
         )}
       >
-        今期 {index} 回（通い放題）
+        今回 {index} 回（通い放題）
       </span>
     );
   }
@@ -69,7 +69,7 @@ const CourseProgressBadge = ({
         className,
       )}
     >
-      今期 {index}/{total} 回目
+      今回 {index}/{total} 回目
       {isOverflow && "（超過）"}
     </span>
   );

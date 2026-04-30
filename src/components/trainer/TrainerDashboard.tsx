@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Users, CalendarDays, TrendingUp, Clock, BarChart3, ClipboardList, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,8 @@ import { useAllBookings } from "@/hooks/useBookings";
 import { format } from "date-fns";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
+import CourseProgressBadge from "./CourseProgressBadge";
+import { getBookingProgressIndex, type BookingForProgress } from "@/lib/courseProgress";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
@@ -22,6 +25,22 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
 
   const today = format(new Date(), "yyyy-MM-dd");
   const todayBookings = bookings.filter((b) => b.date === today && b.status !== "キャンセル済み");
+
+  const bookingsByUser = useMemo(() => {
+    const map = new Map<string, BookingForProgress[]>();
+    bookings
+      .filter((b) => b.user_id !== "trial-guest" && b.user_id !== "blocked")
+      .forEach((b) => {
+        const rows = map.get(b.user_id) || [];
+        rows.push({
+          id: b.id,
+          booking_date: `${b.date}T${b.startTime}:00+09:00`,
+          status: b.status,
+        });
+        map.set(b.user_id, rows);
+      });
+    return map;
+  }, [bookings]);
 
   const currentMonthRevenue = profiles.reduce((sum, p) => {
     if (!p.plan) return sum;
@@ -95,11 +114,16 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
             <div className="space-y-2">
               {todayBookings
                 .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                .map((b) => (
+                .map((b) => {
+                  const profile = profiles.find((pr) => pr.user_id === b.user_id);
+                  const progress = profile
+                    ? getBookingProgressIndex(b.id, profile.cycle_start_date, profile.plan, bookingsByUser.get(b.user_id) || [])
+                    : null;
+
+                  return (
                   <Card key={b.id} className="card-hover cursor-pointer" onClick={() => {
                     // Find profile by user_id for navigation
-                    const p = profiles.find((pr) => pr.user_id === b.user_id);
-                    if (p) onSelectClient(p.user_id);
+                    if (profile) onSelectClient(profile.user_id);
                   }}>
                     <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
                       <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl gym-gradient flex items-center justify-center text-primary-foreground font-bold text-xs sm:text-sm shrink-0">
@@ -107,9 +131,21 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm truncate">{b.clientName}</p>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 mt-0.5">
-                          {b.booking_type}
-                        </Badge>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                            {b.booking_type}
+                          </Badge>
+                          {progress && (
+                            <CourseProgressBadge
+                              index={progress.index}
+                              total={progress.total}
+                              isUnlimited={progress.isUnlimited}
+                              isUnconfigured={progress.isUnconfigured}
+                              isOverflow={progress.isOverflow}
+                              className="mt-0"
+                            />
+                          )}
+                        </div>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold">{b.startTime}</p>
@@ -117,7 +153,8 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
             </div>
           )}
         </section>
