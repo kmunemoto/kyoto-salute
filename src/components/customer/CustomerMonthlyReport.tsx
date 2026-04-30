@@ -442,6 +442,87 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         </section>
       )}
 
+      {/* ②.5 Training Records */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <Dumbbell className="w-3.5 h-3.5" />
+          トレーニング記録
+        </h2>
+        {!hasWorkouts ? (
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-muted-foreground">
+              トレーニング記録がまだありません
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              {/* Weight changes */}
+              <div className="space-y-1.5">
+                {trainingSummary.summary.map((s) => (
+                  <div key={s.name} className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-muted-foreground">
+                      {s.prevWeight != null ? (
+                        <>
+                          {s.prevWeight}kg → <span className="font-bold text-foreground">{s.latestWeight}kg</span>
+                          {s.diff != null && s.diff !== 0 && (
+                            <span className={`ml-1.5 font-bold ${s.diff > 0 ? 'text-accent' : 'text-destructive'}`}>
+                              ({s.diff > 0 ? '+' : ''}{s.diff}kg{s.diff > 0 ? '↑' : '↓'})
+                            </span>
+                          )}
+                          {s.diff === 0 && <span className="ml-1.5 text-muted-foreground">(±0)</span>}
+                        </>
+                      ) : (
+                        <span className="font-bold text-foreground">{s.latestWeight}kg</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Top 3 chart */}
+              {trainingSummary.chartData.length > 1 && trainingSummary.top3.length > 0 && (
+                <div className="pt-2 border-t border-border/60">
+                  <p className="text-xs text-muted-foreground mb-2">主要種目の重量推移</p>
+                  <div className="h-44">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={trainingSummary.chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} unit="kg" width={36} domain={['dataMin - 5', 'dataMax + 5']} />
+                        <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', fontSize: '11px' }} formatter={(v: number) => `${v}kg`} />
+                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                        {trainingSummary.top3.map((s, i) => (
+                          <Line key={s.name} type="monotone" dataKey={s.name} stroke={TRAINING_COLORS[i]} strokeWidth={2} isAnimationActive={false} dot={{ r: 3, fill: TRAINING_COLORS[i], strokeWidth: 1, stroke: 'hsl(0,0%,100%)' }} connectNulls />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Sets x reps changes */}
+              <div className="pt-2 border-t border-border/60 space-y-1">
+                <p className="text-xs text-muted-foreground mb-1.5">セット数 × 回数の変化</p>
+                {trainingSummary.summary.map((s) => (
+                  <div key={s.name} className="flex items-center justify-between text-xs">
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-muted-foreground">
+                      {s.setsRepsPrev ? (
+                        <>{s.setsRepsPrev} → <span className="font-bold text-foreground">{s.setsRepsLatest}</span></>
+                      ) : (
+                        <span className="font-bold text-foreground">{s.setsRepsLatest}</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
       {/* ③ Meal Summary */}
       {hasMeals && (
         <section>
