@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X, Download, Share2, Loader2, Moon, Sun, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WorkoutShareCard, { type ShareTheme } from "./WorkoutShareCard";
-import { renderShareCanvas, type WorkoutSession } from "@/lib/workoutShare";
+import { generateSharePngBlob, type WorkoutSession } from "@/lib/workoutShare";
 import { useToast } from "@/hooks/use-toast";
 import { useGymSettings } from "@/hooks/useGymSettings";
 
@@ -54,11 +54,11 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
 
   if (!open || !session) return null;
 
-  const renderCanvas = async (): Promise<HTMLCanvasElement | null> => {
+  const renderBlob = async (): Promise<Blob | null> => {
     try {
-      return await renderShareCanvas(session, theme, settings?.logo_url ?? null);
+      return await generateSharePngBlob(session, theme);
     } catch (e) {
-      console.error("[share] canvas render failed", e);
+      console.error("[share] image generation failed", e);
       return null;
     }
   };
@@ -67,11 +67,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     if (busy) return;
     setBusy(true);
     try {
-      const canvas = await renderCanvas();
-      if (!canvas) throw new Error("render failed");
-      const blob: Blob | null = await new Promise((res) =>
-        canvas.toBlob((b) => res(b), "image/png"),
-      );
+      const blob = await renderBlob();
       if (!blob) throw new Error("blob failed");
 
       const file = new File([blob], `salute-workout-${session.date}.png`, {
@@ -113,9 +109,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     if (busy) return;
     setBusy(true);
     try {
-      const canvas = await renderCanvas();
-      if (!canvas) throw new Error("render failed");
-      const blob: Blob | null = await new Promise((res) => canvas.toBlob((b) => res(b), "image/png"));
+      const blob = await renderBlob();
       if (!blob) throw new Error("blob failed");
       const file = new File([blob], `salute-workout-${session.date}.png`, { type: "image/png" });
 

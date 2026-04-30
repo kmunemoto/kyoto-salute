@@ -23,3 +23,5 @@ project_id = "gvgrqaigffxtkvckjfur"
     verify_jwt = false
   [functions.monthly-report-notification]
     verify_jwt = false
+  [functions.generate-share-image]
+    verify_jwt = false
