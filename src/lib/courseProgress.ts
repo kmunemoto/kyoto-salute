@@ -27,8 +27,8 @@ export const getCycleWindow = (cycleStartDate: string | null | undefined, target
   const initialStart = parseISO(cycleStartDate);
   let start = initialStart;
 
-  // 契約起算日より前に、架空の「前期」を作らない。
-  // 例: 起算日 2026-04-26 / 参照日 2026-04-25 の場合も、今期は 4/26〜5/25 とする。
+  // 契約起算日より前に、架空の「前回」を作らない。
+  // 例: 起算日 2026-04-26 / 参照日 2026-04-25 の場合も、今回は 4/26〜5/25 とする。
   if (targetDate < initialStart) {
     return { start: initialStart, end: addMonths(initialStart, 1) };
   }
@@ -112,7 +112,7 @@ export const computeCourseProgress = (
 };
 
 /**
- * 特定の予約がそのお客様の今期の何回目に当たるかを返す
+ * 特定の予約がそのお客様の今回の何回目に当たるかを返す
  * 戻り値: { index: 1始まり, total: 月間回数 or null(通い放題/未設定) }
  */
 export const getBookingProgressIndex = (
