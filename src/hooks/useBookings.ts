@@ -311,6 +311,22 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
     console.error("cancelBooking: 予約情報の取得に失敗", fetchError, bookingId);
   }
 
+  // Delete linked Google Calendar event first when an event ID is saved.
+  // Failure must not block the booking cancellation.
+  if (booking?.google_event_id) {
+    try {
+      await supabase.functions.invoke("google-calendar-sync", {
+        body: {
+          action: "delete",
+          booking_id: booking.id,
+          google_event_id: booking.google_event_id,
+        },
+      });
+    } catch (e) {
+      console.error("Google Calendar event delete failed:", e);
+    }
+  }
+
   const { error } = await supabase
     .from("bookings")
     .delete()
@@ -322,13 +338,6 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
     sendCancelLineNotification(booking, cancelledByTrainer).catch((e) =>
       console.error("sendCancelLineNotification failed:", e)
     );
-
-    // Delete from Google Calendar (fire-and-forget)
-    if (booking.google_event_id) {
-      supabase.functions.invoke("google-calendar-sync", {
-        body: { action: "delete", google_event_id: booking.google_event_id },
-      }).catch(console.error);
-    }
   } else if (error) {
     console.error("cancelBooking: 削除エラー", error);
   }
