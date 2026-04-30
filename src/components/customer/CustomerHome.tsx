@@ -406,11 +406,16 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           姿勢チェック（AI）
         </Button>
       </section>
+
+      <WorkoutShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        session={latestSession}
+        streakWeeks={currentStreak}
+        totalSessions={totalSessions}
+      />
     </div>
-    
   );
 };
-
-// (note) Share modal is portaled at root via fixed positioning; mounted within component below in JSX above is removed -- mount here:
 
 export default CustomerHome;
