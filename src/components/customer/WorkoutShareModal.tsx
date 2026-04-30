@@ -123,8 +123,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       if (canShareFiles && navigator.share) {
         await navigator.share({
           files: [file],
-          title: "Workout Complete",
-          text: `${session.totalVolume.toLocaleString()}kg / ${session.exerciseCount}種目 完了！ #SaluteGoshonan`,
+          title: "Salute御所南 トレーニング記録",
         });
       } else {
         const url = URL.createObjectURL(blob);
