@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, Award, Utensils, Bone, MessageSquare, Sparkles, Loader2, CalendarDays, Flame } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, Award, Utensils, Bone, MessageSquare, Sparkles, Loader2, CalendarDays, Flame, Dumbbell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -10,7 +10,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, parseISO, differenceInDays, isBefore } from "date-fns";
 import { ja } from "date-fns/locale";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4, '月6回': 6, '月8回': 8, '通い放題': 15,
@@ -46,6 +46,8 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const [diagnoses, setDiagnoses] = useState<any[]>([]);
   const [prevDiagnoses, setPrevDiagnoses] = useState<any[]>([]);
   const [prevBookings, setPrevBookings] = useState<any[]>([]);
+  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [prevWorkouts, setPrevWorkouts] = useState<any[]>([]);
   const [trainerComment, setTrainerComment] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,13 +100,15 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       // For monthly_reports, use month as the first day of the cycle
       const monthStr = format(cycleStart, "yyyy-MM-dd");
 
-      const [bRes, mRes, mlRes, dRes, pdRes, pbRes, tcRes] = await Promise.all([
+      const [bRes, mRes, mlRes, dRes, pdRes, pbRes, wRes, pwRes, tcRes] = await Promise.all([
         supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", csStr).lt("booking_date", ceStr).neq("status", "キャンセル済み"),
         supabase.from("user_measurements").select("*").eq("user_id", user.id).gte("measured_date", format(cycleStart, "yyyy-MM-dd")).lte("measured_date", format(cycleEnd, "yyyy-MM-dd")).order("measured_date", { ascending: true }),
         supabase.from("meals").select("*").eq("user_id", user.id).gte("created_at", csStr).lt("created_at", ceStr),
         supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", csStr).lt("created_at", ceStr).order("created_at", { ascending: true }),
         supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", pcsStr).lt("created_at", pceStr).order("created_at", { ascending: false }).limit(1),
         supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", pcsStr).lt("booking_date", pceStr).neq("status", "キャンセル済み"),
+        supabase.from("workouts").select("*, exercises(name)").eq("user_id", user.id).gte("workout_date", format(cycleStart, "yyyy-MM-dd")).lt("workout_date", format(cycleEnd, "yyyy-MM-dd")).order("workout_date", { ascending: true }),
+        supabase.from("workouts").select("*, exercises(name)").eq("user_id", user.id).gte("workout_date", format(prevCycleStart, "yyyy-MM-dd")).lt("workout_date", format(prevCycleEnd, "yyyy-MM-dd")).order("workout_date", { ascending: true }),
         supabase.from("monthly_reports" as any).select("*").eq("user_id", user.id).eq("month", monthStr).maybeSingle(),
       ]);
 
@@ -114,6 +118,8 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       setDiagnoses(dRes.data || []);
       setPrevDiagnoses(pdRes.data || []);
       setPrevBookings(pbRes.data || []);
+      setWorkouts(wRes.data || []);
+      setPrevWorkouts(pwRes.data || []);
       setTrainerComment((tcRes.data as any)?.trainer_comment || null);
       setLoading(false);
     };
@@ -162,6 +168,86 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   // Skeletal
   const latestDiag = diagnoses.length > 0 ? diagnoses[diagnoses.length - 1] : null;
   const prevDiag = prevDiagnoses.length > 0 ? prevDiagnoses[0] : null;
+
+  // Training records
+  type WorkoutRow = { exercise_name: string; workout_date: string; sets: { weight: number; reps: number }[] };
+  const normalize = (rows: any[]): WorkoutRow[] => rows.map((w) => {
+    const sets = (w.sets && Array.isArray(w.sets) && w.sets.length > 0)
+      ? w.sets.map((s: any) => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 }))
+      : (w.weight != null ? [{ weight: Number(w.weight), reps: Number(w.reps) || 0 }] : []);
+    return { exercise_name: w.exercises?.name || "不明", workout_date: w.workout_date, sets };
+  }).filter(w => w.sets.length > 0);
+
+  const trainingSummary = useMemo(() => {
+    const cur = normalize(workouts);
+    const prev = normalize(prevWorkouts);
+
+    // Per-exercise: latest & prev max weight, sets×reps representative
+    const exMap = new Map<string, WorkoutRow[]>();
+    cur.forEach(w => {
+      const arr = exMap.get(w.exercise_name) || [];
+      arr.push(w);
+      exMap.set(w.exercise_name, arr);
+    });
+
+    const summary = Array.from(exMap.entries()).map(([name, rows]) => {
+      // sort by date asc
+      rows.sort((a, b) => a.workout_date.localeCompare(b.workout_date));
+      const maxWeightOf = (r: WorkoutRow) => r.sets.reduce((m, s) => Math.max(m, s.weight), 0);
+      const latestRow = rows[rows.length - 1];
+      const latestWeight = maxWeightOf(latestRow);
+
+      // prev = previous record in current cycle if multiple, else last from prev cycle
+      let prevWeight: number | null = null;
+      let prevSetsRepsRow: WorkoutRow | null = null;
+      if (rows.length > 1) {
+        const prevRow = rows[rows.length - 2];
+        prevWeight = maxWeightOf(prevRow);
+        prevSetsRepsRow = prevRow;
+      } else {
+        const prevSame = prev.filter(p => p.exercise_name === name);
+        if (prevSame.length > 0) {
+          const prevRow = prevSame[prevSame.length - 1];
+          prevWeight = maxWeightOf(prevRow);
+          prevSetsRepsRow = prevRow;
+        }
+      }
+
+      const setsRepsLatest = `${latestRow.sets.length}セット×${Math.max(...latestRow.sets.map(s => s.reps))}回`;
+      const setsRepsPrev = prevSetsRepsRow ? `${prevSetsRepsRow.sets.length}セット×${Math.max(...prevSetsRepsRow.sets.map(s => s.reps))}回` : null;
+
+      return {
+        name,
+        count: rows.length,
+        latestWeight,
+        prevWeight,
+        diff: prevWeight != null ? Math.round((latestWeight - prevWeight) * 10) / 10 : null,
+        setsRepsLatest,
+        setsRepsPrev,
+        history: rows.map(r => ({ date: r.workout_date, weight: maxWeightOf(r) })),
+      };
+    }).sort((a, b) => b.count - a.count);
+
+    // Top 3 by record count for chart
+    const top3 = summary.slice(0, 3);
+    // Build chart data merged by date
+    const dateSet = new Set<string>();
+    top3.forEach(s => s.history.forEach(h => dateSet.add(h.date)));
+    const dates = Array.from(dateSet).sort();
+    const chartData = dates.map(d => {
+      const row: any = { date: `${new Date(d).getMonth() + 1}/${new Date(d).getDate()}` };
+      top3.forEach(s => {
+        const point = s.history.find(h => h.date === d);
+        if (point) row[s.name] = point.weight;
+      });
+      return row;
+    });
+
+    return { summary, top3, chartData };
+  }, [workouts, prevWorkouts]);
+
+  const hasWorkouts = trainingSummary.summary.length > 0;
+  const TRAINING_COLORS = ["hsl(174, 65%, 50%)", "hsl(174, 55%, 38%)", "hsl(190, 60%, 55%)"];
 
   // AI advice - cycle-aware
   const generateAdvice = () => {
@@ -356,6 +442,87 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         </section>
       )}
 
+      {/* ②.5 Training Records */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <Dumbbell className="w-3.5 h-3.5" />
+          トレーニング記録
+        </h2>
+        {!hasWorkouts ? (
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-muted-foreground">
+              トレーニング記録がまだありません
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              {/* Weight changes */}
+              <div className="space-y-1.5">
+                {trainingSummary.summary.map((s) => (
+                  <div key={s.name} className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-muted-foreground">
+                      {s.prevWeight != null ? (
+                        <>
+                          {s.prevWeight}kg → <span className="font-bold text-foreground">{s.latestWeight}kg</span>
+                          {s.diff != null && s.diff !== 0 && (
+                            <span className={`ml-1.5 font-bold ${s.diff > 0 ? 'text-accent' : 'text-destructive'}`}>
+                              ({s.diff > 0 ? '+' : ''}{s.diff}kg{s.diff > 0 ? '↑' : '↓'})
+                            </span>
+                          )}
+                          {s.diff === 0 && <span className="ml-1.5 text-muted-foreground">(±0)</span>}
+                        </>
+                      ) : (
+                        <span className="font-bold text-foreground">{s.latestWeight}kg</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Top 3 chart */}
+              {trainingSummary.chartData.length > 1 && trainingSummary.top3.length > 0 && (
+                <div className="pt-2 border-t border-border/60">
+                  <p className="text-xs text-muted-foreground mb-2">主要種目の重量推移</p>
+                  <div className="h-44">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={trainingSummary.chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(220, 6%, 55%)" axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} unit="kg" width={36} domain={['dataMin - 5', 'dataMax + 5']} />
+                        <Tooltip contentStyle={{ background: 'hsl(0,0%,100%)', border: 'none', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', fontSize: '11px' }} formatter={(v: number) => `${v}kg`} />
+                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                        {trainingSummary.top3.map((s, i) => (
+                          <Line key={s.name} type="monotone" dataKey={s.name} stroke={TRAINING_COLORS[i]} strokeWidth={2} isAnimationActive={false} dot={{ r: 3, fill: TRAINING_COLORS[i], strokeWidth: 1, stroke: 'hsl(0,0%,100%)' }} connectNulls />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Sets x reps changes */}
+              <div className="pt-2 border-t border-border/60 space-y-1">
+                <p className="text-xs text-muted-foreground mb-1.5">セット数 × 回数の変化</p>
+                {trainingSummary.summary.map((s) => (
+                  <div key={s.name} className="flex items-center justify-between text-xs">
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-muted-foreground">
+                      {s.setsRepsPrev ? (
+                        <>{s.setsRepsPrev} → <span className="font-bold text-foreground">{s.setsRepsLatest}</span></>
+                      ) : (
+                        <span className="font-bold text-foreground">{s.setsRepsLatest}</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
       {/* ③ Meal Summary */}
       {hasMeals && (
         <section>
@@ -472,7 +639,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       </section>
 
       {/* Empty state */}
-      {!hasTraining && !hasMeasurements && !hasMeals && !hasDiagnosis && (
+      {!hasTraining && !hasMeasurements && !hasMeals && !hasDiagnosis && !hasWorkouts && (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
             この期間のデータはまだありません。
