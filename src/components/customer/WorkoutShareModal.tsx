@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X, Download, Share2, Loader2, Moon, Sun, Image as ImageIcon } from "lucide-react";
 import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,10 @@ interface Props {
 const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions }: Props) => {
   const [theme, setTheme] = useState<ShareTheme>("dark");
   const [busy, setBusy] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const captureRef = useRef<HTMLDivElement>(null); // off-screen 1080x1920 element used for html2canvas
+  const previewRef = useRef<HTMLDivElement>(null); // visible preview inside the modal
+  const previewBoxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.3);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,33 +32,67 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  // Compute scale so the card fits inside the available preview area
+  useLayoutEffect(() => {
+    if (!open) return;
+    const compute = () => {
+      const box = previewBoxRef.current;
+      if (!box) return;
+      const w = box.clientWidth;
+      const h = box.clientHeight;
+      if (w <= 0 || h <= 0) return;
+      const s = Math.min(w / 1080, h / 1920);
+      setScale(s > 0 ? s : 0.3);
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    const t = setTimeout(compute, 50);
+    return () => {
+      window.removeEventListener("resize", compute);
+      clearTimeout(t);
+    };
+  }, [open, session?.date]);
+
   if (!open || !session) return null;
 
   const renderCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    if (!cardRef.current) return null;
-    return await html2canvas(cardRef.current, {
-      // Transparent theme must keep alpha channel; others render their own bg via the card itself
-      backgroundColor: null,
+    if (!captureRef.current) return null;
+    return await html2canvas(captureRef.current, {
+      backgroundColor: theme === "transparent" ? null : (theme === "light" ? "#FAFAF7" : "#0F0F0F"),
       scale: 1,
       useCORS: true,
-      allowTaint: false,
+      allowTaint: true,
       logging: false,
       width: 1080,
       height: 1920,
+      windowWidth: 1080,
+      windowHeight: 1920,
     });
   };
 
   const handleDownload = async () => {
+    if (busy) return;
     setBusy(true);
     try {
       const canvas = await renderCanvas();
-      if (!canvas) return;
-      const link = document.createElement("a");
-      link.download = `salute-workout-${session.date}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      if (!canvas) throw new Error("render failed");
+      await new Promise<void>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error("blob failed"));
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `salute-workout-${session.date}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          resolve();
+        }, "image/png");
+      });
       toast({ title: "画像を保存しました" });
     } catch (e) {
+      console.error("[share] download failed", e);
       toast({ title: "画像の保存に失敗しました", variant: "destructive" });
     } finally {
       setBusy(false);
@@ -63,28 +100,35 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
   };
 
   const handleShare = async () => {
+    if (busy) return;
     setBusy(true);
     try {
       const canvas = await renderCanvas();
-      if (!canvas) return;
+      if (!canvas) throw new Error("render failed");
       const blob: Blob | null = await new Promise((res) => canvas.toBlob((b) => res(b), "image/png"));
       if (!blob) throw new Error("blob failed");
       const file = new File([blob], `salute-workout-${session.date}.png`, { type: "image/png" });
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      const canShareFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+      if (canShareFiles && navigator.share) {
         await navigator.share({
           files: [file],
           title: "Workout Complete",
           text: `${session.totalVolume.toLocaleString()}kg / ${session.exerciseCount}種目 完了！ #SaluteGoshonan`,
         });
       } else {
-        const link = document.createElement("a");
-        link.download = `salute-workout-${session.date}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `salute-workout-${session.date}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast({ title: "共有に対応していないため、ダウンロードしました" });
       }
     } catch (e: any) {
+      console.error("[share] share failed", e);
       if (e?.name !== "AbortError") {
         toast({ title: "共有に失敗しました", variant: "destructive" });
       }
@@ -99,14 +143,17 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         position: "fixed",
         inset: 0,
         zIndex: 100,
-        background: "rgba(0,0,0,0.92)",
+        background: "rgba(0,0,0,0.94)",
         display: "flex",
         flexDirection: "column",
-        overflowY: "auto",
+        overflow: "hidden",
       }}
     >
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 sticky top-0 z-10" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}>
+      <div
+        className="flex items-center justify-between px-4 py-3 shrink-0"
+        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", paddingTop: "max(env(safe-area-inset-top), 12px)" }}
+      >
         <span className="text-white text-sm font-bold">トレーニング シェア</span>
         <button
           onClick={onClose}
@@ -117,30 +164,35 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         </button>
       </div>
 
-      {/* Card preview area (scaled) */}
-      <div className="flex-1 flex items-center justify-center px-4 py-4">
+      {/* Card preview area (scaled to fit) */}
+      <div
+        ref={previewBoxRef}
+        className="flex-1 min-h-0 flex items-center justify-center px-4 py-3"
+      >
         <div
           style={{
-            width: "min(360px, 90vw)",
-            aspectRatio: "9 / 16",
+            width: 1080 * scale,
+            height: 1920 * scale,
             position: "relative",
+            borderRadius: 24 * scale,
             overflow: "hidden",
-            borderRadius: 24,
-            boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-            background: theme === "transparent" ? "#333" : "transparent",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+            background:
+              theme === "transparent"
+                ? "repeating-conic-gradient(#444 0 25%, #555 0 50%) 50% / 24px 24px"
+                : "transparent",
           }}
         >
           <div
+            ref={previewRef}
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              transform: "scale(calc(min(360px, 90vw) / 1080))",
+              transform: `scale(${scale})`,
               transformOrigin: "top left",
+              width: 1080,
+              height: 1920,
             }}
           >
             <WorkoutShareCard
-              ref={cardRef}
               session={session}
               theme={theme}
               streakWeeks={streakWeeks}
@@ -151,7 +203,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       </div>
 
       {/* Theme switcher */}
-      <div className="flex items-center justify-center gap-3 px-4 pb-3">
+      <div className="flex items-center justify-center gap-3 px-4 pb-3 shrink-0">
         {([
           { k: "dark" as const, icon: Moon, label: "Dark" },
           { k: "light" as const, icon: Sun, label: "Light" },
@@ -171,7 +223,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       </div>
 
       {/* Action buttons */}
-      <div className="px-4 pb-[max(env(safe-area-inset-bottom),16px)] flex gap-3">
+      <div className="px-4 pb-[max(env(safe-area-inset-bottom),16px)] flex gap-3 shrink-0">
         <Button
           variant="outline"
           className="flex-1 h-12 bg-white/15 text-white border-white/30 hover:bg-white/25 hover:text-white"
@@ -190,6 +242,29 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
           共有
         </Button>
+      </div>
+
+      {/* Off-screen full-resolution capture target — used by html2canvas */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: -99999,
+          top: 0,
+          width: 1080,
+          height: 1920,
+          pointerEvents: "none",
+          opacity: 1,
+        }}
+      >
+        <div ref={captureRef} style={{ width: 1080, height: 1920 }}>
+          <WorkoutShareCard
+            session={session}
+            theme={theme}
+            streakWeeks={streakWeeks}
+            totalSessions={totalSessions}
+          />
+        </div>
       </div>
 
       {/* Full-screen loading overlay while html2canvas is rendering */}
