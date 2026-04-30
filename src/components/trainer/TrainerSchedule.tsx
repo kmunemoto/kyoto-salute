@@ -117,7 +117,7 @@ const TrainerSchedule = () => {
 
     // Trial guest bookings are in trial_bookings table
     const booking = bookings.find((b) => b.id === target.id);
-    let error: any;
+    let error: { code?: string; message?: string } | null | undefined;
     if (booking?.user_id === "trial-guest") {
       // Fetch google_event_id before deleting
       const { data: trialData } = await supabase
