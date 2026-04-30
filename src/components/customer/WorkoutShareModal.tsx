@@ -69,20 +69,37 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     try {
       const canvas = await renderCanvas();
       if (!canvas) throw new Error("render failed");
-      await new Promise<void>((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (!blob) return reject(new Error("blob failed"));
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `salute-workout-${session.date}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-          resolve();
-        }, "image/png");
+      const blob: Blob | null = await new Promise((res) =>
+        canvas.toBlob((b) => res(b), "image/png"),
+      );
+      if (!blob) throw new Error("blob failed");
+
+      const file = new File([blob], `salute-workout-${session.date}.png`, {
+        type: "image/png",
       });
+
+      // iOS Safari restricts <a download>; prefer Web Share API when files are supported.
+      const canShareFiles = !!(
+        navigator.canShare && navigator.canShare({ files: [file] })
+      );
+      if (canShareFiles && navigator.share) {
+        try {
+          await navigator.share({ files: [file], title: "Workout" });
+          return;
+        } catch (err: any) {
+          if (err?.name === "AbortError") return;
+          // fall through to download fallback
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `salute-workout-${session.date}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast({ title: "画像を保存しました" });
     } catch (e) {
       console.error("[share] download failed", e);
