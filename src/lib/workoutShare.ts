@@ -334,3 +334,73 @@ export async function renderShareCanvas(
 
   return canvas;
 }
+
+/**
+ * Generate a PNG Blob of the share image by calling the server-side SVG
+ * endpoint and rasterizing it in the browser via <img> + <canvas>.
+ * This works reliably in iOS PWAs where html2canvas / direct Canvas drawing
+ * sometimes fail to produce a usable image.
+ */
+export async function generateSharePngBlob(
+  session: WorkoutSession,
+  theme: ShareCanvasTheme,
+): Promise<Blob> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+  const endpoint = `${supabaseUrl}/functions/v1/generate-share-image`;
+
+  const payload = {
+    exercises: session.exercises.slice(0, 6).map((ex) => ({
+      name: ex.exercise_name,
+      weight: ex.maxWeight,
+      reps: ex.totalReps,
+    })),
+    date: formatShareDate(session.date),
+    duration: session.durationMin,
+    theme,
+  };
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: anonKey,
+      Authorization: `Bearer ${anonKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`share image request failed: ${res.status}`);
+  const svgText = await res.text();
+
+  // Rasterize SVG -> PNG via <img> + <canvas>
+  const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error("svg image load failed"));
+      im.src = url;
+    });
+
+    const W = 1080;
+    const H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d")!;
+    if (theme !== "transparent") {
+      ctx.fillStyle = theme === "light" ? "#FAF9F6" : "#0F0F0F";
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.drawImage(img, 0, 0, W, H);
+
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/png"),
+    );
+    if (!blob) throw new Error("png blob failed");
+    return blob;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
