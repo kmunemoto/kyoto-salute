@@ -126,3 +126,211 @@ export const formatShareDate = (dateStr: string): string => {
   const dows = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   return `${y}.${m}.${day} ${dows[d.getDay()]}`;
 };
+
+/**
+ * Render the share card directly with the Canvas 2D API.
+ * This bypasses html2canvas entirely so it works reliably in mobile WebViews.
+ */
+export type ShareCanvasTheme = "dark" | "light" | "transparent";
+
+const loadImage = (src: string): Promise<HTMLImageElement | null> =>
+  new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+
+export async function renderShareCanvas(
+  session: WorkoutSession,
+  theme: ShareCanvasTheme,
+  logoUrl?: string | null,
+): Promise<HTMLCanvasElement> {
+  const W = 1080;
+  const H = 1920;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+
+  const isLight = theme === "light";
+  const isTransparent = theme === "transparent";
+
+  const nameColor = isTransparent ? "#FFFFFF" : isLight ? "#111111" : "#FFFFFF";
+  const valueColor = isTransparent
+    ? "rgba(255,255,255,0.85)"
+    : isLight
+      ? "#777777"
+      : "#888888";
+  const subtleColor = isTransparent
+    ? "rgba(255,255,255,0.75)"
+      : isLight
+        ? "#999999"
+        : "#666666";
+  const accent = "#0ABAB5";
+
+  // Background
+  if (!isTransparent) {
+    ctx.fillStyle = isLight ? "#FAF9F6" : "#0F0F0F";
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Optional drop shadow for transparent theme so text stays readable
+  const applyShadow = () => {
+    if (isTransparent) {
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
+    } else {
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    }
+  };
+  applyShadow();
+
+  const FONT_FAMILY =
+    "'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif";
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+
+  const cx = W / 2;
+
+  // Letter-spacing helper (canvas doesn't support letter-spacing on fillText)
+  const fillTextSpaced = (
+    text: string,
+    x: number,
+    y: number,
+    spacing: number,
+  ) => {
+    if (!text) return;
+    if (spacing <= 0) {
+      ctx.fillText(text, x, y);
+      return;
+    }
+    const chars = Array.from(text);
+    const widths = chars.map((c) => ctx.measureText(c).width);
+    const totalWidth =
+      widths.reduce((a, b) => a + b, 0) + spacing * (chars.length - 1);
+    let cursor = x - totalWidth / 2;
+    const prevAlign = ctx.textAlign;
+    ctx.textAlign = "left";
+    for (let i = 0; i < chars.length; i++) {
+      ctx.fillText(chars[i], cursor, y);
+      cursor += widths[i] + spacing;
+    }
+    ctx.textAlign = prevAlign;
+  };
+
+  // ---------- Time ----------
+  let y = 350;
+  ctx.fillStyle = subtleColor;
+  ctx.font = `300 22px ${FONT_FAMILY}`;
+  fillTextSpaced("トレーニング時間", cx, y, 22 * 0.3);
+
+  y += 90;
+  ctx.fillStyle = nameColor;
+  ctx.font = `500 76px ${FONT_FAMILY}`;
+  const minStr = String(session.durationMin);
+  // Measure to position "分" suffix
+  const minWidth = ctx.measureText(minStr).width;
+  const suffix = "分";
+  ctx.font = `300 36px ${FONT_FAMILY}`;
+  const suffixWidth = ctx.measureText(suffix).width;
+  const gap = 8;
+  const totalW = minWidth + gap + suffixWidth;
+  const startX = cx - totalW / 2;
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = nameColor;
+  ctx.font = `500 76px ${FONT_FAMILY}`;
+  ctx.fillText(minStr, startX, y);
+  ctx.fillStyle = subtleColor;
+  ctx.font = `300 36px ${FONT_FAMILY}`;
+  ctx.fillText(suffix, startX + minWidth + gap, y);
+  ctx.textAlign = "center";
+
+  // ---------- Exercises ----------
+  const visibleExercises = session.exercises.slice(0, 6);
+  const hiddenCount = session.exercises.length - visibleExercises.length;
+
+  y += 110;
+  for (const ex of visibleExercises) {
+    ctx.fillStyle = nameColor;
+    ctx.font = `500 38px ${FONT_FAMILY}`;
+    ctx.fillText(ex.exercise_name, cx, y);
+    y += 50;
+
+    ctx.fillStyle = valueColor;
+    ctx.font = `400 28px ${FONT_FAMILY}`;
+    fillTextSpaced(`${ex.maxWeight}kg  ×  ${ex.totalReps}`, cx, y, 28 * 0.04);
+    y += 74;
+  }
+
+  if (hiddenCount > 0) {
+    ctx.fillStyle = subtleColor;
+    ctx.font = `300 22px ${FONT_FAMILY}`;
+    ctx.fillText(`+${hiddenCount} more`, cx, y);
+    y += 60;
+  }
+
+  // ---------- Date ----------
+  y += 30;
+  ctx.fillStyle = subtleColor;
+  ctx.font = `300 22px ${FONT_FAMILY}`;
+  fillTextSpaced(formatShareDate(session.date), cx, y, 22 * 0.25);
+
+  // ---------- Footer logo ----------
+  // Disable shadow for footer crispness
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+
+  const footerY = H - 140;
+  let logoImg: HTMLImageElement | null = null;
+  if (logoUrl) {
+    try {
+      logoImg = await loadImage(logoUrl);
+    } catch {
+      logoImg = null;
+    }
+  }
+
+  // Compute footer total width
+  ctx.font = `700 26px ${FONT_FAMILY}`;
+  const saluteW = ctx.measureText("Salute").width;
+  const nameGap = 8;
+  const goshoW = ctx.measureText("御所南").width;
+  const titleW = saluteW + nameGap + goshoW;
+
+  const logoSize = 48;
+  const logoGap = 16;
+  const footerW = (logoImg ? logoSize + logoGap : 0) + titleW;
+  let fx = cx - footerW / 2;
+
+  if (logoImg) {
+    ctx.drawImage(logoImg, fx, footerY - logoSize / 2 - 8, logoSize, logoSize);
+    fx += logoSize + logoGap;
+  }
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = accent;
+  ctx.font = `700 26px ${FONT_FAMILY}`;
+  ctx.fillText("Salute", fx, footerY);
+  ctx.fillStyle = nameColor;
+  ctx.fillText("御所南", fx + saluteW + nameGap, footerY);
+
+  // Subtitle
+  ctx.fillStyle = subtleColor;
+  ctx.font = `300 12px ${FONT_FAMILY}`;
+  const subY = footerY + 22;
+  // Use spaced helper centered on the title block
+  const titleCenter = fx + titleW / 2;
+  ctx.textAlign = "center";
+  fillTextSpaced("PERSONAL GYM", titleCenter, subY, 12 * 0.45);
+
+  return canvas;
+}
