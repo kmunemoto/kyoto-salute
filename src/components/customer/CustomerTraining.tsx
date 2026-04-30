@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Dumbbell, TrendingUp, Calendar, Loader2 } from "lucide-react";
+import { Dumbbell, TrendingUp, Calendar, Loader2, Share2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -10,6 +10,9 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStreak } from "@/hooks/useStreak";
+import WorkoutShareModal from "./WorkoutShareModal";
+import { buildSession, type RawWorkout } from "@/lib/workoutShare";
 import {
   LineChart,
   Line,
@@ -33,12 +36,16 @@ interface WorkoutWithExercise {
   reps: number | null;
   sets: SetData[] | null;
   exercise_name: string;
+  exercise_id: string;
 }
 
 const CustomerTraining = () => {
   const { user } = useAuth();
   const [workouts, setWorkouts] = useState<WorkoutWithExercise[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shareDate, setShareDate] = useState<string | null>(null);
+  const [totalSessions, setTotalSessions] = useState(0);
+  const { currentStreak } = useStreak(user?.id);
 
   useEffect(() => {
     if (!user) return;
@@ -57,11 +64,25 @@ const CustomerTraining = () => {
           reps: w.reps,
           sets: w.sets || (w.weight != null ? [{ set: 1, weight: w.weight, reps: w.reps }] : null),
           exercise_name: w.exercises?.name || "不明",
+          exercise_id: w.exercise_id,
         })));
       }
       setLoading(false);
     };
     fetch();
+  }, [user]);
+
+  // Fetch total sessions count (past non-cancelled bookings)
+  useEffect(() => {
+    if (!user) return;
+    const nowIso = new Date().toISOString();
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .neq("status", "キャンセル済み")
+      .lt("booking_date", nowIso)
+      .then(({ count }) => setTotalSessions(count || 0));
   }, [user]);
 
   const exerciseNames = useMemo(() => {
@@ -107,6 +128,21 @@ const CustomerTraining = () => {
     });
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a));
   }, [workouts]);
+
+  const rawWorkoutsForShare: RawWorkout[] = useMemo(() => workouts.map((w) => ({
+    id: w.id,
+    workout_date: w.workout_date,
+    weight: w.weight,
+    reps: w.reps,
+    sets: w.sets,
+    exercise_id: w.exercise_id,
+    exercise_name: w.exercise_name,
+  })), [workouts]);
+
+  const shareSession = useMemo(() => {
+    if (!shareDate) return null;
+    return buildSession(rawWorkoutsForShare, shareDate);
+  }, [shareDate, rawWorkoutsForShare]);
 
   if (loading) {
     return (
@@ -216,6 +252,13 @@ const CustomerTraining = () => {
                         <span className="text-xs text-muted-foreground ml-auto">
                           {records.length}種目
                         </span>
+                        <button
+                          onClick={() => setShareDate(date)}
+                          className="w-8 h-8 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent flex items-center justify-center transition"
+                          aria-label="シェア画像を作成"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
                       </div>
                       <div className="space-y-1.5">
                         {records.map((r) => {
@@ -256,6 +299,14 @@ const CustomerTraining = () => {
           </section>
         </>
       )}
+
+      <WorkoutShareModal
+        open={!!shareDate}
+        onClose={() => setShareDate(null)}
+        session={shareSession}
+        streakWeeks={currentStreak}
+        totalSessions={totalSessions}
+      />
     </div>
   );
 };
