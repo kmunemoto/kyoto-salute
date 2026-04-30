@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight, Dumbbell, Share2 } from "lucide-react";
 import ProgressCharts from "./ProgressCharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { format, parseISO, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { getCycleWindow } from "@/lib/courseProgress";
+import WorkoutShareModal from "./WorkoutShareModal";
+import { buildSession, type RawWorkout } from "@/lib/workoutShare";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4,
@@ -30,6 +32,46 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const { chartData, latest, loading: metricsLoading } = useMeasurements(user?.id);
   const { currentStreak, bestStreak, loading: streakLoading, hasFutureBookingThisWeek } = useStreak(user?.id);
   const streakNotifiedRef = useRef(false);
+  const [latestWorkouts, setLatestWorkouts] = useState<RawWorkout[]>([]);
+  const [latestDate, setLatestDate] = useState<string | null>(null);
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  // Fetch all workouts (for PR + latest session) and total sessions count
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("workouts")
+      .select("id, workout_date, weight, reps, sets, exercise_id, exercises(name)")
+      .eq("user_id", user.id)
+      .order("workout_date", { ascending: false })
+      .limit(500)
+      .then(({ data }) => {
+        if (!data) return;
+        const rows: RawWorkout[] = data.map((w: any) => ({
+          id: w.id,
+          workout_date: w.workout_date,
+          weight: w.weight,
+          reps: w.reps,
+          sets: w.sets,
+          exercise_id: w.exercise_id,
+          exercise_name: w.exercises?.name || "不明",
+        }));
+        setLatestWorkouts(rows);
+        setLatestDate(rows.length > 0 ? rows[0].workout_date : null);
+      });
+
+    const nowIso = new Date().toISOString();
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .neq("status", "キャンセル済み")
+      .lt("booking_date", nowIso)
+      .then(({ count }) => setTotalSessions(count || 0));
+  }, [user]);
+
+  const latestSession = latestDate ? buildSession(latestWorkouts, latestDate) : null;
 
   const displayName = profile?.display_name || "ゲスト";
   const currentPlan = profile?.plan;
@@ -287,6 +329,37 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       {/* Progress Charts (Weight + Training) */}
       <ProgressCharts />
 
+      {/* Latest workout share */}
+      {latestSession && latestSession.exerciseCount > 0 && (
+        <section>
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <Dumbbell className="w-3.5 h-3.5" />
+            最新のトレーニング
+          </h2>
+          <Card className="card-hover border-l-4 border-l-accent">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">
+                  {format(parseISO(latestSession.date), "M月d日（E）", { locale: ja })}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {latestSession.exerciseCount}種目 / {latestSession.totalSets}セット / 総挙上 {latestSession.totalVolume.toLocaleString()}kg
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="accent"
+                className="h-9 px-3 gap-1.5"
+                onClick={() => setShareOpen(true)}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                シェア
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
       {/* Cycle Report Card */}
       <section>
         <Card className="card-hover border-l-4 border-l-accent cursor-pointer" onClick={() => onNavigate?.("report")}>
@@ -333,6 +406,14 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           姿勢チェック（AI）
         </Button>
       </section>
+
+      <WorkoutShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        session={latestSession}
+        streakWeeks={currentStreak}
+        totalSessions={totalSessions}
+      />
     </div>
   );
 };
