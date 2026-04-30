@@ -179,7 +179,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
             boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
             background:
               theme === "transparent"
-                ? "repeating-conic-gradient(#444 0 25%, #555 0 50%) 50% / 24px 24px"
+                ? "#333333"
                 : "transparent",
           }}
         >
