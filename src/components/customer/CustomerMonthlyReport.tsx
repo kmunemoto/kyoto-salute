@@ -639,7 +639,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       </section>
 
       {/* Empty state */}
-      {!hasTraining && !hasMeasurements && !hasMeals && !hasDiagnosis && (
+      {!hasTraining && !hasMeasurements && !hasMeals && !hasDiagnosis && !hasWorkouts && (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
             この期間のデータはまだありません。
