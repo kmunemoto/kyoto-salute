@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, Award, Utensils, Bone, MessageSquare, Sparkles, Loader2, CalendarDays, Flame } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, Award, Utensils, Bone, MessageSquare, Sparkles, Loader2, CalendarDays, Flame, Dumbbell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -10,7 +10,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, parseISO, differenceInDays, isBefore } from "date-fns";
 import { ja } from "date-fns/locale";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4, '月6回': 6, '月8回': 8, '通い放題': 15,
@@ -46,6 +46,8 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const [diagnoses, setDiagnoses] = useState<any[]>([]);
   const [prevDiagnoses, setPrevDiagnoses] = useState<any[]>([]);
   const [prevBookings, setPrevBookings] = useState<any[]>([]);
+  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [prevWorkouts, setPrevWorkouts] = useState<any[]>([]);
   const [trainerComment, setTrainerComment] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,13 +100,15 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       // For monthly_reports, use month as the first day of the cycle
       const monthStr = format(cycleStart, "yyyy-MM-dd");
 
-      const [bRes, mRes, mlRes, dRes, pdRes, pbRes, tcRes] = await Promise.all([
+      const [bRes, mRes, mlRes, dRes, pdRes, pbRes, wRes, pwRes, tcRes] = await Promise.all([
         supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", csStr).lt("booking_date", ceStr).neq("status", "キャンセル済み"),
         supabase.from("user_measurements").select("*").eq("user_id", user.id).gte("measured_date", format(cycleStart, "yyyy-MM-dd")).lte("measured_date", format(cycleEnd, "yyyy-MM-dd")).order("measured_date", { ascending: true }),
         supabase.from("meals").select("*").eq("user_id", user.id).gte("created_at", csStr).lt("created_at", ceStr),
         supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", csStr).lt("created_at", ceStr).order("created_at", { ascending: true }),
         supabase.from("skeletal_diagnoses").select("*").eq("user_id", user.id).gte("created_at", pcsStr).lt("created_at", pceStr).order("created_at", { ascending: false }).limit(1),
         supabase.from("bookings").select("*").eq("user_id", user.id).gte("booking_date", pcsStr).lt("booking_date", pceStr).neq("status", "キャンセル済み"),
+        supabase.from("workouts").select("*, exercises(name)").eq("user_id", user.id).gte("workout_date", format(cycleStart, "yyyy-MM-dd")).lt("workout_date", format(cycleEnd, "yyyy-MM-dd")).order("workout_date", { ascending: true }),
+        supabase.from("workouts").select("*, exercises(name)").eq("user_id", user.id).gte("workout_date", format(prevCycleStart, "yyyy-MM-dd")).lt("workout_date", format(prevCycleEnd, "yyyy-MM-dd")).order("workout_date", { ascending: true }),
         supabase.from("monthly_reports" as any).select("*").eq("user_id", user.id).eq("month", monthStr).maybeSingle(),
       ]);
 
@@ -114,6 +118,8 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
       setDiagnoses(dRes.data || []);
       setPrevDiagnoses(pdRes.data || []);
       setPrevBookings(pbRes.data || []);
+      setWorkouts(wRes.data || []);
+      setPrevWorkouts(pwRes.data || []);
       setTrainerComment((tcRes.data as any)?.trainer_comment || null);
       setLoading(false);
     };
