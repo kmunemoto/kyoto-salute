@@ -126,15 +126,24 @@ const TrainerSchedule = () => {
         .eq("id", target.id)
         .maybeSingle();
 
+      // Delete linked Google Calendar event first. Failure must not block cancellation.
+      if (trialData?.google_event_id) {
+        try {
+          await supabase.functions.invoke("google-calendar-sync", {
+            body: {
+              action: "delete",
+              booking_id: target.id,
+              google_event_id: trialData.google_event_id,
+              is_trial: true,
+            },
+          });
+        } catch (e) {
+          console.error("Google Calendar trial event delete failed:", e);
+        }
+      }
+
       const res = await supabase.from("trial_bookings").delete().eq("id", target.id);
       error = res.error;
-
-      // Delete from Google Calendar if synced
-      if (!res.error && trialData?.google_event_id) {
-        supabase.functions.invoke("google-calendar-sync", {
-          body: { action: "delete", google_event_id: trialData.google_event_id },
-        }).catch(console.error);
-      }
     } else {
       const res = await cancelBooking(target.id, true);
       error = res.error;
