@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X, Download, Share2, Loader2, Moon, Sun, Image as ImageIcon } from "lucide-react";
-import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import WorkoutShareCard, { type ShareTheme } from "./WorkoutShareCard";
-import type { WorkoutSession } from "@/lib/workoutShare";
+import { renderShareCanvas, type WorkoutSession } from "@/lib/workoutShare";
 import { useToast } from "@/hooks/use-toast";
+import { useGymSettings } from "@/hooks/useGymSettings";
 
 interface Props {
   open: boolean;
@@ -17,11 +17,10 @@ interface Props {
 const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions }: Props) => {
   const [theme, setTheme] = useState<ShareTheme>("dark");
   const [busy, setBusy] = useState(false);
-  const captureRef = useRef<HTMLDivElement>(null); // off-screen 1080x1920 element used for html2canvas
-  const previewRef = useRef<HTMLDivElement>(null); // visible preview inside the modal
   const previewBoxRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
   const { toast } = useToast();
+  const { settings } = useGymSettings();
 
   useEffect(() => {
     if (open) {
@@ -56,18 +55,12 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
   if (!open || !session) return null;
 
   const renderCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    if (!captureRef.current) return null;
-    return await html2canvas(captureRef.current, {
-      backgroundColor: theme === "transparent" ? null : (theme === "light" ? "#FAFAF7" : "#0F0F0F"),
-      scale: 1,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      width: 1080,
-      height: 1920,
-      windowWidth: 1080,
-      windowHeight: 1920,
-    });
+    try {
+      return await renderShareCanvas(session, theme, settings?.logo_url ?? null);
+    } catch (e) {
+      console.error("[share] canvas render failed", e);
+      return null;
+    }
   };
 
   const handleDownload = async () => {
@@ -184,7 +177,6 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
           }}
         >
           <div
-            ref={previewRef}
             style={{
               transform: `scale(${scale})`,
               transformOrigin: "top left",
@@ -244,30 +236,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         </Button>
       </div>
 
-      {/* Off-screen full-resolution capture target — used by html2canvas */}
-      <div
-        aria-hidden
-        style={{
-          position: "fixed",
-          left: -99999,
-          top: 0,
-          width: 1080,
-          height: 1920,
-          pointerEvents: "none",
-          opacity: 1,
-        }}
-      >
-        <div ref={captureRef} style={{ width: 1080, height: 1920 }}>
-          <WorkoutShareCard
-            session={session}
-            theme={theme}
-            streakWeeks={streakWeeks}
-            totalSessions={totalSessions}
-          />
-        </div>
-      </div>
-
-      {/* Full-screen loading overlay while html2canvas is rendering */}
+      {/* Full-screen loading overlay while the share image is being generated */}
       {busy && (
         <div
           style={{
