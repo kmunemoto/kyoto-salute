@@ -169,6 +169,86 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const latestDiag = diagnoses.length > 0 ? diagnoses[diagnoses.length - 1] : null;
   const prevDiag = prevDiagnoses.length > 0 ? prevDiagnoses[0] : null;
 
+  // Training records
+  type WorkoutRow = { exercise_name: string; workout_date: string; sets: { weight: number; reps: number }[] };
+  const normalize = (rows: any[]): WorkoutRow[] => rows.map((w) => {
+    const sets = (w.sets && Array.isArray(w.sets) && w.sets.length > 0)
+      ? w.sets.map((s: any) => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 }))
+      : (w.weight != null ? [{ weight: Number(w.weight), reps: Number(w.reps) || 0 }] : []);
+    return { exercise_name: w.exercises?.name || "不明", workout_date: w.workout_date, sets };
+  }).filter(w => w.sets.length > 0);
+
+  const trainingSummary = useMemo(() => {
+    const cur = normalize(workouts);
+    const prev = normalize(prevWorkouts);
+
+    // Per-exercise: latest & prev max weight, sets×reps representative
+    const exMap = new Map<string, WorkoutRow[]>();
+    cur.forEach(w => {
+      const arr = exMap.get(w.exercise_name) || [];
+      arr.push(w);
+      exMap.set(w.exercise_name, arr);
+    });
+
+    const summary = Array.from(exMap.entries()).map(([name, rows]) => {
+      // sort by date asc
+      rows.sort((a, b) => a.workout_date.localeCompare(b.workout_date));
+      const maxWeightOf = (r: WorkoutRow) => r.sets.reduce((m, s) => Math.max(m, s.weight), 0);
+      const latestRow = rows[rows.length - 1];
+      const latestWeight = maxWeightOf(latestRow);
+
+      // prev = previous record in current cycle if multiple, else last from prev cycle
+      let prevWeight: number | null = null;
+      let prevSetsRepsRow: WorkoutRow | null = null;
+      if (rows.length > 1) {
+        const prevRow = rows[rows.length - 2];
+        prevWeight = maxWeightOf(prevRow);
+        prevSetsRepsRow = prevRow;
+      } else {
+        const prevSame = prev.filter(p => p.exercise_name === name);
+        if (prevSame.length > 0) {
+          const prevRow = prevSame[prevSame.length - 1];
+          prevWeight = maxWeightOf(prevRow);
+          prevSetsRepsRow = prevRow;
+        }
+      }
+
+      const setsRepsLatest = `${latestRow.sets.length}セット×${Math.max(...latestRow.sets.map(s => s.reps))}回`;
+      const setsRepsPrev = prevSetsRepsRow ? `${prevSetsRepsRow.sets.length}セット×${Math.max(...prevSetsRepsRow.sets.map(s => s.reps))}回` : null;
+
+      return {
+        name,
+        count: rows.length,
+        latestWeight,
+        prevWeight,
+        diff: prevWeight != null ? Math.round((latestWeight - prevWeight) * 10) / 10 : null,
+        setsRepsLatest,
+        setsRepsPrev,
+        history: rows.map(r => ({ date: r.workout_date, weight: maxWeightOf(r) })),
+      };
+    }).sort((a, b) => b.count - a.count);
+
+    // Top 3 by record count for chart
+    const top3 = summary.slice(0, 3);
+    // Build chart data merged by date
+    const dateSet = new Set<string>();
+    top3.forEach(s => s.history.forEach(h => dateSet.add(h.date)));
+    const dates = Array.from(dateSet).sort();
+    const chartData = dates.map(d => {
+      const row: any = { date: `${new Date(d).getMonth() + 1}/${new Date(d).getDate()}` };
+      top3.forEach(s => {
+        const point = s.history.find(h => h.date === d);
+        if (point) row[s.name] = point.weight;
+      });
+      return row;
+    });
+
+    return { summary, top3, chartData };
+  }, [workouts, prevWorkouts]);
+
+  const hasWorkouts = trainingSummary.summary.length > 0;
+  const TRAINING_COLORS = ["hsl(174, 65%, 50%)", "hsl(174, 55%, 38%)", "hsl(190, 60%, 55%)"];
+
   // AI advice - cycle-aware
   const generateAdvice = () => {
     const parts: string[] = [];
