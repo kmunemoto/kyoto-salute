@@ -137,6 +137,14 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (booking_id) {
+        const table = is_trial ? "trial_bookings" : "bookings";
+        await supabase
+          .from(table)
+          .update({ google_event_id: null })
+          .eq("id", booking_id);
+      }
+
       return new Response(JSON.stringify({ success: true, already_gone: deleteRes.status === 410 || deleteRes.status === 404 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
