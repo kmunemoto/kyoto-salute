@@ -11,7 +11,6 @@ export interface WorkoutSessionExercise {
   maxWeight: number;
   totalReps: number;
   setsCount: number;
-  isPR: boolean;
 }
 
 export interface WorkoutSession {
@@ -49,7 +48,7 @@ export const normalizeSets = (w: { sets: SetData[] | null; weight: number | null
 
 /**
  * Build a workout session for a given date.
- * - allWorkouts: all workouts of the user (for PR calculation)
+ * - allWorkouts: all workouts of the user
  * - date: YYYY-MM-DD of the session
  */
 export const buildSession = (allWorkouts: RawWorkout[], date: string): WorkoutSession => {
@@ -76,19 +75,6 @@ export const buildSession = (allWorkouts: RawWorkout[], date: string): WorkoutSe
     const totalReps = allSets.reduce((m, s) => m + s.reps, 0);
     const volume = allSets.reduce((m, s) => m + s.weight * s.reps, 0);
 
-    // PR check: max weight on this date is >= max weight on any earlier date for same exercise
-    let priorMax = 0;
-    allWorkouts.forEach((w) => {
-      const wKey = w.exercise_id || w.exercise_name;
-      if (wKey !== key) return;
-      if (w.workout_date >= date) return;
-      const setsArr = normalizeSets(w);
-      setsArr.forEach((s) => { if (s.weight > priorMax) priorMax = s.weight; });
-    });
-    const isPR = maxWeight > 0 && maxWeight >= priorMax && priorMax > 0
-      ? maxWeight >= priorMax
-      : maxWeight > 0; // first time recording counts as PR
-
     exercises.push({
       exercise_id: key,
       exercise_name: rows[0].exercise_name,
@@ -96,7 +82,6 @@ export const buildSession = (allWorkouts: RawWorkout[], date: string): WorkoutSe
       maxWeight,
       totalReps,
       setsCount: allSets.length,
-      isPR,
     });
     totalVolume += volume;
     totalSets += allSets.length;
