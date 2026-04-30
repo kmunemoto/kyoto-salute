@@ -107,7 +107,7 @@ export const useAllBookings = () => {
     const allRows = rows || [];
 
     const userIds = [...new Set(allRows.map((r) => r.user_id))];
-    let nameMap: Record<string, string> = {};
+    const nameMap: Record<string, string> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
