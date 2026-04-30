@@ -44,6 +44,7 @@ const WorkoutShareCard = forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
+        id="share-card-content"
         style={{
           width: 1080,
           height: 1920,
