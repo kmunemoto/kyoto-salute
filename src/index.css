@@ -128,3 +128,36 @@ html, body {
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+#app-update-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  min-height: 44px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 44px 10px 16px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px hsl(var(--primary) / 0.25);
+  cursor: pointer;
+}
+
+#app-update-banner button {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 9999px;
+  background: hsl(var(--primary-foreground) / 0.18);
+  color: hsl(var(--primary-foreground));
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
