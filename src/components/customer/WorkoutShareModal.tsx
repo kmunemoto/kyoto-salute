@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X, Download, Share2, Loader2, Moon, Sun, Image as ImageIcon } from "lucide-react";
+import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import WorkoutShareCard, { type ShareTheme } from "./WorkoutShareCard";
-import { generateSharePngBlob, type WorkoutSession } from "@/lib/workoutShare";
+import { type WorkoutSession } from "@/lib/workoutShare";
 import { useToast } from "@/hooks/use-toast";
 import { useGymSettings } from "@/hooks/useGymSettings";
 
@@ -54,56 +55,83 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
 
   if (!open || !session) return null;
 
-  const renderBlob = async (): Promise<Blob | null> => {
-    try {
-      return await generateSharePngBlob(session, theme);
-    } catch (e) {
-      console.error("[share] image generation failed", e);
-      return null;
-    }
+  // Capture the actual on-screen share card with html2canvas.
+  // Returns a PNG data URL (base64).
+  const captureCardDataUrl = async (): Promise<string> => {
+    const element = document.getElementById("share-card-content");
+    if (!element) throw new Error("share card element not found");
+
+    const bg =
+      theme === "dark"
+        ? "#0F0F0F"
+        : theme === "light"
+          ? "#FAF9F6"
+          : null; // null = transparent
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: bg,
+      width: 1080,
+      height: 1920,
+      windowWidth: 1080,
+      windowHeight: 1920,
+      logging: false,
+    });
+    return canvas.toDataURL("image/png");
+  };
+
+  const openImageInNewTab = (dataUrl: string): boolean => {
+    const w = window.open("", "_blank");
+    if (!w) return false;
+    w.document.write(`
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>トレーニングシェア</title>
+  <style>
+    body { margin: 0; padding: 16px; background: #000; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; }
+    p { color: #fff; font-size: 15px; margin: 4px 0 14px; text-align: center; }
+    img { max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    button { margin-top: 20px; padding: 12px 40px; background: #0ABAB5; color: #fff; border: none; border-radius: 8px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <p>↓ 画像を長押しして「写真に追加」で保存</p>
+  <img src="${dataUrl}" alt="トレーニングシェア" />
+  <button onclick="window.close()">閉じる</button>
+</body>
+</html>`);
+    w.document.close();
+    return true;
   };
 
   const handleDownload = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      const blob = await renderBlob();
-      if (!blob) throw new Error("blob failed");
-
-      const file = new File([blob], `salute-workout-${session.date}.png`, {
-        type: "image/png",
-      });
-
-      // iOS PWA: Web Share APIが最も確実。失敗時は新しいタブで画像を開き、長押しで保存させる。
-      const canShareFiles = !!(
-        navigator.canShare && navigator.canShare({ files: [file] })
-      );
-      if (canShareFiles && navigator.share) {
-        try {
-          await navigator.share({ files: [file], title: "Salute御所南 トレーニング記録" });
-          return;
-        } catch (err: any) {
-          if (err?.name === "AbortError") return;
-          // fall through
-        }
-      }
-
-      const imageUrl = URL.createObjectURL(blob);
-      const opened = window.open(imageUrl, "_blank");
+      const dataUrl = await captureCardDataUrl();
+      const opened = openImageInNewTab(dataUrl);
       if (!opened) {
-        // ポップアップブロックなどの場合は <a download> でフォールバック
-        const a = document.createElement("a");
-        a.href = imageUrl;
-        a.download = `salute-workout-${session.date}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        // ポップアップブロック時はモーダル内プレビューを画像に差し替え
+        const preview = document.getElementById("share-card-preview");
+        if (preview) {
+          preview.innerHTML = "";
+          const img = document.createElement("img");
+          img.src = dataUrl;
+          img.style.maxWidth = "100%";
+          img.style.maxHeight = "100%";
+          img.style.objectFit = "contain";
+          preview.appendChild(img);
+        }
+        toast({ title: "画像を長押しして保存してください" });
       }
-      setTimeout(() => URL.revokeObjectURL(imageUrl), 60_000);
-      toast({ title: "画像を長押しして保存してください" });
     } catch (e) {
-      console.error("[share] download failed", e);
-      toast({ title: "画像の保存に失敗しました", variant: "destructive" });
+      console.error("[share] capture failed", e);
+      toast({ title: "画像の生成に失敗しました", variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -113,35 +141,38 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     if (busy) return;
     setBusy(true);
     try {
-      const blob = await renderBlob();
-      if (!blob) throw new Error("blob failed");
-      const file = new File([blob], `salute-workout-${session.date}.png`, { type: "image/png" });
+      const dataUrl = await captureCardDataUrl();
 
-      const canShareFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
-      if (canShareFiles && navigator.share) {
-        await navigator.share({
-          files: [file],
-          title: "Salute御所南 トレーニング記録",
+      // Try Web Share API first (best UX on iOS Safari/PWA when supported)
+      try {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `salute-workout-${session.date}.png`, {
+          type: "image/png",
         });
-      } else {
-        const imageUrl = URL.createObjectURL(blob);
-        window.open(imageUrl, "_blank");
-        setTimeout(() => URL.revokeObjectURL(imageUrl), 60_000);
-        toast({ title: "共有に対応していません。画像を長押しして保存してください" });
+        const canShareFiles = !!(
+          navigator.canShare && navigator.canShare({ files: [file] })
+        );
+        if (canShareFiles && navigator.share) {
+          await navigator.share({
+            files: [file],
+            title: "Salute御所南 トレーニング記録",
+          });
+          return;
+        }
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
+        // fall through
+      }
+
+      // Fallback: open the image in a new tab for long-press save
+      const opened = openImageInNewTab(dataUrl);
+      if (!opened) {
+        toast({ title: "ポップアップを許可してください", variant: "destructive" });
       }
     } catch (e: any) {
       console.error("[share] share failed", e);
       if (e?.name !== "AbortError") {
-        // 共有失敗時も新しいタブで画像を開いて救済する
-        try {
-          const blob = await renderBlob();
-          if (blob) {
-            const imageUrl = URL.createObjectURL(blob);
-            window.open(imageUrl, "_blank");
-            setTimeout(() => URL.revokeObjectURL(imageUrl), 60_000);
-            return;
-          }
-        } catch {}
         toast({ title: "共有に失敗しました", variant: "destructive" });
       }
     } finally {
@@ -179,6 +210,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       {/* Card preview area (scaled to fit) */}
       <div
         ref={previewBoxRef}
+        id="share-card-preview"
         className="flex-1 min-h-0 flex items-center justify-center px-4 py-3"
       >
         <div
