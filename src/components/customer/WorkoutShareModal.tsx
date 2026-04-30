@@ -74,29 +74,33 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         type: "image/png",
       });
 
-      // iOS Safari restricts <a download>; prefer Web Share API when files are supported.
+      // iOS PWA: Web Share APIが最も確実。失敗時は新しいタブで画像を開き、長押しで保存させる。
       const canShareFiles = !!(
         navigator.canShare && navigator.canShare({ files: [file] })
       );
       if (canShareFiles && navigator.share) {
         try {
-          await navigator.share({ files: [file], title: "Workout" });
+          await navigator.share({ files: [file], title: "Salute御所南 トレーニング記録" });
           return;
         } catch (err: any) {
           if (err?.name === "AbortError") return;
-          // fall through to download fallback
+          // fall through
         }
       }
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `salute-workout-${session.date}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast({ title: "画像を保存しました" });
+      const imageUrl = URL.createObjectURL(blob);
+      const opened = window.open(imageUrl, "_blank");
+      if (!opened) {
+        // ポップアップブロックなどの場合は <a download> でフォールバック
+        const a = document.createElement("a");
+        a.href = imageUrl;
+        a.download = `salute-workout-${session.date}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      setTimeout(() => URL.revokeObjectURL(imageUrl), 60_000);
+      toast({ title: "画像を長押しして保存してください" });
     } catch (e) {
       console.error("[share] download failed", e);
       toast({ title: "画像の保存に失敗しました", variant: "destructive" });
@@ -120,19 +124,24 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
           title: "Salute御所南 トレーニング記録",
         });
       } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `salute-workout-${session.date}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        toast({ title: "共有に対応していないため、ダウンロードしました" });
+        const imageUrl = URL.createObjectURL(blob);
+        window.open(imageUrl, "_blank");
+        setTimeout(() => URL.revokeObjectURL(imageUrl), 60_000);
+        toast({ title: "共有に対応していません。画像を長押しして保存してください" });
       }
     } catch (e: any) {
       console.error("[share] share failed", e);
       if (e?.name !== "AbortError") {
+        // 共有失敗時も新しいタブで画像を開いて救済する
+        try {
+          const blob = await renderBlob();
+          if (blob) {
+            const imageUrl = URL.createObjectURL(blob);
+            window.open(imageUrl, "_blank");
+            setTimeout(() => URL.revokeObjectURL(imageUrl), 60_000);
+            return;
+          }
+        } catch {}
         toast({ title: "共有に失敗しました", variant: "destructive" });
       }
     } finally {

@@ -341,14 +341,12 @@ export async function renderShareCanvas(
  * This works reliably in iOS PWAs where html2canvas / direct Canvas drawing
  * sometimes fail to produce a usable image.
  */
+import { supabase } from "@/integrations/supabase/client";
+
 export async function generateSharePngBlob(
   session: WorkoutSession,
   theme: ShareCanvasTheme,
 ): Promise<Blob> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-  const endpoint = `${supabaseUrl}/functions/v1/generate-share-image`;
-
   const payload = {
     exercises: session.exercises.slice(0, 6).map((ex) => ({
       name: ex.exercise_name,
@@ -360,17 +358,17 @@ export async function generateSharePngBlob(
     theme,
   };
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: anonKey,
-      Authorization: `Bearer ${anonKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`share image request failed: ${res.status}`);
-  const svgText = await res.text();
+  const { data, error } = await supabase.functions.invoke(
+    "generate-share-image",
+    { body: payload },
+  );
+  if (error) throw error;
+  const svgText =
+    typeof data === "string"
+      ? data
+      : data instanceof Blob
+        ? await data.text()
+        : String(data);
 
   // Rasterize SVG -> PNG via <img> + <canvas>
   const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
