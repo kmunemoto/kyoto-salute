@@ -38,6 +38,37 @@ function getPeriodStart(period: PeriodValue): Date | null {
 
 interface SetData { set: number; weight: number; reps: number }
 
+// Inline SVG sparkline
+const Sparkline = ({ values, width = 60, height = 24 }: { values: number[]; width?: number; height?: number }) => {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = values.length > 1 ? width / (values.length - 1) : 0;
+  const pad = 3;
+  const innerH = height - pad * 2;
+  const points = values.map((v, i) => {
+    const x = i * stepX;
+    const y = pad + innerH - ((v - min) / range) * innerH;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const lastX = (values.length - 1) * stepX;
+  const lastY = pad + innerH - ((values[values.length - 1] - min) / range) * innerH;
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="shrink-0">
+      <polyline
+        points={points.join(" ")}
+        fill="none"
+        stroke="#0ABAB5"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={lastX} cy={lastY} r="2" fill="#0ABAB5" />
+    </svg>
+  );
+};
+
 const ProgressCharts = () => {
   const { user } = useAuth();
   const { measurements } = useMeasurements(user?.id);
