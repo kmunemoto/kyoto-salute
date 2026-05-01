@@ -4,12 +4,9 @@ import { TrendingUp, TrendingDown, Dumbbell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMeasurements } from "@/hooks/useMeasurements";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   AreaChart,
   Area,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   ResponsiveContainer,
@@ -28,8 +25,6 @@ const PERIODS = [
 
 type PeriodValue = (typeof PERIODS)[number]["value"];
 
-const EXERCISE_COLORS = ["#3FB6AC", "#6BA3BE", "#B07AA1", "#76B947", "#E8834A"];
-
 function getPeriodStart(period: PeriodValue): Date | null {
   const now = new Date();
   switch (period) {
@@ -43,6 +38,37 @@ function getPeriodStart(period: PeriodValue): Date | null {
 
 interface SetData { set: number; weight: number; reps: number }
 
+// Inline SVG sparkline
+const Sparkline = ({ values, width = 60, height = 24 }: { values: number[]; width?: number; height?: number }) => {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = values.length > 1 ? width / (values.length - 1) : 0;
+  const pad = 3;
+  const innerH = height - pad * 2;
+  const points = values.map((v, i) => {
+    const x = i * stepX;
+    const y = pad + innerH - ((v - min) / range) * innerH;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const lastX = (values.length - 1) * stepX;
+  const lastY = pad + innerH - ((values[values.length - 1] - min) / range) * innerH;
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="shrink-0">
+      <polyline
+        points={points.join(" ")}
+        fill="none"
+        stroke="#0ABAB5"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={lastX} cy={lastY} r="2" fill="#0ABAB5" />
+    </svg>
+  );
+};
+
 const ProgressCharts = () => {
   const { user } = useAuth();
   const { measurements } = useMeasurements(user?.id);
@@ -50,8 +76,6 @@ const ProgressCharts = () => {
   const [workouts, setWorkouts] = useState<
     { workout_date: string; weight: number | null; reps: number | null; sets: SetData[] | null; exercise_name: string }[]
   >([]);
-  const [hiddenExercises, setHiddenExercises] = useState<Set<string>>(new Set());
-
   // Fetch workouts
   useEffect(() => {
     if (!user) return;
@@ -129,56 +153,23 @@ const ProgressCharts = () => {
       .map(([name]) => name);
   }, [filteredWorkouts]);
 
-  // Chart data: date -> { exerciseName: maxWeight }
-  const trainingChartData = useMemo(() => {
-    const dateMap: Record<string, Record<string, number>> = {};
-    filteredWorkouts.forEach((w) => {
-      if (!topExercises.includes(w.exercise_name)) return;
-      if (hiddenExercises.has(w.exercise_name)) return;
-      const setsData = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
-      if (setsData.length === 0) return;
-      const maxW = Math.max(...setsData.map((s) => s.weight));
-      if (!dateMap[w.workout_date]) dateMap[w.workout_date] = {};
-      const existing = dateMap[w.workout_date][w.exercise_name];
-      if (!existing || maxW > existing) {
-        dateMap[w.workout_date][w.exercise_name] = maxW;
-      }
-    });
-    return Object.entries(dateMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, vals]) => {
-        const d = new Date(date);
-        return { date: format(d, "M/d"), ...vals };
-      });
-  }, [filteredWorkouts, topExercises, hiddenExercises]);
-
-  // Exercise summaries
+  // Exercise summaries (with per-exercise sparkline series)
   const exerciseSummaries = useMemo(() => {
     return topExercises.map((name) => {
       const exWorkouts = filteredWorkouts
         .filter((w) => w.exercise_name === name)
         .sort((a, b) => a.workout_date.localeCompare(b.workout_date));
-      if (exWorkouts.length === 0) return { name, first: 0, max: 0, diff: 0 };
+      if (exWorkouts.length === 0) return { name, first: 0, current: 0, diff: 0, series: [] as number[] };
       const getMax = (w: (typeof exWorkouts)[0]) => {
         const setsData = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
         return setsData.length > 0 ? Math.max(...setsData.map((s) => s.weight)) : 0;
       };
-      const first = getMax(exWorkouts[0]);
-      const last = getMax(exWorkouts[exWorkouts.length - 1]);
-      return { name, first, max: last, diff: last - first };
+      const series = exWorkouts.map(getMax).filter((v) => v > 0);
+      const first = series[0] ?? 0;
+      const current = series[series.length - 1] ?? 0;
+      return { name, first, current, diff: current - first, series };
     });
   }, [topExercises, filteredWorkouts]);
-
-  const visibleExercises = topExercises.filter((n) => !hiddenExercises.has(n));
-
-  const toggleExercise = (name: string) => {
-    setHiddenExercises((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
-  };
 
   const hasWeightData = weightChartData.length > 0;
   const hasTrainingData = topExercises.length > 0;
@@ -377,100 +368,59 @@ const ProgressCharts = () => {
             トレーニング重量
           </h2>
 
-          {/* Exercise summaries */}
-          <div className="space-y-1 mb-3">
-            {exerciseSummaries
-              .filter((s) => !hiddenExercises.has(s.name))
-              .map((s) => (
-                <div key={s.name} className="flex items-center justify-between text-xs">
-                  <span className="font-medium truncate mr-2">{s.name}</span>
-                  <span className="shrink-0">
-                    {s.first}kg → {s.max}kg
-                    {s.diff !== 0 && (
-                      <span
-                        className={`ml-1 font-bold ${
-                          s.diff > 0 ? "text-success" : "text-destructive"
-                        }`}
-                      >
-                        ({s.diff > 0 ? "+" : ""}
-                        {s.diff}kg{s.diff > 0 ? "↑" : "↓"})
-                      </span>
-                    )}
-                  </span>
-                </div>
-              ))}
-          </div>
-
-          {trainingChartData.length >= 2 ? (
+          {exerciseSummaries.length > 0 ? (
             <Card>
               <CardContent className="p-4">
-                <div className="h-52">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={trainingChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-                      <XAxis
-                        dataKey="date"
-                        tick={{ fontSize: 10, fill: "#888" }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 10, fill: "#888" }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={40}
-                        unit="kg"
-                        domain={["dataMin - 5", "dataMax + 5"]}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: "hsl(var(--background))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "12px",
-                          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-                          fontSize: "12px",
-                        }}
-                      />
-                      {visibleExercises.map((name, i) => (
-                        <Line
-                          key={name}
-                          type="monotone"
-                          dataKey={name}
-                          stroke={EXERCISE_COLORS[i % EXERCISE_COLORS.length]}
-                          strokeWidth={2}
-                          isAnimationActive={false}
-                          dot={{ r: 3, fill: EXERCISE_COLORS[i % EXERCISE_COLORS.length], strokeWidth: 2, stroke: "hsl(var(--background))" }}
-                          connectNulls
-                          name={name}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Exercise filter */}
-                <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3">
-                  {topExercises.map((name, i) => (
-                    <label key={name} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={!hiddenExercises.has(name)}
-                        onCheckedChange={() => toggleExercise(name)}
-                        className="h-3.5 w-3.5"
-                      />
+                <div>
+                  {exerciseSummaries.map((s, idx) => {
+                    const isUp = s.diff > 0;
+                    const isDown = s.diff < 0;
+                    const diffColor = isUp ? "#0ABAB5" : isDown ? "#EF4444" : "#9CA3AF";
+                    const diffText = s.diff === 0
+                      ? "±0"
+                      : `${isUp ? "+" : ""}${s.diff}kg ${isUp ? "↑" : "↓"}`;
+                    return (
                       <div
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ background: EXERCISE_COLORS[i % EXERCISE_COLORS.length] }}
-                      />
-                      <span className="truncate max-w-[100px]">{name}</span>
-                    </label>
-                  ))}
+                        key={s.name}
+                        className="flex items-center justify-between gap-3"
+                        style={{
+                          padding: "12px 0",
+                          borderBottom:
+                            idx < exerciseSummaries.length - 1
+                              ? "1px solid rgba(0,0,0,0.06)"
+                              : "none",
+                        }}
+                      >
+                        <span
+                          className="truncate min-w-0 flex-1"
+                          style={{ fontSize: "14px", fontWeight: 500 }}
+                        >
+                          {s.name}
+                        </span>
+                        <div className="shrink-0">
+                          <Sparkline values={s.series} />
+                        </div>
+                        <div className="text-right shrink-0" style={{ minWidth: 56 }}>
+                          <div style={{ fontSize: "18px", fontWeight: 700, lineHeight: 1.1 }}>
+                            {s.current}kg
+                          </div>
+                          {s.series.length >= 2 && (
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                color: diffColor,
+                                marginTop: 2,
+                              }}
+                            >
+                              {diffText}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </CardContent>
-            </Card>
-          ) : filteredWorkouts.length > 0 ? (
-            <Card>
-              <CardContent className="p-4 text-center text-sm text-muted-foreground">
-                データが2件以上あるとグラフが表示されます
               </CardContent>
             </Card>
           ) : (
