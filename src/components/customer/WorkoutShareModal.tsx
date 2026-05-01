@@ -89,15 +89,45 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
   if (!open || !session) return null;
 
   const handleThemeChange = (k: ShareTheme) => {
-    // Switching theme cancels photo composite mode
-    if (photoCompositeSrc?.startsWith("blob:")) {
-      URL.revokeObjectURL(photoCompositeSrc);
-    }
-    setPhotoCompositeSrc(null);
     setTheme(k);
+    // If a photo is selected, re-render with the new theme
+    if (selectedPhotoFile) {
+      void rerenderComposite(selectedPhotoFile, photoLayout, k);
+    }
   };
 
-  const renderPhotoComposite = async (file: File): Promise<Blob> => {
+  const handleLayoutChange = (l: PhotoLayout) => {
+    setPhotoLayout(l);
+    if (selectedPhotoFile) {
+      void rerenderComposite(selectedPhotoFile, l, theme);
+    }
+  };
+
+  const rerenderComposite = async (
+    file: File,
+    layout: PhotoLayout,
+    currentTheme: ShareTheme,
+  ) => {
+    setBusy(true);
+    try {
+      const blob = await renderPhotoComposite(file, layout, currentTheme);
+      const url = URL.createObjectURL(blob);
+      if (photoCompositeSrc?.startsWith("blob:")) {
+        URL.revokeObjectURL(photoCompositeSrc);
+      }
+      setPhotoCompositeSrc(url);
+    } catch (err) {
+      console.error("[share] re-render failed", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const renderPhotoComposite = async (
+    file: File,
+    layout: PhotoLayout,
+    currentTheme: ShareTheme,
+  ): Promise<Blob> => {
     const photoUrl = URL.createObjectURL(file);
     try {
       const photo = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -132,71 +162,199 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       }
       ctx.drawImage(photo, sx, sy, sw, sh, 0, 0, W, H);
 
-      // Strava-style: bottom gradient only, no dark overlay, no shadows
-      const gradient = ctx.createLinearGradient(0, 1200, 0, H);
-      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-      gradient.addColorStop(0.3, "rgba(0, 0, 0, 0.5)");
-      gradient.addColorStop(1, "rgba(0, 0, 0, 0.85)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 1200, W, H - 1200);
+      // Theme-aware text rendering. NO overlays. NO gradients on the photo itself.
+      // Light mode = dark text + white shadow. Otherwise white text + dark shadow.
+      const isLight = currentTheme === "light";
+      const textColor = isLight ? "#1A1A1A" : "#FFFFFF";
+      const shadowColor = isLight
+        ? "rgba(255,255,255,0.85)"
+        : "rgba(0,0,0,0.85)";
 
       const FONT =
-        "'Helvetica Neue', Arial, 'Noto Sans JP', 'Hiragino Sans', sans-serif";
+        "system-ui, -apple-system, 'Helvetica Neue', Arial, 'Noto Sans JP', 'Hiragino Sans', sans-serif";
+
+      const applyShadow = () => {
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+      };
+      const clearShadow = () => {
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      };
 
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
-      ctx.fillStyle = "#FFFFFF";
+      ctx.fillStyle = textColor;
+      applyShadow();
 
-      // Compute total content height to center within bottom area
-      const visible = session.exercises.slice(0, 6);
-      const hidden = session.exercises.length - visible.length;
+      const visible = session.exercises.slice(0, 3);
+      const dateStr = formatShareDate(session.date);
 
-      // Layout heights
-      const timeBlockH = 28 + 20 + 64; // label + gap + value
-      const exerciseBlockH = visible.length * (36 + 8 + 30 + 24); // name + gap + sub + gap
-      const hiddenH = hidden > 0 ? 28 + 16 : 0;
-      const dateH = 28 + 20;
-      const totalContentH = timeBlockH + 50 + exerciseBlockH + hiddenH + dateH;
+      // Helper: draw centered text with shadow already set
+      const drawCenter = (text: string, cx: number, cy: number) => {
+        ctx.fillText(text, cx, cy);
+      };
 
-      // Reserve room for footer
-      const footerTop = H - 140;
-      const contentTop = Math.max(1320, footerTop - 40 - totalContentH);
-      let y = contentTop;
+      if (layout === "center") {
+        // Compute centered stack
+        const labelGap = 16;
+        const blockGap = 56;
+        const exerciseGap = 18;
+        const exerciseBlockGap = 36;
 
-      // Time label
-      ctx.font = `400 28px ${FONT}`;
-      ctx.fillText("トレーニング時間", W / 2, y + 28);
-      y += 28 + 20;
-      // Time value
-      ctx.font = `800 64px ${FONT}`;
-      ctx.fillText(`${session.durationMin}分`, W / 2, y + 60);
-      y += 64 + 50;
+        // Estimated heights
+        const timeH = 28 + labelGap + 88;
+        const exH = visible.length === 0
+          ? 0
+          : visible.length * (44 + exerciseGap + 32) +
+            (visible.length - 1) * exerciseBlockGap;
+        const dateBlockH = 32 + 14 + 36 + 10 + 22;
+        const totalH = timeH + blockGap + exH + blockGap + dateBlockH;
 
-      // Exercises
-      for (const ex of visible) {
-        ctx.font = `700 36px ${FONT}`;
-        ctx.fillText(ex.exercise_name, W / 2, y + 36);
-        y += 36 + 8;
+        let y = (H - totalH) / 2;
+
+        // Time label
+        ctx.font = `300 28px ${FONT}`;
+        drawCenter("トレーニング時間", W / 2, y + 28);
+        y += 28 + labelGap;
+        // Time value
+        ctx.font = `800 88px ${FONT}`;
+        drawCenter(`${session.durationMin}分`, W / 2, y + 80);
+        y += 88 + blockGap;
+
+        // Exercises
+        for (let i = 0; i < visible.length; i++) {
+          const ex = visible[i];
+          ctx.font = `700 44px ${FONT}`;
+          drawCenter(ex.exercise_name, W / 2, y + 44);
+          y += 44 + exerciseGap;
+          ctx.font = `400 32px ${FONT}`;
+          drawCenter(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y + 32);
+          y += 32;
+          if (i < visible.length - 1) y += exerciseBlockGap;
+        }
+        y += blockGap;
+
+        // Date
+        ctx.font = `400 32px ${FONT}`;
+        drawCenter(dateStr, W / 2, y + 32);
+        y += 32 + 14;
+
+        // Footer
+        ctx.font = `600 36px ${FONT}`;
+        drawCenter("Salute 御所南", W / 2, y + 36);
+        y += 36 + 10;
+        ctx.font = `300 22px ${FONT}`;
+        drawCenter("PERSONAL GYM", W / 2, y + 22);
+      } else if (layout === "grid") {
+        // 2-column grid centered vertically (slightly below middle)
+        const top = H * 0.42;
+        const colLeftX = W * 0.28;
+        const colRightX = W * 0.72;
+        const rowGap = 140;
+
+        const top1 = visible[0];
+
+        const drawCell = (
+          label: string,
+          value: string,
+          cx: number,
+          cy: number,
+          valueSize = 72,
+        ) => {
+          ctx.font = `300 24px ${FONT}`;
+          drawCenter(label, cx, cy);
+          ctx.font = `800 ${valueSize}px ${FONT}`;
+          drawCenter(value, cx, cy + 24 + 16 + valueSize - 8);
+        };
+
+        // Row 1
+        drawCell("種目数", `${session.exercises.length}`, colLeftX, top);
+        drawCell("トレーニング時間", `${session.durationMin}分`, colRightX, top);
+        // Row 2
+        const r2 = top + rowGap;
+        drawCell(
+          "総セット",
+          `${session.exercises.reduce((a, e: any) => a + (e.sets ?? 1), 0)}`,
+          colLeftX,
+          r2,
+        );
+        if (top1) {
+          // Top exercise: smaller value (name can be long)
+          ctx.font = `300 24px ${FONT}`;
+          drawCenter("トップ種目", colRightX, r2);
+          ctx.font = `700 36px ${FONT}`;
+          drawCenter(top1.exercise_name, colRightX, r2 + 24 + 16 + 36 - 8);
+          ctx.font = `400 28px ${FONT}`;
+          drawCenter(
+            `${top1.maxWeight}kg × ${top1.totalReps}`,
+            colRightX,
+            r2 + 24 + 16 + 36 - 8 + 36,
+          );
+        }
+
+        // Footer (date + gym)
+        const footerY = H - 220;
         ctx.font = `400 30px ${FONT}`;
-        ctx.fillText(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y + 30);
-        y += 30 + 24;
-      }
-      if (hidden > 0) {
+        drawCenter(dateStr, W / 2, footerY);
+        ctx.font = `600 36px ${FONT}`;
+        drawCenter("Salute 御所南", W / 2, footerY + 60);
+        ctx.font = `300 22px ${FONT}`;
+        drawCenter("PERSONAL GYM", W / 2, footerY + 96);
+      } else {
+        // bottom layout — Strava-style. Apply gradient ONLY for dark mode.
+        if (currentTheme === "dark") {
+          clearShadow();
+          const gradient = ctx.createLinearGradient(0, 1200, 0, H);
+          gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+          gradient.addColorStop(0.3, "rgba(0, 0, 0, 0.45)");
+          gradient.addColorStop(1, "rgba(0, 0, 0, 0.8)");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 1200, W, H - 1200);
+          ctx.fillStyle = textColor;
+          applyShadow();
+        }
+
+        // Layout heights
+        const visBottom = session.exercises.slice(0, 3);
+        const exerciseBlockH = visBottom.length * (36 + 8 + 30 + 24);
+        const timeBlockH = 28 + 20 + 64;
+        const dateH = 28 + 20;
+        const totalContentH = timeBlockH + 50 + exerciseBlockH + dateH;
+        const footerTop = H - 140;
+        const contentTop = Math.max(1320, footerTop - 40 - totalContentH);
+        let y = contentTop;
+
+        ctx.font = `300 28px ${FONT}`;
+        drawCenter("トレーニング時間", W / 2, y + 28);
+        y += 28 + 20;
+        ctx.font = `800 64px ${FONT}`;
+        drawCenter(`${session.durationMin}分`, W / 2, y + 60);
+        y += 64 + 50;
+
+        for (const ex of visBottom) {
+          ctx.font = `700 36px ${FONT}`;
+          drawCenter(ex.exercise_name, W / 2, y + 36);
+          y += 36 + 8;
+          ctx.font = `400 30px ${FONT}`;
+          drawCenter(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y + 30);
+          y += 30 + 24;
+        }
+
         ctx.font = `400 28px ${FONT}`;
-        ctx.fillText(`+${hidden} more`, W / 2, y + 28);
-        y += 28 + 16;
+        drawCenter(dateStr, W / 2, y + 28);
+
+        ctx.font = `600 34px ${FONT}`;
+        drawCenter("Salute 御所南", W / 2, H - 70);
+        ctx.font = `300 20px ${FONT}`;
+        drawCenter("PERSONAL GYM", W / 2, H - 35);
       }
 
-      // Date
-      ctx.font = `400 28px ${FONT}`;
-      ctx.fillText(formatShareDate(session.date), W / 2, y + 28);
-
-      // Footer (Salute logo)
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = `700 34px ${FONT}`;
-      ctx.fillText("Salute 御所南", W / 2, H - 70);
-      ctx.font = `300 20px ${FONT}`;
-      ctx.fillText("PERSONAL GYM", W / 2, H - 35);
+      clearShadow();
 
       const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png", 0.95),
@@ -214,7 +372,8 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     if (!file) return;
     setBusy(true);
     try {
-      const blob = await renderPhotoComposite(file);
+      setSelectedPhotoFile(file);
+      const blob = await renderPhotoComposite(file, photoLayout, theme);
       const url = URL.createObjectURL(blob);
       if (photoCompositeSrc?.startsWith("blob:")) {
         URL.revokeObjectURL(photoCompositeSrc);
@@ -237,6 +396,8 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     }
     setFullScreenImageSrc(null);
     setPhotoCompositeSrc(null);
+    setSelectedPhotoFile(null);
+    setPhotoLayout("center");
     setTheme("dark");
   };
 
