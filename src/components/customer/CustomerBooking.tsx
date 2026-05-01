@@ -495,11 +495,15 @@ const CustomerBooking = () => {
               <p className="text-sm text-muted-foreground">{cancelDescription}</p>
             </div>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
-              <Button variant="outline" onClick={() => setCancelTarget(null)}>
+              <Button variant="outline" onClick={() => setCancelTarget(null)} disabled={cancelling}>
                 戻る
               </Button>
-              <Button onClick={handleCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                キャンセルする
+              <Button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {cancelling ? "キャンセル中..." : "キャンセルする"}
               </Button>
             </div>
           </div>
