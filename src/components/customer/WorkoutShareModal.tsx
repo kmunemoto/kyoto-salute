@@ -168,7 +168,6 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       // Light mode = dark text + white shadow. Otherwise white text + dark shadow.
       const isLight = currentTheme === "light";
       const textColor = isLight ? "#1A1A1A" : "#FFFFFF";
-      const brandColor = "#0ABAB5";
       const shadowColor = isLight
         ? "rgba(255,255,255,0.85)"
         : "rgba(0,0,0,0.85)";
@@ -249,9 +248,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
 
         // Footer
         ctx.font = `600 36px ${FONT}`;
-        ctx.fillStyle = brandColor;
         drawCenter("Salute 御所南", W / 2, y + 36);
-        ctx.fillStyle = textColor;
         y += 36 + 10;
         ctx.font = `300 22px ${FONT}`;
         drawCenter("PERSONAL GYM", W / 2, y + 22);
@@ -307,9 +304,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         ctx.font = `400 30px ${FONT}`;
         drawCenter(dateStr, W / 2, footerY);
         ctx.font = `600 36px ${FONT}`;
-        ctx.fillStyle = brandColor;
         drawCenter("Salute 御所南", W / 2, footerY + 60);
-        ctx.fillStyle = textColor;
         ctx.font = `300 22px ${FONT}`;
         drawCenter("PERSONAL GYM", W / 2, footerY + 96);
       } else {
@@ -356,9 +351,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         drawCenter(dateStr, W / 2, y + 28);
 
         ctx.font = `600 34px ${FONT}`;
-        ctx.fillStyle = brandColor;
         drawCenter("Salute 御所南", W / 2, H - 70);
-        ctx.fillStyle = textColor;
         ctx.font = `300 20px ${FONT}`;
         drawCenter("PERSONAL GYM", W / 2, H - 35);
       }
