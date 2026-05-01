@@ -517,7 +517,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                         <span className="font-bold text-foreground">{s.setsRepsLatest}</span>
                       )}
                       {s.totalVolumeLatest > 0 && (
-                        <span className="ml-2 text-muted-foreground/70">計{s.totalVolumeLatest}kg</span>
+                        <span className="ml-2 text-muted-foreground/70">総ボリューム {s.totalVolumeLatest}kg</span>
                       )}
                     </span>
                   </div>
