@@ -281,7 +281,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         const r2 = top + rowGap;
         drawCell(
           "総セット",
-          `${session.exercises.reduce((a, e: any) => a + (e.sets ?? 1), 0)}`,
+          `${session.exercises.reduce((a, e) => a + (e.setsCount ?? 1), 0)}`,
           colLeftX,
           r2,
         );
