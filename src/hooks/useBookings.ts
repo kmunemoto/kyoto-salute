@@ -299,8 +299,11 @@ async function sendNewBookingLineToTrainer(
   });
 }
 
+// Module-scope set tracking in-flight cancellation requests, keyed by booking id.
+// Prevents duplicate LINE notifications from double-taps or StrictMode double-invocation.
+const inFlightCancels = new Set<string>();
+
 export const cancelBooking = async (bookingId: string, cancelledByTrainer = false) => {
-  void 0;
   // In-flight guard: prevent duplicate cancel calls for the same booking from
   // sending duplicate LINE/email notifications when the user double-taps or
   // when React StrictMode runs effects twice.
