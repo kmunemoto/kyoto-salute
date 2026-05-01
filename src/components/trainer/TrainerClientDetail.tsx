@@ -846,9 +846,13 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {groupedRecords[date].map((r) => {
                           const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight, reps: r.reps }] : []);
+                          const totalVolume = setsData.reduce((sum: number, s: any) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0);
                           return (
                             <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1 break-all">
                               {r.exercise_name} {setsData.map((s: any) => `${s.weight}kg×${s.reps}`).join(", ")}
+                              {totalVolume > 0 && (
+                                <span className="ml-1.5 text-muted-foreground/70">計{totalVolume}kg</span>
+                              )}
                             </span>
                           );
                         })}

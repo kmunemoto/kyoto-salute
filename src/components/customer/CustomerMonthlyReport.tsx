@@ -215,6 +215,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
 
       const setsRepsLatest = `${latestRow.sets.length}セット×${Math.max(...latestRow.sets.map(s => s.reps))}回`;
       const setsRepsPrev = prevSetsRepsRow ? `${prevSetsRepsRow.sets.length}セット×${Math.max(...prevSetsRepsRow.sets.map(s => s.reps))}回` : null;
+      const totalVolumeLatest = latestRow.sets.reduce((sum, s) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0);
 
       return {
         name,
@@ -224,6 +225,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         diff: prevWeight != null ? Math.round((latestWeight - prevWeight) * 10) / 10 : null,
         setsRepsLatest,
         setsRepsPrev,
+        totalVolumeLatest,
         history: rows.map(r => ({ date: r.workout_date, weight: maxWeightOf(r) })),
       };
     }).sort((a, b) => b.count - a.count);
@@ -513,6 +515,9 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                         <>{s.setsRepsPrev} → <span className="font-bold text-foreground">{s.setsRepsLatest}</span></>
                       ) : (
                         <span className="font-bold text-foreground">{s.setsRepsLatest}</span>
+                      )}
+                      {s.totalVolumeLatest > 0 && (
+                        <span className="ml-2 text-muted-foreground/70">計{s.totalVolumeLatest}kg</span>
                       )}
                     </span>
                   </div>
