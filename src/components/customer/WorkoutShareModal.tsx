@@ -128,79 +128,71 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       }
       ctx.drawImage(photo, sx, sy, sw, sh, 0, 0, W, H);
 
-      // Dark overlay for legibility
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.fillRect(0, 0, W, H);
+      // Strava-style: bottom gradient only, no dark overlay, no shadows
+      const gradient = ctx.createLinearGradient(0, 1200, 0, H);
+      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+      gradient.addColorStop(0.3, "rgba(0, 0, 0, 0.5)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0.85)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 1200, W, H - 1200);
 
       const FONT =
-        "'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif";
+        "'Helvetica Neue', Arial, 'Noto Sans JP', 'Hiragino Sans', sans-serif";
 
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
-      ctx.shadowColor = "rgba(0,0,0,0.6)";
-      ctx.shadowBlur = 10;
-      ctx.shadowOffsetY = 2;
+      ctx.fillStyle = "#FFFFFF";
+
+      // Compute total content height to center within bottom area
+      const visible = session.exercises.slice(0, 6);
+      const hidden = session.exercises.length - visible.length;
+
+      // Layout heights
+      const timeBlockH = 28 + 20 + 64; // label + gap + value
+      const exerciseBlockH = visible.length * (36 + 8 + 30 + 24); // name + gap + sub + gap
+      const hiddenH = hidden > 0 ? 28 + 16 : 0;
+      const dateH = 28 + 20;
+      const totalContentH = timeBlockH + 50 + exerciseBlockH + hiddenH + dateH;
+
+      // Reserve room for footer
+      const footerTop = H - 140;
+      const contentTop = Math.max(1320, footerTop - 40 - totalContentH);
+      let y = contentTop;
 
       // Time label
-      ctx.fillStyle = "rgba(255,255,255,0.75)";
-      ctx.font = `300 32px ${FONT}`;
-      ctx.fillText("トレーニング時間", W / 2, 320);
-
+      ctx.font = `400 28px ${FONT}`;
+      ctx.fillText("トレーニング時間", W / 2, y + 28);
+      y += 28 + 20;
       // Time value
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = `700 84px ${FONT}`;
-      ctx.fillText(`${session.durationMin}分`, W / 2, 420);
+      ctx.font = `800 64px ${FONT}`;
+      ctx.fillText(`${session.durationMin}分`, W / 2, y + 60);
+      y += 64 + 50;
 
       // Exercises
-      const visible = session.exercises.slice(0, 6);
-      let y = 560;
       for (const ex of visible) {
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = `600 42px ${FONT}`;
-        ctx.fillText(ex.exercise_name, W / 2, y);
-        y += 56;
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.font = `400 34px ${FONT}`;
-        ctx.fillText(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y);
-        y += 80;
+        ctx.font = `700 36px ${FONT}`;
+        ctx.fillText(ex.exercise_name, W / 2, y + 36);
+        y += 36 + 8;
+        ctx.font = `400 30px ${FONT}`;
+        ctx.fillText(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y + 30);
+        y += 30 + 24;
       }
-      const hidden = session.exercises.length - visible.length;
       if (hidden > 0) {
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
-        ctx.font = `300 28px ${FONT}`;
-        ctx.fillText(`+${hidden} more`, W / 2, y);
-        y += 50;
+        ctx.font = `400 28px ${FONT}`;
+        ctx.fillText(`+${hidden} more`, W / 2, y + 28);
+        y += 28 + 16;
       }
 
       // Date
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.font = `300 28px ${FONT}`;
-      ctx.fillText(formatShareDate(session.date), W / 2, y + 30);
+      ctx.font = `400 28px ${FONT}`;
+      ctx.fillText(formatShareDate(session.date), W / 2, y + 28);
 
-      // Footer
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-      const footerY = H - 130;
-      ctx.textAlign = "center";
-      ctx.font = `700 36px ${FONT}`;
-      const saluteText = "Salute";
-      const goshoText = " 御所南";
-      const sw2 = ctx.measureText(saluteText).width;
-      const gw2 = ctx.measureText(goshoText).width;
-      const totalW = sw2 + gw2;
-      const startX = W / 2 - totalW / 2;
-      ctx.textAlign = "left";
-      ctx.shadowColor = "rgba(0,0,0,0.6)";
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = "#0ABAB5";
-      ctx.fillText(saluteText, startX, footerY);
+      // Footer (Salute logo)
       ctx.fillStyle = "#FFFFFF";
-      ctx.fillText(goshoText, startX + sw2, footerY);
-
-      ctx.textAlign = "center";
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
-      ctx.font = `300 22px ${FONT}`;
-      ctx.fillText("PERSONAL  GYM", W / 2, footerY + 36);
+      ctx.font = `700 34px ${FONT}`;
+      ctx.fillText("Salute 御所南", W / 2, H - 70);
+      ctx.font = `300 20px ${FONT}`;
+      ctx.fillText("PERSONAL GYM", W / 2, H - 35);
 
       const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png", 0.95),
