@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Resvg, initWasm } from "https://esm.sh/@resvg/resvg-wasm@2.6.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,12 +28,46 @@ const escapeXml = (s: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
+let wasmInitialized = false;
+let notoFontBytes: Uint8Array | null = null;
+let notoBoldFontBytes: Uint8Array | null = null;
+
+async function ensureWasm() {
+  if (wasmInitialized) return;
+  const wasmRes = await fetch("https://esm.sh/@resvg/resvg-wasm@2.6.2/index_bg.wasm");
+  const wasmBuf = await wasmRes.arrayBuffer();
+  await initWasm(wasmBuf);
+  wasmInitialized = true;
+}
+
+async function loadFonts() {
+  if (!notoFontBytes) {
+    const r = await fetch(
+      "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",
+    );
+    if (r.ok) {
+      notoFontBytes = new Uint8Array(await r.arrayBuffer());
+    }
+  }
+  if (!notoBoldFontBytes) {
+    const r = await fetch(
+      "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/Japanese/NotoSansCJKjp-Bold.otf",
+    );
+    if (r.ok) {
+      notoBoldFontBytes = new Uint8Array(await r.arrayBuffer());
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    await ensureWasm();
+    await loadFonts();
+
     const body = (await req.json()) as Payload;
     const { exercises = [], date = "", duration = 60, theme = "dark" } = body;
 
@@ -45,7 +80,7 @@ serve(async (req) => {
     const visible = exercises.slice(0, 6);
     const hiddenCount = exercises.length - visible.length;
 
-    const FF = "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif";
+    const FF = "'Noto Sans JP', sans-serif";
 
     let exerciseSvg = "";
     let y = 600;
@@ -72,16 +107,33 @@ serve(async (req) => {
   <text x="540" y="1820" font-family="${FF}" font-size="22" font-weight="300" fill="${subColor}" text-anchor="middle" letter-spacing="8">PERSONAL GYM</text>
 </svg>`;
 
-    return new Response(svg, {
+    const fontBuffers: Uint8Array[] = [];
+    if (notoFontBytes) fontBuffers.push(notoFontBytes);
+    if (notoBoldFontBytes) fontBuffers.push(notoBoldFontBytes);
+
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: "width", value: 1080 },
+      background: theme === "transparent" ? "rgba(0,0,0,0)" : undefined,
+      font: {
+        fontBuffers,
+        loadSystemFonts: false,
+        defaultFontFamily: "Noto Sans JP",
+      },
+    });
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
+
+    return new Response(pngBuffer, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Content-Type": "image/png",
         "Cache-Control": "no-store",
       },
     });
   } catch (e) {
+    console.error("generate-share-image error:", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 400,
+      status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
