@@ -76,8 +76,6 @@ const ProgressCharts = () => {
   const [workouts, setWorkouts] = useState<
     { workout_date: string; weight: number | null; reps: number | null; sets: SetData[] | null; exercise_name: string }[]
   >([]);
-  const [hiddenExercises, setHiddenExercises] = useState<Set<string>>(new Set());
-
   // Fetch workouts
   useEffect(() => {
     if (!user) return;
