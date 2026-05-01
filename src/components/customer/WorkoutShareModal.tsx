@@ -201,6 +201,24 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         ctx.fillText(text, cx, cy);
       };
 
+      // Draw "Salute 御所南" with "Salute" in Tiffany blue, rest in current textColor.
+      const drawSaluteTitle = (cx: number, cy: number) => {
+        const salute = "Salute";
+        const rest = " 御所南";
+        const wSalute = ctx.measureText(salute).width;
+        const wRest = ctx.measureText(rest).width;
+        const total = wSalute + wRest;
+        const startX = cx - total / 2;
+        const prevAlign = ctx.textAlign;
+        const prevFill = ctx.fillStyle;
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#0ABAB5";
+        ctx.fillText(salute, startX, cy);
+        ctx.fillStyle = prevFill as string;
+        ctx.fillText(rest, startX + wSalute, cy);
+        ctx.textAlign = prevAlign;
+      };
+
       if (layout === "center") {
         // Compute centered stack
         const labelGap = 16;
