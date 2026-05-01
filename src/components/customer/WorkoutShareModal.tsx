@@ -14,6 +14,8 @@ interface Props {
   totalSessions: number;
 }
 
+type PhotoLayout = "center" | "grid" | "bottom";
+
 const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions }: Props) => {
   const [theme, setTheme] = useState<ShareTheme>("dark");
   const [busy, setBusy] = useState(false);
@@ -21,6 +23,8 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
   const [scale, setScale] = useState(0.3);
   const [fullScreenImageSrc, setFullScreenImageSrc] = useState<string | null>(null);
   const [photoCompositeSrc, setPhotoCompositeSrc] = useState<string | null>(null);
+  const [photoLayout, setPhotoLayout] = useState<PhotoLayout>("center");
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
