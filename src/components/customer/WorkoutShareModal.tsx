@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { X, Download, Loader2, Moon, Sun, Image as ImageIcon } from "lucide-react";
+import { X, Download, Loader2, Moon, Sun, Image as ImageIcon, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WorkoutShareCard, { type ShareTheme } from "./WorkoutShareCard";
 import { formatShareDate, type WorkoutSession } from "@/lib/workoutShare";
@@ -20,6 +20,8 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
   const previewBoxRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
   const [fullScreenImageSrc, setFullScreenImageSrc] = useState<string | null>(null);
+  const [photoCompositeSrc, setPhotoCompositeSrc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Cleanup any blob URLs we create
@@ -30,6 +32,25 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       }
     };
   }, [fullScreenImageSrc]);
+
+  // Cleanup composite blob URL
+  useEffect(() => {
+    return () => {
+      if (photoCompositeSrc?.startsWith("blob:")) {
+        URL.revokeObjectURL(photoCompositeSrc);
+      }
+    };
+  }, [photoCompositeSrc]);
+
+  // Reset composite when modal closes or session changes
+  useEffect(() => {
+    if (!open) {
+      if (photoCompositeSrc?.startsWith("blob:")) {
+        URL.revokeObjectURL(photoCompositeSrc);
+      }
+      setPhotoCompositeSrc(null);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -63,8 +84,161 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
 
   if (!open || !session) return null;
 
+  const handleThemeChange = (k: ShareTheme) => {
+    // Switching theme cancels photo composite mode
+    if (photoCompositeSrc?.startsWith("blob:")) {
+      URL.revokeObjectURL(photoCompositeSrc);
+    }
+    setPhotoCompositeSrc(null);
+    setTheme(k);
+  };
+
+  const renderPhotoComposite = async (file: File): Promise<Blob> => {
+    const photoUrl = URL.createObjectURL(file);
+    try {
+      const photo = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("photo load failed"));
+        img.src = photoUrl;
+      });
+
+      // Wait for fonts before drawing text
+      try {
+        await (document as any).fonts?.ready;
+      } catch {}
+
+      const W = 1080;
+      const H = 1920;
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d")!;
+
+      // Cover-fit the photo
+      const photoAspect = photo.width / photo.height;
+      const canvasAspect = W / H;
+      let sx = 0, sy = 0, sw = photo.width, sh = photo.height;
+      if (photoAspect > canvasAspect) {
+        sw = photo.height * canvasAspect;
+        sx = (photo.width - sw) / 2;
+      } else {
+        sh = photo.width / canvasAspect;
+        sy = (photo.height - sh) / 2;
+      }
+      ctx.drawImage(photo, sx, sy, sw, sh, 0, 0, W, H);
+
+      // Dark overlay for legibility
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(0, 0, W, H);
+
+      const FONT =
+        "'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif";
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 2;
+
+      // Time label
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.font = `300 32px ${FONT}`;
+      ctx.fillText("トレーニング時間", W / 2, 320);
+
+      // Time value
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = `700 84px ${FONT}`;
+      ctx.fillText(`${session.durationMin}分`, W / 2, 420);
+
+      // Exercises
+      const visible = session.exercises.slice(0, 6);
+      let y = 560;
+      for (const ex of visible) {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = `600 42px ${FONT}`;
+        ctx.fillText(ex.exercise_name, W / 2, y);
+        y += 56;
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.font = `400 34px ${FONT}`;
+        ctx.fillText(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y);
+        y += 80;
+      }
+      const hidden = session.exercises.length - visible.length;
+      if (hidden > 0) {
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.font = `300 28px ${FONT}`;
+        ctx.fillText(`+${hidden} more`, W / 2, y);
+        y += 50;
+      }
+
+      // Date
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.font = `300 28px ${FONT}`;
+      ctx.fillText(formatShareDate(session.date), W / 2, y + 30);
+
+      // Footer
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      const footerY = H - 130;
+      ctx.textAlign = "center";
+      ctx.font = `700 36px ${FONT}`;
+      const saluteText = "Salute";
+      const goshoText = " 御所南";
+      const sw2 = ctx.measureText(saluteText).width;
+      const gw2 = ctx.measureText(goshoText).width;
+      const totalW = sw2 + gw2;
+      const startX = W / 2 - totalW / 2;
+      ctx.textAlign = "left";
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = "#0ABAB5";
+      ctx.fillText(saluteText, startX, footerY);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillText(goshoText, startX + sw2, footerY);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      ctx.font = `300 22px ${FONT}`;
+      ctx.fillText("PERSONAL  GYM", W / 2, footerY + 36);
+
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png", 0.95),
+      );
+      if (!blob) throw new Error("blob failed");
+      return blob;
+    } finally {
+      URL.revokeObjectURL(photoUrl);
+    }
+  };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      const blob = await renderPhotoComposite(file);
+      const url = URL.createObjectURL(blob);
+      if (photoCompositeSrc?.startsWith("blob:")) {
+        URL.revokeObjectURL(photoCompositeSrc);
+      }
+      setPhotoCompositeSrc(url);
+    } catch (err) {
+      console.error("[share] photo composite failed", err);
+      toast({ title: "写真の読み込みに失敗しました", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleSaveImage = async () => {
     if (busy) return;
+    // If a photo composite is active, just open it full-screen
+    if (photoCompositeSrc) {
+      setFullScreenImageSrc(photoCompositeSrc);
+      return;
+    }
     setBusy(true);
     try {
       const payload = {
