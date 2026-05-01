@@ -551,7 +551,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
             key={k}
             onClick={() => handleThemeChange(k)}
             className={`flex items-center gap-1.5 px-4 h-10 rounded-full text-xs font-bold transition ${
-              theme === k && !photoCompositeSrc
+              theme === k
                 ? "bg-accent text-accent-foreground"
                 : "bg-white/15 text-white hover:bg-white/25"
             }`}
@@ -584,6 +584,72 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
           {photoCompositeSrc ? "写真を変更" : "写真と合成"}
         </button>
       </div>
+
+      {/* Layout selector — only when a photo is composited */}
+      {photoCompositeSrc && (
+        <div className="flex items-center justify-center gap-4 px-4 pb-3 shrink-0">
+          {([
+            { k: "center" as const, label: "中央" },
+            { k: "grid" as const, label: "グリッド" },
+            { k: "bottom" as const, label: "下部" },
+          ]).map(({ k, label }) => {
+            const active = photoLayout === k;
+            return (
+              <button
+                key={k}
+                onClick={() => handleLayoutChange(k)}
+                disabled={busy}
+                className="flex flex-col items-center gap-1"
+              >
+                <div
+                  className="rounded-md flex flex-col items-center justify-center"
+                  style={{
+                    width: 40,
+                    height: 60,
+                    background: "rgba(255,255,255,0.08)",
+                    border: active
+                      ? "2px solid #0ABAB5"
+                      : "2px solid rgba(255,255,255,0.2)",
+                    padding: 4,
+                    gap: 3,
+                  }}
+                >
+                  {k === "center" && (
+                    <>
+                      <div style={{ height: 1, width: "70%", background: "rgba(255,255,255,0.7)" }} />
+                      <div style={{ height: 4, width: "60%", background: "#fff" }} />
+                      <div style={{ height: 1, width: "50%", background: "rgba(255,255,255,0.7)" }} />
+                      <div style={{ height: 1, width: "40%", background: "rgba(255,255,255,0.7)" }} />
+                    </>
+                  )}
+                  {k === "grid" && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3, width: "100%", height: "100%", padding: 2 }}>
+                      <div style={{ background: "rgba(255,255,255,0.7)" }} />
+                      <div style={{ background: "rgba(255,255,255,0.7)" }} />
+                      <div style={{ background: "rgba(255,255,255,0.7)" }} />
+                      <div style={{ background: "rgba(255,255,255,0.7)" }} />
+                    </div>
+                  )}
+                  {k === "bottom" && (
+                    <>
+                      <div style={{ flex: 1 }} />
+                      <div style={{ height: 2, width: "70%", background: "#fff" }} />
+                      <div style={{ height: 1, width: "60%", background: "rgba(255,255,255,0.7)" }} />
+                      <div style={{ height: 1, width: "50%", background: "rgba(255,255,255,0.7)" }} />
+                    </>
+                  )}
+                </div>
+                <span
+                  className="text-[10px] font-bold"
+                  style={{ color: active ? "#0ABAB5" : "rgba(255,255,255,0.7)" }}
+                >
+                  {label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Action buttons */}
       <div className="px-4 pb-[max(env(safe-area-inset-bottom),16px)] shrink-0">
