@@ -300,6 +300,7 @@ async function sendNewBookingLineToTrainer(
 }
 
 export const cancelBooking = async (bookingId: string, cancelledByTrainer = false) => {
+  void 0;
   // In-flight guard: prevent duplicate cancel calls for the same booking from
   // sending duplicate LINE/email notifications when the user double-taps or
   // when React StrictMode runs effects twice.
