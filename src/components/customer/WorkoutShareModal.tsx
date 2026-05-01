@@ -201,6 +201,24 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         ctx.fillText(text, cx, cy);
       };
 
+      // Draw "Salute 御所南" with "Salute" in Tiffany blue, rest in current textColor.
+      const drawSaluteTitle = (cx: number, cy: number) => {
+        const salute = "Salute";
+        const rest = " 御所南";
+        const wSalute = ctx.measureText(salute).width;
+        const wRest = ctx.measureText(rest).width;
+        const total = wSalute + wRest;
+        const startX = cx - total / 2;
+        const prevAlign = ctx.textAlign;
+        const prevFill = ctx.fillStyle;
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#0ABAB5";
+        ctx.fillText(salute, startX, cy);
+        ctx.fillStyle = prevFill as string;
+        ctx.fillText(rest, startX + wSalute, cy);
+        ctx.textAlign = prevAlign;
+      };
+
       if (layout === "center") {
         // Compute centered stack
         const labelGap = 16;
@@ -248,7 +266,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
 
         // Footer
         ctx.font = `600 36px ${FONT}`;
-        drawCenter("Salute 御所南", W / 2, y + 36);
+        drawSaluteTitle(W / 2, y + 36);
         y += 36 + 10;
         ctx.font = `300 22px ${FONT}`;
         drawCenter("PERSONAL GYM", W / 2, y + 22);
@@ -304,7 +322,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         ctx.font = `400 30px ${FONT}`;
         drawCenter(dateStr, W / 2, footerY);
         ctx.font = `600 36px ${FONT}`;
-        drawCenter("Salute 御所南", W / 2, footerY + 60);
+        drawSaluteTitle(W / 2, footerY + 60);
         ctx.font = `300 22px ${FONT}`;
         drawCenter("PERSONAL GYM", W / 2, footerY + 96);
       } else {
@@ -351,7 +369,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         drawCenter(dateStr, W / 2, y + 28);
 
         ctx.font = `600 34px ${FONT}`;
-        drawCenter("Salute 御所南", W / 2, H - 70);
+        drawSaluteTitle(W / 2, H - 70);
         ctx.font = `300 20px ${FONT}`;
         drawCenter("PERSONAL GYM", W / 2, H - 35);
       }
