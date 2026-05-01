@@ -851,7 +851,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                             <span key={r.id} className="text-xs bg-muted rounded-lg px-2 py-1 break-all">
                               {r.exercise_name} {setsData.map((s: any) => `${s.weight}kg×${s.reps}`).join(", ")}
                               {totalVolume > 0 && (
-                                <span className="ml-1.5 text-muted-foreground/70">計{totalVolume}kg</span>
+                                <span className="ml-1.5 text-muted-foreground/70">総ボリューム {totalVolume}kg</span>
                               )}
                             </span>
                           );
