@@ -273,7 +273,7 @@ const CustomerTraining = () => {
                                   <span className="font-bold text-foreground">{setsData[0].weight}</span>kg ×{" "}
                                   <span className="font-bold text-foreground">{setsData[0].reps}</span>回
                                   {totalVolume > 0 && (
-                                    <span className="ml-2 text-muted-foreground/70 text-xs">計{totalVolume}kg</span>
+                                    <span className="ml-2 text-muted-foreground/70 text-xs">総ボリューム {totalVolume}kg</span>
                                   )}
                                 </span>
                               )}
@@ -291,7 +291,7 @@ const CustomerTraining = () => {
                                 ))}
                                 {totalVolume > 0 && (
                                   <div className="flex justify-end text-xs text-muted-foreground/70 pl-2 pt-0.5">
-                                    計{totalVolume}kg
+                                    総ボリューム {totalVolume}kg
                                   </div>
                                 )}
                               </div>
