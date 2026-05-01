@@ -34,6 +34,7 @@ const CustomerBooking = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<BookingWithTime | null>(null);
+  const [cancelling, setCancelling] = useState(false);
   const [lastBooked, setLastBooked] = useState<BookingWithTime | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -212,16 +213,21 @@ const CustomerBooking = () => {
   };
 
   const handleCancel = async () => {
-    if (!cancelTarget) return;
-    const { error } = await cancelBooking(cancelTarget.id);
-    if (error) {
-      toast.error("キャンセルに失敗しました");
-      return;
+    if (!cancelTarget || cancelling) return;
+    setCancelling(true);
+    try {
+      const { error } = await cancelBooking(cancelTarget.id);
+      if (error) {
+        toast.error("キャンセルに失敗しました");
+        return;
+      }
+      toast.success("予約をキャンセルしました");
+      setCancelTarget(null);
+      refetch();
+      if (dateKey) fetchBookedSlots(dateKey);
+    } finally {
+      setCancelling(false);
     }
-    toast.success("予約をキャンセルしました");
-    setCancelTarget(null);
-    refetch();
-    if (dateKey) fetchBookedSlots(dateKey);
   };
 
   const activeBookings = myBookings.filter((b) => {
