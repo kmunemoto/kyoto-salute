@@ -155,56 +155,23 @@ const ProgressCharts = () => {
       .map(([name]) => name);
   }, [filteredWorkouts]);
 
-  // Chart data: date -> { exerciseName: maxWeight }
-  const trainingChartData = useMemo(() => {
-    const dateMap: Record<string, Record<string, number>> = {};
-    filteredWorkouts.forEach((w) => {
-      if (!topExercises.includes(w.exercise_name)) return;
-      if (hiddenExercises.has(w.exercise_name)) return;
-      const setsData = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
-      if (setsData.length === 0) return;
-      const maxW = Math.max(...setsData.map((s) => s.weight));
-      if (!dateMap[w.workout_date]) dateMap[w.workout_date] = {};
-      const existing = dateMap[w.workout_date][w.exercise_name];
-      if (!existing || maxW > existing) {
-        dateMap[w.workout_date][w.exercise_name] = maxW;
-      }
-    });
-    return Object.entries(dateMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, vals]) => {
-        const d = new Date(date);
-        return { date: format(d, "M/d"), ...vals };
-      });
-  }, [filteredWorkouts, topExercises, hiddenExercises]);
-
-  // Exercise summaries
+  // Exercise summaries (with per-exercise sparkline series)
   const exerciseSummaries = useMemo(() => {
     return topExercises.map((name) => {
       const exWorkouts = filteredWorkouts
         .filter((w) => w.exercise_name === name)
         .sort((a, b) => a.workout_date.localeCompare(b.workout_date));
-      if (exWorkouts.length === 0) return { name, first: 0, max: 0, diff: 0 };
+      if (exWorkouts.length === 0) return { name, first: 0, current: 0, diff: 0, series: [] as number[] };
       const getMax = (w: (typeof exWorkouts)[0]) => {
         const setsData = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
         return setsData.length > 0 ? Math.max(...setsData.map((s) => s.weight)) : 0;
       };
-      const first = getMax(exWorkouts[0]);
-      const last = getMax(exWorkouts[exWorkouts.length - 1]);
-      return { name, first, max: last, diff: last - first };
+      const series = exWorkouts.map(getMax).filter((v) => v > 0);
+      const first = series[0] ?? 0;
+      const current = series[series.length - 1] ?? 0;
+      return { name, first, current, diff: current - first, series };
     });
   }, [topExercises, filteredWorkouts]);
-
-  const visibleExercises = topExercises.filter((n) => !hiddenExercises.has(n));
-
-  const toggleExercise = (name: string) => {
-    setHiddenExercises((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
-  };
 
   const hasWeightData = weightChartData.length > 0;
   const hasTrainingData = topExercises.length > 0;
