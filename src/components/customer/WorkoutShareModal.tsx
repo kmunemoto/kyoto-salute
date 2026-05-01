@@ -22,6 +22,15 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
   const [fullScreenImageSrc, setFullScreenImageSrc] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Cleanup any blob URLs we create
+  useEffect(() => {
+    return () => {
+      if (fullScreenImageSrc?.startsWith("blob:")) {
+        URL.revokeObjectURL(fullScreenImageSrc);
+      }
+    };
+  }, [fullScreenImageSrc]);
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -68,20 +77,32 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         duration: session.durationMin,
         theme,
       };
-      const { data, error } = await supabase.functions.invoke(
-        "generate-share-image",
-        { body: payload },
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const token = authSession?.access_token ?? supabaseKey;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/generate-share-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: supabaseKey,
+          },
+          body: JSON.stringify(payload),
+        },
       );
-      if (error) throw error;
-      const svgText =
-        typeof data === "string"
-          ? data
-          : data instanceof Blob
-            ? await data.text()
-            : String(data);
-      const svgBase64 = btoa(unescape(encodeURIComponent(svgText)));
-      const dataUri = `data:image/svg+xml;base64,${svgBase64}`;
-      setFullScreenImageSrc(dataUri);
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        throw new Error(errText || "画像生成に失敗しました");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      if (fullScreenImageSrc?.startsWith("blob:")) {
+        URL.revokeObjectURL(fullScreenImageSrc);
+      }
+      setFullScreenImageSrc(url);
     } catch (e) {
       console.error("[share] generate failed", e);
       toast({ title: "画像の生成に失敗しました", variant: "destructive" });
