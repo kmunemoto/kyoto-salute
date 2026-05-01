@@ -4,12 +4,9 @@ import { TrendingUp, TrendingDown, Dumbbell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMeasurements } from "@/hooks/useMeasurements";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   AreaChart,
   Area,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   ResponsiveContainer,
@@ -27,8 +24,6 @@ const PERIODS = [
 ] as const;
 
 type PeriodValue = (typeof PERIODS)[number]["value"];
-
-const EXERCISE_COLORS = ["#3FB6AC", "#6BA3BE", "#B07AA1", "#76B947", "#E8834A"];
 
 function getPeriodStart(period: PeriodValue): Date | null {
   const now = new Date();
