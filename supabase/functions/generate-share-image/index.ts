@@ -43,16 +43,15 @@ async function ensureWasm() {
 async function loadFonts() {
   if (!notoFontBytes) {
     const r = await fetch(
-      "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.woff",
+      "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",
     );
-    // resvg supports ttf/otf better; fallback to Google Fonts ttf source via gstatic
     if (r.ok) {
       notoFontBytes = new Uint8Array(await r.arrayBuffer());
     }
   }
   if (!notoBoldFontBytes) {
     const r = await fetch(
-      "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-700-normal.woff",
+      "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/Japanese/NotoSansCJKjp-Bold.otf",
     );
     if (r.ok) {
       notoBoldFontBytes = new Uint8Array(await r.arrayBuffer());
