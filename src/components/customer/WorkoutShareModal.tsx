@@ -318,6 +318,19 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         id="share-card-preview"
         className="flex-1 min-h-0 flex items-center justify-center px-4 py-3"
       >
+        {photoCompositeSrc ? (
+          <img
+            src={photoCompositeSrc}
+            alt="プレビュー"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              borderRadius: 16,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+            }}
+          />
+        ) : (
         <div
           style={{
             width: 1080 * scale,
@@ -348,6 +361,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
             />
           </div>
         </div>
+        )}
       </div>
 
       {/* Theme switcher */}
@@ -359,15 +373,40 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         ]).map(({ k, icon: Icon, label }) => (
           <button
             key={k}
-            onClick={() => setTheme(k)}
+            onClick={() => handleThemeChange(k)}
             className={`flex items-center gap-1.5 px-4 h-10 rounded-full text-xs font-bold transition ${
-              theme === k ? "bg-accent text-accent-foreground" : "bg-white/15 text-white hover:bg-white/25"
+              theme === k && !photoCompositeSrc
+                ? "bg-accent text-accent-foreground"
+                : "bg-white/15 text-white hover:bg-white/25"
             }`}
           >
             <Icon className="w-3.5 h-3.5" />
             {label}
           </button>
         ))}
+      </div>
+
+      {/* Photo composite button */}
+      <div className="flex items-center justify-center px-4 pb-3 shrink-0">
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handlePhotoSelect}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={busy}
+          className={`flex items-center gap-1.5 px-4 h-10 rounded-full text-xs font-bold transition border ${
+            photoCompositeSrc
+              ? "bg-accent text-accent-foreground border-transparent"
+              : "bg-transparent text-white border-accent hover:bg-white/10"
+          }`}
+        >
+          <Camera className="w-3.5 h-3.5" />
+          {photoCompositeSrc ? "写真を変更" : "写真と合成"}
+        </button>
       </div>
 
       {/* Action buttons */}
