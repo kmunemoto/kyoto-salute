@@ -263,6 +263,7 @@ const CustomerTraining = () => {
                       <div className="space-y-1.5">
                         {records.map((r) => {
                           const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight!, reps: r.reps! }] : []);
+                          const totalVolume = setsData.reduce((sum, s) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0);
                           return (
                           <div key={r.id} className="text-sm py-1.5 px-3 rounded-lg bg-muted/50">
                             <div className="flex items-center justify-between">
@@ -271,6 +272,9 @@ const CustomerTraining = () => {
                                 <span className="text-muted-foreground">
                                   <span className="font-bold text-foreground">{setsData[0].weight}</span>kg ×{" "}
                                   <span className="font-bold text-foreground">{setsData[0].reps}</span>回
+                                  {totalVolume > 0 && (
+                                    <span className="ml-2 text-muted-foreground/70 text-xs">計{totalVolume}kg</span>
+                                  )}
                                 </span>
                               )}
                             </div>
@@ -285,6 +289,11 @@ const CustomerTraining = () => {
                                     </span>
                                   </div>
                                 ))}
+                                {totalVolume > 0 && (
+                                  <div className="flex justify-end text-xs text-muted-foreground/70 pl-2 pt-0.5">
+                                    計{totalVolume}kg
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
