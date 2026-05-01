@@ -300,6 +300,15 @@ async function sendNewBookingLineToTrainer(
 }
 
 export const cancelBooking = async (bookingId: string, cancelledByTrainer = false) => {
+  // In-flight guard: prevent duplicate cancel calls for the same booking from
+  // sending duplicate LINE/email notifications when the user double-taps or
+  // when React StrictMode runs effects twice.
+  if (inFlightCancels.has(bookingId)) {
+    console.warn("cancelBooking: 同じ予約のキャンセルが処理中のためスキップ", bookingId);
+    return { error: null };
+  }
+  inFlightCancels.add(bookingId);
+  try {
   // Fetch booking details before deleting
   const { data: booking, error: fetchError } = await supabase
     .from("bookings")
@@ -309,6 +318,7 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
 
   if (fetchError || !booking) {
     console.error("cancelBooking: 予約情報の取得に失敗", fetchError, bookingId);
+    return { error: fetchError ?? null };
   }
 
   // Delete linked Google Calendar event first when an event ID is saved.
@@ -343,6 +353,9 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
   }
 
   return { error };
+  } finally {
+    inFlightCancels.delete(bookingId);
+  }
 };
 
 async function sendCancelLineNotification(
