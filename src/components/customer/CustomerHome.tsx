@@ -336,27 +336,74 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
             <Dumbbell className="w-3.5 h-3.5" />
             最新のトレーニング
           </h2>
-          <Card className="card-hover border-l-4 border-l-accent">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">
-                  {format(parseISO(latestSession.date), "M月d日（E）", { locale: ja })}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {latestSession.exerciseCount}種目 / {latestSession.totalSets}セット / 総挙上 {latestSession.totalVolume.toLocaleString()}kg
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="accent"
-                className="h-9 px-3 gap-1.5"
-                onClick={() => setShareOpen(true)}
+          <div
+            onClick={() => onNavigate?.("training")}
+            className="rounded-2xl p-6 cursor-pointer transition active:scale-[0.99]"
+            style={{ backgroundColor: "#1A1A1A" }}
+          >
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-white font-bold text-lg">
+                {format(parseISO(latestSession.date), "M月d日（E）", { locale: ja })}
+              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShareOpen(true);
+                }}
+                className="w-9 h-9 rounded-lg flex items-center justify-center transition hover:opacity-80"
+                style={{ backgroundColor: "rgba(10, 186, 181, 0.15)", color: "#0ABAB5" }}
+                aria-label="シェア"
               >
-                <Share2 className="w-3.5 h-3.5" />
-                シェア
-              </Button>
-            </CardContent>
-          </Card>
+                <Share2 className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Stats row */}
+            <div className="flex items-end justify-between mb-5">
+              <div className="flex-1 text-center">
+                <p className="text-white font-extrabold text-2xl leading-none">
+                  {latestSession.exerciseCount}
+                </p>
+                <p className="text-[11px] mt-1.5" style={{ color: "#888" }}>種目</p>
+              </div>
+              <div className="w-px h-10 self-center" style={{ backgroundColor: "#333" }} />
+              <div className="flex-1 text-center">
+                <p className="text-white font-extrabold text-2xl leading-none">
+                  {latestSession.totalSets}
+                </p>
+                <p className="text-[11px] mt-1.5" style={{ color: "#888" }}>セット</p>
+              </div>
+              <div className="w-px h-10 self-center" style={{ backgroundColor: "#333" }} />
+              <div className="flex-1 text-center">
+                <p className="font-extrabold text-2xl leading-none" style={{ color: "#0ABAB5" }}>
+                  {latestSession.totalVolume.toLocaleString()}
+                  <span className="text-xs font-medium ml-0.5" style={{ color: "#888" }}>kg</span>
+                </p>
+                <p className="text-[11px] mt-1.5" style={{ color: "#888" }}>総挙上量</p>
+              </div>
+            </div>
+
+            {/* Exercise list */}
+            <div className="pt-4 space-y-2" style={{ borderTop: "1px solid #333" }}>
+              {latestSession.exercises.slice(0, 3).map((ex) => {
+                const topSet = ex.sets.reduce((a, b) => (b.weight > a.weight ? b : a), ex.sets[0]);
+                return (
+                  <div key={ex.exercise_id} className="flex items-center justify-between text-xs">
+                    <span className="text-white truncate pr-2">{ex.exercise_name}</span>
+                    <span style={{ color: "#888" }} className="shrink-0">
+                      {topSet.weight}kg × {topSet.reps}
+                    </span>
+                  </div>
+                );
+              })}
+              {latestSession.exercises.length > 3 && (
+                <p className="text-xs text-center pt-1" style={{ color: "#888" }}>
+                  他{latestSession.exercises.length - 3}種目
+                </p>
+              )}
+            </div>
+          </div>
         </section>
       )}
 
