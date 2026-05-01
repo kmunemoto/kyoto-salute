@@ -120,14 +120,35 @@ const TrialBooking = () => {
 
     const bookingDate = `${dateKey}T${slot.time}:00+09:00`;
 
-    const { data: insertedBooking, error } = await supabase.from("trial_bookings").insert({
-      guest_name: guestName.trim(),
-      guest_contact: guestEmail.trim(),
-      booking_date: bookingDate,
-    }).select().single();
+    const bookingId = crypto.randomUUID();
+    const insertedBooking = { id: bookingId, booking_date: bookingDate };
 
-    if (error) {
-      console.error("Trial booking failed:", error);
+    try {
+      const { error } = await supabase.from("trial_bookings").insert({
+        id: bookingId,
+        guest_name: guestName.trim(),
+        guest_contact: guestEmail.trim(),
+        booking_date: bookingDate,
+      });
+
+      if (error) {
+        console.error("Trial booking failed:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          error,
+        });
+        toast.error("予約に失敗しました。もう一度お試しください。");
+        setSubmitting(false);
+        return;
+      }
+    } catch (error: any) {
+      console.error("Trial booking failed:", {
+        message: error?.message,
+        code: error?.code,
+        error,
+      });
       toast.error("予約に失敗しました。もう一度お試しください。");
       setSubmitting(false);
       return;
