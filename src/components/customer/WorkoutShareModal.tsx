@@ -53,6 +53,8 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
         URL.revokeObjectURL(photoCompositeSrc);
       }
       setPhotoCompositeSrc(null);
+      setSelectedPhotoFile(null);
+      setPhotoLayout("center");
     }
   }, [open]);
 
