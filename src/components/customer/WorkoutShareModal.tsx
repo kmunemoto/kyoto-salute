@@ -232,6 +232,23 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
     }
   };
 
+  const resetAllState = () => {
+    if (fullScreenImageSrc?.startsWith("blob:")) {
+      URL.revokeObjectURL(fullScreenImageSrc);
+    }
+    if (photoCompositeSrc?.startsWith("blob:")) {
+      URL.revokeObjectURL(photoCompositeSrc);
+    }
+    setFullScreenImageSrc(null);
+    setPhotoCompositeSrc(null);
+    setTheme("dark");
+  };
+
+  const handleCloseAll = () => {
+    resetAllState();
+    onClose();
+  };
+
   const handleSaveImage = async () => {
     if (busy) return;
     // If a photo composite is active, just open it full-screen
@@ -304,7 +321,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
       >
         <span className="text-white text-sm font-bold">トレーニング シェア</span>
         <button
-          onClick={onClose}
+          onClick={handleCloseAll}
           className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white hover:bg-white/25"
           aria-label="閉じる"
         >
@@ -475,7 +492,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
             }}
           />
           <button
-            onClick={() => setFullScreenImageSrc(null)}
+            onClick={handleCloseAll}
             style={{
               marginTop: 24,
               padding: "12px 60px",
@@ -487,7 +504,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
               fontWeight: 600,
             }}
           >
-            戻る
+            閉じる
           </button>
         </div>
       )}
