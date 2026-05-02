@@ -238,7 +238,7 @@ const CustomerMeals = () => {
   };
 
   const openEditTime = (meal: Meal) => {
-    const d = new Date(meal.created_at);
+    const d = toJSTDate(meal.created_at);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
@@ -251,7 +251,8 @@ const CustomerMeals = () => {
     if (!editTarget || !editDate || !editTime) return;
     setSaving(true);
     try {
-      const newDateTime = new Date(`${editDate}T${editTime}:00`);
+      // Treat user input as JST wall-clock time
+      const newDateTime = new Date(`${editDate}T${editTime}:00+09:00`);
       const { error } = await supabase
         .from("meals")
         .update({ created_at: newDateTime.toISOString() })
