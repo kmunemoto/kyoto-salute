@@ -30,7 +30,7 @@ export const sendBookingNotification = async (
     // The simplest: use supabase admin to get email in the edge function.
     // For now, pass trainer user_id in templateData and resolve in edge function.
 
-    const dateObj = new Date(date + "T00:00:00");
+    const dateObj = new Date(date + "T00:00:00+09:00");
     const formattedDate = format(dateObj, "M月d日（E）", { locale: ja });
 
     await supabase.functions.invoke("send-transactional-email", {
