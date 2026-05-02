@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { addDays, isSameDay } from "date-fns";
+import { format, addDays, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
-import { getJSTNow, formatJST } from "@/lib/timezone";
+import { getJSTNow } from "@/lib/timezone";
 import { BookingWithTime } from "@/hooks/useBookings";
 
 interface WeekTimelineViewProps {
