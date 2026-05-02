@@ -238,6 +238,47 @@ const TrialBooking = () => {
       return `https://calendar.google.com/calendar/render?${params.toString()}`;
     })();
 
+    const handleDownloadIcs = () => {
+      const dateClean = completedInfo.rawDate.replace(/-/g, "");
+      const startClean = completedInfo.rawStartTime.replace(":", "") + "00";
+      const endClean = completedInfo.rawEndTime.replace(":", "") + "00";
+      const dtstamp = format(getJSTNow(), "yyyyMMdd'T'HHmmss");
+      const ics = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Salute Goshominami//Trial Booking//JA",
+        "CALSCALE:GREGORIAN",
+        "BEGIN:VTIMEZONE",
+        "TZID:Asia/Tokyo",
+        "BEGIN:STANDARD",
+        "DTSTART:19700101T000000",
+        "TZOFFSETFROM:+0900",
+        "TZOFFSETTO:+0900",
+        "TZNAME:JST",
+        "END:STANDARD",
+        "END:VTIMEZONE",
+        "BEGIN:VEVENT",
+        `UID:trial-${completedInfo.rawDate}-${completedInfo.rawStartTime}@kyoto-salute.com`,
+        `DTSTAMP:${dtstamp}`,
+        `DTSTART;TZID=Asia/Tokyo:${dateClean}T${startClean}`,
+        `DTEND;TZID=Asia/Tokyo:${dateClean}T${endClean}`,
+        "SUMMARY:【Salute御所南】初回無料体験",
+        "LOCATION:京都市中京区毘沙門町533-1 プラザ御所南2階",
+        "DESCRIPTION:カウンセリング＋トレーニング体験（計60分）\\n動きやすい服装でお越しください。",
+        "END:VEVENT",
+        "END:VCALENDAR",
+      ].join("\r\n");
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `salute-trial-${completedInfo.rawDate}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md slide-up">
@@ -265,6 +306,14 @@ const TrialBooking = () => {
               <CalendarPlus className="w-5 h-5" />
               Googleカレンダーに登録
             </a>
+            <button
+              type="button"
+              onClick={handleDownloadIcs}
+              className="inline-flex items-center justify-center gap-2 w-full h-12 rounded-xl text-base font-semibold border-2 border-primary text-foreground bg-background hover:bg-secondary transition-all duration-200"
+            >
+              <CalendarPlus className="w-5 h-5" />
+              Appleカレンダーに登録
+            </button>
             <div className="text-xs text-muted-foreground space-y-1">
               <p>当日は動きやすい服装でお越しください。</p>
               <p>ご不明な点がございましたらお気軽にお問い合わせください。</p>
