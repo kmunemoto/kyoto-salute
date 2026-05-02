@@ -97,12 +97,9 @@ const CustomerBooking = () => {
   };
 
   const isSlotWithin24Hours = (date: string, time: string): boolean => {
-    const now = new Date();
-    const [h, m] = time.split(":").map(Number);
-    const slotDate = new Date(date + "T00:00:00+09:00");
-    slotDate.setHours(h, m, 0, 0);
-    const diffMs = slotDate.getTime() - now.getTime();
-    return diffMs < 24 * 60 * 60 * 1000;
+    // Compare real UTC instants. JST offset is baked into the ISO string.
+    const slotInstant = new Date(`${date}T${time}:00+09:00`).getTime();
+    return slotInstant - Date.now() < 24 * 60 * 60 * 1000;
   };
 
   const generateSlots = () => {

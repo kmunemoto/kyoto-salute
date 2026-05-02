@@ -119,7 +119,8 @@ export const volumeMetaphor = (totalKg: number): string => {
 };
 
 export const formatShareDate = (dateStr: string): string => {
-  const d = new Date(dateStr + "T00:00:00");
+  // Interpret yyyy-MM-dd as a JST wall-clock day
+  const d = new Date(dateStr + "T00:00:00+09:00");
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");

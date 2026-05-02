@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { getJSTNow } from "@/lib/timezone";
 import DiagnosisHistorySection from "./posture/DiagnosisHistorySection";
 
 const PLAN_LABELS: Record<string, string> = {
@@ -386,7 +387,7 @@ const CustomerSettings = () => {
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         ) : (() => {
-          const now = new Date();
+          const now = getJSTNow();
           const pastBookings = myBookings
             .filter((b) => {
               if (b.status === "キャンセル済み") return false;

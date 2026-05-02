@@ -79,11 +79,9 @@ const TrialBooking = () => {
   };
 
   const isSlotWithin24Hours = (date: string, time: string): boolean => {
-    const now = new Date();
-    const [h, m] = time.split(":").map(Number);
-    const slotDate = new Date(date + "T00:00:00+09:00");
-    slotDate.setHours(h, m, 0, 0);
-    return slotDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000;
+    // Real UTC instant comparison — JST offset baked into the slot ISO string.
+    const slotInstant = new Date(`${date}T${time}:00+09:00`).getTime();
+    return slotInstant - Date.now() < 24 * 60 * 60 * 1000;
   };
 
   const generateSlots = () => {

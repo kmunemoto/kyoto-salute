@@ -86,8 +86,8 @@ const Auth = () => {
         }
 
         // Fire-and-forget: notify trainer via LINE about new signup
-        const now = new Date();
-        const formattedDate = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const { formatJST } = await import("@/lib/timezone");
+        const formattedDate = formatJST(new Date(), "yyyy/MM/dd HH:mm");
         const nameForNotification = displayName?.trim() || email;
         const lineMessage = `【新規会員登録】\n新しいお客様がアカウントを登録しました。\n\nお名前：${nameForNotification}\n登録日時：${formattedDate}\n\n顧客一覧からご確認ください。`;
 

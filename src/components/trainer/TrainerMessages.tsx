@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages, useUnreadBySender } from "@/hooks/useMessages";
 import { format } from "date-fns";
+import { formatJST } from "@/lib/timezone";
 
 interface CustomerInfo {
   user_id: string;
@@ -70,7 +71,7 @@ const TrainerMessages = () => {
       if (data) {
         map[c.user_id] = {
           content: data.content,
-          time: format(new Date(data.created_at), "HH:mm"),
+          time: formatJST(data.created_at, "HH:mm"),
         };
       }
     }
@@ -192,7 +193,7 @@ const TrainerMessages = () => {
                     >
                       <p className="text-sm">{msg.content}</p>
                       <p className={`text-[10px] mt-1 ${isTrainer ? "opacity-70" : "text-muted-foreground"}`}>
-                        {format(new Date(msg.created_at), "M/d HH:mm")}
+                        {formatJST(msg.created_at, "M/d HH:mm")}
                       </p>
                     </div>
                   </div>

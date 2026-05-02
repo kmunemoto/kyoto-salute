@@ -14,6 +14,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { subMonths, subYears, format } from "date-fns";
+import { getJSTNow } from "@/lib/timezone";
 
 const PERIODS = [
   { label: "1ヶ月", value: "1m" },
@@ -26,7 +27,7 @@ const PERIODS = [
 type PeriodValue = (typeof PERIODS)[number]["value"];
 
 function getPeriodStart(period: PeriodValue): Date | null {
-  const now = new Date();
+  const now = getJSTNow();
   switch (period) {
     case "1m": return subMonths(now, 1);
     case "3m": return subMonths(now, 3);

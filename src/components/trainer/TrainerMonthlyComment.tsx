@@ -8,13 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, startOfMonth, subMonths } from "date-fns";
 import { ja } from "date-fns/locale";
+import { getJSTNow } from "@/lib/timezone";
 
 interface Props {
   clientId: string;
 }
 
 const TrainerMonthlyComment = ({ clientId }: Props) => {
-  const now = new Date();
+  const now = getJSTNow();
   const monthOptions = Array.from({ length: 6 }, (_, i) => {
     const d = startOfMonth(subMonths(now, i));
     return { value: format(d, "yyyy-MM-dd"), label: format(d, "yyyy年M月", { locale: ja }) };

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveMealPhotoUrls } from "@/lib/mealPhotoUrl";
+import { getJSTNow, toJSTDate } from "@/lib/timezone";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -139,7 +140,7 @@ const CustomerMeals = () => {
     if (!file) return;
     e.target.value = "";
     // Auto-detect meal type based on current time
-    const hour = new Date().getHours();
+    const hour = getJSTNow().getHours();
     let autoType = "";
     if (hour >= 5 && hour < 10) autoType = "朝食";
     else if (hour >= 10 && hour < 15) autoType = "昼食";
@@ -237,7 +238,7 @@ const CustomerMeals = () => {
   };
 
   const openEditTime = (meal: Meal) => {
-    const d = new Date(meal.created_at);
+    const d = toJSTDate(meal.created_at);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
@@ -250,7 +251,8 @@ const CustomerMeals = () => {
     if (!editTarget || !editDate || !editTime) return;
     setSaving(true);
     try {
-      const newDateTime = new Date(`${editDate}T${editTime}:00`);
+      // Treat user input as JST wall-clock time
+      const newDateTime = new Date(`${editDate}T${editTime}:00+09:00`);
       const { error } = await supabase
         .from("meals")
         .update({ created_at: newDateTime.toISOString() })
@@ -268,12 +270,12 @@ const CustomerMeals = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = toJSTDate(dateStr);
     return `${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   };
 
   const getDateKey = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = toJSTDate(dateStr);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
 

@@ -8,6 +8,7 @@ import { useAllCustomerProfiles } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
+import { getJSTNow } from "@/lib/timezone";
 import { toast } from "sonner";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 import {
@@ -19,7 +20,7 @@ import WeekTimelineView from "./WeekTimelineView";
 
 const TrainerSchedule = () => {
   const { user } = useAuth();
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(getJSTNow(), { weekStartsOn: 1 }));
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
   const [proxyDialogOpen, setProxyDialogOpen] = useState(false);
   const [proxyDate, setProxyDate] = useState<Date | undefined>();
@@ -247,7 +248,7 @@ const TrainerSchedule = () => {
             variant="outline"
             size="sm"
             className="ml-1 h-8 px-2 text-xs"
-            onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+            onClick={() => setWeekStart(startOfWeek(getJSTNow(), { weekStartsOn: 1 }))}
           >
             今日
           </Button>
@@ -308,7 +309,7 @@ const TrainerSchedule = () => {
                   <tr className="border-b bg-muted/40">
                     <th className="p-3 text-xs font-bold text-muted-foreground w-16">時間</th>
                     {weekDays.map((day) => {
-                      const isToday = isSameDay(day, new Date());
+                      const isToday = isSameDay(day, getJSTNow());
                       return (
                         <th key={day.toISOString()} className={`p-3 text-center ${isToday ? "bg-accent/10" : ""}`}>
                           <p className="text-[10px] text-muted-foreground font-semibold uppercase">
@@ -332,7 +333,7 @@ const TrainerSchedule = () => {
                         <td className="p-2 text-xs font-medium text-muted-foreground text-center border-r">{time}</td>
                         {weekDays.map((day) => {
                           const session = getSession(day, time);
-                          const isToday = isSameDay(day, new Date());
+                          const isToday = isSameDay(day, getJSTNow());
                           return (
                             <td key={day.toISOString()} className={`p-1 ${isToday ? "bg-accent/5" : ""}`}>
                               {session && (
@@ -371,7 +372,7 @@ const TrainerSchedule = () => {
 
       <div className="md:hidden space-y-3">
         {weekDays.map((day) => {
-          const isToday = isSameDay(day, new Date());
+          const isToday = isSameDay(day, getJSTNow());
           const dayBookings = getDayBookings(day);
           return (
             <div key={day.toISOString()}>

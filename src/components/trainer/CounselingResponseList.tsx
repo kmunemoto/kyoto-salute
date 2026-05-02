@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { formatJST } from "@/lib/timezone";
 
 const purposeLabels: Record<string, string> = {
   diet: "ダイエット", muscle: "筋力アップ", health: "健康維持",
@@ -75,7 +76,7 @@ const CounselingResponseList = () => {
                 </div>
                 <div className="text-right shrink-0 flex items-center gap-1">
                   <p className="text-xs text-muted-foreground">
-                    {format(new Date(r.created_at), "M/d HH:mm")}
+                    {formatJST(r.created_at, "M/d HH:mm")}
                   </p>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>
@@ -192,7 +193,7 @@ const CounselingDetail = ({ data, updateMemo }: { data: CounselingResponse; upda
       </SectionCard>
 
       <p className="text-[11px] text-muted-foreground text-center pt-1">
-        回答日時: {format(new Date(data.created_at), "yyyy年M月d日 HH:mm")}
+        回答日時: {formatJST(data.created_at, "yyyy年M月d日 HH:mm")}
       </p>
     </div>
   );

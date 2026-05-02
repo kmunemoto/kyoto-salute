@@ -6,7 +6,7 @@ import { planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { useAllCustomerProfiles, useProfile } from "@/hooks/useProfile";
 import { useAllBookings } from "@/hooks/useBookings";
-import { format } from "date-fns";
+import { formatJST, getJSTNow } from "@/lib/timezone";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import CourseProgressBadge from "./CourseProgressBadge";
@@ -23,7 +23,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const { profile: trainerProfile } = useProfile();
   const trainerName = trainerProfile?.display_name || "トレーナー";
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  const today = formatJST(new Date(), "yyyy-MM-dd");
   const todayBookings = bookings.filter((b) => b.date === today && b.status !== "キャンセル済み");
 
   const bookingsByUser = useMemo(() => {
@@ -49,7 +49,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   }, 0);
 
   // Count this month's sessions
-  const currentMonth = format(new Date(), "yyyy-MM");
+  const currentMonth = formatJST(new Date(), "yyyy-MM");
   const monthBookings = bookings.filter((b) => b.date.startsWith(currentMonth) && b.status !== "キャンセル済み");
 
   const revenueData = [
@@ -75,7 +75,7 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
         <div className="relative">
           <p className="text-xs sm:text-sm opacity-75">ダッシュボード</p>
           <h1 className="text-lg sm:text-2xl font-bold mt-1">{trainerName}</h1>
-          <p className="text-xs sm:text-sm opacity-75 mt-1">{format(new Date(), "yyyy年M月d日（E）")}</p>
+          <p className="text-xs sm:text-sm opacity-75 mt-1">{formatJST(new Date(), "yyyy年M月d日（E）")}</p>
         </div>
       </div>
 

@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { format, addMonths, differenceInDays, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
 
@@ -187,7 +188,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [savingMeasurement, setSavingMeasurement] = useState(false);
-  const [measurementDate, setMeasurementDate] = useState<Date>(new Date());
+  const [measurementDate, setMeasurementDate] = useState<Date>(getJSTNow());
   const { measurements, chartData: measurementChartData, saveMeasurement, deleteMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
   const [deleteMeasurementTarget, setDeleteMeasurementTarget] = useState<string | null>(null);
   const [trainingDate, setTrainingDate] = useState(getJSTToday());
@@ -724,7 +725,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         mode="single"
                         selected={measurementDate}
                         onSelect={(d) => d && setMeasurementDate(d)}
-                        disabled={(date) => date > new Date()}
+                        disabled={(date) => date > getJSTNow()}
                         initialFocus
                         className={cn("p-3 pointer-events-auto")}
                       />
@@ -750,7 +751,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                     const w = bodyWeight ? parseFloat(bodyWeight) : null;
                     const f = bodyFat ? parseFloat(bodyFat) : null;
                     const ok = await saveMeasurement(dateStr, w, f);
-                    if (ok) { setBodyWeight(""); setBodyFat(""); setMeasurementDate(new Date()); }
+                    if (ok) { setBodyWeight(""); setBodyFat(""); setMeasurementDate(getJSTNow()); }
                     setSavingMeasurement(false);
                   }}
                 >
@@ -841,7 +842,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                   <Card key={date}>
                     <CardContent className="p-3">
                       <p className="text-xs font-bold text-muted-foreground mb-1">
-                        {format(new Date(date), "M月d日（E）", { locale: ja })}
+                        {formatJST(date, "M月d日（E）", { locale: ja })}
                       </p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {groupedRecords[date].map((r) => {
@@ -987,7 +988,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           {editingDate && (
             <div className="rounded-lg bg-accent/10 border border-accent/30 px-4 py-2 text-sm text-accent font-medium flex items-center gap-2">
               <Pencil className="w-4 h-4" />
-              編集モード：{format(new Date(editingDate), "yyyy年M月d日（E）", { locale: ja })}の記録を編集中
+              編集モード：{formatJST(editingDate, "yyyy年M月d日（E）", { locale: ja })}の記録を編集中
             </div>
           )}
 
@@ -1003,7 +1004,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between mb-1.5">
                         <p className="text-xs font-bold text-muted-foreground">
-                          {format(new Date(date), "yyyy年M月d日（E）", { locale: ja })}
+                          {formatJST(date, "yyyy年M月d日（E）", { locale: ja })}
                         </p>
                         <button onClick={() => openEdit(date)} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground" title="この日の記録を編集">
                           <Pencil className="w-3.5 h-3.5" />
@@ -1056,7 +1057,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         {meal.meal_type}
                       </div>
                       <div className="absolute top-2 right-2 bg-foreground/70 text-primary-foreground px-2 py-0.5 rounded-lg text-xs backdrop-blur-sm">
-                        {new Date(meal.created_at).toLocaleDateString("ja-JP", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(meal.created_at).toLocaleDateString("ja-JP", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })}
                       </div>
                     </div>
                     {meal.analyzed ? (
@@ -1108,7 +1109,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                     </div>
                     <div>
                       <p className="font-bold text-sm">
-                        {format(new Date(b.date), "M月d日（E）", { locale: ja })}
+                        {formatJST(b.date, "M月d日（E）", { locale: ja })}
                       </p>
                       <p className="text-xs text-muted-foreground">{b.startTime}〜{b.endTime}</p>
                       {b.booking_type && (
@@ -1164,7 +1165,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                           }`}>
                             <p>{msg.content}</p>
                             <p className="text-[10px] opacity-60 mt-1">
-                              {new Date(msg.created_at).toLocaleString("ja-JP", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                              {new Date(msg.created_at).toLocaleString("ja-JP", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })}
                             </p>
                           </div>
                         </div>

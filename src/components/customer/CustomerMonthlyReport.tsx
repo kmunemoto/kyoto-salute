@@ -58,7 +58,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const { cycleStart, cycleEnd, prevCycleStart, prevCycleEnd, isCurrentCycle } = useMemo(() => {
     if (!cycleStartDate) {
       // Fallback to calendar month if no cycle_start_date
-      const now = new Date();
+      const now = getJSTNow();
       const base = new Date(now.getFullYear(), now.getMonth(), 1);
       const shifted = addMonths(base, cycleOffset);
       return {
@@ -69,7 +69,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
         isCurrentCycle: cycleOffset === 0,
       };
     }
-    const now = new Date();
+    const now = getJSTNow();
     const currentCycle = getCycleWindow(cycleStartDate, now);
     const shifted = {
       start: addMonths(currentCycle.start, cycleOffset),
@@ -130,15 +130,15 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const currentPlan = profile?.plan;
   const hasPlan = !!currentPlan && currentPlan !== '初回無料体験';
   const maxSessions = hasPlan ? (planMaxSessions[currentPlan] || 4) : 0;
-  const now = new Date();
-  const visitedBookings = bookings.filter(b => new Date(b.booking_date) < now);
-  const scheduledBookings = bookings.filter(b => new Date(b.booking_date) >= now);
+  const nowInstant = Date.now();
+  const visitedBookings = bookings.filter(b => new Date(b.booking_date).getTime() < nowInstant);
+  const scheduledBookings = bookings.filter(b => new Date(b.booking_date).getTime() >= nowInstant);
   const sessionCount = visitedBookings.length;
   const prevSessionCount = prevBookings.length;
   const achieveRate = maxSessions > 0 ? Math.min(100, Math.round((sessionCount / maxSessions) * 100)) : 0;
   const sessionDiff = sessionCount - prevSessionCount;
   const cycleDays = differenceInDays(cycleEnd, cycleStart);
-  const remainingDays = Math.max(0, differenceInDays(cycleEnd, now));
+  const remainingDays = Math.max(0, differenceInDays(cycleEnd, getJSTNow()));
   const remainingSessions = Math.max(0, maxSessions - sessionCount);
 
   // Measurements
@@ -154,7 +154,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
 
   // Meals
   const analyzedMeals = meals.filter(m => m.analyzed);
-  const mealDays = new Set(meals.map(m => format(new Date(m.created_at), "yyyy-MM-dd"))).size;
+  const mealDays = new Set(meals.map(m => formatJST(m.created_at, "yyyy-MM-dd"))).size;
   const avgCalories = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.calories || 0), 0) / analyzedMeals.length) : null;
   const avgProtein = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.protein || 0), 0) / analyzedMeals.length * 10) / 10 : null;
   const avgFat = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.fat || 0), 0) / analyzedMeals.length * 10) / 10 : null;

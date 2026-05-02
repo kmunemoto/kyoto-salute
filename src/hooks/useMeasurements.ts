@@ -87,7 +87,8 @@ export function useMeasurements(userId: string | undefined) {
   const chartData = measurements
     .filter((m) => m.weight != null || m.body_fat != null)
     .map((m) => {
-      const d = new Date(m.measured_date);
+      // measured_date is yyyy-MM-dd (JST calendar day)
+      const d = new Date(m.measured_date + "T00:00:00+09:00");
       return {
         date: `${d.getMonth() + 1}/${d.getDate()}`,
         weight: m.weight,

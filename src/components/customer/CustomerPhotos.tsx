@@ -3,6 +3,7 @@ import { Camera, Plus, Image as ImageIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { photos } from "@/lib/dummyData";
+import { getJSTToday } from "@/lib/timezone";
 import { toast } from "sonner";
 
 const placeholderColors = [
@@ -26,7 +27,7 @@ const CustomerPhotos = () => {
       const newPhoto = {
         id: String(Date.now()),
         url: URL.createObjectURL(file),
-        date: new Date().toISOString().split("T")[0],
+        date: getJSTToday(),
         note: "新しい写真",
       };
       setPhotoList((prev) => [...prev, newPhoto]);
