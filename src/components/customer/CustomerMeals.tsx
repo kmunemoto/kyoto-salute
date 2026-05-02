@@ -139,7 +139,7 @@ const CustomerMeals = () => {
     if (!file) return;
     e.target.value = "";
     // Auto-detect meal type based on current time
-    const hour = new Date().getHours();
+    const hour = getJSTNow().getHours();
     let autoType = "";
     if (hour >= 5 && hour < 10) autoType = "朝食";
     else if (hour >= 10 && hour < 15) autoType = "昼食";
@@ -268,12 +268,12 @@ const CustomerMeals = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = toJSTDate(dateStr);
     return `${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   };
 
   const getDateKey = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = toJSTDate(dateStr);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
 

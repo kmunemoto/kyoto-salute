@@ -138,7 +138,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
   const achieveRate = maxSessions > 0 ? Math.min(100, Math.round((sessionCount / maxSessions) * 100)) : 0;
   const sessionDiff = sessionCount - prevSessionCount;
   const cycleDays = differenceInDays(cycleEnd, cycleStart);
-  const remainingDays = Math.max(0, differenceInDays(cycleEnd, now));
+  const remainingDays = Math.max(0, differenceInDays(cycleEnd, getJSTNow()));
   const remainingSessions = Math.max(0, maxSessions - sessionCount);
 
   // Measurements
