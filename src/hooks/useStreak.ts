@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfWeek, isBefore, subWeeks, isAfter } from "date-fns";
+import { getJSTNow, toJSTDate } from "@/lib/timezone";
 
 interface StreakResult {
   currentStreak: number;
@@ -43,7 +44,7 @@ export const useStreak = (userId: string | undefined): StreakResult => {
       return;
     }
 
-    const now = new Date();
+    const now = getJSTNow();
     const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 });
 
     // Build a Set of week-start dates that have visited bookings (past)
@@ -51,7 +52,7 @@ export const useStreak = (userId: string | undefined): StreakResult => {
     const futureWeeksThisWeek: string[] = [];
 
     for (const b of bookings) {
-      const bd = new Date(b.booking_date);
+      const bd = toJSTDate(b.booking_date);
       const ws = startOfWeek(bd, { weekStartsOn: 1 });
       const wsKey = ws.toISOString();
 

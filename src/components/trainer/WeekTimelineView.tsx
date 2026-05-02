@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { format, addDays, isSameDay } from "date-fns";
+import { addDays, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
+import { getJSTNow, formatJST } from "@/lib/timezone";
 import { BookingWithTime } from "@/hooks/useBookings";
 
 interface WeekTimelineViewProps {
@@ -31,10 +32,10 @@ const WeekTimelineView = ({ weekStart, bookings, onSelectBooking }: WeekTimeline
   const halfSlots: number[] = [];
   for (let m = 0; m < totalMinutes; m += SLOT_MIN) halfSlots.push(m);
 
-  // 現在時刻
-  const [now, setNow] = useState(new Date());
+  // 現在時刻 (JST)
+  const [now, setNow] = useState(getJSTNow());
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
+    const id = setInterval(() => setNow(getJSTNow()), 60_000);
     return () => clearInterval(id);
   }, []);
 
