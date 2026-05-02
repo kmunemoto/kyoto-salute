@@ -10,6 +10,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, parseISO, differenceInDays, isBefore } from "date-fns";
 import { ja } from "date-fns/locale";
+import { getJSTNow, toJSTDate, formatJST } from "@/lib/timezone";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 
 const planMaxSessions: Record<string, number> = {
