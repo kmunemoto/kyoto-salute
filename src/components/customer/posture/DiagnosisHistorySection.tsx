@@ -89,7 +89,7 @@ const CompareView = ({
             {info.label} {d.confidence}%
           </Badge>
           <p className="text-[10px] text-muted-foreground mt-1">
-            {format(new Date(d.created_at), "yyyy/M/d", { locale: ja })}
+            {formatJST(d.created_at, "yyyy/M/d", { locale: ja })}
           </p>
         </div>
         {/* Scores */}
@@ -331,7 +331,7 @@ const DiagnosisHistorySection = ({ userId, allowDelete = false }: Props) => {
                     data={[...diagnoses]
                       .reverse()
                       .map((d) => ({
-                        date: format(new Date(d.created_at), "M/d"),
+                        date: formatJST(d.created_at, "M/d"),
                         ストレート: d.scores?.straight ?? 0,
                         ウェーブ: d.scores?.wave ?? 0,
                         ナチュラル: d.scores?.natural ?? 0,

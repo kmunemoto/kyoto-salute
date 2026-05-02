@@ -67,7 +67,7 @@ const CustomerChat = () => {
 
   // Group messages by date
   const getDateLabel = (dateStr: string) => {
-    return format(new Date(dateStr), "M/d");
+    return formatJST(dateStr, "M/d");
   };
 
   return (
@@ -120,7 +120,7 @@ const CustomerChat = () => {
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                   <p className={`text-[10px] mt-1 ${isMe ? "text-accent-foreground/60" : "text-muted-foreground"}`}>
-                    {format(new Date(msg.created_at), "HH:mm")}
+                    {formatJST(msg.created_at, "HH:mm")}
                   </p>
                 </div>
               </div>

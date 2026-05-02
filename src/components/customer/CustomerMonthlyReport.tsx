@@ -154,7 +154,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
 
   // Meals
   const analyzedMeals = meals.filter(m => m.analyzed);
-  const mealDays = new Set(meals.map(m => format(new Date(m.created_at), "yyyy-MM-dd"))).size;
+  const mealDays = new Set(meals.map(m => formatJST(m.created_at, "yyyy-MM-dd"))).size;
   const avgCalories = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.calories || 0), 0) / analyzedMeals.length) : null;
   const avgProtein = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.protein || 0), 0) / analyzedMeals.length * 10) / 10 : null;
   const avgFat = analyzedMeals.length > 0 ? Math.round(analyzedMeals.reduce((s, m) => s + (m.fat || 0), 0) / analyzedMeals.length * 10) / 10 : null;

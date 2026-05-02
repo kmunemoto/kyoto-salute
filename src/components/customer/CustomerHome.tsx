@@ -345,7 +345,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
               <p className="text-white font-bold text-lg">
-                {format(parseISO(latestSession.date), "M月d日（E）", { locale: ja })}
+                {formatJST(latestSession.date, "M月d日（E）", { locale: ja })}
               </p>
               <button
                 onClick={(e) => {
