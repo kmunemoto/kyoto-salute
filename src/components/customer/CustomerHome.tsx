@@ -12,6 +12,7 @@ import { useStreak } from "@/hooks/useStreak";
 import StreakCard from "./StreakCard";
 import { Loader2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
+import { getJSTNow, formatJST } from "@/lib/timezone";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { getCycleWindow } from "@/lib/courseProgress";
@@ -77,10 +78,10 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const currentPlan = profile?.plan;
   const hasPlan = !!currentPlan && currentPlan !== '初回無料体験';
 
-  // Filter future bookings only
-  const now = new Date();
-  const todayStr = format(now, "yyyy-MM-dd");
-  const nowTimeStr = format(now, "HH:mm");
+  // Filter future bookings only — based on JST wall clock
+  const now = getJSTNow();
+  const todayStr = formatJST(new Date(), "yyyy-MM-dd");
+  const nowTimeStr = formatJST(new Date(), "HH:mm");
 
   const futureBookings = bookings.filter((b) => {
     if (b.status === "キャンセル済み") return false;
