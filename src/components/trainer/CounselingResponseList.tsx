@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { formatJST } from "@/lib/timezone";
 
 const purposeLabels: Record<string, string> = {
   diet: "ダイエット", muscle: "筋力アップ", health: "健康維持",

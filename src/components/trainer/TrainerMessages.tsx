@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages, useUnreadBySender } from "@/hooks/useMessages";
 import { format } from "date-fns";
+import { formatJST } from "@/lib/timezone";
 
 interface CustomerInfo {
   user_id: string;

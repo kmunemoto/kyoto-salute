@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/hooks/useMessages";
 import { format } from "date-fns";
+import { formatJST } from "@/lib/timezone";
 
 const CustomerChat = () => {
   const { user } = useAuth();
