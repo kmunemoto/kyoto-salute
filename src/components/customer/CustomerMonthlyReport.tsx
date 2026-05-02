@@ -237,7 +237,8 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
     top3.forEach(s => s.history.forEach(h => dateSet.add(h.date)));
     const dates = Array.from(dateSet).sort();
     const chartData = dates.map(d => {
-      const row: any = { date: `${new Date(d).getMonth() + 1}/${new Date(d).getDate()}` };
+      const jd = toJSTDate(`${d}T00:00:00+09:00`);
+      const row: any = { date: `${jd.getMonth() + 1}/${jd.getDate()}` };
       top3.forEach(s => {
         const point = s.history.find(h => h.date === d);
         if (point) row[s.name] = point.weight;
