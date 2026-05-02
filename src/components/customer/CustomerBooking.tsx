@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 import BookingCompleteDialog from "./BookingCompleteDialog";
+import { getJSTNow, getJSTToday, toJSTDate, formatJST } from "@/lib/timezone";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",
@@ -43,7 +44,7 @@ const CustomerBooking = () => {
 
   // Set of dates (yyyy-MM-dd) where this customer has future bookings — for calendar dots
   const { futureDateSet, pastDateSet } = useMemo(() => {
-    const today = format(new Date(), "yyyy-MM-dd");
+    const today = getJSTToday();
     const future = new Set<string>();
     const past = new Set<string>();
     myBookings.forEach((b) => {
@@ -54,6 +55,8 @@ const CustomerBooking = () => {
     return { futureDateSet: future, pastDateSet: past };
   }, [myBookings]);
 
+  // selectedDate comes from <Calendar>, where the user's tap maps to a JST
+  // calendar day; format() reads its local fields, which match.
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
   const fetchBookedSlots = useCallback(async (dateStr: string) => {
@@ -62,8 +65,8 @@ const CustomerBooking = () => {
     const slots = data
       .filter((r: { status: string }) => r.status !== "キャンセル済み")
       .map((r: { booking_date: string; end_booking_date: string; status: string }) => {
-        const dt = new Date(r.booking_date);
-        const endDt = new Date(r.end_booking_date);
+        const dt = toJSTDate(r.booking_date);
+        const endDt = toJSTDate(r.end_booking_date);
         return {
           date: format(dt, "yyyy-MM-dd"),
           startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
@@ -237,7 +240,7 @@ const CustomerBooking = () => {
   });
 
   const cancelDescription = cancelTarget
-    ? `${format(new Date(cancelTarget.date), "M月d日（E）", { locale: ja })} ${cancelTarget.startTime}〜${cancelTarget.endTime} の予約をキャンセルします。`
+    ? `${formatJST(`${cancelTarget.date}T00:00:00+09:00`, "M月d日（E）", { locale: ja })} ${cancelTarget.startTime}〜${cancelTarget.endTime} の予約をキャンセルします。`
     : "予約をキャンセルします。";
 
   if (profileLoading || bookingsLoading) {
@@ -293,7 +296,7 @@ const CustomerBooking = () => {
                         </div>
                         <div>
                           <p className="font-bold text-sm">
-                            {format(new Date(b.date), "M月d日（E）", { locale: ja })}
+                            {formatJST(`${b.date}T00:00:00+09:00`, "M月d日（E）", { locale: ja })}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {b.startTime}〜{b.endTime}
@@ -383,13 +386,14 @@ const CustomerBooking = () => {
                     }
                   }}
                   locale={ja}
-                  fromDate={startOfDay(new Date())}
-                  toDate={addMonths(startOfDay(new Date()), 1)}
+                  fromDate={startOfDay(getJSTNow())}
+                  toDate={addMonths(startOfDay(getJSTNow()), 1)}
                   disabled={(date) => {
-                    const now = new Date();
-                    const latestSlot = new Date(date);
-                    latestSlot.setHours(20, 15, 0, 0);
-                    return latestSlot.getTime() - now.getTime() < 24 * 60 * 60 * 1000;
+                    // `date` is in browser local TZ; build the JST 20:15 instant
+                    // for that calendar day using a JST-anchored ISO.
+                    const yyyyMMdd = format(date, "yyyy-MM-dd");
+                    const latestSlot = new Date(`${yyyyMMdd}T20:15:00+09:00`);
+                    return latestSlot.getTime() - Date.now() < 24 * 60 * 60 * 1000;
                   }}
                   className="pointer-events-auto"
                   components={{
