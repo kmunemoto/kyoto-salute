@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { format, addMonths, differenceInDays, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
 
