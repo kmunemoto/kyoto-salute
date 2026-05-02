@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check, CalendarDays, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { formatJST } from "@/lib/timezone";
 
 interface BookingCompleteDialogProps {
   open: boolean;
@@ -45,8 +46,8 @@ const BookingCompleteDialog = ({
   endTime,
   planName,
 }: BookingCompleteDialogProps) => {
-  const dateObj = date ? new Date(date + "T00:00:00") : null;
-  const formattedDate = dateObj ? format(dateObj, "M月d日（E）", { locale: ja }) : "";
+  // Always render in JST regardless of viewer timezone.
+  const formattedDate = date ? formatJST(`${date}T00:00:00+09:00`, "M月d日（E）", { locale: ja }) : "";
   const calendarUrl = date ? buildCalendarUrl(date, startTime, endTime) : "#";
 
   return (
