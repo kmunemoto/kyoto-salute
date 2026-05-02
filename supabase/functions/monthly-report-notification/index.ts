@@ -17,6 +17,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // LINE通知は無効化されました（ユーザー要望）。
+    return new Response(
+      JSON.stringify({ disabled: true, reason: "monthly report LINE notification disabled by request" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+
+    // 以下は無効化済みコード（参考用）
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
