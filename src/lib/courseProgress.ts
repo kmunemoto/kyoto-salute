@@ -1,5 +1,6 @@
 import { addMonths, parseISO } from "date-fns";
 import { PlanType, planOptions } from "./dummyData";
+import { getJSTNow } from "./timezone";
 
 /**
  * Plan名から月間セッション回数を導出
@@ -66,7 +67,7 @@ export const computeCourseProgress = (
   cycleStartDate: string | null | undefined,
   plan: string | null | undefined,
   bookings: BookingForProgress[],
-  referenceDate: Date = new Date(),
+  referenceDate: Date = getJSTNow(),
 ): CourseProgress => {
   const monthlyTotal = getMonthlySessionCount(plan);
   const isUnlimited = monthlyTotal === -1;
