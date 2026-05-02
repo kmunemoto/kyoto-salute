@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { toJSTDate, formatJST } from "@/lib/timezone";
 
 export interface BookingRow {
   id: string;
@@ -27,7 +28,8 @@ export interface BookingWithTime {
 }
 
 function parseBooking(row: BookingRow): BookingWithTime {
-  const dt = new Date(row.booking_date);
+  // booking_date is a UTC ISO; render it in JST wall-clock.
+  const dt = toJSTDate(row.booking_date);
   const h = dt.getHours();
   const m = dt.getMinutes();
   const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -125,7 +127,7 @@ export const useAllBookings = () => {
     // Merge trial bookings as BookingWithTime entries
     trialRows?.forEach((t) => {
       if (t.status === "キャンセル済み") return;
-      const dt = new Date(t.booking_date);
+      const dt = toJSTDate(t.booking_date);
       const h = dt.getHours();
       const m = dt.getMinutes();
       const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -145,8 +147,8 @@ export const useAllBookings = () => {
 
     // Merge blocked slots
     blockedRows?.forEach((bs) => {
-      const dt = new Date(bs.blocked_date);
-      const endDt = new Date(bs.end_blocked_date);
+      const dt = toJSTDate(bs.blocked_date);
+      const endDt = toJSTDate(bs.end_blocked_date);
       const h = dt.getHours();
       const m = dt.getMinutes();
       const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -256,10 +258,9 @@ async function sendBookingConfirmationToCustomer(
     .maybeSingle();
   const name = profile?.display_name || "お客";
 
-  const dt = new Date(`${date}T${startTime}:00+09:00`);
-  const md = format(dt, "M/d", { locale: ja });
-  const dow = format(dt, "E", { locale: ja });
-  const hm = format(dt, "HH:mm", { locale: ja });
+  const md = formatJST(`${date}T${startTime}:00+09:00`, "M/d", { locale: ja });
+  const dow = formatJST(`${date}T${startTime}:00+09:00`, "E", { locale: ja });
+  const hm = formatJST(`${date}T${startTime}:00+09:00`, "HH:mm", { locale: ja });
 
   const proxyNote = isProxyBooking ? "\n※トレーナーが代理で予約を登録しました。" : "";
 
@@ -288,8 +289,7 @@ async function sendNewBookingLineToTrainer(
   const trainerId = trainerIds?.[0]?.user_id;
   if (!trainerId) return;
 
-  const dt = new Date(`${date}T${startTime}:00+09:00`);
-  const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
+  const dateStr = formatJST(`${date}T${startTime}:00+09:00`, "M月d日（E） HH:mm", { locale: ja });
 
   await supabase.functions.invoke("send-line-message", {
     body: {
@@ -366,11 +366,10 @@ async function sendCancelLineNotification(
   booking: { user_id: string; booking_date: string; booking_type: string },
   cancelledByTrainer: boolean,
 ) {
-  const dt = new Date(booking.booking_date);
-  const dateStr = format(dt, "M月d日（E） HH:mm", { locale: ja });
-  const md = format(dt, "M/d", { locale: ja });
-  const dow = format(dt, "E", { locale: ja });
-  const hm = format(dt, "HH:mm", { locale: ja });
+  const dateStr = formatJST(booking.booking_date, "M月d日（E） HH:mm", { locale: ja });
+  const md = formatJST(booking.booking_date, "M/d", { locale: ja });
+  const dow = formatJST(booking.booking_date, "E", { locale: ja });
+  const hm = formatJST(booking.booking_date, "HH:mm", { locale: ja });
 
   // Always fetch customer name & trainer id (needed for both paths)
   const [{ data: profile }, { data: trainerIds }] = await Promise.all([

@@ -10,6 +10,7 @@ import GymLogo from "@/components/GymLogo";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
+import { getJSTNow, toJSTDate } from "@/lib/timezone";
 
 interface TrialSlotBooking {
   date: string;
@@ -32,7 +33,7 @@ const TrialBooking = () => {
   const fetchExistingSlots = useCallback(async () => {
     // Fetch slots for upcoming 60 days using the secure RPC
     const slots: TrialSlotBooking[] = [];
-    const today = new Date();
+    const today = getJSTNow();
     const promises = [];
     for (let i = 0; i < 60; i++) {
       const d = new Date(today);
@@ -42,8 +43,8 @@ const TrialBooking = () => {
         supabase.rpc("get_booked_slots", { check_date: dateStr }).then(({ data }: { data: any }) => {
           data?.forEach((r: { booking_date: string; end_booking_date: string; status: string }) => {
             if (r.status === "キャンセル済み") return;
-            const dt = new Date(r.booking_date);
-            const endDt = new Date(r.end_booking_date);
+            const dt = toJSTDate(r.booking_date);
+            const endDt = toJSTDate(r.end_booking_date);
             slots.push({
               date: format(dt, "yyyy-MM-dd"),
               startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
@@ -371,10 +372,9 @@ const TrialBooking = () => {
                 }}
                 locale={ja}
                 disabled={(date) => {
-                  const now = new Date();
-                  const latestSlot = new Date(date);
-                  latestSlot.setHours(20, 15, 0, 0);
-                  return latestSlot.getTime() - now.getTime() < 24 * 60 * 60 * 1000;
+                  const yyyyMMdd = format(date, "yyyy-MM-dd");
+                  const latestSlot = new Date(`${yyyyMMdd}T20:15:00+09:00`);
+                  return latestSlot.getTime() - Date.now() < 24 * 60 * 60 * 1000;
                 }}
                 className="pointer-events-auto"
               />

@@ -190,7 +190,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [measurementDate, setMeasurementDate] = useState<Date>(new Date());
   const { measurements, chartData: measurementChartData, saveMeasurement, deleteMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
   const [deleteMeasurementTarget, setDeleteMeasurementTarget] = useState<string | null>(null);
-  const [trainingDate, setTrainingDate] = useState(new Date().toISOString().slice(0, 10));
+  const [trainingDate, setTrainingDate] = useState(getJSTToday());
   const [exercises, setExercises] = useState<ExerciseEntry[]>([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
   const [memo, setMemo] = useState("");
   const [exerciseMasters, setExerciseMasters] = useState<ExerciseMaster[]>([]);
@@ -463,7 +463,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       toast.success("記録を保存しました", { description: `${displayName}さんのトレーニング記録を保存しました` });
     }
 
-    setTrainingDate(new Date().toISOString().slice(0, 10));
+    setTrainingDate(getJSTToday());
     setExercises([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
     setMemo("");
     setSaving(false);
@@ -491,7 +491,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   };
 
   const handleResetCycleToToday = async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getJSTToday();
     await handleCycleStartDateChange(today);
   };
 
@@ -524,7 +524,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const cancelEdit = () => {
     setEditingDate(null);
     setEditingRecordIds([]);
-    setTrainingDate(new Date().toISOString().slice(0, 10));
+    setTrainingDate(getJSTToday());
     setExercises([{ exerciseId: "", name: "", sets: [{ weight: "", reps: "" }] }]);
     setMemo("");
   };
@@ -622,7 +622,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <p className="text-xs text-muted-foreground">
                   有効期限：{format(addMonths(parseISO(cycleStartDate), 1), "yyyy年M月d日", { locale: ja })}
                   {(() => {
-                    const remaining = differenceInDays(addMonths(parseISO(cycleStartDate), 1), new Date());
+                    const remaining = differenceInDays(addMonths(parseISO(cycleStartDate), 1), getJSTNow());
                     if (remaining < 0) return <span className="text-destructive font-bold ml-1">（期限切れ）</span>;
                     if (remaining <= 3) return <span className="text-warning font-bold ml-1">（残り{remaining}日）</span>;
                     return <span className="ml-1">（残り{remaining}日）</span>;
