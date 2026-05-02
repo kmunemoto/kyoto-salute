@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveMealPhotoUrls } from "@/lib/mealPhotoUrl";
+import { getJSTNow, toJSTDate } from "@/lib/timezone";
 import {
   AlertDialog,
   AlertDialogAction,

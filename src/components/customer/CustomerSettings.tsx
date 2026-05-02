@@ -386,7 +386,7 @@ const CustomerSettings = () => {
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         ) : (() => {
-          const now = new Date();
+          const now = getJSTNow();
           const pastBookings = myBookings
             .filter((b) => {
               if (b.status === "キャンセル済み") return false;

@@ -188,7 +188,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [savingMeasurement, setSavingMeasurement] = useState(false);
-  const [measurementDate, setMeasurementDate] = useState<Date>(new Date());
+  const [measurementDate, setMeasurementDate] = useState<Date>(getJSTNow());
   const { measurements, chartData: measurementChartData, saveMeasurement, deleteMeasurement, latest: latestMeasurement, loading: loadingMeasurements } = useMeasurements(clientId);
   const [deleteMeasurementTarget, setDeleteMeasurementTarget] = useState<string | null>(null);
   const [trainingDate, setTrainingDate] = useState(getJSTToday());
@@ -725,7 +725,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         mode="single"
                         selected={measurementDate}
                         onSelect={(d) => d && setMeasurementDate(d)}
-                        disabled={(date) => date > new Date()}
+                        disabled={(date) => date > getJSTNow()}
                         initialFocus
                         className={cn("p-3 pointer-events-auto")}
                       />
@@ -751,7 +751,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                     const w = bodyWeight ? parseFloat(bodyWeight) : null;
                     const f = bodyFat ? parseFloat(bodyFat) : null;
                     const ok = await saveMeasurement(dateStr, w, f);
-                    if (ok) { setBodyWeight(""); setBodyFat(""); setMeasurementDate(new Date()); }
+                    if (ok) { setBodyWeight(""); setBodyFat(""); setMeasurementDate(getJSTNow()); }
                     setSavingMeasurement(false);
                   }}
                 >
