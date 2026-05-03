@@ -12,6 +12,7 @@ interface ExerciseInput {
   name: string;
   weight: number;
   reps: number;
+  muscleGroup?: string;
 }
 
 interface Payload {
@@ -87,6 +88,10 @@ serve(async (req) => {
     for (const ex of visible) {
       exerciseSvg += `<text x="540" y="${y}" font-family="${FF}" font-size="40" font-weight="500" fill="${textColor}" text-anchor="middle">${escapeXml(ex.name)}</text>`;
       y += 56;
+      if (ex.muscleGroup) {
+        exerciseSvg += `<text x="540" y="${y}" font-family="${FF}" font-size="22" font-weight="600" fill="${accentColor}" text-anchor="middle">[${escapeXml(ex.muscleGroup)}]</text>`;
+        y += 36;
+      }
       exerciseSvg += `<text x="540" y="${y}" font-family="${FF}" font-size="32" font-weight="400" fill="${subColor}" text-anchor="middle">${ex.weight}kg × ${ex.reps}</text>`;
       y += 80;
     }
