@@ -6,13 +6,11 @@ import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = "Salute御所南"
 const SITE_URL = "https://kyoto-salute.com"
-const ADDRESS_LINE_2 = '\u30D7\u30E9\u30B6\u5FA1\u6240\u53572\u968E'
-const ZWNJ = '\u200C'
+const ADDRESS_LINE_1 = '\u4EAC\u90FD\u5E02\u4E2D\u4EAC\u533A\u6BD8\u6C99\u9580\u753A533-1'
+const ADDRESS_LINE_2 = '\u30D7\u30E9\u30B6\u5FA1\u6240\u5357' + '2' + '\u968E'
 
 const AddressLine = ({ style }: { style: React.CSSProperties }) => (
-  <Text style={style}>
-    <span>京都市</span>{ZWNJ}<span>中京区</span>{ZWNJ}<span>毘沙門町</span>{ZWNJ}<span>533-1</span>
-  </Text>
+  <Text style={style}>{ADDRESS_LINE_1}</Text>
 )
 
 interface TrialBookingConfirmationProps {
@@ -27,7 +25,10 @@ const TrialBookingConfirmationEmail = ({
   bookingTime = '',
 }: TrialBookingConfirmationProps) => (
   <Html lang="ja" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="UTF-8" />
+      <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
+    </Head>
     <Preview>初回無料体験のご予約を承りました — {SITE_NAME}</Preview>
     <Body style={main}>
       <Container style={container}>
@@ -39,7 +40,7 @@ const TrialBookingConfirmationEmail = ({
         </Text>
 
         <Section style={detailSection}>
-          <Text style={sectionTitle}>📅 ご予約内容</Text>
+          <Text style={sectionTitle}>ご予約内容</Text>
           <Text style={label}>日時</Text>
           <Text style={value}>{bookingDate} {bookingTime}</Text>
           <Text style={label}>内容</Text>
@@ -50,19 +51,19 @@ const TrialBookingConfirmationEmail = ({
         </Section>
 
         <Section style={detailSection}>
-          <Text style={sectionTitle}>📌 当日のご案内</Text>
+          <Text style={sectionTitle}>当日のご案内</Text>
           <Text style={text}>・動きやすい服装でお越しください</Text>
           <Text style={text}>・室内シューズをご持参ください</Text>
           <Text style={text}>・お水はこちらでご用意しております</Text>
         </Section>
 
         <Section style={detailSection}>
-          <Text style={sectionTitle}>⚠️ キャンセル・変更</Text>
+          <Text style={sectionTitle}>キャンセル・変更</Text>
           <Text style={text}>
             前日までに下記メールへご連絡ください。
           </Text>
           <Text style={text}>
-            📧 <Link href="mailto:k.munemoto@kyoto-salute.com" style={inlineLink}>k.munemoto@kyoto-salute.com</Link>
+            <Link href="mailto:k.munemoto@kyoto-salute.com" style={inlineLink}>k.munemoto@kyoto-salute.com</Link>
           </Text>
         </Section>
 
