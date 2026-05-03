@@ -12,6 +12,7 @@ import { format, addMonths, parseISO, differenceInDays, isBefore } from "date-fn
 import { ja } from "date-fns/locale";
 import { getJSTNow, toJSTDate, formatJST } from "@/lib/timezone";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
+import MuscleGroupBadge from "./MuscleGroupBadge";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4, '月6回': 6, '月8回': 8, '通い放題': 15,
@@ -465,7 +466,10 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
               <div className="space-y-1.5">
                 {trainingSummary.summary.map((s) => (
                   <div key={s.name} className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{s.name}</span>
+                    <span className="font-medium flex items-center gap-1.5 min-w-0">
+                      <span className="truncate">{s.name}</span>
+                      <MuscleGroupBadge exerciseName={s.name} />
+                    </span>
                     <span className="text-muted-foreground">
                       {s.prevWeight != null ? (
                         <>
@@ -511,7 +515,10 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                 <p className="text-xs text-muted-foreground mb-1.5">セット数 × 回数の変化</p>
                 {trainingSummary.summary.map((s) => (
                   <div key={s.name} className="flex items-center justify-between text-xs">
-                    <span className="font-medium">{s.name}</span>
+                    <span className="font-medium flex items-center gap-1.5 min-w-0">
+                      <span className="truncate">{s.name}</span>
+                      <MuscleGroupBadge exerciseName={s.name} />
+                    </span>
                     <span className="text-muted-foreground">
                       {s.setsRepsPrev ? (
                         <>{s.setsRepsPrev} → <span className="font-bold text-foreground">{s.setsRepsLatest}</span></>

@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCycleWindow } from "@/lib/courseProgress";
 import WorkoutShareModal from "./WorkoutShareModal";
 import { buildSession, type RawWorkout } from "@/lib/workoutShare";
+import { getMuscleGroup, summarizeMuscleGroups } from "@/lib/muscleGroup";
 
 const planMaxSessions: Record<string, number> = {
   '月4回': 4,
@@ -344,9 +345,14 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           >
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
-              <p className="text-white font-bold text-lg">
-                {formatJST(latestSession.date, "M月d日（E）", { locale: ja })}
-              </p>
+              <div>
+                <p className="text-white font-bold text-lg">
+                  {formatJST(latestSession.date, "M月d日（E）", { locale: ja })}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "#999" }}>
+                  {summarizeMuscleGroups(latestSession.exercises.map((e) => e.exercise_name))}
+                </p>
+              </div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -391,7 +397,23 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
                 const topSet = ex.sets.reduce((a, b) => (b.weight > a.weight ? b : a), ex.sets[0]);
                 return (
                   <div key={ex.exercise_id} className="flex items-center justify-between text-xs">
-                    <span className="text-white truncate pr-2">{ex.exercise_name}</span>
+                    <span className="text-white truncate pr-2 flex items-center gap-1.5 min-w-0">
+                      <span className="truncate">{ex.exercise_name}</span>
+                      <span
+                        style={{
+                          backgroundColor: "rgba(10, 186, 181, 0.15)",
+                          color: "#0ABAB5",
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          padding: "1px 6px",
+                          borderRadius: "4px",
+                          lineHeight: 1.4,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {getMuscleGroup(ex.exercise_name)}
+                      </span>
+                    </span>
                     <span style={{ color: "#888" }} className="shrink-0">
                       {topSet.weight}kg × {topSet.reps}
                     </span>

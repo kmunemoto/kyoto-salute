@@ -13,6 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import WorkoutShareModal from "./WorkoutShareModal";
 import { buildSession, type RawWorkout } from "@/lib/workoutShare";
+import MuscleGroupBadge from "./MuscleGroupBadge";
+import { summarizeMuscleGroups } from "@/lib/muscleGroup";
 import {
   LineChart,
   Line,
@@ -244,7 +246,7 @@ const CustomerTraining = () => {
                 return (
                   <Card key={date} className="card-hover">
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-2 mb-1">
                         <div className="w-8 h-8 rounded-lg gym-gradient flex items-center justify-center">
                           <Dumbbell className="w-4 h-4 text-primary-foreground" />
                         </div>
@@ -260,6 +262,9 @@ const CustomerTraining = () => {
                           <Share2 className="w-4 h-4" />
                         </button>
                       </div>
+                      <p className="text-xs mb-3 pl-10" style={{ color: "#999", fontSize: "12px" }}>
+                        {summarizeMuscleGroups(records.map((r) => r.exercise_name))}
+                      </p>
                       <div className="space-y-1.5">
                         {records.map((r) => {
                           const setsData = r.sets || (r.weight != null ? [{ set: 1, weight: r.weight!, reps: r.reps! }] : []);
@@ -267,7 +272,10 @@ const CustomerTraining = () => {
                           return (
                           <div key={r.id} className="text-sm py-1.5 px-3 rounded-lg bg-muted/50">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium">{r.exercise_name}</span>
+                              <span className="font-medium flex items-center gap-1.5 min-w-0">
+                                <span className="truncate">{r.exercise_name}</span>
+                                <MuscleGroupBadge exerciseName={r.exercise_name} />
+                              </span>
                               {setsData.length === 1 && (
                                 <span className="text-muted-foreground">
                                   <span className="font-bold text-foreground">{setsData[0].weight}</span>kg ×{" "}
