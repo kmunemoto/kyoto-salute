@@ -6,8 +6,14 @@ import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = "Salute御所南"
 const SITE_URL = "https://kyoto-salute.com"
-const ADDRESS_LINE_1 = '\u4EAC\u90FD\u5E02\u4E2D\u4EAC\u533A\u6BD8\u6C99\u9580\u753A533-1'
 const ADDRESS_LINE_2 = '\u30D7\u30E9\u30B6\u5FA1\u6240\u53572\u968E'
+const ZWNJ = '\u200C'
+
+const AddressLine = ({ style }: { style: React.CSSProperties }) => (
+  <Text style={style}>
+    <span>京都市</span>{ZWNJ}<span>中京区</span>{ZWNJ}<span>毘沙門町</span>{ZWNJ}<span>533-1</span>
+  </Text>
+)
 
 interface TrialBookingConfirmationProps {
   customerName?: string
@@ -39,9 +45,7 @@ const TrialBookingConfirmationEmail = ({
           <Text style={label}>内容</Text>
           <Text style={value}>カウンセリング＋トレーニング体験（計60分）</Text>
           <Text style={label}>場所</Text>
-          <Text style={value}>
-            <span>京都市中京区</span><span>毘沙門町533-1</span>
-          </Text>
+          <AddressLine style={value} />
           <Text style={value}>{ADDRESS_LINE_2}</Text>
         </Section>
 
@@ -66,7 +70,9 @@ const TrialBookingConfirmationEmail = ({
         <Text style={text}>お会いできることを楽しみにしております！</Text>
         <Hr style={hr} />
         <Text style={footer}>パーソナルジム {SITE_NAME}</Text>
-        <Text style={footer}>〒604-0862 {ADDRESS_LINE_1} {ADDRESS_LINE_2}</Text>
+        <Text style={footer}>〒604-0862</Text>
+        <AddressLine style={footer} />
+        <Text style={footer}>{ADDRESS_LINE_2}</Text>
         <Link href={SITE_URL} style={footerLink}>{SITE_URL}</Link>
       </Container>
     </Body>
