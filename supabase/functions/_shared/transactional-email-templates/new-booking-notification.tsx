@@ -67,13 +67,13 @@ export const template = {
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', 'Hiragino Sans', sans-serif" }
 const container = { padding: '32px 28px', maxWidth: '480px', margin: '0 auto' }
-const h1 = { fontSize: '20px', fontWeight: '700' as const, color: '#3d3d3d', margin: '0 0 16px' }
-const hr = { borderColor: '#e8e4df', margin: '16px 0' }
+const h1 = { fontSize: '20px', fontWeight: '700' as const, color: '#000000', margin: '0 0 16px' }
+const hr = { borderColor: 'rgba(10, 186, 181, 0.3)', borderTopWidth: '1px', margin: '16px 0' }
 const detailSection = { margin: '8px 0' }
-const label = { fontSize: '11px', fontWeight: '600' as const, color: '#9a8c7a', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: '12px 0 2px' }
-const value = { fontSize: '15px', color: '#3d3d3d', margin: '0 0 4px', fontWeight: '500' as const }
+const label = { fontSize: '11px', fontWeight: '600' as const, color: '#0ABAB5', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: '12px 0 2px' }
+const value = { fontSize: '15px', color: '#000000', margin: '0 0 4px', fontWeight: '500' as const }
 const button = {
-  backgroundColor: '#a08050',
+  backgroundColor: '#0ABAB5',
   color: '#ffffff',
   padding: '12px 28px',
   borderRadius: '8px',
