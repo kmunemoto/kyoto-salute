@@ -188,14 +188,13 @@ const TrialBooking = () => {
       try {
         await supabase.functions.invoke("send-transactional-email", {
           body: {
-            templateName: "booking-confirmation",
+            templateName: "trial-booking-confirmation",
             recipientEmail: guestEmail.trim(),
             idempotencyKey: `trial-confirm-${guestEmail.trim()}-${bookingDate}`,
             templateData: {
               customerName: guestName.trim(),
               bookingDate: formattedDate,
               bookingTime: `${slot.time}〜${endTime}`,
-              planName: "初回無料体験（カウンセリング＋トレーニング）",
             },
           },
         });
