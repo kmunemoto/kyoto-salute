@@ -253,6 +253,15 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
           ctx.font = `700 44px ${FONT}`;
           drawCenter(ex.exercise_name, W / 2, y + 44);
           y += 44 + exerciseGap;
+          // Muscle group label
+          {
+            const prevFill = ctx.fillStyle;
+            ctx.fillStyle = "#0ABAB5";
+            ctx.font = `600 24px ${FONT}`;
+            drawCenter(`[${getMuscleGroup(ex.exercise_name)}]`, W / 2, y + 24);
+            ctx.fillStyle = prevFill as string;
+            y += 24 + 10;
+          }
           ctx.font = `400 32px ${FONT}`;
           drawCenter(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y + 32);
           y += 32;
@@ -361,6 +370,14 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
           ctx.font = `700 36px ${FONT}`;
           drawCenter(ex.exercise_name, W / 2, y + 36);
           y += 36 + 8;
+          {
+            const prevFill = ctx.fillStyle;
+            ctx.fillStyle = "#0ABAB5";
+            ctx.font = `600 22px ${FONT}`;
+            drawCenter(`[${getMuscleGroup(ex.exercise_name)}]`, W / 2, y + 22);
+            ctx.fillStyle = prevFill as string;
+            y += 22 + 6;
+          }
           ctx.font = `400 30px ${FONT}`;
           drawCenter(`${ex.maxWeight}kg × ${ex.totalReps}`, W / 2, y + 30);
           y += 30 + 24;
