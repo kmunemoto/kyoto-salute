@@ -3,7 +3,6 @@ import { X, Download, Loader2, Moon, Sun, Image as ImageIcon, Camera } from "luc
 import { Button } from "@/components/ui/button";
 import WorkoutShareCard, { type ShareTheme } from "./WorkoutShareCard";
 import { formatShareDate, type WorkoutSession } from "@/lib/workoutShare";
-import { getMuscleGroup } from "@/lib/muscleGroup";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
