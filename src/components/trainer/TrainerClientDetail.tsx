@@ -398,7 +398,21 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     const master = exerciseMasters.find(e => e.id === exerciseId);
     if (master) {
       const updated = [...exercises];
-      updated[i] = { ...updated[i], exerciseId: master.id, name: master.name };
+      const m: any = master;
+      const dw = m.default_weight;
+      const dr = m.default_reps;
+      const ds = m.default_sets;
+      let sets = updated[i].sets;
+      // Autofill defaults only if user hasn't entered anything yet
+      const isEmpty = sets.length === 1 && !sets[0].weight && !sets[0].reps;
+      if (isEmpty && (dw != null || dr != null || ds != null)) {
+        const setCount = Math.max(1, Number(ds) || 1);
+        sets = Array.from({ length: setCount }, () => ({
+          weight: dw != null ? String(dw) : "",
+          reps: dr != null ? String(dr) : "",
+        }));
+      }
+      updated[i] = { ...updated[i], exerciseId: master.id, name: master.name, sets };
       setExercises(updated);
     }
   };

@@ -237,20 +237,41 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          default_reps: number | null
+          default_sets: number | null
+          default_weight: number | null
           id: string
+          muscle_group: string
           name: string
+          notes: string | null
+          sort_order: number
+          updated_at: string
         }
         Insert: {
           category?: string
           created_at?: string
+          default_reps?: number | null
+          default_sets?: number | null
+          default_weight?: number | null
           id?: string
+          muscle_group?: string
           name: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
         }
         Update: {
           category?: string
           created_at?: string
+          default_reps?: number | null
+          default_sets?: number | null
+          default_weight?: number | null
           id?: string
+          muscle_group?: string
           name?: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }

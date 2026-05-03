@@ -1,6 +1,9 @@
+import { supabase } from "@/integrations/supabase/client";
+
 /**
  * Map exercise name to a muscle group (Japanese label).
  * Unknown exercises return "その他".
+ * Seeded with built-in fallbacks; refreshed from `exercises` table at runtime.
  */
 export const muscleGroupMap: Record<string, string> = {
   // 胸
@@ -49,6 +52,37 @@ export const muscleGroupMap: Record<string, string> = {
   "プランク": "腹筋",
   "アブローラー": "腹筋",
 };
+
+let loadPromise: Promise<void> | null = null;
+
+/**
+ * Load (or refresh) the muscle group map from the exercises table.
+ * Safe to call multiple times; subsequent calls reuse the in-flight promise.
+ */
+export const loadMuscleGroupMap = async (force = false): Promise<void> => {
+  if (loadPromise && !force) return loadPromise;
+  loadPromise = (async () => {
+    const { data, error } = await supabase
+      .from("exercises")
+      .select("name, muscle_group");
+    if (error || !data) return;
+    for (const row of data as Array<{ name: string; muscle_group: string | null }>) {
+      if (row.name && row.muscle_group) {
+        muscleGroupMap[row.name] = row.muscle_group;
+      }
+    }
+  })();
+  try {
+    await loadPromise;
+  } finally {
+    if (force) loadPromise = null;
+  }
+};
+
+// Kick off load eagerly so most callers see DB values without awaiting.
+if (typeof window !== "undefined") {
+  loadMuscleGroupMap().catch(() => {});
+}
 
 export const getMuscleGroup = (exerciseName: string): string => {
   return muscleGroupMap[exerciseName] || "その他";
