@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { useGymSettings } from "@/hooks/useGymSettings";
 import { formatShareDate, type WorkoutSession } from "@/lib/workoutShare";
+import { getMuscleGroup } from "@/lib/muscleGroup";
 
 export type ShareTheme = "dark" | "light" | "transparent";
 
@@ -115,9 +116,27 @@ const WorkoutShareCard = forwardRef<HTMLDivElement, Props>(
                     color: nameColor,
                     lineHeight: 1.2,
                     marginBottom: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 14,
                   }}
                 >
-                  {ex.exercise_name}
+                  <span>{ex.exercise_name}</span>
+                  <span
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 600,
+                      backgroundColor: "rgba(10, 186, 181, 0.15)",
+                      color: accent,
+                      padding: "4px 14px",
+                      borderRadius: 8,
+                      lineHeight: 1.4,
+                      textShadow: "none",
+                    }}
+                  >
+                    {getMuscleGroup(ex.exercise_name)}
+                  </span>
                 </div>
                 <div
                   style={{
