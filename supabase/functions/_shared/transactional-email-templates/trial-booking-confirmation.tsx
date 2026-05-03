@@ -37,7 +37,8 @@ const TrialBookingConfirmationEmail = ({
           <Text style={label}>内容</Text>
           <Text style={value}>カウンセリング＋トレーニング体験（計60分）</Text>
           <Text style={label}>場所</Text>
-          <Text style={value}>京都市中京区毘沙門町533-1<br />プラザ御所南2階</Text>
+          <Text style={value}>京都市中京区毘沙門町533-1</Text>
+          <Text style={value}>プラザ御所南2階</Text>
         </Section>
 
         <Section style={detailSection}>
