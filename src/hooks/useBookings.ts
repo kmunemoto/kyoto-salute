@@ -468,27 +468,21 @@ async function sendCancelEmailNotification(
     }).catch((e) => console.error("Cancel email (trainer) failed:", e));
   }
 
-  // Email customer
-  const { data: authUser } = await supabase.auth.getUser();
-  let customerEmail: string | undefined;
-  if (authUser?.user?.id === booking.user_id) {
-    customerEmail = authUser.user.email ?? undefined;
-  }
-  if (customerEmail) {
-    supabase.functions.invoke("send-transactional-email", {
-      body: {
-        templateName: "booking-cancellation",
-        recipientEmail: customerEmail,
-        idempotencyKey: `cancel-customer-${booking.id}`,
-        templateData: {
-          customerName,
-          bookingDate: formattedDate,
-          bookingTime,
-          planName: booking.booking_type,
-          recipientRole: "customer",
-          cancelledByTrainer,
-        },
+  // Email customer (resolve email from auth via edge function)
+  supabase.functions.invoke("send-transactional-email", {
+    body: {
+      templateName: "booking-cancellation",
+      recipientEmail: "_resolve_user_",
+      idempotencyKey: `cancel-customer-${booking.id}`,
+      templateData: {
+        customerName,
+        bookingDate: formattedDate,
+        bookingTime,
+        planName: booking.booking_type,
+        recipientRole: "customer",
+        cancelledByTrainer,
+        resolveUserId: booking.user_id,
       },
-    }).catch((e) => console.error("Cancel email (customer) failed:", e));
-  }
+    },
+  }).catch((e) => console.error("Cancel email (customer) failed:", e));
 }
