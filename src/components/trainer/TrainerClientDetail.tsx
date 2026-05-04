@@ -910,17 +910,28 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                       className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     >
                       <option value="" disabled>種目を選択</option>
-                      {[...exerciseCategories].map((cat) => {
-                        const catExercises = exerciseMasters.filter((e) => e.category === cat);
-                        if (catExercises.length === 0) return null;
-                        return (
-                          <optgroup key={cat} label={cat}>
-                            {catExercises.map((e) => (
-                              <option key={e.id} value={e.id}>{e.name}</option>
-                            ))}
-                          </optgroup>
+                      {(() => {
+                        const cats = Array.from(
+                          new Set(
+                            exerciseMasters.map(
+                              (e: any) => e.muscle_group || e.category || "その他",
+                            ),
+                          ),
                         );
-                      })}
+                        return cats.map((cat) => {
+                          const catExercises = exerciseMasters.filter(
+                            (e: any) => (e.muscle_group || e.category) === cat,
+                          );
+                          if (catExercises.length === 0) return null;
+                          return (
+                            <optgroup key={cat} label={cat}>
+                              {catExercises.map((e) => (
+                                <option key={e.id} value={e.id}>{e.name}</option>
+                              ))}
+                            </optgroup>
+                          );
+                        });
+                      })()}
                       <option value="__new__">＋ 新しい種目を追加</option>
                     </select>
                     {showNewExercise === i && (
