@@ -427,3 +427,68 @@ async function sendCancelLineNotification(
     });
   }
 }
+
+async function sendCancelEmailNotification(
+  booking: { id: string; user_id: string; booking_date: string; booking_type: string },
+  cancelledByTrainer: boolean,
+) {
+  const dt = toJSTDate(booking.booking_date);
+  const formattedDate = format(dt, "M月d日（E）", { locale: ja });
+  const h = dt.getHours();
+  const m = dt.getMinutes();
+  const startTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const endMin = h * 60 + m + 60;
+  const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+  const bookingTime = `${startTime}〜${endTime}`;
+
+  const [{ data: profile }, { data: trainerIds }] = await Promise.all([
+    supabase.from("profiles").select("display_name").eq("user_id", booking.user_id).maybeSingle(),
+    supabase.rpc("get_trainer_ids"),
+  ]);
+  const customerName = profile?.display_name || "お客様";
+  const trainerId = trainerIds?.[0]?.user_id;
+
+  // Email trainer
+  if (trainerId) {
+    supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName: "booking-cancellation",
+        recipientEmail: "_resolve_trainer_",
+        idempotencyKey: `cancel-trainer-${booking.id}`,
+        templateData: {
+          customerName,
+          bookingDate: formattedDate,
+          bookingTime,
+          planName: booking.booking_type,
+          recipientRole: "trainer",
+          cancelledByTrainer,
+          trainerUserId: trainerId,
+        },
+      },
+    }).catch((e) => console.error("Cancel email (trainer) failed:", e));
+  }
+
+  // Email customer
+  const { data: authUser } = await supabase.auth.getUser();
+  let customerEmail: string | undefined;
+  if (authUser?.user?.id === booking.user_id) {
+    customerEmail = authUser.user.email ?? undefined;
+  }
+  if (customerEmail) {
+    supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName: "booking-cancellation",
+        recipientEmail: customerEmail,
+        idempotencyKey: `cancel-customer-${booking.id}`,
+        templateData: {
+          customerName,
+          bookingDate: formattedDate,
+          bookingTime,
+          planName: booking.booking_type,
+          recipientRole: "customer",
+          cancelledByTrainer,
+        },
+      },
+    }).catch((e) => console.error("Cancel email (customer) failed:", e));
+  }
+}
