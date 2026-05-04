@@ -219,6 +219,33 @@ const TrialBooking = () => {
         console.error("LINE notification failed:", e);
       }
     })();
+
+    // Fire-and-forget: notify trainer via email
+    (async () => {
+      try {
+        const { data: trainerRoles } = await supabase.rpc("get_trainer_ids");
+        const trainerId = trainerRoles?.[0]?.user_id;
+        if (!trainerId) return;
+
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "new-booking-notification",
+            recipientEmail: "_resolve_trainer_",
+            idempotencyKey: `trial-notify-${guestEmail.trim()}-${bookingDate}`,
+            templateData: {
+              customerName: `🆕 ${guestName.trim()}（初回無料体験）`,
+              bookingDate: formattedDate,
+              bookingTime: `${slot.time}〜${endTime}`,
+              planName: "初回無料体験",
+              dashboardUrl: window.location.origin,
+              trainerUserId: trainerId,
+            },
+          },
+        });
+      } catch (e) {
+        console.error("Trainer email notification failed:", e);
+      }
+    })();
   };
 
   if (completed && completedInfo) {
