@@ -125,7 +125,22 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (!effectiveRecipient || effectiveRecipient === '_resolve_trainer_') {
+  // Special: resolve any user email from DB by user_id
+  if (effectiveRecipient === '_resolve_user_' && templateData.resolveUserId) {
+    const supabaseForAuth = createClient(supabaseUrl, supabaseServiceKey)
+    const { data: authUser } = await supabaseForAuth.auth.admin.getUserById(templateData.resolveUserId)
+    if (authUser?.user?.email) {
+      effectiveRecipient = authUser.user.email
+    } else {
+      console.error('Could not resolve user email', { resolveUserId: templateData.resolveUserId })
+      return new Response(
+        JSON.stringify({ error: 'Could not resolve user email' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+  }
+
+  if (!effectiveRecipient || effectiveRecipient === '_resolve_trainer_' || effectiveRecipient === '_resolve_user_') {
     return new Response(
       JSON.stringify({
         error: 'recipientEmail is required (unless the template defines a fixed recipient)',
