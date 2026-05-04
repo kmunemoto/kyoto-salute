@@ -352,6 +352,10 @@ export const cancelBooking = async (bookingId: string, cancelledByTrainer = fals
     sendCancelLineNotification(booking, cancelledByTrainer).catch((e) =>
       console.error("sendCancelLineNotification failed:", e)
     );
+    // Send email cancel notifications (fire-and-forget)
+    sendCancelEmailNotification(booking, cancelledByTrainer).catch((e) =>
+      console.error("sendCancelEmailNotification failed:", e)
+    );
   } else if (error) {
     console.error("cancelBooking: 削除エラー", error);
   }
