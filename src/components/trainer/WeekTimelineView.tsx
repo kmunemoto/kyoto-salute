@@ -3,11 +3,19 @@ import { format, addDays, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { getJSTNow } from "@/lib/timezone";
 import { BookingWithTime } from "@/hooks/useBookings";
+import { getBookingProgressIndex, type BookingForProgress } from "@/lib/courseProgress";
+
+export interface ProfileLite {
+  user_id: string;
+  plan: string | null;
+  cycle_start_date: string | null;
+}
 
 interface WeekTimelineViewProps {
   weekStart: Date;
   bookings: BookingWithTime[];
   onSelectBooking?: (booking: BookingWithTime) => void;
+  profiles?: ProfileLite[];
 }
 
 const START_HOUR = 9;
@@ -21,8 +29,22 @@ const timeToMin = (t: string) => {
   return h * 60 + m;
 };
 
-const WeekTimelineView = ({ weekStart, bookings, onSelectBooking }: WeekTimelineViewProps) => {
+const WeekTimelineView = ({ weekStart, bookings, onSelectBooking, profiles = [] }: WeekTimelineViewProps) => {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  // user_id ごとの予約一覧（進捗計算用）
+  const bookingsByUser = new Map<string, BookingForProgress[]>();
+  bookings
+    .filter((b) => b.user_id !== "trial-guest" && b.user_id !== "blocked" && !b.isBlocked)
+    .forEach((b) => {
+      const rows = bookingsByUser.get(b.user_id) || [];
+      rows.push({
+        id: b.id,
+        booking_date: `${b.date}T${b.startTime}:00+09:00`,
+        status: b.status,
+      });
+      bookingsByUser.set(b.user_id, rows);
+    });
   const totalMinutes = (END_HOUR - START_HOUR) * 60;
   const totalHeight = totalMinutes * PX_PER_MIN;
 
@@ -125,6 +147,24 @@ const WeekTimelineView = ({ weekStart, bookings, onSelectBooking }: WeekTimeline
                     ? "🚫"
                     : b.clientName.replace("🆕 ", "").slice(0, 3);
 
+                  const profile = profiles.find((p) => p.user_id === b.user_id);
+                  const progress =
+                    !b.isBlocked && profile
+                      ? getBookingProgressIndex(
+                          b.id,
+                          profile.cycle_start_date,
+                          profile.plan,
+                          bookingsByUser.get(b.user_id) || [],
+                        )
+                      : null;
+                  const progressLabel = progress
+                    ? progress.isUnlimited
+                      ? `${progress.index}回目`
+                      : progress.isUnconfigured || progress.total === null
+                        ? null
+                        : `${progress.index}/${progress.total}`
+                    : null;
+
                   return (
                     <button
                       key={b.id}
@@ -136,11 +176,14 @@ const WeekTimelineView = ({ weekStart, bookings, onSelectBooking }: WeekTimeline
                           : "bg-accent text-accent-foreground"
                       }`}
                       style={{ top, height }}
-                      title={`${b.clientName} ${b.startTime}〜${b.endTime}`}
+                      title={`${b.clientName} ${b.startTime}〜${b.endTime}${progressLabel ? ` (${progressLabel})` : ""}`}
                     >
                       <div className="font-bold truncate">{shortName}</div>
                       {height > 24 && (
                         <div className="opacity-80 truncate">{b.startTime}</div>
+                      )}
+                      {progressLabel && height > 38 && (
+                        <div className="opacity-90 truncate font-semibold">{progressLabel}</div>
                       )}
                     </button>
                   );
