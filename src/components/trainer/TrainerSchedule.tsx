@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import WeekTimelineView from "./WeekTimelineView";
+import CourseProgressBadge from "./CourseProgressBadge";
+import { getBookingProgressIndex, type BookingForProgress } from "@/lib/courseProgress";
 
 
 const TrainerSchedule = () => {
@@ -37,6 +39,35 @@ const TrainerSchedule = () => {
 
   const { bookings, loading, refetch, removeBooking } = useAllBookings();
   const { profiles } = useAllCustomerProfiles();
+
+  // user_id ごとの予約一覧（進捗計算用）
+  const bookingsByUser = (() => {
+    const map = new Map<string, BookingForProgress[]>();
+    bookings
+      .filter((b) => b.user_id !== "trial-guest" && b.user_id !== "blocked" && !b.isBlocked)
+      .forEach((b) => {
+        const rows = map.get(b.user_id) || [];
+        rows.push({
+          id: b.id,
+          booking_date: `${b.date}T${b.startTime}:00+09:00`,
+          status: b.status,
+        });
+        map.set(b.user_id, rows);
+      });
+    return map;
+  })();
+
+  const getProgress = (booking: { id: string; user_id: string; isBlocked?: boolean }) => {
+    if (booking.isBlocked) return null;
+    const profile = profiles.find((p) => p.user_id === booking.user_id);
+    if (!profile) return null;
+    return getBookingProgressIndex(
+      booking.id,
+      profile.cycle_start_date,
+      profile.plan,
+      bookingsByUser.get(booking.user_id) || [],
+    );
+  };
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const timeSlots = (() => {
@@ -286,6 +317,11 @@ const TrainerSchedule = () => {
         <WeekTimelineView
           weekStart={weekStart}
           bookings={bookings}
+          profiles={profiles.map((p) => ({
+            user_id: p.user_id,
+            plan: p.plan ?? null,
+            cycle_start_date: p.cycle_start_date ?? null,
+          }))}
           onSelectBooking={(b) =>
             setDeleteTarget({
               id: b.id,
@@ -355,6 +391,20 @@ const TrainerSchedule = () => {
                                   <p className="font-bold truncate">{session.isBlocked ? "🚫 ブロック" : session.clientName}</p>
                                   <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
                                   {!session.isBlocked && <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>}
+                                  {!session.isBlocked && (() => {
+                                    const p = getProgress(session);
+                                    if (!p) return null;
+                                    return (
+                                      <CourseProgressBadge
+                                        index={p.index}
+                                        total={p.total}
+                                        isUnlimited={p.isUnlimited}
+                                        isUnconfigured={p.isUnconfigured}
+                                        isOverflow={p.isOverflow}
+                                        className="mt-1"
+                                      />
+                                    );
+                                  })()}
                                 </div>
                               )}
                             </td>
@@ -399,6 +449,20 @@ const TrainerSchedule = () => {
                               <p className="text-sm font-bold truncate">{booking.isBlocked ? "ブロック" : booking.clientName}</p>
                               <p className="text-xs text-muted-foreground">{booking.startTime}〜{booking.endTime}</p>
                               {!booking.isBlocked && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{booking.booking_type}</p>}
+                              {!booking.isBlocked && (() => {
+                                const p = getProgress(booking);
+                                if (!p) return null;
+                                return (
+                                  <CourseProgressBadge
+                                    index={p.index}
+                                    total={p.total}
+                                    isUnlimited={p.isUnlimited}
+                                    isUnconfigured={p.isUnconfigured}
+                                    isOverflow={p.isOverflow}
+                                    className="mt-1"
+                                  />
+                                );
+                              })()}
                             </div>
                           </div>
                           <div className="mt-3 flex justify-end">
