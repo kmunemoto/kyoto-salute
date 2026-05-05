@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Users, CalendarDays, TrendingUp, Clock, BarChart3, ClipboardList, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +9,8 @@ import { formatJST } from "@/lib/timezone";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import CourseProgressBadge from "./CourseProgressBadge";
-import { getBookingProgressIndex, getMonthlySessionCount, type BookingForProgress } from "@/lib/courseProgress";
+import { getBookingProgressIndex, type BookingForProgress } from "@/lib/courseProgress";
+import { useMemo } from "react";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
@@ -55,54 +55,19 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   );
 
   // 今月売上:
-  //  支払いタイミング = 各サイクルの「1回目のトレーニング実施日(予約日)」
-  //  各顧客の予約履歴(キャンセル除外)を時系列に並べ、cycle_start_date 以降を
-  //  プラン回数ごとに区切ったときの「各サイクル先頭の予約日」が今月にある場合のみ計上。
-  //  サイクル開始日は固定addMonthsではなく、実際の予約から導出する。
+  //  各顧客の `cycle_start_date` (= 今期サイクルの1回目のトレーニング日 = 支払い日)
+  //  が今月にある場合のみ、その顧客のプラン料金を計上する。
+  //  cycle_start_date はトレーナーが新サイクル開始時に更新する運用。
   const currentMonthRevenue = profiles.reduce((sum, p) => {
     if (!p.plan || !p.cycle_start_date) return sum;
     const plan = p.plan as PlanType;
     const price = planPrices[plan] || 0;
     if (!price) return sum;
-
-    const monthly = getMonthlySessionCount(plan); // -1=通い放題, null=未設定
-    if (monthly === null) return sum;
-
-    const userBookings = (bookingsByUser.get(p.user_id) || [])
-      .filter((b) => b.status !== "キャンセル済み")
-      .map((b) => new Date(b.booking_date))
-      .filter((d) => formatJST(d, "yyyy-MM-dd") >= p.cycle_start_date!)
-      .sort((a, b) => a.getTime() - b.getTime());
-
-    if (userBookings.length === 0) return sum;
-
-    // サイクル先頭となる予約日インデックスを抽出
-    // 通い放題は addMonths ベース、回数制は monthly 件ごとに区切り
-    const cycleStartDates: Date[] = [];
-    if (monthly === -1) {
-      // 通い放題: cycle_start_date から月次でローリング
-      let anchor = userBookings[0];
-      cycleStartDates.push(anchor);
-      // 以降は実予約から「前回サイクル開始から1ヶ月以上後の最初の予約」を新サイクル開始とみなす
-      for (const d of userBookings) {
-        const next = new Date(anchor);
-        next.setMonth(next.getMonth() + 1);
-        if (d >= next) {
-          cycleStartDates.push(d);
-          anchor = d;
-        }
-      }
-    } else {
-      // 回数制: monthly 件ごとに区切り、その先頭が支払い日
-      for (let i = 0; i < userBookings.length; i += monthly) {
-        cycleStartDates.push(userBookings[i]);
-      }
+    // cycle_start_date は date 型 (YYYY-MM-DD)
+    if (p.cycle_start_date.startsWith(currentMonth)) {
+      return sum + price;
     }
-
-    const hasCycleStartThisMonth = cycleStartDates.some(
-      (d) => formatJST(d, "yyyy-MM") === currentMonth,
-    );
-    return hasCycleStartThisMonth ? sum + price : sum;
+    return sum;
   }, 0);
 
   const revenueData = [
