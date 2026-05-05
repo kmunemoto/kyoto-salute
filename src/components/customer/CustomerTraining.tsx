@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Dumbbell, TrendingUp, Calendar, Loader2, Share2 } from "lucide-react";
+import { Dumbbell, TrendingUp, Calendar, Loader2, Share2, Camera } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,6 +15,7 @@ import WorkoutShareModal from "./WorkoutShareModal";
 import { buildSession, type RawWorkout } from "@/lib/workoutShare";
 import MuscleGroupBadge from "./MuscleGroupBadge";
 import { summarizeMuscleGroups } from "@/lib/muscleGroup";
+import ProgressPhotosTab from "./progress/ProgressPhotosTab";
 import {
   LineChart,
   Line,
@@ -43,6 +44,7 @@ interface WorkoutWithExercise {
 
 const CustomerTraining = () => {
   const { user } = useAuth();
+  const [subTab, setSubTab] = useState<"workout" | "photos">("workout");
   const [workouts, setWorkouts] = useState<WorkoutWithExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareDate, setShareDate] = useState<string | null>(null);
@@ -161,10 +163,34 @@ const CustomerTraining = () => {
         <div className="w-9 h-9 rounded-xl accent-gradient flex items-center justify-center">
           <Dumbbell className="w-4.5 h-4.5 text-accent-foreground" />
         </div>
-        <h1 className="text-lg font-bold">トレーニング記録</h1>
+        <h1 className="text-lg font-bold">記録</h1>
       </div>
 
-      {workouts.length === 0 ? (
+      {/* Sub tabs */}
+      <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted">
+        <button
+          onClick={() => setSubTab("workout")}
+          className={`h-9 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition ${
+            subTab === "workout" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          <Dumbbell className="w-4 h-4" />
+          トレーニング
+        </button>
+        <button
+          onClick={() => setSubTab("photos")}
+          className={`h-9 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition ${
+            subTab === "photos" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          <Camera className="w-4 h-4" />
+          写真
+        </button>
+      </div>
+
+      {subTab === "photos" ? (
+        <ProgressPhotosTab />
+      ) : workouts.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Dumbbell className="w-8 h-8 mx-auto mb-2 opacity-50" />
