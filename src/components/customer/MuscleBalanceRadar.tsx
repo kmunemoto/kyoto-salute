@@ -26,9 +26,16 @@ interface WorkoutRow {
   exercise_name: string;
 }
 
-const MuscleBalanceRadar = () => {
+interface Props {
+  userId?: string;
+  cycleStartDate?: string | null;
+}
+
+const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: Props = {}) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const userId = userIdProp ?? user?.id;
+  const cycleStartDate = cycleProp !== undefined ? cycleProp : profile?.cycle_start_date;
   const [cycleOffset, setCycleOffset] = useState(0);
   const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
   const [, force] = useState(0);
@@ -41,8 +48,8 @@ const MuscleBalanceRadar = () => {
 
   const { start, end } = useMemo(() => {
     const now = getJSTNow();
-    if (profile?.cycle_start_date) {
-      const current = getCycleWindow(profile.cycle_start_date, now);
+    if (cycleStartDate) {
+      const current = getCycleWindow(cycleStartDate, now);
       return {
         start: addMonths(current.start, cycleOffset),
         end: addMonths(current.end, cycleOffset),
@@ -51,17 +58,17 @@ const MuscleBalanceRadar = () => {
     const base = new Date(now.getFullYear(), now.getMonth(), 1);
     const shifted = addMonths(base, cycleOffset);
     return { start: shifted, end: addMonths(shifted, 1) };
-  }, [profile?.cycle_start_date, cycleOffset]);
+  }, [cycleStartDate, cycleOffset]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const fetch = async () => {
       const startStr = format(start, "yyyy-MM-dd");
       const endStr = format(end, "yyyy-MM-dd");
       const { data } = await supabase
         .from("workouts")
         .select("workout_date, weight, reps, sets, exercises(name)")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .gte("workout_date", startStr)
         .lt("workout_date", endStr);
       if (data) {
@@ -79,7 +86,7 @@ const MuscleBalanceRadar = () => {
       }
     };
     fetch();
-  }, [user, start, end]);
+  }, [userId, start, end]);
 
   const chartData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -126,7 +133,7 @@ const MuscleBalanceRadar = () => {
             <ChevronLeft className="w-4 h-4" />
           </button>
           <span className="text-xs text-muted-foreground">
-            {isCurrent ? "今期間" : `${cycleOffset}期間前`}
+            {isCurrent ? "今回" : cycleOffset === -1 ? "前回" : `${Math.abs(cycleOffset)}回前`}
           </span>
           <button
             onClick={() => setCycleOffset((n) => Math.min(0, n + 1))}
