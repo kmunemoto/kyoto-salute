@@ -119,7 +119,7 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Activity className="w-4 h-4 text-accent" />
-            <h3 className="font-bold text-sm">部位バランス</h3>
+            <h3 className="font-bold text-sm">トレーニング部位バランス</h3>
           </div>
           <span className="text-xs" style={{ color: "#999" }}>{periodLabel}</span>
         </div>
