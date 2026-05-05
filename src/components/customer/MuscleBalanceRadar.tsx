@@ -24,6 +24,7 @@ interface WorkoutRow {
   reps: number | null;
   sets: Array<{ set: number; weight: number; reps: number }> | null;
   exercise_name: string;
+  muscle_group: string | null;
 }
 
 interface Props {
@@ -67,20 +68,21 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
       const endStr = format(end, "yyyy-MM-dd");
       const { data } = await supabase
         .from("workouts")
-        .select("workout_date, weight, reps, sets, exercises(name)")
+        .select("workout_date, weight, reps, sets, exercises(name, muscle_group)")
         .eq("user_id", userId)
         .gte("workout_date", startStr)
         .lt("workout_date", endStr);
       if (data) {
-        setWorkouts(
-          data.map((w: any) => ({
-            workout_date: w.workout_date,
-            weight: w.weight,
-            reps: w.reps,
-            sets: w.sets,
-            exercise_name: w.exercises?.name || "不明",
-          }))
-        );
+        const rows = data.map((w: any) => ({
+          workout_date: w.workout_date,
+          weight: w.weight,
+          reps: w.reps,
+          sets: w.sets,
+          exercise_name: w.exercises?.name || "不明",
+          muscle_group: w.exercises?.muscle_group ?? null,
+        }));
+        console.log("[MuscleBalanceRadar] period", startStr, "→", endStr, "rows:", rows);
+        setWorkouts(rows);
       } else {
         setWorkouts([]);
       }
@@ -93,18 +95,20 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
     MUSCLE_GROUPS.forEach((g) => (counts[g] = 0));
     let total = 0;
     workouts.forEach((w) => {
-      const group = getMuscleGroup(w.exercise_name);
-      if (group === "その他") return;
+      // Prefer DB-joined muscle_group; fall back to hardcoded map for legacy data.
+      const group = w.muscle_group || getMuscleGroup(w.exercise_name);
+      if (!group || group === "その他") return;
       const setCount = w.sets?.length || (w.weight != null ? 1 : 0);
       if (counts[group] !== undefined) {
         counts[group] += setCount;
         total += setCount;
       }
     });
+    console.log("[MuscleBalanceRadar] counts:", counts, "total sets:", total);
     return {
       data: MUSCLE_GROUPS.map((g) => ({
         group: g,
-        value: total > 0 ? Math.round((counts[g] / total) * 100) : 0,
+        value: counts[g],
       })),
       total,
     };
@@ -152,7 +156,15 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
                 <PolarGrid stroke="#E5E5E5" />
                 <PolarAngleAxis
                   dataKey="group"
-                  tick={{ fontSize: 13, fill: "#333" }}
+                  tick={({ payload, x, y, textAnchor }: any) => {
+                    const count = chartData.data.find((d) => d.group === payload.value)?.value ?? 0;
+                    return (
+                      <text x={x} y={y} textAnchor={textAnchor} fontSize={12} fill="#333">
+                        <tspan>{payload.value}</tspan>
+                        <tspan x={x} dy="14" fill="#0ABAB5" fontWeight={600}>{count}セット</tspan>
+                      </text>
+                    );
+                  }}
                 />
                 <Radar
                   dataKey="value"
