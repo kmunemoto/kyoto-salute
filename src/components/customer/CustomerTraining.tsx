@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Dumbbell, TrendingUp, Calendar, Loader2, Share2 } from "lucide-react";
+import { Dumbbell, TrendingUp, Calendar, Loader2, Share2, Camera } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,6 +15,7 @@ import WorkoutShareModal from "./WorkoutShareModal";
 import { buildSession, type RawWorkout } from "@/lib/workoutShare";
 import MuscleGroupBadge from "./MuscleGroupBadge";
 import { summarizeMuscleGroups } from "@/lib/muscleGroup";
+import ProgressPhotosTab from "./progress/ProgressPhotosTab";
 import {
   LineChart,
   Line,
@@ -43,6 +44,7 @@ interface WorkoutWithExercise {
 
 const CustomerTraining = () => {
   const { user } = useAuth();
+  const [subTab, setSubTab] = useState<"workout" | "photos">("workout");
   const [workouts, setWorkouts] = useState<WorkoutWithExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareDate, setShareDate] = useState<string | null>(null);
