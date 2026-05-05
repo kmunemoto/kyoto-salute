@@ -6,7 +6,7 @@ import { planPrices, PlanType } from "@/lib/dummyData";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { useAllCustomerProfiles, useProfile } from "@/hooks/useProfile";
 import { useAllBookings } from "@/hooks/useBookings";
-import { formatJST, getJSTNow } from "@/lib/timezone";
+import { formatJST } from "@/lib/timezone";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import CourseProgressBadge from "./CourseProgressBadge";
