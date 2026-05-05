@@ -10,7 +10,7 @@ import { formatJST, getJSTNow } from "@/lib/timezone";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import CourseProgressBadge from "./CourseProgressBadge";
-import { getBookingProgressIndex, getCycleWindow, type BookingForProgress } from "@/lib/courseProgress";
+import { getBookingProgressIndex, getMonthlySessionCount, type BookingForProgress } from "@/lib/courseProgress";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
