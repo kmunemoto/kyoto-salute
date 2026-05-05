@@ -16,6 +16,55 @@ interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
 }
 
+type RevenueProfile = {
+  user_id: string;
+  plan: string | null;
+  cycle_start_date: string | null;
+};
+
+const addMonthsToDateKey = (dateKey: string, months: number) => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + months, day));
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+const getRecentMonths = (todayKey: string, count = 4) => {
+  const currentMonthStart = `${todayKey.slice(0, 7)}-01`;
+  return Array.from({ length: count }, (_, index) => addMonthsToDateKey(currentMonthStart, index - count + 1));
+};
+
+const getRevenueCycleStartDates = (
+  profile: RevenueProfile,
+  userBookings: BookingForProgress[],
+  todayKey: string,
+) => {
+  const starts = new Set<string>();
+  const bookingDates = userBookings
+    .filter((b) => b.status !== "キャンセル済み")
+    .map((b) => b.booking_date.slice(0, 10))
+    .sort();
+
+  if (!profile.cycle_start_date || bookingDates.length === 0) return starts;
+
+  if (profile.cycle_start_date <= todayKey) {
+    starts.add(profile.cycle_start_date);
+  }
+
+  let nextStart = profile.cycle_start_date;
+  while (nextStart) {
+    const windowStart = addMonthsToDateKey(nextStart, -1);
+    const previousStart = bookingDates.find((date) => date >= windowStart && date < nextStart);
+    if (!previousStart || starts.has(previousStart)) break;
+    starts.add(previousStart);
+    nextStart = previousStart;
+  }
+
+  return starts;
+};
+
 const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const { profiles, loading } = useAllCustomerProfiles();
   const { bookings, loading: bookingsLoading } = useAllBookings();
