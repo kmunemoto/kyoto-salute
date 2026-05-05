@@ -156,15 +156,7 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
                 <PolarGrid stroke="#E5E5E5" />
                 <PolarAngleAxis
                   dataKey="group"
-                  tick={({ payload, x, y, textAnchor }: any) => {
-                    const count = chartData.data.find((d) => d.group === payload.value)?.value ?? 0;
-                    return (
-                      <text x={x} y={y} textAnchor={textAnchor} fontSize={12} fill="#333">
-                        <tspan>{payload.value}</tspan>
-                        <tspan x={x} dy="14" fill="#0ABAB5" fontWeight={600}>{count}セット</tspan>
-                      </text>
-                    );
-                  }}
+                  tick={{ fontSize: 13, fill: "#333" }}
                 />
                 <Radar
                   dataKey="value"
