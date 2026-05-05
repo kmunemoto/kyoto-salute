@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
+import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
 
 interface TrainerClientDetailProps {
   clientId: string;
