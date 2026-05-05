@@ -185,7 +185,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [hasProfile, setHasProfile] = useState(false);
   const [showUsagePeriod, setShowUsagePeriod] = useState(true);
   const [clientPlan, setClientPlan] = useState<string>('初回無料体験');
-  const [isPaid, setIsPaid] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [savingMeasurement, setSavingMeasurement] = useState(false);
@@ -228,7 +227,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         setProfile(data);
         setHasProfile(true);
         setClientPlan(data.plan || '初回無料体験');
-        setIsPaid(data.paid_this_month);
         setCycleStartDate(data.cycle_start_date || "");
         setShowUsagePeriod(data.show_usage_period ?? true);
       } else {
@@ -492,13 +490,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     toast.success(`${displayName}さんのプランを「${v}」に変更しました`);
   };
 
-  const handlePaymentToggle = async (checked: boolean) => {
-    const { error } = await supabase.from("profiles").update({ paid_this_month: checked }).eq("user_id", clientId);
-    if (error) { toast.error("更新に失敗しました"); return; }
-    setIsPaid(checked);
-    toast.success(checked ? `${displayName}さんの今月分を「支払済」にしました` : `${displayName}さんの今月分を「未払い」に戻しました`);
-  };
-
   const handleCycleStartDateChange = async (newDate: string) => {
     const { error } = await supabase.from("profiles").update({ cycle_start_date: newDate || null }).eq("user_id", clientId);
     if (error) { toast.error("起算日の更新に失敗しました"); return; }
@@ -601,19 +592,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 ))}
               </select>
               <p className="text-sm font-bold mt-2">月額: ¥{getPrice(clientPlan).toLocaleString()}</p>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className={`w-4 h-4 ${isPaid ? 'text-success' : 'text-muted-foreground'}`} />
-                <span className="text-sm font-medium">今月分 支払い状況</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-bold ${isPaid ? 'text-success' : 'text-destructive'}`}>
-                  {isPaid ? '支払済' : '未払い'}
-                </span>
-                <Switch checked={isPaid} onCheckedChange={handlePaymentToggle} />
-              </div>
             </div>
 
             {/* Cycle Start Date */}
