@@ -719,12 +719,6 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           {/* Training Growth Chart */}
           <TrainingGrowthChart workoutRecords={workoutRecords} loadingRecords={loadingRecords} />
 
-          {/* Muscle Balance Radar */}
-          <section>
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">部位バランス</h2>
-            <MuscleBalanceRadar userId={clientId} cycleStartDate={cycleStartDate || null} />
-          </section>
-
           <section>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <Weight className="w-3.5 h-3.5" />
@@ -891,6 +885,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
         {/* Training input */}
         <TabsContent value="training" className="space-y-4">
+          {/* Muscle Balance Radar */}
+          <MuscleBalanceRadar userId={clientId} cycleStartDate={cycleStartDate || null} />
+
           <Card>
             <CardContent className="p-3 sm:p-4 space-y-4">
               <div>

@@ -10,7 +10,7 @@ import { formatJST, getJSTNow } from "@/lib/timezone";
 import CounselingResponseList from "./CounselingResponseList";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import CourseProgressBadge from "./CourseProgressBadge";
-import { getBookingProgressIndex, type BookingForProgress } from "@/lib/courseProgress";
+import { getBookingProgressIndex, getCycleWindow, type BookingForProgress } from "@/lib/courseProgress";
 
 interface TrainerDashboardProps {
   onSelectClient: (clientId: string) => void;
@@ -24,7 +24,9 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
   const trainerName = trainerProfile?.display_name || "トレーナー";
 
   const today = formatJST(new Date(), "yyyy-MM-dd");
-  const todayBookings = bookings.filter((b) => b.date === today && b.status !== "キャンセル済み");
+  const todayBookings = bookings.filter(
+    (b) => b.date === today && b.status !== "キャンセル済み" && b.user_id !== "blocked" && b.user_id !== "trial-guest",
+  );
 
   const bookingsByUser = useMemo(() => {
     const map = new Map<string, BookingForProgress[]>();
@@ -42,15 +44,28 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
     return map;
   }, [bookings]);
 
+  // Count this month's sessions (exclude blocked/trial guest, exclude cancellations)
+  const currentMonth = formatJST(new Date(), "yyyy-MM");
+  const monthBookings = bookings.filter(
+    (b) =>
+      b.date.startsWith(currentMonth) &&
+      b.status !== "キャンセル済み" &&
+      b.user_id !== "blocked" &&
+      b.user_id !== "trial-guest",
+  );
+
+  // 今月売上: 支払い済み かつ 今期サイクルの開始日（=今期1回目のトレーニング起算日）が今月にある顧客のみ計上
+  const now = getJSTNow();
   const currentMonthRevenue = profiles.reduce((sum, p) => {
     if (!p.plan) return sum;
+    if (!p.paid_this_month) return sum;
+    const cycle = getCycleWindow(p.cycle_start_date, now);
+    if (!cycle) return sum;
+    const cycleStartMonth = formatJST(cycle.start, "yyyy-MM");
+    if (cycleStartMonth !== currentMonth) return sum;
     const plan = p.plan as PlanType;
     return sum + (planPrices[plan] || 0);
   }, 0);
-
-  // Count this month's sessions
-  const currentMonth = formatJST(new Date(), "yyyy-MM");
-  const monthBookings = bookings.filter((b) => b.date.startsWith(currentMonth) && b.status !== "キャンセル済み");
 
   const revenueData = [
     { month: '1月', revenue: 680000 },
