@@ -16,6 +16,7 @@ import { buildSession, type RawWorkout } from "@/lib/workoutShare";
 import MuscleGroupBadge from "./MuscleGroupBadge";
 import { summarizeMuscleGroups, subscribeMuscleGroup, loadMuscleGroupMap } from "@/lib/muscleGroup";
 import ProgressPhotosTab from "./progress/ProgressPhotosTab";
+import MuscleBalanceRadar from "./MuscleBalanceRadar";
 import {
   LineChart,
   Line,
@@ -196,7 +197,10 @@ const CustomerTraining = () => {
 
       {subTab === "photos" ? (
         <ProgressPhotosTab />
-      ) : workouts.length === 0 ? (
+      ) : (
+        <>
+          <MuscleBalanceRadar />
+          {workouts.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Dumbbell className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -346,6 +350,8 @@ const CustomerTraining = () => {
               })}
             </div>
           </section>
+        </>
+      )}
         </>
       )}
 
