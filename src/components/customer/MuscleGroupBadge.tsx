@@ -1,4 +1,5 @@
-import { getMuscleGroup } from "@/lib/muscleGroup";
+import { useEffect, useState } from "react";
+import { getMuscleGroup, subscribeMuscleGroup, loadMuscleGroupMap } from "@/lib/muscleGroup";
 
 interface Props {
   exerciseName: string;
@@ -6,6 +7,12 @@ interface Props {
 }
 
 const MuscleGroupBadge = ({ exerciseName, className }: Props) => {
+  const [, force] = useState(0);
+  useEffect(() => {
+    loadMuscleGroupMap().catch(() => {});
+    const unsub = subscribeMuscleGroup(() => force((n) => n + 1));
+    return () => { unsub(); };
+  }, []);
   const group = getMuscleGroup(exerciseName);
   return (
     <span

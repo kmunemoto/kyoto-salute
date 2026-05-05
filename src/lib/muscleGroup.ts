@@ -54,6 +54,15 @@ export const muscleGroupMap: Record<string, string> = {
 };
 
 let loadPromise: Promise<void> | null = null;
+const listeners = new Set<() => void>();
+let loaded = false;
+
+export const subscribeMuscleGroup = (cb: () => void) => {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+};
+
+export const isMuscleGroupLoaded = () => loaded;
 
 /**
  * Load (or refresh) the muscle group map from the exercises table.
@@ -71,6 +80,8 @@ export const loadMuscleGroupMap = async (force = false): Promise<void> => {
         muscleGroupMap[row.name] = row.muscle_group;
       }
     }
+    loaded = true;
+    listeners.forEach((cb) => cb());
   })();
   try {
     await loadPromise;
