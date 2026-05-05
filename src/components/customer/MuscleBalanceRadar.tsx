@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow } from "@/lib/timezone";
 import { getMuscleGroup, loadMuscleGroupMap, subscribeMuscleGroup } from "@/lib/muscleGroup";
 
-const MUSCLE_GROUPS = ["胸", "背中", "肩", "脚", "臀部", "腕", "腹筋"] as const;
+const MUSCLE_GROUPS = ["胸", "背中", "肩", "脚", "二頭筋", "三頭筋", "腹筋"] as const;
 
 const getCycleWindow = (cycleStartDate: string, targetDate: Date) => {
   let cycleStart = parseISO(cycleStartDate);
