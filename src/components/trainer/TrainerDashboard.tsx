@@ -56,15 +56,15 @@ const TrainerDashboard = ({ onSelectClient }: TrainerDashboardProps) => {
 
   // 今月売上:
   //  各顧客の `cycle_start_date` (= 今期サイクルの1回目のトレーニング日 = 支払い日)
-  //  が今月にある場合のみ、その顧客のプラン料金を計上する。
-  //  cycle_start_date はトレーナーが新サイクル開始時に更新する運用。
+  //  が今月かつ今日以前の場合のみ、その顧客のプラン料金を計上する。
+  //  未来の1回目トレーニング日は、当日になるまで売上に含めない。
   const currentMonthRevenue = profiles.reduce((sum, p) => {
     if (!p.plan || !p.cycle_start_date) return sum;
     const plan = p.plan as PlanType;
     const price = planPrices[plan] || 0;
     if (!price) return sum;
     // cycle_start_date は date 型 (YYYY-MM-DD)
-    if (p.cycle_start_date.startsWith(currentMonth)) {
+    if (p.cycle_start_date.startsWith(currentMonth) && p.cycle_start_date <= today) {
       return sum + price;
     }
     return sum;
