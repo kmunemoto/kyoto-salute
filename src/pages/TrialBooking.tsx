@@ -447,7 +447,11 @@ const TrialBooking = () => {
                 disabled={(date) => {
                   const yyyyMMdd = format(date, "yyyy-MM-dd");
                   const latestSlot = new Date(`${yyyyMMdd}T20:15:00+09:00`);
-                  return latestSlot.getTime() - Date.now() < 24 * 60 * 60 * 1000;
+                  if (latestSlot.getTime() - Date.now() < 24 * 60 * 60 * 1000) return true;
+                  // 1ヶ月先までのみ予約可能
+                  const maxDate = new Date();
+                  maxDate.setMonth(maxDate.getMonth() + 1);
+                  return date.getTime() > maxDate.getTime();
                 }}
                 className="pointer-events-auto"
               />
