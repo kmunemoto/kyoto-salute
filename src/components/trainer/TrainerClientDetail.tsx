@@ -885,6 +885,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
         {/* Training input */}
         <TabsContent value="training" className="space-y-4">
+          {/* Muscle Balance Radar */}
+          <MuscleBalanceRadar userId={clientId} cycleStartDate={cycleStartDate || null} />
+
           <Card>
             <CardContent className="p-3 sm:p-4 space-y-4">
               <div>
