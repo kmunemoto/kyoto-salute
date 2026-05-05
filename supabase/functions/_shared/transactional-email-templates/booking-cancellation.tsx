@@ -4,7 +4,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "Salute御所南"
+const SITE_NAME = "パーソナルジムSalute御所南"
 
 interface BookingCancellationProps {
   customerName?: string
@@ -73,10 +73,10 @@ export const template = {
   component: BookingCancellationEmail,
   subject: (data: Record<string, any>) =>
     data?.recipientRole === 'customer'
-      ? '【Salute御所南】ご予約のキャンセルを承りました'
+      ? '【パーソナルジムSalute御所南】ご予約のキャンセルを承りました'
       : (data?.isTrial
-          ? '【Salute御所南】初回無料体験の予約がキャンセルされました'
-          : '【Salute御所南】予約がキャンセルされました'),
+          ? '【パーソナルジムSalute御所南】初回無料体験の予約がキャンセルされました'
+          : '【パーソナルジムSalute御所南】予約がキャンセルされました'),
   displayName: '予約キャンセル通知',
   previewData: {
     customerName: '山田 太郎',

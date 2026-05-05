@@ -4,7 +4,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "Salute御所南"
+const SITE_NAME = "パーソナルジムSalute御所南"
 const SITE_URL = "https://app.kyoto-salute.com"
 
 interface BookingConfirmationProps {
@@ -60,7 +60,7 @@ const BookingConfirmationEmail = ({
 
 export const template = {
   component: BookingConfirmationEmail,
-  subject: '【Salute御所南】予約完了のお知らせ',
+  subject: '【パーソナルジムSalute御所南】予約完了のお知らせ',
   displayName: '予約完了のお知らせ（顧客向け）',
   previewData: {
     customerName: '山田 太郎',
