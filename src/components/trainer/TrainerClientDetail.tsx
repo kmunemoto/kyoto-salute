@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
+import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
 
 interface TrainerClientDetailProps {
   clientId: string;
@@ -717,6 +718,12 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
           {/* Training Growth Chart */}
           <TrainingGrowthChart workoutRecords={workoutRecords} loadingRecords={loadingRecords} />
+
+          {/* Muscle Balance Radar */}
+          <section>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">部位バランス</h2>
+            <MuscleBalanceRadar userId={clientId} cycleStartDate={cycleStartDate || null} />
+          </section>
 
           <section>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
