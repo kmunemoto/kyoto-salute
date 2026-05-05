@@ -14,7 +14,7 @@ import { useStreak } from "@/hooks/useStreak";
 import WorkoutShareModal from "./WorkoutShareModal";
 import { buildSession, type RawWorkout } from "@/lib/workoutShare";
 import MuscleGroupBadge from "./MuscleGroupBadge";
-import { summarizeMuscleGroups } from "@/lib/muscleGroup";
+import { summarizeMuscleGroups, subscribeMuscleGroup, loadMuscleGroupMap } from "@/lib/muscleGroup";
 import ProgressPhotosTab from "./progress/ProgressPhotosTab";
 import {
   LineChart,
@@ -50,6 +50,12 @@ const CustomerTraining = () => {
   const [shareDate, setShareDate] = useState<string | null>(null);
   const [totalSessions, setTotalSessions] = useState(0);
   const { currentStreak } = useStreak(user?.id);
+  const [, forceMg] = useState(0);
+  useEffect(() => {
+    loadMuscleGroupMap().catch(() => {});
+    const unsub = subscribeMuscleGroup(() => forceMg((n) => n + 1));
+    return () => { unsub(); };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
