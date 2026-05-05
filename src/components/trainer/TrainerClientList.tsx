@@ -1,4 +1,4 @@
-import { Users, Search, ChevronRight, CheckCircle2, AlertCircle, Sparkles, UserCheck, Trash2, CalendarDays } from "lucide-react";
+import { Users, Search, ChevronRight, Sparkles, UserCheck, Trash2, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -58,26 +58,6 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   };
 
   const deleteTargetName = profiles.find(p => p.user_id === deleteTarget)?.display_name || "この顧客";
-
-  const togglePayment = async (userId: string, currentStatus: boolean, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newStatus = !currentStatus;
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ paid_this_month: newStatus })
-      .eq("user_id", userId);
-
-    if (error) {
-      toast.error("更新に失敗しました");
-      return;
-    }
-
-    setProfiles(prev => prev.map(p =>
-      p.user_id === userId ? { ...p, paid_this_month: newStatus } : p
-    ));
-    toast.success(newStatus ? "支払済みに更新しました" : "未払いに更新しました");
-  };
 
   if (loading) {
     return (
@@ -158,22 +138,6 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <div
-                      className="flex items-center gap-1.5 cursor-pointer min-h-[44px] px-1 items-center"
-                      onClick={(e) => togglePayment(c.user_id, c.paid_this_month, e)}
-                    >
-                      {c.paid_this_month ? (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-success">
-                          <CheckCircle2 className="w-4 h-4" />
-                          支払済
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-destructive">
-                          <AlertCircle className="w-4 h-4" />
-                          未払い
-                        </span>
-                      )}
-                    </div>
                     <div className="flex items-center gap-1">
                       <button
                         className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
