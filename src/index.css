@@ -77,15 +77,27 @@ html, body {
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
     overflow-x: hidden;
     max-width: 100vw;
     -webkit-tap-highlight-color: transparent;
+    color: #333333;
+    /* Fixed Apple Music–style soft gradient */
+    background: #E0F7F6;
+    background-image: linear-gradient(180deg, #E0F7F6 0%, #C8EBF0 50%, #F0F4FF 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    min-height: 100vh;
   }
 
   #root {
     max-width: 100vw;
     overflow-x: hidden;
+    background: transparent;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #1A1A1A;
   }
 }
 
@@ -97,7 +109,18 @@ html, body {
     background: linear-gradient(135deg, hsl(174 65% 50%), hsl(180 60% 55%));
   }
   .glass {
-    @apply bg-card/80 backdrop-blur-xl;
+    background: rgba(255, 255, 255, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.6) !important;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05) !important;
   }
   .card-hover {
     @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
