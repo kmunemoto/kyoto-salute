@@ -391,6 +391,20 @@ async function sendCancelLineNotification(
   const trainerId = trainerIds?.[0]?.user_id;
 
   if (cancelledByTrainer) {
+    // Notify customer (gated — currently disabled)
+    if (NOTIFICATION_FLAGS.customerBookingCancellationLine) {
+      console.log("LINE送信: 顧客へキャンセル通知", booking.user_id);
+      const custRes = await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: booking.user_id,
+          message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
+        },
+      });
+      console.log("LINE送信結果(顧客):", custRes);
+    } else {
+      console.log("顧客へのキャンセルLINE通知はフラグでOFFのためスキップ");
+    }
+
     // Notify trainer (self-confirmation)
     if (trainerId) {
       console.log("LINE送信: トレーナーへキャンセル確認通知", trainerId);
@@ -403,7 +417,7 @@ async function sendCancelLineNotification(
       console.log("LINE送信結果(トレーナー):", trRes);
     }
   } else {
-    // Customer cancelled → notify trainer only (customer LINE notifications disabled)
+    // Customer cancelled → notify trainer (always) and customer (gated)
     if (trainerId) {
       console.log("LINE送信: トレーナーへキャンセル通知", trainerId);
       await supabase.functions.invoke("send-line-message", {
@@ -412,6 +426,18 @@ async function sendCancelLineNotification(
           message: `❌ 予約キャンセル通知\n\n${dateStr}\n\n${customerName}様がキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
         },
       });
+    }
+
+    if (NOTIFICATION_FLAGS.customerBookingCancellationLine) {
+      console.log("LINE送信: 顧客へキャンセル確認通知", booking.user_id);
+      await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: booking.user_id,
+          message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
+        },
+      });
+    } else {
+      console.log("顧客へのキャンセル確認LINE通知はフラグでOFFのためスキップ");
     }
   }
 }
