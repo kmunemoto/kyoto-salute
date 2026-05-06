@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 import BookingCompleteDialog from "./BookingCompleteDialog";
-import BookingCancelledDialog from "./BookingCancelledDialog";
 import { getJSTNow, getJSTToday, toJSTDate, formatJST } from "@/lib/timezone";
 
 const PLAN_LABELS: Record<string, string> = {
@@ -38,7 +37,6 @@ const CustomerBooking = () => {
   const [cancelTarget, setCancelTarget] = useState<BookingWithTime | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [lastBooked, setLastBooked] = useState<BookingWithTime | null>(null);
-  const [lastCancelled, setLastCancelled] = useState<BookingWithTime | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Booked slots fetched via SECURITY DEFINER RPC — sees ALL bookings regardless of RLS
@@ -217,11 +215,10 @@ const CustomerBooking = () => {
         toast.error("キャンセルに失敗しました");
         return;
       }
-      const cancelled = cancelTarget;
+      toast.success("予約をキャンセルしました");
       setCancelTarget(null);
       refetch();
       if (dateKey) fetchBookedSlots(dateKey);
-      setLastCancelled(cancelled);
     } finally {
       setCancelling(false);
     }
@@ -515,21 +512,6 @@ const CustomerBooking = () => {
         startTime={lastBooked?.startTime || ""}
         endTime={lastBooked?.endTime || ""}
         planName={lastBooked ? planLabel(lastBooked.booking_type) : ""}
-      />
-
-      <BookingCancelledDialog
-        open={!!lastCancelled}
-        onClose={() => setLastCancelled(null)}
-        onNewBooking={() => {
-          setLastCancelled(null);
-          // 少し遅延してDOM更新後にスクロール
-          setTimeout(() => {
-            document.getElementById("calendar-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 100);
-        }}
-        date={lastCancelled?.date || ""}
-        startTime={lastCancelled?.startTime || ""}
-        endTime={lastCancelled?.endTime || ""}
       />
     </>
   );
