@@ -21,7 +21,7 @@ interface Exercise {
   sort_order: number;
 }
 
-const MUSCLE_GROUPS = ["胸", "背中", "肩", "脚", "臀部", "腕", "腹筋", "その他"] as const;
+const MUSCLE_GROUPS = ["胸", "背中", "肩", "脚", "二頭筋", "三頭筋", "腹筋", "その他"] as const;
 type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
 
 interface FormState {
