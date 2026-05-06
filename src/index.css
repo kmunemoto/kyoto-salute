@@ -184,3 +184,108 @@ html, body {
   line-height: 1;
   cursor: pointer;
 }
+
+/* ============================================================
+   Apple Music–style Glassmorphism Global Overrides
+   ============================================================ */
+
+/* Generic Card / surfaces using the bg-card token */
+.bg-card {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Popovers, dropdowns, sheets, dialogs */
+.bg-popover,
+[role="dialog"] > .bg-background,
+[role="menu"].bg-popover {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Inputs / textareas / selects — frosted */
+input.bg-background,
+textarea.bg-background,
+select,
+.bg-input {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 12px !important;
+  color: #333 !important;
+}
+input.bg-background:focus,
+textarea.bg-background:focus,
+select:focus,
+.bg-input:focus {
+  border-color: #0ABAB5 !important;
+  outline: none;
+}
+
+/* Primary buttons → pill, frosted accent */
+button.bg-primary,
+.bg-primary {
+  background-color: rgba(10, 186, 181, 0.85) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: 25px !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(10, 186, 181, 0.3);
+}
+button.bg-accent,
+.bg-accent {
+  border-radius: 25px;
+  box-shadow: 0 4px 15px rgba(10, 186, 181, 0.25);
+}
+
+/* Outline / secondary buttons → frosted white pill */
+button.border.border-input,
+button.bg-secondary,
+.bg-secondary {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 25px !important;
+  color: #333 !important;
+}
+
+/* Bottom navigation — heavier blur */
+nav.glass {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Muted surfaces still need to read on the gradient */
+.bg-muted {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Force any leftover hard-dark home cards (e.g. #1A1A1A) to glass */
+[style*="#1A1A1A"],
+[style*="rgb(26, 26, 26)"] {
+  background: rgba(255, 255, 255, 0.55) !important;
+  color: #1A1A1A !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Make sure auth/full-bleed pages let the gradient show through */
+.bg-background {
+  background-color: transparent !important;
+}
