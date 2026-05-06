@@ -222,8 +222,10 @@ export const createBooking = async (
     .single();
 
   if (!error && data) {
-    // Always notify customer about their booking
-    sendBookingConfirmationToCustomer(userId, date, startTime, bookingType, isProxyBooking).catch(console.error);
+    // Notify customer about their booking (gated by feature flag)
+    if (NOTIFY_CUSTOMER_LINE_ON_BOOKING) {
+      sendBookingConfirmationToCustomer(userId, date, startTime, bookingType, isProxyBooking).catch(console.error);
+    }
     // Always notify trainer about new bookings (skip if trainer is the one booking for themselves)
     sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
 
