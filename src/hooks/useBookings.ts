@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toJSTDate, formatJST } from "@/lib/timezone";
+import { NOTIFICATION_FLAGS } from "@/lib/notificationFlags";
 
 export interface BookingRow {
   id: string;
@@ -217,7 +218,9 @@ export const createBooking = async (
     .single();
 
   if (!error && data) {
-    // Notify trainer about new bookings (customer LINE notifications are disabled — reminders only)
+    // Customer LINE confirmation (gated by flag — currently disabled; reminders still run)
+    sendBookingConfirmationToCustomer(userId, date, startTime, bookingType, isProxyBooking).catch(console.error);
+    // Always notify trainer about new bookings
     sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
 
     // Sync to Google Calendar (fire-and-forget)
@@ -265,6 +268,40 @@ async function sendNewBookingLineToTrainer(
     body: {
       user_id: trainerId,
       message: `📅 新規予約通知\n\n${dateStr}\n\n${customerName}様から予約が入りました。\n\nプラン：${bookingType}\n\nパーソナルジムSalute御所南`,
+    },
+  });
+}
+
+async function sendBookingConfirmationToCustomer(
+  userId: string,
+  date: string,
+  startTime: string,
+  bookingType: string,
+  isProxyBooking: boolean,
+) {
+  // Gated by flag — currently disabled. Code retained for future re-enable.
+  if (!NOTIFICATION_FLAGS.customerBookingConfirmationLine) {
+    console.log("顧客への予約完了LINE通知はフラグでOFFのためスキップ");
+    return;
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const name = profile?.display_name || "お客";
+
+  const md = formatJST(`${date}T${startTime}:00+09:00`, "M/d", { locale: ja });
+  const dow = formatJST(`${date}T${startTime}:00+09:00`, "E", { locale: ja });
+  const hm = formatJST(`${date}T${startTime}:00+09:00`, "HH:mm", { locale: ja });
+
+  const proxyNote = isProxyBooking ? "\n※トレーナーが代理で予約を登録しました。" : "";
+
+  await supabase.functions.invoke("send-line-message", {
+    body: {
+      user_id: userId,
+      message: `✅ 予約確定\n\n${md}（${dow}）${hm}\n\n${name}様、トレーニングのご予約が完了しました。${proxyNote}\n\nプラン：${bookingType}\n\nパーソナルジムSalute御所南`,
     },
   });
 }
@@ -354,6 +391,20 @@ async function sendCancelLineNotification(
   const trainerId = trainerIds?.[0]?.user_id;
 
   if (cancelledByTrainer) {
+    // Notify customer (gated — currently disabled)
+    if (NOTIFICATION_FLAGS.customerBookingCancellationLine) {
+      console.log("LINE送信: 顧客へキャンセル通知", booking.user_id);
+      const custRes = await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: booking.user_id,
+          message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
+        },
+      });
+      console.log("LINE送信結果(顧客):", custRes);
+    } else {
+      console.log("顧客へのキャンセルLINE通知はフラグでOFFのためスキップ");
+    }
+
     // Notify trainer (self-confirmation)
     if (trainerId) {
       console.log("LINE送信: トレーナーへキャンセル確認通知", trainerId);
@@ -366,7 +417,7 @@ async function sendCancelLineNotification(
       console.log("LINE送信結果(トレーナー):", trRes);
     }
   } else {
-    // Customer cancelled → notify trainer only (customer LINE notifications disabled)
+    // Customer cancelled → notify trainer (always) and customer (gated)
     if (trainerId) {
       console.log("LINE送信: トレーナーへキャンセル通知", trainerId);
       await supabase.functions.invoke("send-line-message", {
@@ -375,6 +426,18 @@ async function sendCancelLineNotification(
           message: `❌ 予約キャンセル通知\n\n${dateStr}\n\n${customerName}様がキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
         },
       });
+    }
+
+    if (NOTIFICATION_FLAGS.customerBookingCancellationLine) {
+      console.log("LINE送信: 顧客へキャンセル確認通知", booking.user_id);
+      await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: booking.user_id,
+          message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
+        },
+      });
+    } else {
+      console.log("顧客へのキャンセル確認LINE通知はフラグでOFFのためスキップ");
     }
   }
 }
