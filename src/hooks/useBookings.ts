@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toJSTDate, formatJST } from "@/lib/timezone";
+import { NOTIFICATION_FLAGS } from "@/lib/notificationFlags";
 
 export interface BookingRow {
   id: string;
@@ -267,6 +268,40 @@ async function sendNewBookingLineToTrainer(
     body: {
       user_id: trainerId,
       message: `📅 新規予約通知\n\n${dateStr}\n\n${customerName}様から予約が入りました。\n\nプラン：${bookingType}\n\nパーソナルジムSalute御所南`,
+    },
+  });
+}
+
+async function sendBookingConfirmationToCustomer(
+  userId: string,
+  date: string,
+  startTime: string,
+  bookingType: string,
+  isProxyBooking: boolean,
+) {
+  // Gated by flag — currently disabled. Code retained for future re-enable.
+  if (!NOTIFICATION_FLAGS.customerBookingConfirmationLine) {
+    console.log("顧客への予約完了LINE通知はフラグでOFFのためスキップ");
+    return;
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const name = profile?.display_name || "お客";
+
+  const md = formatJST(`${date}T${startTime}:00+09:00`, "M/d", { locale: ja });
+  const dow = formatJST(`${date}T${startTime}:00+09:00`, "E", { locale: ja });
+  const hm = formatJST(`${date}T${startTime}:00+09:00`, "HH:mm", { locale: ja });
+
+  const proxyNote = isProxyBooking ? "\n※トレーナーが代理で予約を登録しました。" : "";
+
+  await supabase.functions.invoke("send-line-message", {
+    body: {
+      user_id: userId,
+      message: `✅ 予約確定\n\n${md}（${dow}）${hm}\n\n${name}様、トレーニングのご予約が完了しました。${proxyNote}\n\nプラン：${bookingType}\n\nパーソナルジムSalute御所南`,
     },
   });
 }
