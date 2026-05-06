@@ -3,6 +3,7 @@ import { MessageCircle } from "lucide-react";
 
 import BottomNav from "./BottomNav";
 import CustomerHome from "./CustomerHome";
+import AnnouncementBanner from "./AnnouncementBanner";
 import CustomerBooking from "./CustomerBooking";
 import CustomerMeals from "./CustomerMeals";
 import CustomerChat from "./CustomerChat";
@@ -30,6 +31,7 @@ const CustomerView = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 w-full max-w-md mx-auto overflow-x-hidden fade-in" translate="no">
+      <AnnouncementBanner />
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
         <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2">
