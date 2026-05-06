@@ -98,7 +98,8 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
       // Prefer DB-joined muscle_group; fall back to hardcoded map for legacy data.
       const group = w.muscle_group || getMuscleGroup(w.exercise_name);
       if (!group || group === "その他") return;
-      const setCount = w.sets?.length || (w.weight != null ? 1 : 0);
+      // Count total sets: prefer sets[] length, otherwise treat the row as 1 set.
+      const setCount = Array.isArray(w.sets) && w.sets.length > 0 ? w.sets.length : 1;
       if (counts[group] !== undefined) {
         counts[group] += setCount;
         total += setCount;
