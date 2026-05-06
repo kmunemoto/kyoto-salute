@@ -217,9 +217,7 @@ export const createBooking = async (
     .single();
 
   if (!error && data) {
-    // Always notify customer about their booking
-    sendBookingConfirmationToCustomer(userId, date, startTime, bookingType, isProxyBooking).catch(console.error);
-    // Always notify trainer about new bookings (skip if trainer is the one booking for themselves)
+    // Notify trainer about new bookings (customer LINE notifications are disabled — reminders only)
     sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
 
     // Sync to Google Calendar (fire-and-forget)
@@ -243,34 +241,6 @@ export const createBooking = async (
 
   return { data, error };
 };
-
-async function sendBookingConfirmationToCustomer(
-  userId: string,
-  date: string,
-  startTime: string,
-  bookingType: string,
-  isProxyBooking: boolean,
-) {
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("user_id", userId)
-    .maybeSingle();
-  const name = profile?.display_name || "お客";
-
-  const md = formatJST(`${date}T${startTime}:00+09:00`, "M/d", { locale: ja });
-  const dow = formatJST(`${date}T${startTime}:00+09:00`, "E", { locale: ja });
-  const hm = formatJST(`${date}T${startTime}:00+09:00`, "HH:mm", { locale: ja });
-
-  const proxyNote = isProxyBooking ? "\n※トレーナーが代理で予約を登録しました。" : "";
-
-  await supabase.functions.invoke("send-line-message", {
-    body: {
-      user_id: userId,
-      message: `✅ 予約確定\n\n${md}（${dow}）${hm}\n\n${name}様、トレーニングのご予約が完了しました。${proxyNote}\n\nプラン：${bookingType}\n\nパーソナルジムSalute御所南`,
-    },
-  });
-}
 
 async function sendNewBookingLineToTrainer(
   userId: string,
