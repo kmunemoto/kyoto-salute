@@ -72,6 +72,7 @@ interface WorkoutRecord {
   reps: number | null;
   sets: { set: number; weight: number; reps: number }[] | null;
   exercise_name?: string;
+  notes?: string | null;
 }
 
 interface MealRecord {
@@ -455,6 +456,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         reps: parseInt(s.reps, 10),
       })),
       workout_date: trainingDate,
+      notes: memo.trim() || null,
     }));
 
     if (editingDate) {
@@ -523,7 +525,8 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         sets: setsData.map((s: any) => ({ weight: String(s.weight ?? ""), reps: String(s.reps ?? "") })),
       };
     }));
-    setMemo("");
+    const existingMemo = records.find(r => r.notes && r.notes.trim())?.notes || "";
+    setMemo(existingMemo);
     // Scroll to top of form
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
