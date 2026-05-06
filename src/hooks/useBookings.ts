@@ -15,6 +15,11 @@ export interface BookingRow {
   display_name?: string;
 }
 
+// Feature flag: customer-side LINE notifications for booking creation/cancellation.
+// Set to true to re-enable. Trainer notifications and reminder notifications are
+// unaffected. Code is preserved (only the send is skipped) so it can be revived later.
+const NOTIFY_CUSTOMER_LINE_ON_BOOKING = false;
+
 export interface BookingWithTime {
   id: string;
   user_id: string;
