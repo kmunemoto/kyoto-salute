@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
 import { sendBookingNotification } from "@/lib/bookingNotification";
 import BookingCompleteDialog from "./BookingCompleteDialog";
+import BookingCancelledDialog from "./BookingCancelledDialog";
 import { getJSTNow, getJSTToday, toJSTDate, formatJST } from "@/lib/timezone";
 
 const PLAN_LABELS: Record<string, string> = {
@@ -37,6 +38,7 @@ const CustomerBooking = () => {
   const [cancelTarget, setCancelTarget] = useState<BookingWithTime | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [lastBooked, setLastBooked] = useState<BookingWithTime | null>(null);
+  const [lastCancelled, setLastCancelled] = useState<BookingWithTime | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Booked slots fetched via SECURITY DEFINER RPC — sees ALL bookings regardless of RLS
@@ -226,8 +228,9 @@ const CustomerBooking = () => {
         toast.error("キャンセルに失敗しました");
         return;
       }
-      toast.success("予約をキャンセルしました");
+      const cancelled = cancelTarget;
       setCancelTarget(null);
+      setLastCancelled(cancelled);
       refetch();
       if (dateKey) fetchBookedSlots(dateKey);
     } finally {
@@ -523,6 +526,20 @@ const CustomerBooking = () => {
         startTime={lastBooked?.startTime || ""}
         endTime={lastBooked?.endTime || ""}
         planName={lastBooked ? planLabel(lastBooked.booking_type) : ""}
+      />
+
+      <BookingCancelledDialog
+        open={!!lastCancelled}
+        onClose={() => setLastCancelled(null)}
+        onNewBooking={() => {
+          setLastCancelled(null);
+          setTimeout(() => {
+            document.getElementById("calendar-section")?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+        }}
+        date={lastCancelled?.date || ""}
+        startTime={lastCancelled?.startTime || ""}
+        endTime={lastCancelled?.endTime || ""}
       />
     </>
   );
