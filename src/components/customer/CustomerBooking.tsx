@@ -170,12 +170,17 @@ const CustomerBooking = () => {
     sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
 
     // Fire-and-forget LINE message to customer
-    supabase.functions.invoke("send-line-message", {
-      body: {
-        user_id: user.id,
-        message: `✅ 予約確定\n\n${format(selectedDate!, "M/d", { locale: ja })}（${format(selectedDate!, "E", { locale: ja })}）${slot.time}\n\n${profile?.display_name || "お客"}様、トレーニングのご予約が完了しました。\n\nプラン：${selectedPlan}\n\nパーソナルジムSalute御所南`,
-      },
-    }).catch((e) => console.error("LINE message failed:", e));
+    // Gated by feature flag — customer LINE booking notifications are currently disabled
+    // (only the trainer reminder/notification flows remain). Set to true to revive.
+    const NOTIFY_CUSTOMER_LINE_ON_BOOKING = false;
+    if (NOTIFY_CUSTOMER_LINE_ON_BOOKING) {
+      supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: user.id,
+          message: `✅ 予約確定\n\n${format(selectedDate!, "M/d", { locale: ja })}（${format(selectedDate!, "E", { locale: ja })}）${slot.time}\n\n${profile?.display_name || "お客"}様、トレーニングのご予約が完了しました。\n\nプラン：${selectedPlan}\n\nパーソナルジムSalute御所南`,
+        },
+      }).catch((e) => console.error("LINE message failed:", e));
+    }
 
     // Fire-and-forget push notification to trainer
     supabase.rpc("get_trainer_ids").then(({ data: trainers }) => {
