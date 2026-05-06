@@ -217,7 +217,9 @@ export const createBooking = async (
     .single();
 
   if (!error && data) {
-    // Notify trainer about new bookings (customer LINE notifications are disabled — reminders only)
+    // Customer LINE confirmation (gated by flag — currently disabled; reminders still run)
+    sendBookingConfirmationToCustomer(userId, date, startTime, bookingType, isProxyBooking).catch(console.error);
+    // Always notify trainer about new bookings
     sendNewBookingLineToTrainer(userId, date, startTime, bookingType).catch(console.error);
 
     // Sync to Google Calendar (fire-and-forget)
