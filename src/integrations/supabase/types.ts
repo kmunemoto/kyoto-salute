@@ -709,6 +709,7 @@ export type Database = {
           created_at: string
           exercise_id: string
           id: string
+          notes: string | null
           reps: number | null
           sets: Json | null
           user_id: string
@@ -719,6 +720,7 @@ export type Database = {
           created_at?: string
           exercise_id: string
           id?: string
+          notes?: string | null
           reps?: number | null
           sets?: Json | null
           user_id: string
@@ -729,6 +731,7 @@ export type Database = {
           created_at?: string
           exercise_id?: string
           id?: string
+          notes?: string | null
           reps?: number | null
           sets?: Json | null
           user_id?: string
