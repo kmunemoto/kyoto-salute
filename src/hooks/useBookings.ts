@@ -391,15 +391,17 @@ async function sendCancelLineNotification(
   const trainerId = trainerIds?.[0]?.user_id;
 
   if (cancelledByTrainer) {
-    // Notify customer
-    console.log("LINE送信: 顧客へキャンセル通知", booking.user_id);
-    const custRes = await supabase.functions.invoke("send-line-message", {
-      body: {
-        user_id: booking.user_id,
-        message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
-      },
-    });
-    console.log("LINE送信結果(顧客):", custRes);
+    // Notify customer (gated by feature flag)
+    if (NOTIFY_CUSTOMER_LINE_ON_BOOKING) {
+      console.log("LINE送信: 顧客へキャンセル通知", booking.user_id);
+      const custRes = await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: booking.user_id,
+          message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
+        },
+      });
+      console.log("LINE送信結果(顧客):", custRes);
+    }
 
     // Notify trainer (self-confirmation)
     if (trainerId) {
@@ -424,14 +426,16 @@ async function sendCancelLineNotification(
       });
     }
 
-    // Notify customer (cancellation confirmation)
-    console.log("LINE送信: 顧客へキャンセル確認通知", booking.user_id);
-    await supabase.functions.invoke("send-line-message", {
-      body: {
-        user_id: booking.user_id,
-        message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
-      },
-    });
+    // Notify customer (cancellation confirmation, gated by feature flag)
+    if (NOTIFY_CUSTOMER_LINE_ON_BOOKING) {
+      console.log("LINE送信: 顧客へキャンセル確認通知", booking.user_id);
+      await supabase.functions.invoke("send-line-message", {
+        body: {
+          user_id: booking.user_id,
+          message: `❌ キャンセル完了\n\n${md}（${dow}）${hm}\n\n${customerName}様、上記ご予約をキャンセルしました。\n\nプラン：${booking.booking_type}\n\nパーソナルジムSalute御所南`,
+        },
+      });
+    }
   }
 }
 
