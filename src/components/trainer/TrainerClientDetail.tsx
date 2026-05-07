@@ -1276,6 +1276,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
             </div>
           )}
         </TabsContent>
+
+        {/* Avatar */}
+        <TabsContent value="avatar">
+          <TrainerClientAvatarTab clientId={clientId} />
+        </TabsContent>
       </Tabs>
 
       {/* Delete confirmation */}
