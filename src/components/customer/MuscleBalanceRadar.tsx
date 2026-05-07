@@ -47,19 +47,13 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
     return () => { unsub(); };
   }, []);
 
+  // Monthly aggregation: always use calendar month windows (1st → 1st of next month).
   const { start, end } = useMemo(() => {
     const now = getJSTNow();
-    if (cycleStartDate) {
-      const current = getCycleWindow(cycleStartDate, now);
-      return {
-        start: addMonths(current.start, cycleOffset),
-        end: addMonths(current.end, cycleOffset),
-      };
-    }
     const base = new Date(now.getFullYear(), now.getMonth(), 1);
     const shifted = addMonths(base, cycleOffset);
     return { start: shifted, end: addMonths(shifted, 1) };
-  }, [cycleStartDate, cycleOffset]);
+  }, [cycleOffset]);
 
   useEffect(() => {
     if (!userId) return;
@@ -115,7 +109,7 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
     };
   }, [workouts]);
 
-  const periodLabel = `${format(start, "M/d")}〜${format(addMonths(start, 1), "M/d")}`;
+  const periodLabel = format(start, "yyyy年M月");
   const isCurrent = cycleOffset === 0;
 
   return (
@@ -138,7 +132,7 @@ const MuscleBalanceRadar = ({ userId: userIdProp, cycleStartDate: cycleProp }: P
             <ChevronLeft className="w-4 h-4" />
           </button>
           <span className="text-xs text-muted-foreground">
-            {isCurrent ? "今回" : cycleOffset === -1 ? "前回" : `${Math.abs(cycleOffset)}回前`}
+            {isCurrent ? "今月" : cycleOffset === -1 ? "先月" : `${Math.abs(cycleOffset)}ヶ月前`}
           </span>
           <button
             onClick={() => setCycleOffset((n) => Math.min(0, n + 1))}
