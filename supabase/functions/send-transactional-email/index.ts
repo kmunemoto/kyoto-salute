@@ -163,6 +163,7 @@ Deno.serve(async (req) => {
     'booking-cancellation',
     'new-booking-notification',
     'trial-booking-confirmation',
+    'new-account-notification',
   ])
   const mustDeliver = MUST_DELIVER_TEMPLATES.has(templateName)
   console.log('Preparing transactional email', {
