@@ -45,6 +45,7 @@ import { getComboMultiplier } from "@/lib/comboSystem";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
 import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
+import TrainerClientAvatarTab from "./TrainerClientAvatarTab";
 
 interface TrainerClientDetailProps {
   clientId: string;
@@ -706,7 +707,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
 
       {/* Tabbed sections */}
       <Tabs defaultValue="training" className="space-y-4">
-        <TabsList className="grid grid-cols-7 w-full">
+        <TabsList className="grid grid-cols-8 w-full">
           <TabsTrigger value="overview" className="text-[10px] sm:text-xs px-1">概要</TabsTrigger>
           <TabsTrigger value="training" className="text-[10px] sm:text-xs px-1">記録</TabsTrigger>
           <TabsTrigger value="meals" className="text-[10px] sm:text-xs px-1">食事</TabsTrigger>
@@ -714,6 +715,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           <TabsTrigger value="skeletal" className="text-[10px] sm:text-xs px-1">骨格</TabsTrigger>
           <TabsTrigger value="report" className="text-[10px] sm:text-xs px-1">月報</TabsTrigger>
           <TabsTrigger value="chat" className="text-[10px] sm:text-xs px-1">チャット</TabsTrigger>
+          <TabsTrigger value="avatar" className="text-[10px] sm:text-xs px-1">アバター</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -1273,6 +1275,11 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
               </div>
             </div>
           )}
+        </TabsContent>
+
+        {/* Avatar */}
+        <TabsContent value="avatar">
+          <TrainerClientAvatarTab clientId={clientId} />
         </TabsContent>
       </Tabs>
 
