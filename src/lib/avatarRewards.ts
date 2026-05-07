@@ -195,25 +195,41 @@ export interface MissionStatsInput {
   hasPerfectWeek: boolean;
 }
 
+export interface ExtraStatsInput {
+  level?: number;
+  maxComboReached?: number;
+  totalCoinsEarned?: number;
+  gachaCount?: number;
+  eventsCompletedCount?: number;
+  raidContributionCount?: number;
+  raidMvpCount?: number;
+  hasProgressPhoto?: boolean;
+}
+
 export function computeAchievements(
   workouts: WorkoutRow[],
   totalSessions: number,
   bestStreakWeeks: number,
   exerciseMuscleGroup: (name: string) => string,
   missionStats?: MissionStatsInput,
+  extra?: ExtraStatsInput,
 ): string[] {
   const keys: string[] = [];
   if (workouts.length > 0) keys.push("first_step");
+  if (workouts.length > 0) keys.push("first_session");
   if (totalSessions >= 10) keys.push("regular_visitor");
   if (totalSessions >= 50) keys.push("fifty_sessions");
   if (totalSessions >= 100) keys.push("hundred_sessions");
+  if (totalSessions >= 200) keys.push("two_hundred_sessions");
   if (bestStreakWeeks >= 4) keys.push("habit_formed");
   if (bestStreakWeeks >= 12) keys.push("three_months");
   if (bestStreakWeeks >= 26) keys.push("half_year");
+  if (bestStreakWeeks >= 52) keys.push("one_year");
 
-  // power_up: any PB after first time
+  // power_up: any PB after first time + count PBs
   const seen = new Map<string, number>();
   let powerUp = false;
+  let pbCount = 0;
   for (const w of [...workouts].sort((a, b) => a.workout_date.localeCompare(b.workout_date))) {
     const sets = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
     if (sets.length === 0) continue;
@@ -222,10 +238,14 @@ export function computeAchievements(
     const prev = seen.get(w.exercise_id);
     if (prev !== undefined && maxW > prev) {
       powerUp = true;
+      pbCount += 1;
     }
     if (prev === undefined || maxW > prev) seen.set(w.exercise_id, maxW);
   }
   if (powerUp) keys.push("power_up");
+  if (pbCount >= 1) keys.push("first_pb");
+  if (pbCount >= 10) keys.push("best_hunter");
+  if (pbCount >= 30) keys.push("record_breaker");
 
   // multiplayer: 5+ distinct exercises
   const exNames = new Set(workouts.map((w) => w.exercise_name || w.exercise_id));
@@ -241,6 +261,18 @@ export function computeAchievements(
   const maxDayVol = volByDate.size > 0 ? Math.max(...volByDate.values()) : 0;
   if (maxDayVol >= 1000) keys.push("ton_club");
   if (maxDayVol >= 10000) keys.push("ten_ton_club");
+
+  // Monthly volume thresholds
+  const volByMonth = new Map<string, number>();
+  for (const w of workouts) {
+    const m = w.workout_date.substring(0, 7);
+    const sets = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
+    const v = sets.reduce((s, st) => s + (Number(st.weight) || 0) * (Number(st.reps) || 0), 0);
+    volByMonth.set(m, (volByMonth.get(m) || 0) + v);
+  }
+  const maxMonthVol = volByMonth.size > 0 ? Math.max(...volByMonth.values()) : 0;
+  if (maxMonthVol >= 50000) keys.push("month_50k");
+  if (maxMonthVol >= 200000) keys.push("month_200k");
 
   // balance_master / all_rounder: any month with 5+ / 7+ distinct muscle groups
   const monthGroups = new Map<string, Set<string>>();
@@ -259,6 +291,22 @@ export function computeAchievements(
     if (missionStats.totalCompletedCount >= 30) keys.push("mission_master");
     if (missionStats.perfectDayCount >= 1) keys.push("perfect_day");
     if (missionStats.hasPerfectWeek) keys.push("perfect_week");
+  }
+
+  if (extra) {
+    if ((extra.level || 0) >= 10) keys.push("level_10");
+    if ((extra.level || 0) >= 25) keys.push("level_25");
+    if ((extra.level || 0) >= 50) keys.push("level_50");
+    if ((extra.maxComboReached || 0) >= 3) keys.push("combo_starter");
+    if ((extra.maxComboReached || 0) >= 10) keys.push("combo_king");
+    if ((extra.totalCoinsEarned || 0) >= 500) keys.push("coin_collector");
+    if ((extra.gachaCount || 0) >= 30) keys.push("gacha_addict");
+    if ((extra.eventsCompletedCount || 0) >= 1) keys.push("first_event");
+    if ((extra.eventsCompletedCount || 0) >= 3) keys.push("event_master");
+    if ((extra.raidContributionCount || 0) >= 1) keys.push("first_raid");
+    if ((extra.raidMvpCount || 0) >= 1) keys.push("raid_mvp");
+    if (extra.hasProgressPhoto) keys.push("first_shot");
+    // combo_master_ach uses missionStats-style passed via combo5Reached not here; gated separately below
   }
 
   return keys;
