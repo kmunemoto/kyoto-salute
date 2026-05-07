@@ -122,7 +122,7 @@ const TrainerSchedule = () => {
     void refetch();
 
     if (bookingData?.id) {
-      sendBookingNotification(bookingData.id, client?.display_name || "顧客", proxyDateKey, proxyTime, proxyEndTime, proxyBookingType);
+      sendBookingNotification(bookingData.id, client?.display_name || "顧客", proxyDateKey, proxyTime, proxyEndTime, proxyBookingType, proxyClient);
     }
   };
 
