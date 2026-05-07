@@ -39,6 +39,8 @@ import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import { evaluateAndAwardMissions } from "@/lib/missionRewards";
+import { applyRaidDamage, computeSessionVolume, processSessionRewards } from "@/lib/raidUtils";
+import { getComboMultiplier } from "@/lib/comboSystem";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
 import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
@@ -488,6 +490,36 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       }
       if (result.bonusAwarded) {
         toast.success("🎉 全ミッションコンプリート！", { description: "+50 EXP ボーナス！" });
+      }
+    } catch (e) {
+      // non-fatal
+    }
+
+    // Process session rewards (session exp + combo bonus + level recompute)
+    try {
+      const sess = await processSessionRewards(clientId, trainingDate);
+      if (sess && sess.combo >= 2 && sess.combo_bonus > 0) {
+        toast.success(`🔥 ${sess.combo}コンボ！EXP ${getComboMultiplier(sess.combo)}倍`, {
+          description: `+${sess.combo_bonus} EXP ボーナス`,
+        });
+      }
+    } catch (e) {
+      // non-fatal
+    }
+
+    // Apply raid damage (volume from this entire session = all today's records for this user)
+    try {
+      const { data: todayWs } = await supabase
+        .from("workouts")
+        .select("sets, weight, reps")
+        .eq("user_id", clientId)
+        .eq("workout_date", trainingDate);
+      const vol = computeSessionVolume((todayWs || []) as any);
+      if (vol > 0) {
+        const r = await applyRaidDamage(clientId, trainingDate, vol);
+        if (r?.defeated) {
+          toast.success("⚔️ レイドボス撃破！", { description: "全員に報酬を配布しました！" });
+        }
       }
     } catch (e) {
       // non-fatal
