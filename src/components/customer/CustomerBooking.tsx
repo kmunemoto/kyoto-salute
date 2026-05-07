@@ -169,7 +169,7 @@ const CustomerBooking = () => {
     fetchBookedSlots(dateKey);
 
     // Fire-and-forget notification email to trainer
-    sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan, user.id);
+    sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan, user.id, user.email);
 
     // Fire-and-forget LINE message to customer
     // Gated by feature flag — customer LINE booking notifications are currently disabled
@@ -200,23 +200,6 @@ const CustomerBooking = () => {
       }
     });
 
-    // Fire-and-forget confirmation email to customer
-    const customerName = profile?.display_name || "お客様";
-    const dateObj = new Date(dateKey + "T00:00:00");
-    const formattedDate = format(dateObj, "M月d日（E）", { locale: ja });
-    supabase.functions.invoke("send-transactional-email", {
-      body: {
-        templateName: "booking-confirmation",
-        recipientEmail: user.email,
-        idempotencyKey: `booking-confirm-${data.id}`,
-        templateData: {
-          customerName,
-          bookingDate: formattedDate,
-          bookingTime: `${slot.time}〜${endTime}`,
-          planName: selectedPlan,
-        },
-      },
-    }).catch((e) => console.error("Failed to send booking confirmation:", e));
   };
 
   const handleCancel = async () => {
