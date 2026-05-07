@@ -184,16 +184,32 @@ export function buildExpLogsFromWorkouts(
  * Determine which achievements should be unlocked from full history.
  * Returns achievement keys to insert (DB UNIQUE will dedupe).
  */
+export interface MissionStatsInput {
+  /** Number of daily_missions rows where at least one mission was completed */
+  rowsWithAnyComplete: number;
+  /** Sum of completed_keys lengths across all rows */
+  totalCompletedCount: number;
+  /** Number of rows where all_completed = true */
+  perfectDayCount: number;
+  /** Whether at least one ISO week exists where every session date had all_completed = true */
+  hasPerfectWeek: boolean;
+}
+
 export function computeAchievements(
   workouts: WorkoutRow[],
   totalSessions: number,
   bestStreakWeeks: number,
   exerciseMuscleGroup: (name: string) => string,
+  missionStats?: MissionStatsInput,
 ): string[] {
   const keys: string[] = [];
   if (workouts.length > 0) keys.push("first_step");
   if (totalSessions >= 10) keys.push("regular_visitor");
+  if (totalSessions >= 50) keys.push("fifty_sessions");
+  if (totalSessions >= 100) keys.push("hundred_sessions");
   if (bestStreakWeeks >= 4) keys.push("habit_formed");
+  if (bestStreakWeeks >= 12) keys.push("three_months");
+  if (bestStreakWeeks >= 26) keys.push("half_year");
 
   // power_up: any PB after first time
   const seen = new Map<string, number>();
@@ -215,23 +231,35 @@ export function computeAchievements(
   const exNames = new Set(workouts.map((w) => w.exercise_name || w.exercise_id));
   if (exNames.size >= 5) keys.push("multiplayer");
 
-  // ton_club: any session date with total volume > 1000
+  // ton_club / ten_ton_club: any session date with total volume thresholds
   const volByDate = new Map<string, number>();
   for (const w of workouts) {
     const sets = w.sets || (w.weight != null ? [{ set: 1, weight: w.weight!, reps: w.reps! }] : []);
     const v = sets.reduce((s, st) => s + (Number(st.weight) || 0) * (Number(st.reps) || 0), 0);
     volByDate.set(w.workout_date, (volByDate.get(w.workout_date) || 0) + v);
   }
-  if ([...volByDate.values()].some((v) => v >= 1000)) keys.push("ton_club");
+  const maxDayVol = volByDate.size > 0 ? Math.max(...volByDate.values()) : 0;
+  if (maxDayVol >= 1000) keys.push("ton_club");
+  if (maxDayVol >= 10000) keys.push("ten_ton_club");
 
-  // balance_master: any month with 5+ distinct muscle groups
+  // balance_master / all_rounder: any month with 5+ / 7+ distinct muscle groups
   const monthGroups = new Map<string, Set<string>>();
   for (const w of workouts) {
     const m = w.workout_date.substring(0, 7);
     if (!monthGroups.has(m)) monthGroups.set(m, new Set());
     monthGroups.get(m)!.add(exerciseMuscleGroup(w.exercise_name || ""));
   }
-  if ([...monthGroups.values()].some((s) => s.size >= 5)) keys.push("balance_master");
+  const maxMonthGroups = monthGroups.size > 0 ? Math.max(...[...monthGroups.values()].map((s) => s.size)) : 0;
+  if (maxMonthGroups >= 5) keys.push("balance_master");
+  if (maxMonthGroups >= 7) keys.push("all_rounder");
+
+  // Mission-related achievements
+  if (missionStats) {
+    if (missionStats.rowsWithAnyComplete >= 1) keys.push("mission_clear");
+    if (missionStats.totalCompletedCount >= 30) keys.push("mission_master");
+    if (missionStats.perfectDayCount >= 1) keys.push("perfect_day");
+    if (missionStats.hasPerfectWeek) keys.push("perfect_week");
+  }
 
   return keys;
 }

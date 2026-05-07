@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ACHIEVEMENTS, getExpProgress } from "@/lib/avatarSystem";
+import { ACHIEVEMENTS, getExpProgress, getRarityColor, getRarityStarCount } from "@/lib/avatarSystem";
 import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Coins, Trophy, Plus } from "lucide-react";
+import { Coins, Trophy, Plus, Star } from "lucide-react";
 import CoinShopDialog from "./CoinShopDialog";
+import { getMissionDef } from "@/lib/missionSystem";
 
 interface Props {
   open: boolean;
@@ -16,13 +17,19 @@ interface Props {
 }
 
 const reasonLabel = (reason: string): string => {
-  const head = reason.split("|")[0];
+  const parts = reason.split("|");
+  const head = parts[0];
   switch (head) {
     case "session": return "セッション完了";
     case "streak_bonus": return "連続来店ボーナス";
     case "pb": return "自己ベスト更新";
     case "new_exercise": return "新種目チャレンジ";
     case "monthly_goal": return "月間目標達成";
+    case "mission": {
+      const def = getMissionDef(parts[1]);
+      return def ? `ミッション: ${def.name}` : "ミッション達成";
+    }
+    case "mission_bonus": return "全ミッション達成ボーナス";
     default: return reason;
   }
 };
@@ -92,11 +99,18 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props
           <div className="grid grid-cols-2 gap-2">
             {ACHIEVEMENTS.map((a) => {
               const got = acquired.has(a.key);
+              const starColor = getRarityColor(a.rarity);
+              const stars = getRarityStarCount(a.rarity);
               return (
                 <div
                   key={a.key}
-                  className={`p-2.5 rounded-xl border text-center ${got ? "bg-accent/10 border-accent/30" : "bg-muted/30 border-border opacity-50"}`}
+                  className={`p-2.5 rounded-xl border text-center relative ${got ? "bg-accent/10 border-accent/30" : "bg-muted/30 border-border opacity-50"}`}
                 >
+                  <div className="absolute top-1 right-1 flex gap-0.5">
+                    {Array.from({ length: stars }).map((_, i) => (
+                      <Star key={i} className="w-2.5 h-2.5" style={{ color: starColor, fill: starColor }} />
+                    ))}
+                  </div>
                   <p className="text-xs font-bold">{a.name}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 break-all">{a.description}</p>
                 </div>

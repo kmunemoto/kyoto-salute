@@ -38,6 +38,7 @@ import { format, addMonths, differenceInDays, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
+import { evaluateAndAwardMissions } from "@/lib/missionRewards";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
 import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
@@ -477,6 +478,19 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       const newRecords = (data || []).map((w: any) => ({ ...w, exercise_name: w.exercises?.name || "不明" }));
       setWorkoutRecords(prev => [...newRecords, ...prev]);
       toast.success("記録を保存しました", { description: `${displayName}さんのトレーニング記録を保存しました` });
+    }
+
+    // Evaluate today's missions for this customer (fire-and-forget UI feedback via toast)
+    try {
+      const result = await evaluateAndAwardMissions(clientId, trainingDate);
+      for (const m of result.newlyCompleted) {
+        toast.success(`🎯 ミッション達成！${m.name}`, { description: `+${m.exp} EXP` });
+      }
+      if (result.bonusAwarded) {
+        toast.success("🎉 全ミッションコンプリート！", { description: "+50 EXP ボーナス！" });
+      }
+    } catch (e) {
+      // non-fatal
     }
 
     setTrainingDate(getJSTToday());

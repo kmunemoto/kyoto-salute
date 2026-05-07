@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import StreakCard from "./StreakCard";
 import AvatarCard from "./AvatarCard";
+import DailyMissionCard from "./DailyMissionCard";
 import { Loader2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { getJSTNow, formatJST } from "@/lib/timezone";
@@ -205,6 +206,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* Plan badge - only show if user has a plan */}
       <AvatarCard />
+      <DailyMissionCard />
 
       {hasPlan && (
         <Card className="border-l-4 border-l-accent bg-accent/5">

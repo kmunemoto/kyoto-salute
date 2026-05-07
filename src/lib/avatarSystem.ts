@@ -7,15 +7,42 @@ export interface RankInfo {
   color: string;
 }
 
-export const ACHIEVEMENTS: { key: string; name: string; description: string }[] = [
-  { key: "first_step", name: "はじめの一歩", description: "初回トレーニング完了" },
-  { key: "regular_visitor", name: "常連", description: "累計10セッション達成" },
-  { key: "habit_formed", name: "習慣化", description: "4週連続来店" },
-  { key: "power_up", name: "パワーアップ", description: "初めて重量の自己ベスト更新" },
-  { key: "multiplayer", name: "マルチプレイヤー", description: "5種類以上の種目を記録" },
-  { key: "ton_club", name: "1トンクラブ", description: "1セッションの総挙上量1,000kg超え" },
-  { key: "balance_master", name: "バランスマスター", description: "1ヶ月で5部位以上をトレーニング" },
+export type AchievementRarity = "normal" | "rare" | "epic";
+
+export const ACHIEVEMENTS: { key: string; name: string; description: string; rarity: AchievementRarity }[] = [
+  // Normal
+  { key: "first_step", name: "はじめの一歩", description: "初回トレーニング完了", rarity: "normal" },
+  { key: "power_up", name: "パワーアップ", description: "初めて重量の自己ベスト更新", rarity: "normal" },
+  { key: "multiplayer", name: "マルチプレイヤー", description: "5種類以上の種目を記録", rarity: "normal" },
+  { key: "mission_clear", name: "ミッションクリア🎯", description: "デイリーミッション初達成", rarity: "normal" },
+  // Rare
+  { key: "regular_visitor", name: "常連", description: "累計10セッション達成", rarity: "rare" },
+  { key: "ton_club", name: "1トンクラブ", description: "1セッションの総挙上量1,000kg超え", rarity: "rare" },
+  { key: "balance_master", name: "バランスマスター", description: "1ヶ月で5部位以上をトレーニング", rarity: "rare" },
+  { key: "mission_master", name: "ミッションマスター🏅", description: "デイリーミッション累計30回達成", rarity: "rare" },
+  { key: "perfect_day", name: "パーフェクトデイ⭐", description: "1日で3ミッション全達成", rarity: "rare" },
+  { key: "fifty_sessions", name: "50回達成5️⃣", description: "累計50セッション", rarity: "rare" },
+  { key: "all_rounder", name: "オールラウンダー🔰", description: "1ヶ月で全7部位をトレーニング", rarity: "rare" },
+  { key: "three_months", name: "3ヶ月継続🗓️", description: "12週連続来店", rarity: "rare" },
+  // Epic
+  { key: "habit_formed", name: "習慣化", description: "4週連続来店", rarity: "epic" },
+  { key: "perfect_week", name: "パーフェクトウィーク🌟", description: "1週間で全セッションのミッション全達成", rarity: "epic" },
+  { key: "hundred_sessions", name: "100回達成💯", description: "累計100セッション", rarity: "epic" },
+  { key: "half_year", name: "半年継続📅", description: "26週連続来店", rarity: "epic" },
+  { key: "ten_ton_club", name: "10トンクラブ🏋️", description: "1セッションの総挙上量10,000kg超え", rarity: "epic" },
 ];
+
+export const getRarityColor = (rarity: AchievementRarity): string => {
+  switch (rarity) {
+    case "normal": return "#999999";
+    case "rare": return "hsl(174, 65%, 50%)";
+    case "epic": return "#D4AF37";
+  }
+};
+
+export const getRarityStarCount = (rarity: AchievementRarity): number => {
+  return rarity === "normal" ? 1 : rarity === "rare" ? 2 : 3;
+};
 
 export const getRequiredExp = (level: number): number => 250 + level * 50;
 
