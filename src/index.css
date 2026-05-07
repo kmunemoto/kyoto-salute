@@ -173,3 +173,11 @@ html, body {
   line-height: 1;
   cursor: pointer;
 }
+
+@keyframes raid-band-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.raid-band {
+  animation: raid-band-pulse 2s ease-in-out infinite;
+}
