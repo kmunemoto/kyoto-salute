@@ -17,6 +17,7 @@ interface RaidRow {
   defeated_at: string | null;
   reward_exp: number;
   reward_coins: number;
+  boss_image_url: string | null;
 }
 
 const BOSS_EMOJI: Record<string, string> = {
