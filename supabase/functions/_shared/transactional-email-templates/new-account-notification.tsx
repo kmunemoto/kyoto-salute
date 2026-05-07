@@ -53,6 +53,7 @@ const NewAccountNotificationEmail = ({
 export const template = {
   component: NewAccountNotificationEmail,
   subject: '【パーソナルジムSalute御所南】新しいアカウントが登録されました',
+  to: 'munekan2989@gmail.com',
   displayName: '新規アカウント登録通知（トレーナー向け）',
   previewData: {
     customerEmail: 'taro@example.com',
