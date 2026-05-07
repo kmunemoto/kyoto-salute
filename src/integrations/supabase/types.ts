@@ -680,6 +680,86 @@ export type Database = {
         }
         Relationships: []
       }
+      raid_bosses: {
+        Row: {
+          boss_hp: number
+          boss_image_url: string | null
+          boss_name: string
+          created_at: string
+          current_damage: number
+          defeated: boolean
+          defeated_at: string | null
+          end_date: string
+          id: string
+          reward_coins: number
+          reward_exp: number
+          start_date: string
+        }
+        Insert: {
+          boss_hp: number
+          boss_image_url?: string | null
+          boss_name: string
+          created_at?: string
+          current_damage?: number
+          defeated?: boolean
+          defeated_at?: string | null
+          end_date: string
+          id?: string
+          reward_coins?: number
+          reward_exp?: number
+          start_date: string
+        }
+        Update: {
+          boss_hp?: number
+          boss_image_url?: string | null
+          boss_name?: string
+          created_at?: string
+          current_damage?: number
+          defeated?: boolean
+          defeated_at?: string | null
+          end_date?: string
+          id?: string
+          reward_coins?: number
+          reward_exp?: number
+          start_date?: string
+        }
+        Relationships: []
+      }
+      raid_damage_logs: {
+        Row: {
+          created_at: string
+          damage: number
+          id: string
+          raid_id: string
+          user_id: string
+          workout_date: string
+        }
+        Insert: {
+          created_at?: string
+          damage: number
+          id?: string
+          raid_id: string
+          user_id: string
+          workout_date: string
+        }
+        Update: {
+          created_at?: string
+          damage?: number
+          id?: string
+          raid_id?: string
+          user_id?: string
+          workout_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raid_damage_logs_raid_id_fkey"
+            columns: ["raid_id"]
+            isOneToOne: false
+            referencedRelation: "raid_bosses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       skeletal_diagnoses: {
         Row: {
           confidence: number
@@ -773,27 +853,42 @@ export type Database = {
       user_avatars: {
         Row: {
           coins: number
+          combo_5_count: number
+          combo_count: number
           created_at: string
+          equipped_title: string | null
           id: string
+          last_session_date: string | null
           level: number
+          max_combo_reached: number
           total_exp: number
           updated_at: string
           user_id: string
         }
         Insert: {
           coins?: number
+          combo_5_count?: number
+          combo_count?: number
           created_at?: string
+          equipped_title?: string | null
           id?: string
+          last_session_date?: string | null
           level?: number
+          max_combo_reached?: number
           total_exp?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           coins?: number
+          combo_5_count?: number
+          combo_count?: number
           created_at?: string
+          equipped_title?: string | null
           id?: string
+          last_session_date?: string | null
           level?: number
+          max_combo_reached?: number
           total_exp?: number
           updated_at?: string
           user_id?: string
@@ -848,6 +943,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_titles: {
+        Row: {
+          id: string
+          title_key: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          title_key: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          title_key?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workouts: {
         Row: {
           created_at: string
@@ -897,6 +1013,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_raid_damage: {
+        Args: { _damage: number; _user_id: string; _workout_date: string }
+        Returns: Json
+      }
       delete_customer_cascade: {
         Args: { _customer_id: string }
         Returns: undefined
@@ -938,6 +1058,10 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      process_session_rewards: {
+        Args: { _user_id: string; _workout_date: string }
+        Returns: Json
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

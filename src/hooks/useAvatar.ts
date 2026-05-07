@@ -10,11 +10,18 @@ import {
   type WorkoutRow,
 } from "@/lib/avatarRewards";
 import { getMuscleGroup } from "@/lib/muscleGroup";
+import { computeTitles } from "@/lib/titleSystem";
+import { formatJST } from "@/lib/timezone";
 
 export interface AvatarRow {
   total_exp: number;
   level: number;
   coins: number;
+  combo_count?: number;
+  last_session_date?: string | null;
+  max_combo_reached?: number;
+  combo_5_count?: number;
+  equipped_title?: string | null;
 }
 
 export interface ExpLogRow {
@@ -31,13 +38,14 @@ export const useAvatar = (autoSync = true) => {
   const [avatar, setAvatar] = useState<AvatarRow | null>(null);
   const [logs, setLogs] = useState<ExpLogRow[]>([]);
   const [achievements, setAchievements] = useState<string[]>([]);
+  const [titles, setTitles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [levelUp, setLevelUp] = useState<{ newLevel: number; earnedCoins: number } | null>(null);
 
   const refetch = useCallback(async () => {
     if (!user) return;
-    const [avRes, logRes, achRes] = await Promise.all([
-      supabase.from("user_avatars").select("total_exp, level, coins").eq("user_id", user.id).maybeSingle(),
+    const [avRes, logRes, achRes, titleRes] = await Promise.all([
+      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title").eq("user_id", user.id).maybeSingle(),
       supabase
         .from("avatar_exp_logs")
         .select("id, exp_amount, reason, reference_date, created_at")
@@ -45,10 +53,12 @@ export const useAvatar = (autoSync = true) => {
         .order("created_at", { ascending: false })
         .limit(20),
       supabase.from("avatar_achievements").select("achievement_key").eq("user_id", user.id),
+      supabase.from("user_titles").select("title_key").eq("user_id", user.id),
     ]);
     setAvatar((avRes.data as AvatarRow) ?? { total_exp: 0, level: 1, coins: 0 });
     setLogs((logRes.data as ExpLogRow[]) || []);
     setAchievements(((achRes.data as any[]) || []).map((r) => r.achievement_key));
+    setTitles(((titleRes.data as any[]) || []).map((r) => r.title_key));
   }, [user]);
 
   // Initial sync: backfill from workouts if needed
@@ -63,7 +73,7 @@ export const useAvatar = (autoSync = true) => {
       setLoading(true);
       const { data: avRow } = await supabase
         .from("user_avatars")
-        .select("total_exp, level, coins")
+        .select("total_exp, level, coins, combo_5_count, max_combo_reached")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -133,6 +143,39 @@ export const useAvatar = (autoSync = true) => {
       });
       await unlockAchievements(user.id, achKeys);
 
+      // Title computation
+      const { data: bookingsForTitles } = await supabase
+        .from("bookings")
+        .select("booking_date")
+        .eq("user_id", user.id)
+        .neq("status", "キャンセル済み")
+        .lt("booking_date", new Date().toISOString());
+      const bookingHours = (bookingsForTitles || []).map((b: any) => parseInt(formatJST(b.booking_date, "HH"), 10));
+
+      // Raid contribution count (defeated raids the user contributed to)
+      const { data: raidContribs } = await supabase
+        .from("raid_damage_logs")
+        .select("raid_id, raid_bosses!inner(defeated)")
+        .eq("user_id", user.id);
+      const defeatedRaidIds = new Set<string>();
+      (raidContribs || []).forEach((r: any) => {
+        if (r.raid_bosses?.defeated) defeatedRaidIds.add(r.raid_id);
+      });
+
+      const titleKeys = computeTitles({
+        workouts: workouts as any,
+        bookingHours,
+        bestStreakWeeks: profile?.best_streak || 0,
+        raidsContributedAndDefeated: defeatedRaidIds.size,
+        totalMissionCompletions: totalCompletedCount,
+        combo5Reached: avRow?.combo_5_count || 0,
+        exerciseMuscleGroup: getMuscleGroup,
+      });
+      if (titleKeys.length > 0) {
+        const rows = titleKeys.map((k) => ({ user_id: user.id, title_key: k }));
+        await supabase.from("user_titles").upsert(rows, { onConflict: "user_id,title_key", ignoreDuplicates: true });
+      }
+
       if (!cancelled) {
         await refetch();
         setLoading(false);
@@ -146,5 +189,11 @@ export const useAvatar = (autoSync = true) => {
     };
   }, [user, profile?.plan, profile?.best_streak, autoSync, refetch]);
 
-  return { avatar, logs, achievements, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null) };
+  const equipTitle = useCallback(async (titleKey: string | null) => {
+    if (!user) return;
+    await supabase.from("user_avatars").update({ equipped_title: titleKey } as any).eq("user_id", user.id);
+    await refetch();
+  }, [user, refetch]);
+
+  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle };
 };

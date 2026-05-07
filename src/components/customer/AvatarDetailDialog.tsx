@@ -7,6 +7,7 @@ import { ja } from "date-fns/locale";
 import { Coins, Trophy, Plus, Star } from "lucide-react";
 import CoinShopDialog from "./CoinShopDialog";
 import { getMissionDef } from "@/lib/missionSystem";
+import { TITLES, getTitleDef } from "@/lib/titleSystem";
 
 interface Props {
   open: boolean;
@@ -14,6 +15,8 @@ interface Props {
   avatar: AvatarRow;
   logs: ExpLogRow[];
   achievements: string[];
+  titles?: string[];
+  onEquipTitle?: (titleKey: string | null) => void | Promise<void>;
 }
 
 const reasonLabel = (reason: string): string => {
@@ -25,6 +28,8 @@ const reasonLabel = (reason: string): string => {
     case "pb": return "自己ベスト更新";
     case "new_exercise": return "新種目チャレンジ";
     case "monthly_goal": return "月間目標達成";
+    case "combo_bonus": return "コンボボーナス";
+    case "raid_reward": return "レイド撃破報酬";
     case "mission": {
       const def = getMissionDef(parts[1]);
       return def ? `ミッション: ${def.name}` : "ミッション達成";
@@ -34,9 +39,11 @@ const reasonLabel = (reason: string): string => {
   }
 };
 
-const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props) => {
+const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles = [], onEquipTitle }: Props) => {
   const p = getExpProgress(avatar.total_exp);
   const acquired = new Set(achievements);
+  const acquiredTitles = new Set(titles);
+  const equipped = avatar.equipped_title || null;
   const [shopOpen, setShopOpen] = useState(false);
 
   return (
@@ -114,6 +121,38 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props
                   <p className="text-xs font-bold">{a.name}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 break-all">{a.description}</p>
                 </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mt-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Star className="w-3.5 h-3.5" /> 称号
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            {TITLES.map((t) => {
+              const got = acquiredTitles.has(t.key);
+              const isEq = equipped === t.key;
+              return (
+                <button
+                  key={t.key}
+                  disabled={!got || !onEquipTitle}
+                  onClick={() => onEquipTitle?.(isEq ? null : t.key)}
+                  className={`p-2.5 rounded-xl border text-center transition ${
+                    isEq
+                      ? "border-2"
+                      : got
+                      ? "bg-accent/10 border-accent/30 hover:bg-accent/20 cursor-pointer"
+                      : "bg-muted/30 border-border opacity-50 cursor-default"
+                  }`}
+                  style={isEq ? { borderColor: "hsl(174, 65%, 50%)", backgroundColor: "hsla(174, 65%, 50%, 0.1)" } : {}}
+                >
+                  <p className="text-base">{t.icon}</p>
+                  <p className="text-xs font-bold mt-0.5">{t.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 break-all">{t.condition}</p>
+                  {isEq && <p className="text-[10px] font-bold mt-1" style={{ color: "hsl(174, 65%, 50%)" }}>装備中</p>}
+                </button>
               );
             })}
           </div>
