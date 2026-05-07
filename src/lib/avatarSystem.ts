@@ -30,6 +30,10 @@ export const ACHIEVEMENTS: { key: string; name: string; description: string; rar
   { key: "hundred_sessions", name: "100回達成💯", description: "累計100セッション", rarity: "epic" },
   { key: "half_year", name: "半年継続📅", description: "26週連続来店", rarity: "epic" },
   { key: "ten_ton_club", name: "10トンクラブ🏋️", description: "1セッションの総挙上量10,000kg超え", rarity: "epic" },
+  // Gacha
+  { key: "gacha_beginner", name: "初ガチャ🎰", description: "ガチャを初めて回す", rarity: "normal" },
+  { key: "gacha_lucky", name: "ラッキー🍀", description: "epicまたはlegendaryを引く", rarity: "rare" },
+  { key: "gacha_legend", name: "ジャックポット🎰", description: "legendaryを引く", rarity: "epic" },
 ];
 
 export const getRarityColor = (rarity: AchievementRarity): string => {
