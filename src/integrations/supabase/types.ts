@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      avatar_achievements: {
+        Row: {
+          achievement_key: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      avatar_exp_logs: {
+        Row: {
+          created_at: string
+          exp_amount: number
+          id: string
+          reason: string
+          reference_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exp_amount: number
+          id?: string
+          reason: string
+          reference_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exp_amount?: number
+          id?: string
+          reason?: string
+          reference_date?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       blocked_slots: {
         Row: {
           blocked_date: string
@@ -653,6 +701,36 @@ export type Database = {
           guest_name?: string
           id?: string
           status?: string
+        }
+        Relationships: []
+      }
+      user_avatars: {
+        Row: {
+          coins: number
+          created_at: string
+          id: string
+          level: number
+          total_exp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coins?: number
+          created_at?: string
+          id?: string
+          level?: number
+          total_exp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          id?: string
+          level?: number
+          total_exp?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
