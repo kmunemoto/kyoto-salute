@@ -18,6 +18,14 @@ export const TITLES: TitleDef[] = [
   { key: "boss_slayer", name: "ボスハンター", condition: "レイドボス3回撃破に貢献" },
   { key: "mission_addict", name: "ミッション中毒", condition: "デイリーミッション累計50回達成" },
   { key: "combo_master", name: "コンボマスター", condition: "5コンボ以上を3回達成" },
+  { key: "core_oni", name: "コアの鬼", condition: "体幹トレが全体の40%以上" },
+  { key: "weekend_warrior", name: "週末戦士", condition: "土日のセッションが60%以上" },
+  { key: "iron_man", name: "鉄人", condition: "累計200セッション以上" },
+  { key: "gacha_master", name: "ガチャマスター", condition: "ガチャ累計50回以上" },
+  { key: "raid_slayer", name: "レイドスレイヤー", condition: "レイドボス5回撃破に貢献" },
+  { key: "streaker", name: "ストリーカー", condition: "最大コンボ10回以上" },
+  { key: "record_child", name: "記録の申し子", condition: "自己ベスト累計30回以上" },
+  { key: "legend_title", name: "レジェンド", condition: "アバターレベル50到達" },
 ];
 
 export const getTitleDef = (key: string | null | undefined): TitleDef | undefined =>
