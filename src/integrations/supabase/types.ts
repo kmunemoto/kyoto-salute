@@ -119,6 +119,39 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_purchases: {
+        Row: {
+          amount_jpy: number
+          coins_added: number
+          created_at: string
+          environment: string
+          id: string
+          price_id: string
+          stripe_session_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_jpy: number
+          coins_added: number
+          created_at?: string
+          environment?: string
+          id?: string
+          price_id: string
+          stripe_session_id: string
+          user_id: string
+        }
+        Update: {
+          amount_jpy?: number
+          coins_added?: number
+          created_at?: string
+          environment?: string
+          id?: string
+          price_id?: string
+          stripe_session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       counseling_responses: {
         Row: {
           age: string | null

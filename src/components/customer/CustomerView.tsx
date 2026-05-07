@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 
 import BottomNav from "./BottomNav";
 import CustomerHome from "./CustomerHome";
@@ -27,6 +28,15 @@ const CustomerView = () => {
       refetchUnread();
     }
   }, [tab]);
+
+  // Detect Stripe checkout return
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success" && params.get("session_id")) {
+      toast.success("購入が完了しました！コインが反映されるまで数秒お待ちください");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background pb-20 w-full max-w-md mx-auto overflow-x-hidden fade-in" translate="no">

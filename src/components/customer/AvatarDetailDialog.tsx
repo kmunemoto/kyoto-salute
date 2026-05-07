@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ACHIEVEMENTS, getExpProgress } from "@/lib/avatarSystem";
 import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Coins, Trophy } from "lucide-react";
+import { Coins, Trophy, Plus } from "lucide-react";
+import CoinShopDialog from "./CoinShopDialog";
 
 interface Props {
   open: boolean;
@@ -28,6 +30,7 @@ const reasonLabel = (reason: string): string => {
 const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props) => {
   const p = getExpProgress(avatar.total_exp);
   const acquired = new Set(achievements);
+  const [shopOpen, setShopOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -54,10 +57,14 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props
               <span>次のレベルまで {p.remainingExp}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-amber-600">
+          <button
+            onClick={() => setShopOpen(true)}
+            className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-amber-600 px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 transition-colors"
+          >
             <Coins className="w-4 h-4" />
             {avatar.coins} コイン
-          </div>
+            <Plus className="w-3.5 h-3.5 ml-1" />
+          </button>
         </div>
 
         <section className="mt-4">
@@ -98,6 +105,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props
           </div>
         </section>
       </DialogContent>
+      <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
     </Dialog>
   );
 };
