@@ -175,9 +175,25 @@ html, body {
 }
 
 @keyframes raid-band-pulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
+  0%, 100% {
+    background-color: rgba(239, 68, 68, 0.08);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+  }
 }
 .raid-band {
+  will-change: background-color, box-shadow;
   animation: raid-band-pulse 2s ease-in-out infinite;
+}
+@keyframes raid-swords-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.raid-swords {
+  will-change: transform;
+  animation: raid-swords-pulse 1.5s ease-in-out infinite;
+  transform-origin: center;
 }

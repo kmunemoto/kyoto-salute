@@ -433,10 +433,9 @@ const CustomerBooking = () => {
                                 position: "absolute",
                                 top: -2,
                                 bottom: -2,
-                                left: roundLeft ? 0 : -4,
-                                right: roundRight ? 0 : -4,
-                                backgroundColor: "rgba(239, 68, 68, 0.12)",
-                                borderTopLeftRadius: roundLeft ? 8 : 0,
+                                 left: roundLeft ? 0 : -4,
+                                 right: roundRight ? 0 : -4,
+                                 borderTopLeftRadius: roundLeft ? 8 : 0,
                                 borderBottomLeftRadius: roundLeft ? 8 : 0,
                                 borderTopRightRadius: roundRight ? 8 : 0,
                                 borderBottomRightRadius: roundRight ? 8 : 0,
@@ -446,14 +445,14 @@ const CustomerBooking = () => {
                             />
                           )}
                           <span className="relative z-[1]">{dayDate.getDate()}</span>
-                          {raid && (
-                            <Swords
-                              className="relative z-[1]"
-                              size={10}
-                              color="#EF4444"
-                              style={{ marginTop: -2 }}
-                            />
-                          )}
+                           {raid && (
+                             <Swords
+                               className="relative z-[1] raid-swords"
+                               size={10}
+                               color="#EF4444"
+                               style={{ marginTop: -2 }}
+                             />
+                           )}
                           {(isFuture || isPast) && (
                             <span
                               className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full z-[1]"
