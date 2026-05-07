@@ -155,7 +155,20 @@ Deno.serve(async (req) => {
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+  // Critical booking templates always deliver — they are essential transactional
+  // notifications (booking confirmations / cancellations) that the user must
+  // receive. They bypass the suppression list and skip the unsubscribe footer.
+  const MUST_DELIVER_TEMPLATES = new Set([
+    'booking-confirmation',
+    'booking-cancellation',
+    'new-booking-notification',
+    'trial-booking-confirmation',
+  ])
+  const mustDeliver = MUST_DELIVER_TEMPLATES.has(templateName)
+
   // 2. Check suppression list (fail-closed: if we can't verify, don't send)
+  // Skipped entirely for must-deliver templates.
+  if (!mustDeliver) {
   const { data: suppressed, error: suppressionError } = await supabase
     .from('suppressed_emails')
     .select('id')
@@ -194,10 +207,14 @@ Deno.serve(async (req) => {
       }
     )
   }
+  }
 
   // 3. Get or create unsubscribe token (one token per email address)
+  // Must-deliver templates skip token generation — no unsubscribe footer.
   const normalizedEmail = effectiveRecipient.toLowerCase()
-  let unsubscribeToken: string
+  let unsubscribeToken: string | undefined
+
+  if (!mustDeliver) {
 
   // Check for existing token for this email
   const { data: existingToken, error: tokenLookupError } = await supabase
@@ -311,6 +328,7 @@ Deno.serve(async (req) => {
       }
     )
   }
+  } // end if (!mustDeliver) for unsubscribe token
 
   // 4. Render React Email template to HTML and plain text
   const html = await renderAsync(
