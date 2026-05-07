@@ -264,7 +264,7 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
                 {raidLogs.map((r) => (
                   <div key={r.raid_id} className="flex items-center justify-between p-2 rounded-lg bg-muted/40">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold">{r.raid?.boss_name ?? "ボス"}{r.raid?.defeated ? " 🏆" : ""}</p>
+                      <p className="text-xs font-bold flex items-center gap-1">{r.raid?.boss_name ?? "ボス"}{r.raid?.defeated && <Trophy className="w-3 h-3 text-amber-500" />}</p>
                       <p className="text-[10px] text-muted-foreground">{r.raid?.start_date}〜{r.raid?.end_date}</p>
                     </div>
                     <span className="text-xs font-extrabold text-red-600">{r.damage.toLocaleString()} kg</span>
@@ -293,8 +293,8 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
                       </span>
                       <span className="text-[11px] text-muted-foreground">{format(parseISO(g.result_date), "M/d", { locale: ja })}</span>
                     </div>
-                    <span className="text-xs font-bold">
-                      {g.reward_type === "coins" ? "💰" : "✨"} +{g.reward_amount}
+                    <span className="text-xs font-bold inline-flex items-center gap-1">
+                      {g.reward_type === "coins" ? <Coins className="w-3 h-3 text-amber-500" /> : <Sparkles className="w-3 h-3 text-accent" />}+{g.reward_amount}
                       <span className="text-[10px] text-muted-foreground ml-1">{g.reward_type === "coins" ? "コイン" : "EXP"}</span>
                     </span>
                   </div>

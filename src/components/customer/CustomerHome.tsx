@@ -137,11 +137,11 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       let message = "";
       if (hitMilestone) {
         const months = Math.floor(hitMilestone / 4);
-        if (hitMilestone === 4) message = `🔥 4週連続来店達成！1ヶ月間継続できています。この調子で頑張りましょう！`;
-        else if (hitMilestone === 8) message = `🔥 8週連続来店達成！2ヶ月間の継続、素晴らしいです！💪`;
-        else if (hitMilestone === 12) message = `🏆 12週連続来店達成！3ヶ月間の継続は本当にすごいことです！`;
+        if (hitMilestone === 4) message = `4週連続来店達成！1ヶ月間継続できています。この調子で頑張りましょう！`;
+        else if (hitMilestone === 8) message = `8週連続来店達成！2ヶ月間の継続、素晴らしいです！`;
+        else if (hitMilestone === 12) message = `12週連続来店達成！3ヶ月間の継続は本当にすごいことです！`;
       } else if (isBestRecord) {
-        message = `🎉 自己ベスト更新！${currentStreak}週連続来店を達成しました！`;
+        message = `自己ベスト更新！${currentStreak}週連続来店を達成しました！`;
       }
 
       if (message && currentStreak > lastNotified) {

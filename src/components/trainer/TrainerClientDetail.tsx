@@ -488,10 +488,10 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     try {
       const result = await evaluateAndAwardMissions(clientId, trainingDate);
       for (const m of result.newlyCompleted) {
-        toast.success(`🎯 ミッション達成！${m.name}`, { description: `+${m.exp} EXP` });
+        toast.success(`ミッション達成！${m.name}`, { description: `+${m.exp} EXP` });
       }
       if (result.bonusAwarded) {
-        toast.success("🎉 全ミッションコンプリート！", { description: "+50 EXP ボーナス！" });
+        toast.success("全ミッションコンプリート！", { description: "+50 EXP ボーナス！" });
       }
     } catch (e) {
       // non-fatal
@@ -501,7 +501,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     try {
       const sess = await processSessionRewards(clientId, trainingDate);
       if (sess && sess.combo >= 2 && sess.combo_bonus > 0) {
-        toast.success(`🔥 ${sess.combo}コンボ！EXP ${getComboMultiplier(sess.combo)}倍`, {
+        toast.success(`${sess.combo}コンボ！EXP ${getComboMultiplier(sess.combo)}倍`, {
           description: `+${sess.combo_bonus} EXP ボーナス`,
         });
       }
@@ -520,7 +520,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       if (vol > 0) {
         const r = await applyRaidDamage(clientId, trainingDate, vol);
         if (r?.defeated) {
-          toast.success("⚔️ レイドボス撃破！", { description: "全員に報酬を配布しました！" });
+          toast.success("レイドボス撃破！", { description: "全員に報酬を配布しました！" });
         }
       }
     } catch (e) {
@@ -531,7 +531,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     try {
       const ev = await updateEventProgress(clientId);
       for (const c of (ev?.completed_events || [])) {
-        toast.success(`🏆 イベント完走！${c.event_name}`, {
+        toast.success(`イベント完走！${c.event_name}`, {
           description: `+${c.reward_exp} EXP / +${c.reward_coins}コイン${c.badge_name ? ` / 限定バッジ「${c.badge_name}」` : ""}`,
         });
       }
@@ -1142,7 +1142,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                         </div>
                         {meal.feedback && (
                           <div className="bg-accent/10 rounded-lg p-2">
-                            <p className="text-[10px] font-bold text-accent mb-0.5">🤖 AIアドバイス</p>
+                            <p className="text-[10px] font-bold text-accent mb-0.5">AIアドバイス</p>
                             <p className="text-xs text-foreground leading-relaxed">{meal.feedback}</p>
                           </div>
                         )}

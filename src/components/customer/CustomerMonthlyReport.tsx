@@ -259,7 +259,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
     const parts: string[] = [];
 
     if (maxSessions > 0 && achieveRate >= 100) {
-      parts.push("今回の目標回数を達成しました！素晴らしいです🎉");
+      parts.push("今回の目標回数を達成しました！素晴らしいです");
     } else if (maxSessions > 0 && isCurrentCycle && remainingSessions > 0 && remainingDays > 0) {
       const pace = remainingDays / remainingSessions;
       if (pace >= 7) {
@@ -359,7 +359,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                 <>
                   <Progress value={achieveRate} className="h-2.5" />
                   <p className="text-sm font-bold text-center">
-                    {achieveRate >= 100 ? "達成！🎉" : `あと${remainingSessions}回！`}
+                    {achieveRate >= 100 ? "達成！" : `あと${remainingSessions}回！`}
                   </p>
                 </>
               )}
@@ -380,7 +380,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
               {currentStreak > 0 && isCurrentCycle && (
                 <div className="flex items-center justify-center gap-1.5 pt-1">
                   <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm font-bold">🔥 {currentStreak}週連続来店中！</span>
+                  <span className="text-sm font-bold">{currentStreak}週連続来店中！</span>
                 </div>
               )}
             </CardContent>
@@ -422,7 +422,7 @@ const CustomerMonthlyReport = ({ onBack }: Props) => {
                 </div>
               )}
               {weightChange != null && weightChange > 0 && (
-                <p className="text-xs text-muted-foreground">筋肉量が増えている可能性があります 💪</p>
+                <p className="text-xs text-muted-foreground">筋肉量が増えている可能性があります</p>
               )}
               {measurementChartData.length > 1 && (
                 <div className="h-32">

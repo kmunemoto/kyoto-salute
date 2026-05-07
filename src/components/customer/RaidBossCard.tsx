@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getJSTToday, toJSTDate } from "@/lib/timezone";
-import { Sword, Swords, Users, Gift } from "lucide-react";
+import { Sword, Swords, Users, Gift, Sparkles } from "lucide-react";
 import { differenceInDays, differenceInHours, parseISO } from "date-fns";
 
 interface RaidRow {
@@ -20,11 +20,7 @@ interface RaidRow {
   boss_image_url: string | null;
 }
 
-const BOSS_EMOJI: Record<string, string> = {
-  ゴブリン: "👺",
-  オーク戦士: "👹",
-  ドラゴン: "🐉",
-};
+// Boss visuals now use Lucide Swords icon for all bosses (no emoji).
 
 const RaidBossCard = () => {
   const { user } = useAuth();
@@ -231,8 +227,6 @@ const RaidBossCard = () => {
 
   const hp = Math.max(0, raid.boss_hp - raid.current_damage);
   const pct = Math.min(100, Math.round((raid.current_damage / raid.boss_hp) * 100));
-  const emoji = BOSS_EMOJI[raid.boss_name] || "👾";
-
   if (expired && !raid.defeated) {
     return (
       <Card>
@@ -273,7 +267,9 @@ const RaidBossCard = () => {
           </div>
 
           <div className="flex flex-col items-center my-3">
-            <div className={`text-7xl ${raid.defeated ? "raid-defeated" : ""}`}>{emoji}</div>
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center bg-red-50 ${raid.defeated ? "raid-defeated" : ""}`}>
+              <Swords className="w-12 h-12 text-red-600" />
+            </div>
             <p className="text-base font-extrabold mt-1">{raid.boss_name}</p>
           </div>
 
@@ -296,14 +292,14 @@ const RaidBossCard = () => {
           </div>
 
           {raid.defeated && (
-            <p className="text-center text-sm font-bold mt-3" style={{ color: "#D4AF37" }}>
-              🎉 おめでとう！全員に+{raid.reward_exp} EXP +{raid.reward_coins} コインを配布しました
+            <p className="text-center text-sm font-bold mt-3 flex items-center justify-center gap-1" style={{ color: "#D4AF37" }}>
+              <Sparkles className="w-4 h-4" />おめでとう！全員に+{raid.reward_exp} EXP +{raid.reward_coins} コインを配布しました
             </p>
           )}
 
           <div className="grid grid-cols-3 gap-2 mt-3 text-center">
             <div className="rounded-lg p-2" style={{ backgroundColor: "rgba(220, 38, 38, 0.05)" }}>
-              <p className="text-[10px] text-muted-foreground">🗡️ あなた</p>
+              <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-0.5"><Sword className="w-3 h-3" />あなた</p>
               <p className="text-xs font-extrabold mt-0.5">{myDamage.toLocaleString()} kg</p>
             </div>
             <div className="rounded-lg p-2" style={{ backgroundColor: "rgba(10, 186, 181, 0.05)" }}>
