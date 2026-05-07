@@ -129,6 +129,18 @@ html, body {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+@keyframes badge-shimmer {
+  0% { background: linear-gradient(0deg, #F59E0B, #D97706); }
+  25% { background: linear-gradient(90deg, #F59E0B, #D97706); }
+  50% { background: linear-gradient(180deg, #F59E0B, #D97706); }
+  75% { background: linear-gradient(270deg, #F59E0B, #D97706); }
+  100% { background: linear-gradient(360deg, #F59E0B, #D97706); }
+}
+
+.badge-shimmer {
+  animation: badge-shimmer 3s linear infinite;
+}
+
 #app-update-banner {
   position: fixed;
   top: 0;
