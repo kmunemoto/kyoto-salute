@@ -2,23 +2,22 @@ export interface TitleDef {
   key: string;
   name: string;
   condition: string;
-  icon: string;
 }
 
 export const TITLES: TitleDef[] = [
-  { key: "chest_master", name: "胸板の鬼", condition: "胸トレが全体の40%以上", icon: "🫁" },
-  { key: "back_master", name: "背中の鬼", condition: "背中トレが全体の40%以上", icon: "🦍" },
-  { key: "leg_master", name: "脚の王", condition: "脚トレが全体の40%以上", icon: "🦵" },
-  { key: "shoulder_master", name: "肩メロン", condition: "肩トレが全体の40%以上", icon: "🍈" },
-  { key: "arm_master", name: "腕自慢", condition: "腕トレが全体の40%以上", icon: "💪" },
-  { key: "early_bird", name: "朝活の達人", condition: "午前セッションが70%以上", icon: "🌅" },
-  { key: "night_owl", name: "夜型トレーニー", condition: "19時以降セッションが70%以上", icon: "🦉" },
-  { key: "consistency_king", name: "継続の王", condition: "12週連続来店", icon: "👑" },
-  { key: "volume_monster", name: "ボリュームモンスター", condition: "月間総挙上量10万kg以上", icon: "🦁" },
-  { key: "all_rounder_title", name: "オールラウンダー", condition: "毎月5部位以上を3ヶ月連続", icon: "🌈" },
-  { key: "boss_slayer", name: "ボスハンター", condition: "レイドボス3回撃破に貢献", icon: "⚔️" },
-  { key: "mission_addict", name: "ミッション中毒", condition: "デイリーミッション累計50回達成", icon: "🎯" },
-  { key: "combo_master", name: "コンボマスター", condition: "5コンボ以上を3回達成", icon: "🔥" },
+  { key: "chest_master", name: "胸板の鬼", condition: "胸トレが全体の40%以上" },
+  { key: "back_master", name: "背中の鬼", condition: "背中トレが全体の40%以上" },
+  { key: "leg_master", name: "脚の王", condition: "脚トレが全体の40%以上" },
+  { key: "shoulder_master", name: "肩メロン", condition: "肩トレが全体の40%以上" },
+  { key: "arm_master", name: "腕自慢", condition: "腕トレが全体の40%以上" },
+  { key: "early_bird", name: "朝活の達人", condition: "午前セッションが70%以上" },
+  { key: "night_owl", name: "夜型トレーニー", condition: "19時以降セッションが70%以上" },
+  { key: "consistency_king", name: "継続の王", condition: "12週連続来店" },
+  { key: "volume_monster", name: "ボリュームモンスター", condition: "月間総挙上量10万kg以上" },
+  { key: "all_rounder_title", name: "オールラウンダー", condition: "毎月5部位以上を3ヶ月連続" },
+  { key: "boss_slayer", name: "ボスハンター", condition: "レイドボス3回撃破に貢献" },
+  { key: "mission_addict", name: "ミッション中毒", condition: "デイリーミッション累計50回達成" },
+  { key: "combo_master", name: "コンボマスター", condition: "5コンボ以上を3回達成" },
 ];
 
 export const getTitleDef = (key: string | null | undefined): TitleDef | undefined =>
