@@ -398,6 +398,7 @@ export type Database = {
           reward_amount: number | null
           reward_key: string | null
           reward_type: string
+          ticket_id: string | null
           user_id: string
         }
         Insert: {
@@ -408,6 +409,7 @@ export type Database = {
           reward_amount?: number | null
           reward_key?: string | null
           reward_type: string
+          ticket_id?: string | null
           user_id: string
         }
         Update: {
@@ -418,9 +420,18 @@ export type Database = {
           reward_amount?: number | null
           reward_key?: string | null
           reward_type?: string
+          ticket_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "gacha_results_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "user_gacha_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       google_calendar_tokens: {
         Row: {
@@ -1099,6 +1110,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_gacha_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          session_date: string
+          used: boolean
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_date: string
+          used?: boolean
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_date?: string
+          used?: boolean
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_measurements: {
         Row: {
