@@ -5,6 +5,7 @@ import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Coins, Trophy, Plus, Star } from "lucide-react";
+import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
@@ -111,14 +112,15 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
               return (
                 <div
                   key={a.key}
-                  className={`p-2.5 rounded-xl border text-center relative ${got ? "bg-accent/10 border-accent/30" : "bg-muted/30 border-border opacity-50"}`}
+                  className={`p-2.5 rounded-xl border text-center relative flex flex-col items-center ${got ? "bg-accent/10 border-accent/30" : "bg-muted/30 border-border"}`}
                 >
                   <div className="absolute top-1 right-1 flex gap-0.5">
                     {Array.from({ length: stars }).map((_, i) => (
                       <Star key={i} className="w-2.5 h-2.5" style={{ color: starColor, fill: starColor }} />
                     ))}
                   </div>
-                  <p className="text-xs font-bold">{a.name}</p>
+                  <BadgeIcon type="achievement" iconKey={a.key} rarity={a.rarity} acquired={got} size={48} />
+                  <p className="text-xs font-bold mt-1.5">{a.name}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 break-all">{a.description}</p>
                 </div>
               );
@@ -139,17 +141,17 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                   key={t.key}
                   disabled={!got || !onEquipTitle}
                   onClick={() => onEquipTitle?.(isEq ? null : t.key)}
-                  className={`p-2.5 rounded-xl border text-center transition ${
+                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center ${
                     isEq
                       ? "border-2"
                       : got
                       ? "bg-accent/10 border-accent/30 hover:bg-accent/20 cursor-pointer"
-                      : "bg-muted/30 border-border opacity-50 cursor-default"
+                      : "bg-muted/30 border-border cursor-default"
                   }`}
                   style={isEq ? { borderColor: "hsl(174, 65%, 50%)", backgroundColor: "hsla(174, 65%, 50%, 0.1)" } : {}}
                 >
-                  <p className="text-base">{t.icon}</p>
-                  <p className="text-xs font-bold mt-0.5">{t.name}</p>
+                  <BadgeIcon type="title" iconKey={t.key} acquired={got} equipped={isEq} size={48} />
+                  <p className="text-xs font-bold mt-1.5">{t.name}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 break-all">{t.condition}</p>
                   {isEq && <p className="text-[10px] font-bold mt-1" style={{ color: "hsl(174, 65%, 50%)" }}>装備中</p>}
                 </button>
