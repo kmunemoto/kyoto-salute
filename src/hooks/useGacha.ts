@@ -4,33 +4,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getJSTToday } from "@/lib/timezone";
 import type { GachaRarity } from "@/lib/gachaSystem";
 
-export interface GachaResultRow {
-  id: string;
-  result_date: string;
+export interface GachaSpinResult {
   reward_type: string;
-  reward_amount: number | null;
+  reward_amount: number;
   rarity: GachaRarity;
+  remaining: number;
 }
 
 export const useGacha = () => {
   const { user } = useAuth();
-  const [todayResult, setTodayResult] = useState<GachaResultRow | null>(null);
-  const [hasTrainedToday, setHasTrainedToday] = useState(false);
+  const [ticketCount, setTicketCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user) return;
-    const today = getJSTToday();
-    const [gRes, wRes] = await Promise.all([
-      supabase.from("gacha_results")
-        .select("id, result_date, reward_type, reward_amount, rarity")
-        .eq("user_id", user.id).eq("result_date", today).maybeSingle(),
-      supabase.from("workouts").select("id", { count: "exact", head: true })
-        .eq("user_id", user.id).eq("workout_date", today),
-    ]);
-    setTodayResult((gRes.data as GachaResultRow) || null);
-    setHasTrainedToday((wRes.count || 0) > 0);
+    const { count } = await supabase
+      .from("user_gacha_tickets")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("used", false);
+    setTicketCount(count || 0);
   }, [user]);
 
   useEffect(() => {
@@ -39,26 +33,27 @@ export const useGacha = () => {
     refresh().finally(() => setLoading(false));
   }, [user, refresh]);
 
-  const spin = useCallback(async (): Promise<GachaResultRow | null> => {
+  const spin = useCallback(async (): Promise<GachaSpinResult | null> => {
     if (!user) return null;
     setSpinning(true);
     try {
-      const today = getJSTToday();
       const { data, error } = await supabase.rpc("spin_gacha", {
-        _user_id: user.id, _result_date: today,
+        _user_id: user.id, _result_date: getJSTToday(),
       });
       if (error) throw error;
       const r: any = data;
-      const result: GachaResultRow = {
-        id: "",
-        result_date: today,
+      if (r?.no_ticket) {
+        setTicketCount(0);
+        return null;
+      }
+      const result: GachaSpinResult = {
         reward_type: r.reward_type,
         reward_amount: r.reward_amount,
         rarity: r.rarity as GachaRarity,
+        remaining: r.remaining ?? 0,
       };
-      setTodayResult(result);
+      setTicketCount(result.remaining);
 
-      // Achievements: gacha_beginner, lucky, legend
       const achKeys: string[] = ["gacha_beginner"];
       if (r.rarity === "epic" || r.rarity === "legendary") achKeys.push("gacha_lucky");
       if (r.rarity === "legendary") achKeys.push("gacha_legend");
@@ -66,12 +61,11 @@ export const useGacha = () => {
         achKeys.map((k) => ({ user_id: user.id, achievement_key: k })),
         { onConflict: "user_id,achievement_key", ignoreDuplicates: true } as any,
       );
-
       return result;
     } finally {
       setSpinning(false);
     }
   }, [user]);
 
-  return { todayResult, hasTrainedToday, loading, spinning, spin, refresh };
+  return { ticketCount, loading, spinning, spin, refresh };
 };

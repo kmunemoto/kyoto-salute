@@ -209,9 +209,9 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* Plan badge - only show if user has a plan */}
       <AvatarCard />
-      <DailyMissionCard />
       <RaidBossCard />
       <GachaCard />
+      <DailyMissionCard />
       <SeasonEventCard />
 
       {hasPlan && (
