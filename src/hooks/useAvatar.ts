@@ -32,6 +32,7 @@ export const useAvatar = (autoSync = true) => {
   const [logs, setLogs] = useState<ExpLogRow[]>([]);
   const [achievements, setAchievements] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [levelUp, setLevelUp] = useState<{ newLevel: number; earnedCoins: number } | null>(null);
 
   const refetch = useCallback(async () => {
     if (!user) return;
@@ -88,7 +89,10 @@ export const useAvatar = (autoSync = true) => {
       }
 
       const expLogs = buildExpLogsFromWorkouts(workouts, profile?.plan ?? null);
-      await recomputeAvatar(user.id, expLogs);
+      const result = await recomputeAvatar(user.id, expLogs);
+      if (result.newLevel > result.oldLevel && result.oldLevel >= 1 && avRow) {
+        setLevelUp({ newLevel: result.newLevel, earnedCoins: result.newCoins - result.oldCoins });
+      }
 
       // Achievements
       const { count } = await supabase
@@ -115,4 +119,5 @@ export const useAvatar = (autoSync = true) => {
   }, [user, profile?.plan, profile?.best_streak, autoSync, refetch]);
 
   return { avatar, logs, achievements, loading, refetch };
+  return { avatar, logs, achievements, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null) };
 };
