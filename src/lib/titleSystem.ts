@@ -37,6 +37,8 @@ const PART_KEY_MAP: Record<string, string> = {
   脚: "leg_master",
   肩: "shoulder_master",
   腕: "arm_master",
+  体幹: "core_oni",
+  腹筋: "core_oni",
 };
 
 export interface TitleEvalInput {
@@ -47,6 +49,11 @@ export interface TitleEvalInput {
   totalMissionCompletions: number;
   combo5Reached: number;
   exerciseMuscleGroup: (name: string) => string;
+  totalSessions?: number;
+  gachaCount?: number;
+  maxComboReached?: number;
+  totalPbCount?: number;
+  level?: number;
 }
 
 export function computeTitles(input: TitleEvalInput): string[] {
@@ -111,8 +118,26 @@ export function computeTitles(input: TitleEvalInput): string[] {
   }
 
   if (input.raidsContributedAndDefeated >= 3) keys.push("boss_slayer");
+  if (input.raidsContributedAndDefeated >= 5) keys.push("raid_slayer");
   if (input.totalMissionCompletions >= 50) keys.push("mission_addict");
   if (input.combo5Reached >= 3) keys.push("combo_master");
+
+  // weekend warrior: 60%+ of session dates are Sat/Sun
+  const sessionDates = new Set(ws.map((w) => w.workout_date));
+  if (sessionDates.size >= 5) {
+    let weekend = 0;
+    sessionDates.forEach((d) => {
+      const day = new Date(d).getDay();
+      if (day === 0 || day === 6) weekend += 1;
+    });
+    if (weekend / sessionDates.size >= 0.6) keys.push("weekend_warrior");
+  }
+
+  if ((input.totalSessions || 0) >= 200) keys.push("iron_man");
+  if ((input.gachaCount || 0) >= 50) keys.push("gacha_master");
+  if ((input.maxComboReached || 0) >= 10) keys.push("streaker");
+  if ((input.totalPbCount || 0) >= 30) keys.push("record_child");
+  if ((input.level || 0) >= 50) keys.push("legend_title");
 
   return keys;
 }
