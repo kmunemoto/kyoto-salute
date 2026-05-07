@@ -2,6 +2,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
+const logEmailInvoke = (
+  context: string,
+  templateName: string,
+  recipientEmail: string,
+  result: Awaited<ReturnType<typeof supabase.functions.invoke>>,
+) => {
+  console.log("予約メール送信レスポンス", {
+    context,
+    templateName,
+    recipientEmail,
+    status: result.error ? "error" : "ok",
+    body: result.data ?? result.error,
+  });
+};
+
 /**
  * Send a booking notification email to the trainer.
  * Fire-and-forget — errors are logged but never block the UI.
@@ -26,7 +41,7 @@ export const sendBookingNotification = async (
 
     // Notify trainer
     if (trainerRole) {
-      await supabase.functions.invoke("send-transactional-email", {
+      const result = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "new-booking-notification",
           recipientEmail: "_resolve_trainer_",
@@ -41,13 +56,14 @@ export const sendBookingNotification = async (
           },
         },
       });
+      logEmailInvoke("booking-create-trainer", "new-booking-notification", "_resolve_trainer_", result);
     } else {
       console.warn("No trainer found for booking notification");
     }
 
     // Notify customer (booking confirmation email)
     if (customerUserId) {
-      await supabase.functions.invoke("send-transactional-email", {
+      const result = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "booking-confirmation",
           recipientEmail: "_resolve_user_",
@@ -61,6 +77,7 @@ export const sendBookingNotification = async (
           },
         },
       });
+      logEmailInvoke("booking-create-customer", "booking-confirmation", "_resolve_user_", result);
     }
   } catch (e) {
     console.error("Failed to send booking notification email:", e);
