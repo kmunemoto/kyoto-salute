@@ -1059,6 +1059,10 @@ export type Database = {
         }
         Returns: number
       }
+      process_session_rewards: {
+        Args: { _user_id: string; _workout_date: string }
+        Returns: Json
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
