@@ -6,12 +6,13 @@ export const getComboMultiplier = (comboCount: number): number => {
   return 2.0;
 };
 
-export const getComboFlames = (comboCount: number): string => {
-  if (comboCount <= 1) return "";
-  if (comboCount === 2) return "🔥";
-  if (comboCount === 3) return "🔥🔥";
-  if (comboCount === 4) return "🔥🔥🔥";
-  return "🔥🔥🔥🔥";
+/** Number of flame icons to render for a given combo count. */
+export const getComboFlameCount = (comboCount: number): number => {
+  if (comboCount <= 1) return 0;
+  if (comboCount === 2) return 1;
+  if (comboCount === 3) return 2;
+  if (comboCount === 4) return 3;
+  return 4;
 };
 
 export const getComboColor = (comboCount: number): string => {
