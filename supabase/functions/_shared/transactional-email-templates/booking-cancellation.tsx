@@ -73,7 +73,7 @@ const BookingCancellationEmail = ({
           <Hr style={hr} />
           {recipientRole === 'customer' ? (
             <>
-              <Text style={footer}>パーソナルジム Salute御所南</Text>
+              <Text style={footer}>パーソナルジムSalute御所南</Text>
               <Text style={footer}>〒604-0862 京都市中京区毘沙門町533-1 プラザ御所南2階</Text>
               <Link href={SITE_URL} style={footerLink}>🌐 {SITE_URL}</Link>
             </>
@@ -92,7 +92,7 @@ export const template = {
   component: BookingCancellationEmail,
   subject: (data: Record<string, any>) =>
     data?.recipientRole === 'customer'
-      ? '【Salute御所南】キャンセルを受け付けました'
+      ? '【パーソナルジムSalute御所南】キャンセルを受け付けました'
       : (data?.isTrial
           ? '【パーソナルジムSalute御所南】初回無料体験の予約がキャンセルされました'
           : '【パーソナルジムSalute御所南】予約がキャンセルされました'),
