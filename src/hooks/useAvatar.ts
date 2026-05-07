@@ -102,7 +102,35 @@ export const useAvatar = (autoSync = true) => {
         .neq("status", "キャンセル済み")
         .lt("booking_date", new Date().toISOString());
 
-      const achKeys = computeAchievements(workouts, count || 0, profile?.best_streak || 0, getMuscleGroup);
+      // Mission stats
+      const { data: missionsData } = await supabase
+        .from("daily_missions")
+        .select("mission_date, completed_keys, all_completed")
+        .eq("user_id", user.id);
+      const rows = (missionsData || []) as any[];
+      const rowsWithAnyComplete = rows.filter((r) => (r.completed_keys || []).length > 0).length;
+      const totalCompletedCount = rows.reduce((s, r) => s + (r.completed_keys?.length || 0), 0);
+      const perfectDayCount = rows.filter((r) => r.all_completed).length;
+      // perfect_week: any ISO-week where every session-date in that week has all_completed
+      const perfectByDate = new Map<string, boolean>();
+      rows.forEach((r) => perfectByDate.set(r.mission_date, !!r.all_completed));
+      const sessionDates = new Set(workouts.map((w) => w.workout_date));
+      const weekMap = new Map<string, { total: number; perfect: number }>();
+      sessionDates.forEach((d) => {
+        const dt = new Date(d);
+        const onejan = new Date(dt.getFullYear(), 0, 1);
+        const wk = Math.ceil(((dt.getTime() - onejan.getTime()) / 86400000 + onejan.getDay() + 1) / 7);
+        const key = `${dt.getFullYear()}-W${String(wk).padStart(2, "0")}`;
+        const cur = weekMap.get(key) || { total: 0, perfect: 0 };
+        cur.total += 1;
+        if (perfectByDate.get(d)) cur.perfect += 1;
+        weekMap.set(key, cur);
+      });
+      const hasPerfectWeek = [...weekMap.values()].some((v) => v.total > 0 && v.total === v.perfect);
+
+      const achKeys = computeAchievements(workouts, count || 0, profile?.best_streak || 0, getMuscleGroup, {
+        rowsWithAnyComplete, totalCompletedCount, perfectDayCount, hasPerfectWeek,
+      });
       await unlockAchievements(user.id, achKeys);
 
       if (!cancelled) {
