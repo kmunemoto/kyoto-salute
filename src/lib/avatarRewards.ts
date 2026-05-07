@@ -198,6 +198,7 @@ export interface MissionStatsInput {
 export interface ExtraStatsInput {
   level?: number;
   maxComboReached?: number;
+  combo5Count?: number;
   totalCoinsEarned?: number;
   gachaCount?: number;
   eventsCompletedCount?: number;
@@ -306,7 +307,7 @@ export function computeAchievements(
     if ((extra.raidContributionCount || 0) >= 1) keys.push("first_raid");
     if ((extra.raidMvpCount || 0) >= 1) keys.push("raid_mvp");
     if (extra.hasProgressPhoto) keys.push("first_shot");
-    // combo_master_ach uses missionStats-style passed via combo5Reached not here; gated separately below
+    if ((extra.combo5Count || 0) >= 3) keys.push("combo_master_ach");
   }
 
   return keys;
