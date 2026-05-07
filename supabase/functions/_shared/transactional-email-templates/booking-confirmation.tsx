@@ -1,11 +1,11 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section, Link,
+  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section, Link, Button,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "パーソナルジムSalute御所南"
-const SITE_URL = "https://app.kyoto-salute.com"
+const APP_URL = "https://app.kyoto-salute.com"
+const SITE_URL = "https://kyoto-salute.com"
 
 interface BookingConfirmationProps {
   customerName?: string
@@ -22,37 +22,29 @@ const BookingConfirmationEmail = ({
 }: BookingConfirmationProps) => (
   <Html lang="ja" dir="ltr">
     <Head />
-    <Preview>予約完了のお知らせ — {SITE_NAME}</Preview>
+    <Preview>ご予約を承りました — Salute御所南</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>予約完了のお知らせ</Heading>
+        <Heading style={h1}>ご予約を承りました</Heading>
         <Hr style={hr} />
         <Text style={greeting}>{customerName} 様</Text>
-        <Text style={text}>
-          {SITE_NAME}をご利用いただきありがとうございます。
-        </Text>
-        <Text style={text}>
-          以下の内容でご予約を承りました。
-        </Text>
+        <Text style={text}>ご予約を承りました。</Text>
         <Section style={detailSection}>
-          <Text style={sectionTitle}>■ ご予約内容</Text>
+          <Text style={sectionTitle}>📅 ご予約内容</Text>
           <Text style={label}>日時</Text>
           <Text style={value}>{bookingDate} {bookingTime}</Text>
           <Text style={label}>プラン</Text>
           <Text style={value}>{planName}</Text>
         </Section>
+        <Section style={detailSection}>
+          <Text style={sectionTitle}>⚠️ キャンセル・変更</Text>
+          <Text style={text}>アプリからキャンセル・変更が可能です。</Text>
+          <Button href={APP_URL} style={button}>▼ アプリを開く</Button>
+        </Section>
         <Hr style={hr} />
-        <Text style={text}>
-          当日のご来店を心よりお待ちしております。
-        </Text>
-        <Text style={noteText}>
-          ※キャンセルや変更はアプリのチャット、またはお電話にてご連絡ください。
-        </Text>
-        <Hr style={hr} />
-        <Text style={footer}>
-          パーソナルジム {SITE_NAME}
-        </Text>
-        <Link href={SITE_URL} style={footerLink}>{SITE_URL}</Link>
+        <Text style={footer}>パーソナルジム Salute御所南</Text>
+        <Text style={footer}>〒604-0862 京都市中京区毘沙門町533-1 プラザ御所南2階</Text>
+        <Link href={SITE_URL} style={footerLink}>🌐 {SITE_URL}</Link>
       </Container>
     </Body>
   </Html>
@@ -60,8 +52,8 @@ const BookingConfirmationEmail = ({
 
 export const template = {
   component: BookingConfirmationEmail,
-  subject: '【パーソナルジムSalute御所南】予約完了のお知らせ',
-  displayName: '予約完了のお知らせ（顧客向け）',
+  subject: '【Salute御所南】ご予約を承りました',
+  displayName: 'ご予約を承りました（顧客向け）',
   previewData: {
     customerName: '山田 太郎',
     bookingDate: '4月15日（火）',
@@ -83,3 +75,4 @@ const label = { fontSize: '11px', fontWeight: '600' as const, color: '#0ABAB5', 
 const value = { fontSize: '15px', color: '#000000', margin: '0 0 4px', fontWeight: '500' as const }
 const footer = { fontSize: '12px', color: '#999999', margin: '16px 0 4px', lineHeight: '1.5', textAlign: 'center' as const }
 const footerLink = { fontSize: '12px', color: '#0ABAB5', textAlign: 'center' as const, display: 'block' }
+const button = { backgroundColor: '#0ABAB5', color: '#ffffff', padding: '12px 20px', borderRadius: '6px', textDecoration: 'none', display: 'inline-block', fontSize: '14px', fontWeight: '600' as const, marginTop: '8px' }
