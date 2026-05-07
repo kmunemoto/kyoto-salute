@@ -38,7 +38,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props
             className="w-44 h-44 rounded-3xl flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: `${p.rank.color}15` }}
           >
-            <img src={p.rank.image} alt={p.rank.name} className="w-full h-full object-contain" />
+            <img src={p.rank.image} alt={p.rank.name} className="w-full h-full object-cover" />
           </div>
           <div className="mt-3 text-center">
             <p className="text-2xl font-extrabold">Lv.{p.level}</p>

@@ -31,11 +31,11 @@ export const calculateLevel = (totalExp: number): number => {
 };
 
 export const getRankInfo = (level: number): RankInfo => {
-  if (level <= 5) return { key: "rookie", name: "ルーキー", image: "/avatars/rookie.svg", color: "#10b981" };
-  if (level <= 15) return { key: "regular", name: "レギュラー", image: "/avatars/regular.svg", color: "#3b82f6" };
-  if (level <= 30) return { key: "athlete", name: "アスリート", image: "/avatars/athlete.svg", color: "#8b5cf6" };
-  if (level <= 50) return { key: "elite", name: "エリート", image: "/avatars/elite.svg", color: "#f59e0b" };
-  return { key: "legend", name: "レジェンド", image: "/avatars/legend.svg", color: "#d4af37" };
+  if (level <= 5) return { key: "rookie", name: "ルーキー", image: "/avatars/rookie.png", color: "#10b981" };
+  if (level <= 15) return { key: "regular", name: "レギュラー", image: "/avatars/regular.png", color: "#3b82f6" };
+  if (level <= 30) return { key: "athlete", name: "アスリート", image: "/avatars/athlete.png", color: "#8b5cf6" };
+  if (level <= 50) return { key: "elite", name: "エリート", image: "/avatars/elite.png", color: "#f59e0b" };
+  return { key: "legend", name: "レジェンド", image: "/avatars/legend.png", color: "#d4af37" };
 };
 
 export interface ExpProgress {

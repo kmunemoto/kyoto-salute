@@ -23,7 +23,7 @@ const AvatarLevelUpDialog = ({ open, onClose, newLevel, earnedCoins }: Props) =>
             className="w-44 h-44 rounded-3xl flex items-center justify-center overflow-hidden animate-[scale-in_0.4s_ease-out]"
             style={{ backgroundColor: `${rank.color}20`, boxShadow: `0 0 40px ${rank.color}55` }}
           >
-            <img src={rank.image} alt={rank.name} className="w-full h-full object-contain" />
+            <img src={rank.image} alt={rank.name} className="w-full h-full object-cover" />
           </div>
           <p className="mt-4 text-3xl font-black tracking-wider" style={{ color: rank.color }}>LEVEL UP!</p>
           <p className="mt-2 text-xl font-extrabold">Lv.{newLevel}</p>
