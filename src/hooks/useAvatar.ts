@@ -206,9 +206,7 @@ export const useAvatar = (autoSync = true) => {
         .eq("user_id", user.id)
         .eq("reward_type", "coins");
       const gachaCoinsEarned = (gachaCoinRows || []).reduce((s: number, r: any) => s + (r.reward_amount || 0), 0);
-      // Sum (newLevel-1)*10 estimate for level rewards
-      const levelRewardCoins = Math.max(0, ((avRow?.total_exp != null ? 0 : 0) + 0));
-      // Use current avatar.coins + purchasedCoins + gachaCoinsEarned + raid rewards as a proxy
+      // Use current avatar.coins + gacha coin rewards + purchases as a proxy for total earned
       const totalCoinsEarned = (avRow?.coins ?? 0) + gachaCoinsEarned + purchasedCoins;
 
       const achKeys = computeAchievements(workouts, count || 0, profile?.best_streak || 0, getMuscleGroup, {
