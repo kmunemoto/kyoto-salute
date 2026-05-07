@@ -41,23 +41,26 @@ export async function recomputeAvatar(
   const oldCoins = existing?.coins ?? 0;
 
   // Insert new logs (ignore duplicates via onConflict)
-  let addedExp = 0;
   if (newLogs.length > 0) {
     const rows = newLogs.map((l) => ({ user_id: userId, ...l }));
-    const { data: inserted } = await supabase
+    await supabase
       .from("avatar_exp_logs")
-      .upsert(rows, { onConflict: "user_id,reason,reference_date", ignoreDuplicates: true })
-      .select("exp_amount");
-    addedExp = (inserted || []).reduce((s, r: any) => s + (r.exp_amount || 0), 0);
+      .upsert(rows, { onConflict: "user_id,reason,reference_date", ignoreDuplicates: true });
   }
 
-  if (addedExp === 0 && existing) {
-    return { addedExp: 0, oldLevel, newLevel: oldLevel, oldCoins, newCoins: oldCoins, newExp: oldExp };
-  }
-
-  const newExp = oldExp + addedExp;
+  // Re-sum from all logs to get authoritative total
+  const { data: allLogs } = await supabase
+    .from("avatar_exp_logs")
+    .select("exp_amount")
+    .eq("user_id", userId);
+  const newExp = (allLogs || []).reduce((s, r: any) => s + (Number(r.exp_amount) || 0), 0);
   const newLevel = calculateLevel(newExp);
   const newCoins = oldCoins + Math.max(0, newLevel - oldLevel) * 10;
+  const addedExp = newExp - oldExp;
+
+  if (addedExp === 0 && existing && newLevel === oldLevel) {
+    return { addedExp: 0, oldLevel, newLevel: oldLevel, oldCoins, newCoins: oldCoins, newExp: oldExp };
+  }
 
   if (existing) {
     await supabase
