@@ -2,8 +2,7 @@ import {
   Layers, Target, Repeat, Dumbbell, Scale, Award, Sun, Hash, Compass,
   CalendarCheck, Flame, Star, Trophy, Shield, Zap, Sparkles, Clover, Crown,
   Swords, Mountain, Footprints, CircleDot, Sunrise, Moon, TrendingUp, Radar,
-  Weight, Coins, Camera, Gift, Image as ImageIcon, Rocket, Medal, PartyPopper,
-  Hexagon, Boxes, CircleDollarSign,
+  Weight, Coins, Camera, Gift, Rocket, Medal, PartyPopper, Hexagon, Boxes,
   type LucideIcon,
 } from "lucide-react";
 
