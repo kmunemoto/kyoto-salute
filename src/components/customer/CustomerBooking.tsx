@@ -169,7 +169,7 @@ const CustomerBooking = () => {
     fetchBookedSlots(dateKey);
 
     // Fire-and-forget notification email to trainer
-    sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan);
+    sendBookingNotification(data.id, profile?.display_name || "お客様", dateKey, slot.time, endTime, selectedPlan, user.id);
 
     // Fire-and-forget LINE message to customer
     // Gated by feature flag — customer LINE booking notifications are currently disabled
