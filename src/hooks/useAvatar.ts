@@ -118,6 +118,5 @@ export const useAvatar = (autoSync = true) => {
     };
   }, [user, profile?.plan, profile?.best_streak, autoSync, refetch]);
 
-  return { avatar, logs, achievements, loading, refetch };
   return { avatar, logs, achievements, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null) };
 };
