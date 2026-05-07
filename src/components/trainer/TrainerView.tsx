@@ -9,6 +9,7 @@ import TrainerSchedule from "./TrainerSchedule";
 import TrainerMessages from "./TrainerMessages";
 import TrainerExerciseManager from "./TrainerExerciseManager";
 import TrainerGymSettings from "./TrainerGymSettings";
+import TrainerRaidManager from "./TrainerRaidManager";
 import CounselingResponseList from "./CounselingResponseList";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ import { useUnreadCount } from "@/hooks/useMessages";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import { supabase } from "@/integrations/supabase/client";
 
-export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "counseling" | "gym-settings";
+export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "counseling" | "raid" | "gym-settings";
 
 const TrainerView = () => {
   const [tab, setTab] = useState<TrainerTab>("dashboard");
@@ -115,6 +116,7 @@ const TrainerView = () => {
               {tab === "messages" && <TrainerMessages />}
               {tab === "exercises" && <TrainerExerciseManager />}
               {tab === "counseling" && <CounselingResponseList />}
+              {tab === "raid" && <TrainerRaidManager />}
               {tab === "gym-settings" && <TrainerGymSettings onSignOut={signOut} />}
             </main>
         </div>
