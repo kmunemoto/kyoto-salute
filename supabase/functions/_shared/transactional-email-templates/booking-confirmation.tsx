@@ -22,7 +22,7 @@ const BookingConfirmationEmail = ({
 }: BookingConfirmationProps) => (
   <Html lang="ja" dir="ltr">
     <Head />
-    <Preview>ご予約を承りました — Salute御所南</Preview>
+    <Preview>ご予約を承りました — パーソナルジムSalute御所南</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>ご予約を承りました</Heading>
@@ -37,12 +37,12 @@ const BookingConfirmationEmail = ({
           <Text style={value}>{planName}</Text>
         </Section>
         <Section style={detailSection}>
-          <Text style={sectionTitle}>⚠️ キャンセル・変更</Text>
+          <Text style={sectionTitle}>キャンセル・変更について</Text>
           <Text style={text}>アプリからキャンセル・変更が可能です。</Text>
           <Button href={APP_URL} style={button}>▼ アプリを開く</Button>
         </Section>
         <Hr style={hr} />
-        <Text style={footer}>パーソナルジム Salute御所南</Text>
+        <Text style={footer}>パーソナルジムSalute御所南</Text>
         <Text style={footer}>〒604-0862 京都市中京区毘沙門町533-1 プラザ御所南2階</Text>
         <Link href={SITE_URL} style={footerLink}>🌐 {SITE_URL}</Link>
       </Container>
@@ -52,7 +52,7 @@ const BookingConfirmationEmail = ({
 
 export const template = {
   component: BookingConfirmationEmail,
-  subject: '【Salute御所南】ご予約を承りました',
+  subject: '【パーソナルジムSalute御所南】ご予約を承りました',
   displayName: 'ご予約を承りました（顧客向け）',
   previewData: {
     customerName: '山田 太郎',
