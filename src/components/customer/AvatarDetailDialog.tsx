@@ -1,0 +1,105 @@
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ACHIEVEMENTS, getExpProgress } from "@/lib/avatarSystem";
+import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
+import { format, parseISO } from "date-fns";
+import { ja } from "date-fns/locale";
+import { Coins, Trophy } from "lucide-react";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  avatar: AvatarRow;
+  logs: ExpLogRow[];
+  achievements: string[];
+}
+
+const reasonLabel = (reason: string): string => {
+  const head = reason.split("|")[0];
+  switch (head) {
+    case "session": return "セッション完了";
+    case "streak_bonus": return "連続来店ボーナス";
+    case "pb": return "自己ベスト更新";
+    case "new_exercise": return "新種目チャレンジ";
+    case "monthly_goal": return "月間目標達成";
+    default: return reason;
+  }
+};
+
+const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements }: Props) => {
+  const p = getExpProgress(avatar.total_exp);
+  const acquired = new Set(achievements);
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="sr-only">アバター詳細</DialogTitle>
+        <div className="flex flex-col items-center pt-2">
+          <div
+            className="w-44 h-44 rounded-3xl flex items-center justify-center overflow-hidden"
+            style={{ backgroundColor: `${p.rank.color}15` }}
+          >
+            <img src={p.rank.image} alt={p.rank.name} className="w-full h-full object-contain" />
+          </div>
+          <div className="mt-3 text-center">
+            <p className="text-2xl font-extrabold">Lv.{p.level}</p>
+            <p className="text-sm font-bold" style={{ color: p.rank.color }}>{p.rank.name}</p>
+            <p className="text-xs text-muted-foreground mt-1">累計 {p.totalExp.toLocaleString()} EXP</p>
+          </div>
+          <div className="w-full mt-3">
+            <div className="h-3 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${p.percent}%`, backgroundColor: "hsl(174, 65%, 50%)" }} />
+            </div>
+            <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+              <span>{p.currentLevelExp} / {p.requiredExp} EXP</span>
+              <span>次のレベルまで {p.remainingExp}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-amber-600">
+            <Coins className="w-4 h-4" />
+            {avatar.coins} コイン
+          </div>
+        </div>
+
+        <section className="mt-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">EXP獲得履歴</h3>
+          {logs.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">まだ記録がありません</p>
+          ) : (
+            <div className="space-y-1">
+              {logs.slice(0, 10).map((l) => (
+                <div key={l.id} className="flex items-center justify-between text-xs py-1.5 px-3 rounded-lg bg-muted/50">
+                  <span className="truncate">
+                    {l.reference_date ? format(parseISO(l.reference_date), "M/d", { locale: ja }) : ""} {reasonLabel(l.reason)}
+                  </span>
+                  <span className="font-bold text-accent">+{l.exp_amount}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Trophy className="w-3.5 h-3.5" /> 実績バッジ
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            {ACHIEVEMENTS.map((a) => {
+              const got = acquired.has(a.key);
+              return (
+                <div
+                  key={a.key}
+                  className={`p-2.5 rounded-xl border text-center ${got ? "bg-accent/10 border-accent/30" : "bg-muted/30 border-border opacity-50"}`}
+                >
+                  <p className="text-xs font-bold">{a.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 break-all">{a.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default AvatarDetailDialog;
