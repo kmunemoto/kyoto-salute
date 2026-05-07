@@ -20,6 +20,21 @@ export interface BookingRow {
 // unaffected. Code is preserved (only the send is skipped) so it can be revived later.
 const NOTIFY_CUSTOMER_LINE_ON_BOOKING = false;
 
+const logEmailInvoke = (
+  context: string,
+  templateName: string,
+  recipientEmail: string,
+  result: Awaited<ReturnType<typeof supabase.functions.invoke>>,
+) => {
+  console.log("予約メール送信レスポンス", {
+    context,
+    templateName,
+    recipientEmail,
+    status: result.error ? "error" : "ok",
+    body: result.data ?? result.error,
+  });
+};
+
 export interface BookingWithTime {
   id: string;
   user_id: string;
@@ -476,7 +491,8 @@ async function sendCancelEmailNotification(
           trainerUserId: trainerId,
         },
       },
-    }).catch((e) => console.error("Cancel email (trainer) failed:", e));
+    }).then((result) => logEmailInvoke("booking-cancel-trainer", "booking-cancellation", "_resolve_trainer_", result))
+      .catch((e) => console.error("Cancel email (trainer) failed:", e));
   }
 
   // Email customer (resolve email from auth via edge function)
@@ -495,5 +511,6 @@ async function sendCancelEmailNotification(
         resolveUserId: booking.user_id,
       },
     },
-  }).catch((e) => console.error("Cancel email (customer) failed:", e));
+  }).then((result) => logEmailInvoke("booking-cancel-customer", "booking-cancellation", "_resolve_user_", result))
+    .catch((e) => console.error("Cancel email (customer) failed:", e));
 }
