@@ -7,6 +7,7 @@ import type { TemplateEntry } from './registry.ts'
 const SITE_NAME = "パーソナルジムSalute御所南"
 const APP_URL = "https://app.kyoto-salute.com"
 const SITE_URL = "https://kyoto-salute.com"
+const NEW_BOOKING_GUIDANCE = "新しいご予約\u306Fアプリから承っております。"
 
 interface BookingCancellationProps {
   customerName?: string
@@ -66,7 +67,7 @@ const BookingCancellationEmail = ({
           </Section>
           {recipientRole === 'customer' && (
             <Section style={detailSection}>
-              <Text style={text}>新しいご予約はアプリから承っております。</Text>
+              <Text style={text}>{NEW_BOOKING_GUIDANCE}</Text>
               <Button href={APP_URL} style={button}>▼ アプリを開く</Button>
             </Section>
           )}
