@@ -7,6 +7,7 @@ import AvatarDetailDialog from "./AvatarDetailDialog";
 import AvatarLevelUpDialog from "./AvatarLevelUpDialog";
 import { getComboColor, getComboFlames, getComboMultiplier } from "@/lib/comboSystem";
 import { getTitleDef } from "@/lib/titleSystem";
+import BadgeIcon from "./BadgeIcon";
 
 const AvatarCard = () => {
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle } = useAvatar(true);
@@ -45,9 +46,12 @@ const AvatarCard = () => {
               <span className="text-xs font-bold" style={{ color: p.rank.color }}>{p.rank.name}</span>
             </div>
             {equipped && (
-              <p className="text-[11px] font-bold mt-0.5" style={{ color: "hsl(174, 65%, 50%)" }}>
-                {equipped.icon} {equipped.name}
-              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <BadgeIcon type="title" iconKey={equipped.key} equipped size={20} />
+                <span className="text-[11px] font-bold" style={{ color: "hsl(174, 65%, 50%)" }}>
+                  {equipped.name}
+                </span>
+              </div>
             )}
             <p className="text-[11px] text-muted-foreground mt-0.5">EXP: {p.totalExp.toLocaleString()}</p>
             {combo >= 2 && (
