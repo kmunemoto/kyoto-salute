@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import IconPicker from "@/components/IconPicker";
+import RenderIcon from "@/components/RenderIcon";
 
 interface EventRow {
   id: string;
@@ -54,8 +56,8 @@ const TrainerEventManager = () => {
   // New event form state
   const [form, setForm] = useState({
     event_name: "", event_description: "", start_date: "", end_date: "",
-    event_icon: "🎉", reward_exp: 500, reward_coins: 50,
-    reward_badge_key: "", badge_name: "", badge_icon: "🏅",
+    event_icon: "PartyPopper", reward_exp: 500, reward_coins: 50,
+    reward_badge_key: "", badge_name: "", badge_icon: "Medal",
   });
 
   // New task per event
@@ -95,7 +97,7 @@ const TrainerEventManager = () => {
     setCreating(false);
     if (error) { toast.error("作成に失敗", { description: error.message }); return; }
     toast.success("イベントを作成しました");
-    setForm({ event_name: "", event_description: "", start_date: "", end_date: "", event_icon: "🎉", reward_exp: 500, reward_coins: 50, reward_badge_key: "", badge_name: "", badge_icon: "🏅" });
+    setForm({ event_name: "", event_description: "", start_date: "", end_date: "", event_icon: "PartyPopper", reward_exp: 500, reward_coins: 50, reward_badge_key: "", badge_name: "", badge_icon: "Medal" });
     refresh();
   };
 
@@ -142,14 +144,14 @@ const TrainerEventManager = () => {
           <h2 className="font-bold">新規イベント作成</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><Label>イベント名</Label><Input value={form.event_name} onChange={(e) => setForm({ ...form, event_name: e.target.value })} /></div>
-            <div><Label>アイコン</Label><Input value={form.event_icon} onChange={(e) => setForm({ ...form, event_icon: e.target.value })} /></div>
+            <div><Label>アイコン</Label><IconPicker value={form.event_icon} onChange={(v) => setForm({ ...form, event_icon: v })} className="w-full" /></div>
             <div><Label>開始日</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
             <div><Label>終了日</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
             <div><Label>報酬EXP</Label><Input type="number" value={form.reward_exp} onChange={(e) => setForm({ ...form, reward_exp: parseInt(e.target.value) || 0 })} /></div>
             <div><Label>報酬コイン</Label><Input type="number" value={form.reward_coins} onChange={(e) => setForm({ ...form, reward_coins: parseInt(e.target.value) || 0 })} /></div>
             <div><Label>限定バッジキー</Label><Input value={form.reward_badge_key} onChange={(e) => setForm({ ...form, reward_badge_key: e.target.value })} /></div>
             <div><Label>バッジ名</Label><Input value={form.badge_name} onChange={(e) => setForm({ ...form, badge_name: e.target.value })} /></div>
-            <div><Label>バッジアイコン</Label><Input value={form.badge_icon} onChange={(e) => setForm({ ...form, badge_icon: e.target.value })} /></div>
+            <div><Label>バッジアイコン</Label><IconPicker value={form.badge_icon} onChange={(v) => setForm({ ...form, badge_icon: v })} className="w-full" /></div>
             <div className="md:col-span-2"><Label>説明</Label><Textarea value={form.event_description} onChange={(e) => setForm({ ...form, event_description: e.target.value })} /></div>
           </div>
           <Button onClick={createEvent} disabled={creating} className="w-full md:w-auto">
@@ -166,7 +168,7 @@ const TrainerEventManager = () => {
             <CardContent className="p-4 space-y-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-bold text-lg">{ev.event_icon} {ev.event_name}</h3>
+                  <h3 className="font-bold text-lg flex items-center gap-2"><RenderIcon name={ev.event_icon} size={20} />{ev.event_name}</h3>
                   <p className="text-xs text-muted-foreground">{ev.start_date} 〜 {ev.end_date}</p>
                   <p className="text-xs">報酬: {ev.reward_exp} EXP + {ev.reward_coins}コイン{ev.badge_name ? ` + 「${ev.badge_name}」` : ""}</p>
                 </div>
@@ -176,7 +178,7 @@ const TrainerEventManager = () => {
               <div className="space-y-2 pl-2">
                 {evTasks.map((t) => (
                   <div key={t.id} className="flex items-center gap-2 text-sm py-1 border-b">
-                    <span>{t.task_icon} {t.task_name}</span>
+                    <span className="flex items-center gap-1.5"><RenderIcon name={t.task_icon} size={14} />{t.task_name}</span>
                     <span className="text-muted-foreground">({TASK_TYPES.find(x => x.value === t.task_type)?.label || t.task_type} / 目標 {t.target_value.toLocaleString()})</span>
                     <Button size="sm" variant="ghost" className="ml-auto" onClick={() => deleteTask(t.id)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
                   </div>
@@ -185,7 +187,7 @@ const TrainerEventManager = () => {
 
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 pt-2 border-t">
                 <Input placeholder="タスク名" value={tf.task_name} onChange={(e) => setTaskForms({ ...taskForms, [ev.id]: { ...tf, task_name: e.target.value } })} />
-                <Input placeholder="アイコン" value={tf.task_icon} onChange={(e) => setTaskForms({ ...taskForms, [ev.id]: { ...tf, task_icon: e.target.value } })} />
+                <IconPicker value={tf.task_icon || "Target"} onChange={(v) => setTaskForms({ ...taskForms, [ev.id]: { ...tf, task_icon: v } })} className="w-full" />
                 <Input placeholder="目標値" type="number" value={tf.target_value || ""} onChange={(e) => setTaskForms({ ...taskForms, [ev.id]: { ...tf, target_value: parseInt(e.target.value) || 0 } })} />
                 <Select value={tf.task_type} onValueChange={(v) => setTaskForms({ ...taskForms, [ev.id]: { ...tf, task_type: v } })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>

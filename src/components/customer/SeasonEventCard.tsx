@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { useSeasonEvents } from "@/hooks/useSeasonEvents";
 import { differenceInDays, parseISO } from "date-fns";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Gift } from "lucide-react";
+import RenderIcon from "@/components/RenderIcon";
 import { getJSTToday } from "@/lib/timezone";
 
 const TIFFANY = "hsl(174, 65%, 50%)";
@@ -29,8 +30,9 @@ const SeasonEventCard = () => {
             <Card key={event.id} className={completed ? "event-complete-glow border-amber-300" : ""}>
               <CardContent className="p-4">
                 <div className="flex items-baseline justify-between mb-1">
-                  <h3 className="text-sm font-extrabold">
-                    {event.event_icon} {event.event_name}
+                  <h3 className="text-sm font-extrabold flex items-center gap-1.5">
+                    <RenderIcon name={event.event_icon} size={16} color={TIFFANY} />
+                    {event.event_name}
                   </h3>
                   {completed && (
                     <span className="text-[11px] font-extrabold flex items-center gap-1" style={{ color: "#D4AF37" }}>
@@ -58,8 +60,9 @@ const SeasonEventCard = () => {
                           ) : (
                             <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0" />
                           )}
-                          <span className="text-sm font-bold flex-1" style={{ color: done ? TIFFANY : undefined }}>
-                            {t.task_icon} {t.task_name}
+                          <span className="text-sm font-bold flex-1 flex items-center gap-1.5" style={{ color: done ? TIFFANY : undefined }}>
+                            <RenderIcon name={t.task_icon} size={14} color={done ? TIFFANY : "#666"} />
+                            {t.task_name}
                           </span>
                           <span className="text-[11px] font-bold" style={{ color: done ? TIFFANY : "#999" }}>
                             {cur.toLocaleString()}/{t.target_value.toLocaleString()}
@@ -76,9 +79,9 @@ const SeasonEventCard = () => {
                 </div>
 
                 <div className="mt-3 pt-3 border-t text-[11px] space-y-0.5" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
-                  <p className="font-bold">🎁 完走報酬: {event.reward_exp} EXP + {event.reward_coins}コイン</p>
+                  <p className="font-bold flex items-center gap-1"><Gift className="w-3.5 h-3.5" />完走報酬: {event.reward_exp} EXP + {event.reward_coins}コイン</p>
                   {event.badge_name && (
-                    <p>＋限定バッジ「{event.badge_name}{event.badge_icon || ""}」</p>
+                    <p className="flex items-center gap-1">＋限定バッジ「{event.badge_name}」<RenderIcon name={event.badge_icon} size={12} /></p>
                   )}
                   <p className="text-muted-foreground">進捗: {doneTasks}/{totalTasks} タスク完了</p>
                 </div>
