@@ -34,6 +34,30 @@ export const ACHIEVEMENTS: { key: string; name: string; description: string; rar
   { key: "gacha_beginner", name: "初ガチャ", description: "ガチャを初めて回す", rarity: "normal" },
   { key: "gacha_lucky", name: "ラッキー", description: "epicまたはlegendaryを引く", rarity: "rare" },
   { key: "gacha_legend", name: "ジャックポット", description: "legendaryを引く", rarity: "epic" },
+  // === New: ★1 (common) ===
+  { key: "first_session", name: "初セッション", description: "初回トレーニング完了", rarity: "normal" },
+  { key: "first_pb", name: "初ベスト更新", description: "初めて自己ベストを更新", rarity: "normal" },
+  { key: "combo_starter", name: "コンボ入門", description: "コンボ3回達成", rarity: "normal" },
+  { key: "first_raid", name: "初レイド参加", description: "レイドボスに初めてダメージ", rarity: "normal" },
+  { key: "month_50k", name: "月間5万kg突破", description: "月間総挙上量50,000kg以上", rarity: "normal" },
+  { key: "level_10", name: "Lv10到達", description: "アバターレベル10到達", rarity: "normal" },
+  { key: "first_event", name: "イベント初参加", description: "シーズンイベント初クリア", rarity: "normal" },
+  { key: "first_shot", name: "ファーストショット", description: "初のビフォーアフター写真", rarity: "normal" },
+  // === New: ★2 (rare) ===
+  { key: "best_hunter", name: "ベストハンター", description: "自己ベスト累計10回更新", rarity: "rare" },
+  { key: "combo_master_ach", name: "コンボマスター", description: "コンボ5回達成を3回記録", rarity: "rare" },
+  { key: "level_25", name: "Lv25到達", description: "アバターレベル25到達", rarity: "rare" },
+  { key: "coin_collector", name: "コインコレクター", description: "累計コイン獲得500枚以上", rarity: "rare" },
+  { key: "event_master", name: "イベントマスター", description: "シーズンイベント3回クリア", rarity: "rare" },
+  { key: "gacha_addict", name: "ガチャ中毒", description: "ガチャ累計30回実行", rarity: "rare" },
+  // === New: ★3 (epic) ===
+  { key: "record_breaker", name: "記録破壊王", description: "自己ベスト累計30回更新", rarity: "epic" },
+  { key: "two_hundred_sessions", name: "200回達成", description: "累計200セッション", rarity: "epic" },
+  { key: "one_year", name: "1年継続", description: "52週連続来店", rarity: "epic" },
+  { key: "combo_king", name: "コンボキング", description: "最大コンボ10到達", rarity: "epic" },
+  { key: "raid_mvp", name: "レイドMVP", description: "1回のレイドで最大貢献者", rarity: "epic" },
+  { key: "month_200k", name: "月間20万kg突破", description: "月間総挙上量200,000kg以上", rarity: "epic" },
+  { key: "level_50", name: "Lv50到達", description: "アバターレベル50到達", rarity: "epic" },
 ];
 
 export const getRarityColor = (rarity: AchievementRarity): string => {
