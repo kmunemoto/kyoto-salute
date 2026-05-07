@@ -227,6 +227,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_missions: {
+        Row: {
+          all_completed: boolean
+          completed_keys: string[]
+          created_at: string
+          exp_earned: number
+          id: string
+          mission_date: string
+          mission_keys: string[]
+          user_id: string
+        }
+        Insert: {
+          all_completed?: boolean
+          completed_keys?: string[]
+          created_at?: string
+          exp_earned?: number
+          id?: string
+          mission_date: string
+          mission_keys: string[]
+          user_id: string
+        }
+        Update: {
+          all_completed?: boolean
+          completed_keys?: string[]
+          created_at?: string
+          exp_earned?: number
+          id?: string
+          mission_date?: string
+          mission_keys?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
