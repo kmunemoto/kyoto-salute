@@ -1,5 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Loader2, Target } from "lucide-react";
+import RenderIcon from "@/components/RenderIcon";
+import { Gift } from "lucide-react";
 import { useDailyMissions } from "@/hooks/useDailyMissions";
 import { getMissionDef, MISSION_BONUS_EXP } from "@/lib/missionSystem";
 
@@ -63,10 +65,11 @@ const DailyMissionCard = () => {
                       <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0" />
                     )}
                     <span
-                      className="text-sm font-bold flex-1"
+                      className="text-sm font-bold flex-1 flex items-center gap-1.5"
                       style={{ color: done ? TIFFANY : undefined }}
                     >
-                      {def.icon} {def.name}
+                      <RenderIcon name={def.icon} size={14} color={done ? TIFFANY : "#666"} />
+                      {def.name}
                     </span>
                     <span
                       className="text-xs font-bold"
@@ -89,7 +92,7 @@ const DailyMissionCard = () => {
             className="mt-3 pt-3 border-t flex items-center justify-between"
             style={{ borderColor: "rgba(0,0,0,0.06)" }}
           >
-            <span className="text-xs font-bold">🎁 全達成ボーナス</span>
+            <span className="text-xs font-bold flex items-center gap-1"><Gift className="w-3.5 h-3.5" />全達成ボーナス</span>
             {allDone ? (
               <span className="text-xs font-extrabold" style={{ color: "#D4AF37", fontWeight: 800 }}>
                 COMPLETE! +{MISSION_BONUS_EXP} EXP

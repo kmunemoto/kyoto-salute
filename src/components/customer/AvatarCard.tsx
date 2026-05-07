@@ -5,9 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import AvatarDetailDialog from "./AvatarDetailDialog";
 import AvatarLevelUpDialog from "./AvatarLevelUpDialog";
-import { getComboColor, getComboFlames, getComboMultiplier } from "@/lib/comboSystem";
+import { getComboColor, getComboFlameCount, getComboMultiplier } from "@/lib/comboSystem";
 import { getTitleDef } from "@/lib/titleSystem";
 import BadgeIcon from "./BadgeIcon";
+import { Flame } from "lucide-react";
 
 const AvatarCard = () => {
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle } = useAvatar(true);
@@ -56,10 +57,13 @@ const AvatarCard = () => {
             <p className="text-[11px] text-muted-foreground mt-0.5">EXP: {p.totalExp.toLocaleString()}</p>
             {combo >= 2 && (
               <p
-                className={`text-[11px] font-extrabold mt-0.5 ${combo >= 5 ? "animate-pulse" : ""}`}
+                className={`text-[11px] font-extrabold mt-0.5 flex items-center gap-0.5 ${combo >= 5 ? "animate-pulse" : ""}`}
                 style={{ color: getComboColor(combo) }}
               >
-                {getComboFlames(combo)} {combo}コンボ！EXP {getComboMultiplier(combo)}倍
+                {Array.from({ length: getComboFlameCount(combo) }).map((_, i) => (
+                  <Flame key={i} className="w-3 h-3" style={{ color: getComboColor(combo) }} />
+                ))}
+                <span className="ml-1">{combo}コンボ！EXP {getComboMultiplier(combo)}倍</span>
               </p>
             )}
             <div className="mt-1.5 h-2 rounded-full bg-muted overflow-hidden">

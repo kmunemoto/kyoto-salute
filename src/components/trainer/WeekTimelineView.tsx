@@ -144,8 +144,8 @@ const WeekTimelineView = ({ weekStart, bookings, onSelectBooking, profiles = [] 
                   if (top + height < 0 || top > totalHeight) return null;
 
                   const shortName = b.isBlocked
-                    ? "🚫"
-                    : b.clientName.replace("🆕 ", "").slice(0, 3);
+                    ? "—"
+                    : b.clientName.replace(/^[^A-Za-z\u3040-\u30FF\u4E00-\u9FFF]+/, "").slice(0, 3);
 
                   const profile = profiles.find((p) => p.user_id === b.user_id);
                   const progress =

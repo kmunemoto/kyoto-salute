@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { ImagePlus, Loader2, Utensils, Flame, Beef, Droplets, Wheat, Leaf, Trash2, Pencil, ChevronDown, Sunrise, Sun, Moon, Apple, CalendarDays, Bot } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -58,12 +58,9 @@ interface Meal {
   dishes?: DishDetail[] | null;
 }
 
-const mealTypeEmoji: Record<string, string> = {
-  "朝食": "🌅",
-  "昼食": "☀️",
-  "夕食": "🌙",
-  "間食": "🍎",
-  "食事": "🍽️",
+const MealTypeIcon = ({ type, className }: { type: string; className?: string }) => {
+  const Cmp = type === "朝食" ? Sunrise : type === "昼食" ? Sun : type === "夕食" ? Moon : type === "間食" ? Apple : Utensils;
+  return <Cmp className={className || "w-3.5 h-3.5"} />;
 };
 
 const mealTypeOptions = ["朝食", "昼食", "夕食", "間食"];
@@ -284,9 +281,9 @@ const CustomerMeals = () => {
     const today = getDateKey(new Date().toISOString());
     const yesterday = getDateKey(new Date(Date.now() - 86400000).toISOString());
     const label = `${parseInt(m)}月${parseInt(d)}日`;
-    if (key === today) return `📅 今日 (${label})`;
-    if (key === yesterday) return `📅 昨日 (${label})`;
-    return `📅 ${label}`;
+    if (key === today) return `今日 (${label})`;
+    if (key === yesterday) return `昨日 (${label})`;
+    return label;
   };
 
   const groupedMeals = useMemo(() => {
@@ -365,7 +362,7 @@ const CustomerMeals = () => {
         <div className="space-y-6">
           {groupedMeals.map(({ dateKey, meals: dayMeals, totals, pfc }) => (
             <div key={dateKey} className="space-y-3">
-              <div className="text-sm font-bold text-foreground">{formatDateLabel(dateKey)}</div>
+              <div className="text-sm font-bold text-foreground flex items-center gap-1.5"><CalendarDays className="w-4 h-4" />{formatDateLabel(dateKey)}</div>
               <Card className="border-accent/30 bg-accent/5">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-end gap-4">
@@ -427,8 +424,8 @@ const CustomerMeals = () => {
                         alt="食事写真"
                         className="w-full h-48 object-cover"
                       />
-                      <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
-                        {mealTypeEmoji[meal.meal_type] || "🍽️"} {meal.meal_type}
+                      <div className="absolute top-2 left-2 bg-foreground/70 text-primary-foreground px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm flex items-center gap-1">
+                        <MealTypeIcon type={meal.meal_type} className="w-3 h-3" />{meal.meal_type}
                       </div>
                       <button
                         onClick={() => openEditTime(meal)}
@@ -462,7 +459,7 @@ const CustomerMeals = () => {
 
                         {meal.feedback && (
                           <div className="bg-accent/10 rounded-xl p-3">
-                            <p className="text-xs font-bold text-accent mb-1">🤖 AIアドバイス</p>
+                            <p className="text-xs font-bold text-accent mb-1 flex items-center gap-1"><Bot className="w-3.5 h-3.5" />AIアドバイス</p>
                             <p className="text-sm text-foreground leading-relaxed">{meal.feedback}</p>
                           </div>
                         )}
@@ -495,13 +492,13 @@ const CustomerMeals = () => {
                   <button
                     key={t}
                     onClick={() => setSelectedMealType(t)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
                       selectedMealType === t
                         ? "bg-accent text-accent-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     }`}
                   >
-                    {mealTypeEmoji[t]} {t}
+                    <MealTypeIcon type={t} className="w-3 h-3" />{t}
                   </button>
                 ))}
               </div>

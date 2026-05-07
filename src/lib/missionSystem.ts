@@ -11,20 +11,21 @@ export type MissionKey =
 export interface MissionDef {
   key: MissionKey;
   name: string;
+  /** Lucide icon registry name */
   icon: string;
   description: string;
   exp: number;
 }
 
 export const MISSIONS: MissionDef[] = [
-  { key: "full_power", name: "フルパワー", icon: "💪", description: "全種目で前回以上の重量を挙げる", exp: 20 },
-  { key: "volume_king", name: "ボリュームキング", icon: "👑", description: "総挙上量5,000kg以上", exp: 25 },
-  { key: "three_parts", name: "3部位チャレンジ", icon: "🎯", description: "3つ以上の異なる部位をトレーニング", exp: 15 },
-  { key: "rep_master", name: "レップマスター", icon: "🔄", description: "全セットで10回以上", exp: 15 },
-  { key: "new_record", name: "新記録ハンター", icon: "🏆", description: "いずれかの種目で自己ベスト更新", exp: 30 },
-  { key: "complete_sets", name: "コンプリートセット", icon: "✅", description: "全種目3セット以上", exp: 15 },
-  { key: "morning_training", name: "早起きトレーニング", icon: "🌅", description: "12:00前のセッション", exp: 10 },
-  { key: "night_fighter", name: "ナイトファイター", icon: "🌙", description: "19:00以降のセッション", exp: 10 },
+  { key: "full_power", name: "フルパワー", icon: "Dumbbell", description: "全種目で前回以上の重量を挙げる", exp: 20 },
+  { key: "volume_king", name: "ボリュームキング", icon: "Crown", description: "総挙上量5,000kg以上", exp: 25 },
+  { key: "three_parts", name: "3部位チャレンジ", icon: "Target", description: "3つ以上の異なる部位をトレーニング", exp: 15 },
+  { key: "rep_master", name: "レップマスター", icon: "Repeat", description: "全セットで10回以上", exp: 15 },
+  { key: "new_record", name: "新記録ハンター", icon: "Trophy", description: "いずれかの種目で自己ベスト更新", exp: 30 },
+  { key: "complete_sets", name: "コンプリートセット", icon: "CheckCircle2", description: "全種目3セット以上", exp: 15 },
+  { key: "morning_training", name: "早起きトレーニング", icon: "Sunrise", description: "12:00前のセッション", exp: 10 },
+  { key: "night_fighter", name: "ナイトファイター", icon: "Moon", description: "19:00以降のセッション", exp: 10 },
 ];
 
 export const MISSION_BONUS_EXP = 50;

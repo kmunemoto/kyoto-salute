@@ -9,7 +9,7 @@ const showAppUpdateBanner = () => {
   banner.id = "app-update-banner";
   banner.setAttribute("role", "button");
   banner.setAttribute("tabindex", "0");
-  banner.textContent = "🔄 アプリが更新されました。タップして更新";
+  banner.textContent = "アプリが更新されました。タップして更新";
 
   const closeButton = document.createElement("button");
   closeButton.type = "button";

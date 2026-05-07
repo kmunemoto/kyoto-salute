@@ -8,9 +8,9 @@ interface StreakCardProps {
 }
 
 const getStreakMessage = (streak: number): string => {
-  if (streak >= 13) return "圧巻の継続力！トレーナーも感動しています✨";
-  if (streak >= 9) return "3ヶ月近く継続中！もはやプロです🏆";
-  if (streak >= 5) return "素晴らしい継続力です！💪";
+  if (streak >= 13) return "圧巻の継続力！トレーナーも感動しています";
+  if (streak >= 9) return "3ヶ月近く継続中！もはやプロです";
+  if (streak >= 5) return "素晴らしい継続力です！";
   if (streak >= 3) return "習慣になってきましたね！";
   if (streak >= 1) return "いいスタートです！";
   return "今週の来店で記録をスタートしましょう！";
@@ -29,8 +29,9 @@ const StreakCard = ({ currentStreak, bestStreak, hasFutureBookingThisWeek }: Str
           <div className="flex-1">
             {isActive ? (
               <>
-                <p className="text-lg font-extrabold">
-                  🔥 {currentStreak}週連続トレーニング{hasFutureBookingThisWeek && currentStreak > 0 ? '継続中' : '中'}！
+                <p className="text-lg font-extrabold flex items-center gap-1.5">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  {currentStreak}週連続トレーニング{hasFutureBookingThisWeek && currentStreak > 0 ? '継続中' : '中'}！
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {getStreakMessage(currentStreak)}

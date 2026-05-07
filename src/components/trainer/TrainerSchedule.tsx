@@ -388,7 +388,7 @@ const TrainerSchedule = () => {
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
-                                  <p className="font-bold truncate">{session.isBlocked ? "🚫 ブロック" : session.clientName}</p>
+                                  <p className="font-bold truncate">{session.isBlocked ? "ブロック" : session.clientName}</p>
                                   <p className="opacity-75 truncate">{session.startTime}〜{session.endTime}</p>
                                   {!session.isBlocked && <p className="opacity-60 truncate text-[9px] mt-0.5">{session.booking_type}</p>}
                                   {!session.isBlocked && (() => {
@@ -443,7 +443,7 @@ const TrainerSchedule = () => {
                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
                               booking.isBlocked ? "bg-muted text-muted-foreground" : "accent-gradient text-accent-foreground"
                             }`}>
-                              {booking.isBlocked ? "🚫" : booking.clientName[0]}
+                              {booking.isBlocked ? "—" : booking.clientName[0]}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-bold truncate">{booking.isBlocked ? "ブロック" : booking.clientName}</p>

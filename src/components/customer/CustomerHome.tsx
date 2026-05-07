@@ -137,11 +137,11 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       let message = "";
       if (hitMilestone) {
         const months = Math.floor(hitMilestone / 4);
-        if (hitMilestone === 4) message = `🔥 4週連続来店達成！1ヶ月間継続できています。この調子で頑張りましょう！`;
-        else if (hitMilestone === 8) message = `🔥 8週連続来店達成！2ヶ月間の継続、素晴らしいです！💪`;
-        else if (hitMilestone === 12) message = `🏆 12週連続来店達成！3ヶ月間の継続は本当にすごいことです！`;
+        if (hitMilestone === 4) message = `4週連続来店達成！1ヶ月間継続できています。この調子で頑張りましょう！`;
+        else if (hitMilestone === 8) message = `8週連続来店達成！2ヶ月間の継続、素晴らしいです！`;
+        else if (hitMilestone === 12) message = `12週連続来店達成！3ヶ月間の継続は本当にすごいことです！`;
       } else if (isBestRecord) {
-        message = `🎉 自己ベスト更新！${currentStreak}週連続来店を達成しました！`;
+        message = `自己ベスト更新！${currentStreak}週連続来店を達成しました！`;
       }
 
       if (message && currentStreak > lastNotified) {
@@ -191,7 +191,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-accent/10 -translate-y-8 translate-x-8" />
         <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-accent/5 translate-y-6 -translate-x-4" />
         <div className="relative">
-          <p className="text-sm opacity-75">Good Morning 🔥</p>
+          <p className="text-sm opacity-75 flex items-center gap-1">Good Morning <Flame className="w-3.5 h-3.5" /></p>
           <h1 className="text-xl font-bold mt-1">{displayName}さん</h1>
           <div className="flex items-center gap-4 mt-4">
             <div className="flex items-center gap-1.5 bg-primary-foreground/15 rounded-full px-3 py-1">
@@ -451,7 +451,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
                   <BarChart3 className="w-5 h-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm">📊 今回のレポート</p>
+                  <p className="font-bold text-sm flex items-center gap-1.5"><BarChart3 className="w-4 h-4" />今回のレポート</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {(() => {
                        const currentCycle = getCycleWindow(profile?.cycle_start_date, now);
