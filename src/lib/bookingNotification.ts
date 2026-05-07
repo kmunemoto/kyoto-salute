@@ -29,6 +29,7 @@ export const sendBookingNotification = async (
   endTime: string,
   planName: string,
   customerUserId?: string,
+  customerEmail?: string,
 ) => {
   try {
     // Find the trainer via secure RPC (avoids exposing user_roles table)
@@ -63,10 +64,11 @@ export const sendBookingNotification = async (
 
     // Notify customer (booking confirmation email)
     if (customerUserId) {
+      const customerRecipient = customerEmail || "_resolve_user_";
       const result = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "booking-confirmation",
-          recipientEmail: "_resolve_user_",
+          recipientEmail: customerRecipient,
           idempotencyKey: `booking-confirm-customer-${bookingId}`,
           templateData: {
             customerName,
@@ -77,7 +79,7 @@ export const sendBookingNotification = async (
           },
         },
       });
-      logEmailInvoke("booking-create-customer", "booking-confirmation", "_resolve_user_", result);
+      logEmailInvoke("booking-create-customer", "booking-confirmation", customerRecipient, result);
     }
   } catch (e) {
     console.error("Failed to send booking notification email:", e);
