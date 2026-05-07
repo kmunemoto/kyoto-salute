@@ -187,6 +187,18 @@ export const useAvatar = (autoSync = true) => {
         supabase.from("progress_photos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
       const purchasedCoins = (coinPurchases || []).reduce((s: number, r: any) => s + (r.coins_added || 0), 0);
+      // PB count from workouts (mirror logic in avatarRewards)
+      const seenMax = new Map<string, number>();
+      let pbCountTotal = 0;
+      for (const w of [...workouts].sort((a, b) => a.workout_date.localeCompare(b.workout_date))) {
+        const sets = w.sets && w.sets.length ? w.sets : (w.weight != null ? [{ set: 1, weight: w.weight as number, reps: (w.reps as number) || 0 }] : []);
+        if (sets.length === 0) continue;
+        const maxW = Math.max(...sets.map((s: any) => Number(s.weight) || 0));
+        if (maxW <= 0) continue;
+        const prev = seenMax.get(w.exercise_id);
+        if (prev !== undefined && maxW > prev) pbCountTotal += 1;
+        if (prev === undefined || maxW > prev) seenMax.set(w.exercise_id, maxW);
+      }
       // Approximate total coins earned: current + level rewards already counted; sum gacha coin rewards & raid rewards
       const { data: gachaCoinRows } = await supabase
         .from("gacha_results")
@@ -225,7 +237,7 @@ export const useAvatar = (autoSync = true) => {
         totalSessions: count || 0,
         gachaCount: gachaCount || 0,
         maxComboReached: avRow?.max_combo_reached || 0,
-        totalPbCount: 0, // computed inside computeAchievements; pass 0 since record_child uses workouts-derived count below
+        totalPbCount: pbCountTotal,
         level: avRow?.level || 1,
       });
       if (titleKeys.length > 0) {
