@@ -1,10 +1,12 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section,
+  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section, Link, Button,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = "パーソナルジムSalute御所南"
+const APP_URL = "https://app.kyoto-salute.com"
+const SITE_URL = "https://kyoto-salute.com"
 
 interface BookingCancellationProps {
   customerName?: string
@@ -27,13 +29,13 @@ const BookingCancellationEmail = ({
 }: BookingCancellationProps) => {
   const heading = recipientRole === 'trainer'
     ? (isTrial ? '初回無料体験の予約がキャンセルされました' : '予約がキャンセルされました')
-    : 'ご予約のキャンセルを承りました'
+    : 'キャンセルを受け付けました'
 
   const intro = recipientRole === 'trainer'
     ? (cancelledByTrainer
         ? '以下の予約をキャンセルしました。'
         : `${customerName}様より、以下のご予約のキャンセルがありました。`)
-    : `${customerName} 様\n\n以下のご予約をキャンセルいたしました。`
+    : `${customerName} 様\n\n以下のご予約のキャンセルを受け付けました。`
 
   return (
     <Html lang="ja" dir="ltr">
@@ -48,6 +50,9 @@ const BookingCancellationEmail = ({
           <Hr style={hr} />
           <Text style={text}>{intro}</Text>
           <Section style={detailSection}>
+            {recipientRole === 'customer' && (
+              <Text style={sectionTitle}>📅 キャンセルした予約</Text>
+            )}
             <Text style={label}>お名前</Text>
             <Text style={value}>{customerName}</Text>
             <Text style={label}>日時</Text>
@@ -59,10 +64,24 @@ const BookingCancellationEmail = ({
               </>
             )}
           </Section>
+          {recipientRole === 'customer' && (
+            <Section style={detailSection}>
+              <Text style={text}>新しいご予約はアプリから承っております。</Text>
+              <Button href={APP_URL} style={button}>▼ アプリを開く</Button>
+            </Section>
+          )}
           <Hr style={hr} />
-          <Text style={footer}>
-            このメールは{SITE_NAME}の予約システムから自動送信されています。
-          </Text>
+          {recipientRole === 'customer' ? (
+            <>
+              <Text style={footer}>パーソナルジム Salute御所南</Text>
+              <Text style={footer}>〒604-0862 京都市中京区毘沙門町533-1 プラザ御所南2階</Text>
+              <Link href={SITE_URL} style={footerLink}>🌐 {SITE_URL}</Link>
+            </>
+          ) : (
+            <Text style={footer}>
+              このメールは{SITE_NAME}の予約システムから自動送信されています。
+            </Text>
+          )}
         </Container>
       </Body>
     </Html>
@@ -73,7 +92,7 @@ export const template = {
   component: BookingCancellationEmail,
   subject: (data: Record<string, any>) =>
     data?.recipientRole === 'customer'
-      ? '【パーソナルジムSalute御所南】ご予約のキャンセルを承りました'
+      ? '【Salute御所南】キャンセルを受け付けました'
       : (data?.isTrial
           ? '【パーソナルジムSalute御所南】初回無料体験の予約がキャンセルされました'
           : '【パーソナルジムSalute御所南】予約がキャンセルされました'),
@@ -94,6 +113,9 @@ const h1 = { fontSize: '20px', fontWeight: '700' as const, color: '#000000', mar
 const hr = { borderColor: 'rgba(10, 186, 181, 0.3)', borderTopWidth: '1px', margin: '16px 0' }
 const text = { fontSize: '14px', color: '#000000', lineHeight: '1.6', margin: '0 0 12px', whiteSpace: 'pre-line' as const }
 const detailSection = { margin: '8px 0' }
+const sectionTitle = { fontSize: '14px', fontWeight: '700' as const, color: '#0ABAB5', margin: '0 0 12px' }
 const label = { fontSize: '11px', fontWeight: '600' as const, color: '#0ABAB5', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: '12px 0 2px' }
 const value = { fontSize: '15px', color: '#000000', margin: '0 0 4px', fontWeight: '500' as const }
 const footer = { fontSize: '11px', color: '#999999', margin: '28px 0 0', lineHeight: '1.5' }
+const footerLink = { fontSize: '12px', color: '#0ABAB5', textAlign: 'center' as const, display: 'block' }
+const button = { backgroundColor: '#0ABAB5', color: '#ffffff', padding: '12px 20px', borderRadius: '6px', textDecoration: 'none', display: 'inline-block', fontSize: '14px', fontWeight: '600' as const, marginTop: '8px' }
