@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { getJSTToday } from "@/lib/timezone";
-import { Sword, Users, Gift, Loader2 } from "lucide-react";
+import { getJSTToday, toJSTDate } from "@/lib/timezone";
+import { Sword, Swords, Users, Gift } from "lucide-react";
 import { differenceInDays, differenceInHours, parseISO } from "date-fns";
 
 interface RaidRow {
@@ -29,6 +29,7 @@ const RaidBossCard = () => {
   const { user } = useAuth();
   const [raid, setRaid] = useState<RaidRow | null>(null);
   const [upcoming, setUpcoming] = useState<RaidRow | null>(null);
+  const [teaserDaysUntil, setTeaserDaysUntil] = useState<number>(0);
   const [myDamage, setMyDamage] = useState(0);
   const [participants, setParticipants] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,25 +65,35 @@ const RaidBossCard = () => {
         if (recent && recent[0]) activeRaid = recent[0] as any;
       }
 
-      // upcoming raid in next 3 days
+      // upcoming raid (any future un-defeated boss) for teaser display
       let nextRaid: RaidRow | null = null;
+      let daysUntil = 0;
       if (!activeRaid) {
-        const in3 = new Date();
-        in3.setDate(in3.getDate() + 3);
-        const in3str = in3.toISOString().substring(0, 10);
         const { data: ups } = await supabase
           .from("raid_bosses")
           .select("*")
           .gt("start_date", today)
-          .lte("start_date", in3str)
+          .eq("defeated", false)
           .order("start_date", { ascending: true })
           .limit(1);
-        if (ups && ups[0]) nextRaid = ups[0] as any;
+        if (ups && ups[0]) {
+          const cand = ups[0] as RaidRow;
+          const todayJST = toJSTDate(new Date());
+          todayJST.setHours(0, 0, 0, 0);
+          const startJST = toJSTDate(cand.start_date + "T00:00:00+09:00");
+          startJST.setHours(0, 0, 0, 0);
+          daysUntil = differenceInDays(startJST, todayJST);
+          // Show teaser only within 10 days before start
+          if (daysUntil >= 1 && daysUntil <= 10) {
+            nextRaid = cand;
+          }
+        }
       }
 
       if (cancelled) return;
       setRaid(activeRaid);
       setUpcoming(nextRaid);
+      setTeaserDaysUntil(daysUntil);
 
       if (activeRaid) {
         const { data: dmg } = await supabase
@@ -102,19 +113,108 @@ const RaidBossCard = () => {
   if (loading) return null;
 
   if (!raid && upcoming) {
+    const phase2 = teaserDaysUntil >= 1 && teaserDaysUntil <= 3;
+    const progressPct = Math.max(0, Math.min(100, ((10 - teaserDaysUntil) / 10) * 100));
+    const formatMD = (d: string) => {
+      const dt = toJSTDate(d + "T00:00:00+09:00");
+      const wd = ["日", "月", "火", "水", "木", "金", "土"][dt.getDay()];
+      return `${dt.getMonth() + 1}/${dt.getDate()}（${wd}）`;
+    };
     return (
-      <Card className="border-l-4 border-l-amber-400 bg-amber-50">
-        <CardContent className="p-3 flex items-center gap-2">
-          <Sword className="w-4 h-4 text-amber-600" />
-          <div className="flex-1">
-            <p className="text-sm font-bold">⚔️ レイドボス出現予告！</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {upcoming.start_date.substring(5).replace("-", "/")} 〜 {upcoming.end_date.substring(5).replace("-", "/")}
+      <>
+        <style>{`
+          @keyframes raid-teaser-pulse-1 {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.2); }
+            50% { box-shadow: 0 0 24px 4px rgba(239,68,68,0.2); }
+          }
+          @keyframes raid-teaser-pulse-2 {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 0 28px 6px rgba(239,68,68,0.3); }
+          }
+          .raid-teaser-1 { animation: raid-teaser-pulse-1 2.4s ease-in-out infinite; }
+          .raid-teaser-2 { animation: raid-teaser-pulse-2 2s ease-in-out infinite; }
+        `}</style>
+        <Card
+          className={`overflow-hidden border-0 ${phase2 ? "raid-teaser-2" : "raid-teaser-1"}`}
+          style={{
+            background: phase2
+              ? "linear-gradient(135deg, #1a1a2e 0%, #1e3a5f 100%)"
+              : "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+          }}
+        >
+          <CardContent className="p-4 text-white">
+            <p className="text-[12px] font-bold tracking-[0.18em] flex items-center gap-1.5">
+              <Swords className="w-3.5 h-3.5" />
+              RAID BOSS{phase2 ? " 出現予告" : ""}
             </p>
-            <p className="text-xs mt-0.5">「{upcoming.boss_name}」が襲来！みんなで倒そう！</p>
-          </div>
-        </CardContent>
-      </Card>
+
+            <div className="flex flex-col items-center my-3">
+              {phase2 ? (
+                upcoming.boss_image_url ? (
+                  <img
+                    src={upcoming.boss_image_url}
+                    alt={upcoming.boss_name}
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center"
+                    style={{ background: "#374151" }}
+                  >
+                    <Swords size={48} color="#EF4444" />
+                  </div>
+                )
+              ) : (
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center"
+                  style={{ background: "#000" }}
+                >
+                  <Swords size={44} color="#333" />
+                </div>
+              )}
+              {phase2 ? (
+                <>
+                  <p className="text-[18px] font-bold mt-2">{upcoming.boss_name}</p>
+                  <p className="text-[16px] font-bold mt-1" style={{ color: "#EF4444" }}>
+                    HP: {upcoming.boss_hp.toLocaleString()} kg
+                  </p>
+                  <p className="text-[14px] font-bold mt-1" style={{ color: "#0ABAB5" }}>
+                    {formatMD(upcoming.start_date)}〜{formatMD(upcoming.end_date)}の1週間！
+                  </p>
+                  <p className="text-[14px] mt-1.5">ジム全体の総挙上量でHPを削れ！</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[16px] font-bold mt-2">？？？</p>
+                  <p
+                    className="text-[14px] mt-1 italic"
+                    style={{ color: "#9CA3AF" }}
+                  >
+                    強大な敵の気配が近づいている…
+                  </p>
+                </>
+              )}
+            </div>
+
+            <p className="text-[14px] text-center mt-2">
+              出現まで あと{" "}
+              <span className="text-[20px] font-bold">{teaserDaysUntil}</span> 日
+            </p>
+            <div
+              className="mt-2 h-1 rounded-full overflow-hidden"
+              style={{ background: "#374151" }}
+            >
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${progressPct}%`,
+                  background: "linear-gradient(90deg, #EF4444, #DC2626)",
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
