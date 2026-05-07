@@ -389,6 +389,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gacha_results: {
+        Row: {
+          created_at: string
+          id: string
+          rarity: string
+          result_date: string
+          reward_amount: number | null
+          reward_key: string | null
+          reward_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rarity: string
+          result_date: string
+          reward_amount?: number | null
+          reward_key?: string | null
+          reward_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rarity?: string
+          result_date?: string
+          reward_amount?: number | null
+          reward_key?: string | null
+          reward_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       google_calendar_tokens: {
         Row: {
           access_token: string
@@ -760,6 +793,101 @@ export type Database = {
           },
         ]
       }
+      season_event_tasks: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          sort_order: number
+          target_value: number
+          task_description: string | null
+          task_icon: string | null
+          task_key: string
+          task_name: string
+          task_type: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          sort_order?: number
+          target_value: number
+          task_description?: string | null
+          task_icon?: string | null
+          task_key: string
+          task_name: string
+          task_type: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          sort_order?: number
+          target_value?: number
+          task_description?: string | null
+          task_icon?: string | null
+          task_key?: string
+          task_name?: string
+          task_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "season_event_tasks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "season_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      season_events: {
+        Row: {
+          badge_icon: string | null
+          badge_name: string | null
+          created_at: string
+          end_date: string
+          event_description: string | null
+          event_icon: string | null
+          event_name: string
+          id: string
+          is_active: boolean
+          reward_badge_key: string | null
+          reward_coins: number
+          reward_exp: number
+          start_date: string
+        }
+        Insert: {
+          badge_icon?: string | null
+          badge_name?: string | null
+          created_at?: string
+          end_date: string
+          event_description?: string | null
+          event_icon?: string | null
+          event_name: string
+          id?: string
+          is_active?: boolean
+          reward_badge_key?: string | null
+          reward_coins?: number
+          reward_exp?: number
+          start_date: string
+        }
+        Update: {
+          badge_icon?: string | null
+          badge_name?: string | null
+          created_at?: string
+          end_date?: string
+          event_description?: string | null
+          event_icon?: string | null
+          event_name?: string
+          id?: string
+          is_active?: boolean
+          reward_badge_key?: string | null
+          reward_coins?: number
+          reward_exp?: number
+          start_date?: string
+        }
+        Relationships: []
+      }
       skeletal_diagnoses: {
         Row: {
           confidence: number
@@ -894,6 +1022,83 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_event_completion: {
+        Row: {
+          completed_at: string
+          event_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          event_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          event_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_event_completion_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "season_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_event_progress: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          current_value: number
+          event_id: string
+          id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          current_value?: number
+          event_id: string
+          id?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          current_value?: number
+          event_id?: string
+          id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_event_progress_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "season_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_event_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "season_event_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_measurements: {
         Row: {
@@ -1071,6 +1276,11 @@ export type Database = {
           read_ct: number
         }[]
       }
+      spin_gacha: {
+        Args: { _result_date: string; _user_id: string }
+        Returns: Json
+      }
+      update_event_progress: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "customer" | "trainer"

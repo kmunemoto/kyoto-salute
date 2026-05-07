@@ -13,6 +13,8 @@ import StreakCard from "./StreakCard";
 import AvatarCard from "./AvatarCard";
 import DailyMissionCard from "./DailyMissionCard";
 import RaidBossCard from "./RaidBossCard";
+import GachaCard from "./GachaCard";
+import SeasonEventCard from "./SeasonEventCard";
 import { Loader2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { getJSTNow, formatJST } from "@/lib/timezone";
@@ -209,6 +211,8 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       <AvatarCard />
       <DailyMissionCard />
       <RaidBossCard />
+      <GachaCard />
+      <SeasonEventCard />
 
       {hasPlan && (
         <Card className="border-l-4 border-l-accent bg-accent/5">

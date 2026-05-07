@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import { evaluateAndAwardMissions } from "@/lib/missionRewards";
 import { applyRaidDamage, computeSessionVolume, processSessionRewards } from "@/lib/raidUtils";
+import { updateEventProgress } from "@/hooks/useSeasonEvents";
 import { getComboMultiplier } from "@/lib/comboSystem";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
@@ -520,6 +521,18 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
         if (r?.defeated) {
           toast.success("⚔️ レイドボス撃破！", { description: "全員に報酬を配布しました！" });
         }
+      }
+    } catch (e) {
+      // non-fatal
+    }
+
+    // Update season event progress
+    try {
+      const ev = await updateEventProgress(clientId);
+      for (const c of (ev?.completed_events || [])) {
+        toast.success(`🏆 イベント完走！${c.event_name}`, {
+          description: `+${c.reward_exp} EXP / +${c.reward_coins}コイン${c.badge_name ? ` / 限定バッジ「${c.badge_name}」` : ""}`,
+        });
       }
     } catch (e) {
       // non-fatal
