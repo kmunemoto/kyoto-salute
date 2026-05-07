@@ -2,7 +2,7 @@ import {
   Layers, Target, Repeat, Dumbbell, Scale, Award, Sun, Hash, Compass,
   CalendarCheck, Flame, Star, Trophy, Shield, Zap, Sparkles, Clover, Crown,
   Swords, Mountain, Footprints, CircleDot, Sunrise, Moon, TrendingUp, Radar,
-  Weight,
+  Weight, Coins, Camera, Gift, Rocket, Medal, PartyPopper, Hexagon, Boxes,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,6 +30,28 @@ const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
   gacha_lucky: Clover,
   gacha_legend: Crown,
   mission_addict: Target,
+  // New achievements
+  first_session: Sparkles,
+  first_pb: TrendingUp,
+  combo_starter: Flame,
+  first_raid: Swords,
+  month_50k: Boxes,
+  level_10: Star,
+  first_event: PartyPopper,
+  first_shot: Camera,
+  best_hunter: TrendingUp,
+  combo_master_ach: Flame,
+  level_25: Medal,
+  coin_collector: Coins,
+  event_master: Gift,
+  gacha_addict: Clover,
+  record_breaker: Rocket,
+  two_hundred_sessions: Hash,
+  one_year: CalendarCheck,
+  combo_king: Crown,
+  raid_mvp: Trophy,
+  month_200k: Hexagon,
+  level_50: Crown,
 };
 
 const TITLE_ICONS: Record<string, LucideIcon> = {
@@ -46,6 +68,15 @@ const TITLE_ICONS: Record<string, LucideIcon> = {
   boss_slayer: Swords,
   mission_addict: Target,
   combo_master: Flame,
+  // New titles
+  core_oni: Shield,
+  weekend_warrior: Sun,
+  iron_man: Award,
+  gacha_master: Clover,
+  raid_slayer: Swords,
+  streaker: Flame,
+  record_child: Rocket,
+  legend_title: Crown,
 };
 
 const RARITY_GRADIENT: Record<BadgeRarity, string> = {

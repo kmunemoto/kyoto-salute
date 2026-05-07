@@ -138,11 +138,6 @@ export const useAvatar = (autoSync = true) => {
       });
       const hasPerfectWeek = [...weekMap.values()].some((v) => v.total > 0 && v.total === v.perfect);
 
-      const achKeys = computeAchievements(workouts, count || 0, profile?.best_streak || 0, getMuscleGroup, {
-        rowsWithAnyComplete, totalCompletedCount, perfectDayCount, hasPerfectWeek,
-      });
-      await unlockAchievements(user.id, achKeys);
-
       // Title computation
       const { data: bookingsForTitles } = await supabase
         .from("bookings")
@@ -155,12 +150,79 @@ export const useAvatar = (autoSync = true) => {
       // Raid contribution count (defeated raids the user contributed to)
       const { data: raidContribs } = await supabase
         .from("raid_damage_logs")
-        .select("raid_id, raid_bosses!inner(defeated)")
+        .select("raid_id, damage, raid_bosses!inner(defeated)")
         .eq("user_id", user.id);
       const defeatedRaidIds = new Set<string>();
+      const raidContribIds = new Set<string>();
       (raidContribs || []).forEach((r: any) => {
+        raidContribIds.add(r.raid_id);
         if (r.raid_bosses?.defeated) defeatedRaidIds.add(r.raid_id);
       });
+
+      // Raid MVP detection: for each defeated raid the user contributed to,
+      // check if they were a top damage dealer.
+      let raidMvpCount = 0;
+      if (defeatedRaidIds.size > 0) {
+        const { data: allDmg } = await supabase
+          .from("raid_damage_logs")
+          .select("raid_id, user_id, damage")
+          .in("raid_id", [...defeatedRaidIds]);
+        const totals = new Map<string, Map<string, number>>();
+        (allDmg || []).forEach((r: any) => {
+          if (!totals.has(r.raid_id)) totals.set(r.raid_id, new Map());
+          const m = totals.get(r.raid_id)!;
+          m.set(r.user_id, (m.get(r.user_id) || 0) + (r.damage || 0));
+        });
+        for (const [, m] of totals) {
+          const max = Math.max(...m.values());
+          if ((m.get(user.id) || 0) >= max) raidMvpCount += 1;
+        }
+      }
+
+      // Extra stats: gacha count, events completed, coins earned, progress photo
+      const [{ count: gachaCount }, { count: eventsCount }, { data: coinPurchases }, { count: photoCount }] = await Promise.all([
+        supabase.from("gacha_results").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("user_event_completion").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("coin_purchases").select("coins_added").eq("user_id", user.id),
+        supabase.from("progress_photos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      ]);
+      const purchasedCoins = (coinPurchases || []).reduce((s: number, r: any) => s + (r.coins_added || 0), 0);
+      // PB count from workouts (mirror logic in avatarRewards)
+      const seenMax = new Map<string, number>();
+      let pbCountTotal = 0;
+      for (const w of [...workouts].sort((a, b) => a.workout_date.localeCompare(b.workout_date))) {
+        const sets = w.sets && w.sets.length ? w.sets : (w.weight != null ? [{ set: 1, weight: w.weight as number, reps: (w.reps as number) || 0 }] : []);
+        if (sets.length === 0) continue;
+        const maxW = Math.max(...sets.map((s: any) => Number(s.weight) || 0));
+        if (maxW <= 0) continue;
+        const prev = seenMax.get(w.exercise_id);
+        if (prev !== undefined && maxW > prev) pbCountTotal += 1;
+        if (prev === undefined || maxW > prev) seenMax.set(w.exercise_id, maxW);
+      }
+      // Approximate total coins earned: current + level rewards already counted; sum gacha coin rewards & raid rewards
+      const { data: gachaCoinRows } = await supabase
+        .from("gacha_results")
+        .select("reward_type, reward_amount")
+        .eq("user_id", user.id)
+        .eq("reward_type", "coins");
+      const gachaCoinsEarned = (gachaCoinRows || []).reduce((s: number, r: any) => s + (r.reward_amount || 0), 0);
+      // Use current avatar.coins + gacha coin rewards + purchases as a proxy for total earned
+      const totalCoinsEarned = (avRow?.coins ?? 0) + gachaCoinsEarned + purchasedCoins;
+
+      const achKeys = computeAchievements(workouts, count || 0, profile?.best_streak || 0, getMuscleGroup, {
+        rowsWithAnyComplete, totalCompletedCount, perfectDayCount, hasPerfectWeek,
+      }, {
+        level: avRow?.level || 1,
+        maxComboReached: avRow?.max_combo_reached || 0,
+        combo5Count: avRow?.combo_5_count || 0,
+        totalCoinsEarned,
+        gachaCount: gachaCount || 0,
+        eventsCompletedCount: eventsCount || 0,
+        raidContributionCount: raidContribIds.size,
+        raidMvpCount,
+        hasProgressPhoto: (photoCount || 0) > 0,
+      });
+      await unlockAchievements(user.id, achKeys);
 
       const titleKeys = computeTitles({
         workouts: workouts as any,
@@ -170,6 +232,11 @@ export const useAvatar = (autoSync = true) => {
         totalMissionCompletions: totalCompletedCount,
         combo5Reached: avRow?.combo_5_count || 0,
         exerciseMuscleGroup: getMuscleGroup,
+        totalSessions: count || 0,
+        gachaCount: gachaCount || 0,
+        maxComboReached: avRow?.max_combo_reached || 0,
+        totalPbCount: pbCountTotal,
+        level: avRow?.level || 1,
       });
       if (titleKeys.length > 0) {
         const rows = titleKeys.map((k) => ({ user_id: user.id, title_key: k }));
