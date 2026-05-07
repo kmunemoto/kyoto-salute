@@ -2,14 +2,14 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, verifyWebhook } from "../_shared/stripe.ts";
 
 const COIN_MAP: Record<string, number> = {
-  coin_starter_price: 50,
-  coin_value_price: 200,
-  coin_premium_price: 500,
+  coin_starter_jpy_300: 50,
+  coin_value_jpy_800: 200,
+  coin_premium_jpy_1800: 500,
 };
 const AMOUNT_MAP: Record<string, number> = {
-  coin_starter_price: 300,
-  coin_value_price: 800,
-  coin_premium_price: 1800,
+  coin_starter_jpy_300: 300,
+  coin_value_jpy_800: 800,
+  coin_premium_jpy_1800: 1800,
 };
 
 let _supabase: ReturnType<typeof createClient> | null = null;
