@@ -4,9 +4,10 @@ import { getExpProgress } from "@/lib/avatarSystem";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import AvatarDetailDialog from "./AvatarDetailDialog";
+import AvatarLevelUpDialog from "./AvatarLevelUpDialog";
 
 const AvatarCard = () => {
-  const { avatar, logs, achievements, loading } = useAvatar(true);
+  const { avatar, logs, achievements, loading, levelUp, clearLevelUp } = useAvatar(true);
   const [open, setOpen] = useState(false);
 
   if (loading || !avatar) {
@@ -58,6 +59,12 @@ const AvatarCard = () => {
         avatar={avatar}
         logs={logs}
         achievements={achievements}
+      />
+      <AvatarLevelUpDialog
+        open={!!levelUp}
+        onClose={clearLevelUp}
+        newLevel={levelUp?.newLevel ?? 1}
+        earnedCoins={levelUp?.earnedCoins ?? 0}
       />
     </>
   );
