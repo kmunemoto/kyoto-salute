@@ -155,9 +155,9 @@ Deno.serve(async (req) => {
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-  // Critical booking templates always deliver — they are essential transactional
-  // notifications (booking confirmations / cancellations) that the user must
-  // receive. They bypass the suppression list and skip the unsubscribe footer.
+  // Critical booking templates always deliver — they are essential app emails
+  // that the user must receive. They bypass the suppression list, but the
+  // email API still requires an unsubscribe token for runtime app emails.
   const MUST_DELIVER_TEMPLATES = new Set([
     'booking-confirmation',
     'booking-cancellation',
@@ -165,6 +165,11 @@ Deno.serve(async (req) => {
     'trial-booking-confirmation',
   ])
   const mustDeliver = MUST_DELIVER_TEMPLATES.has(templateName)
+  console.log('Preparing transactional email', {
+    templateName,
+    effectiveRecipient,
+    mustDeliver,
+  })
 
   // 2. Check suppression list (fail-closed: if we can't verify, don't send)
   // Skipped entirely for must-deliver templates.
@@ -209,12 +214,11 @@ Deno.serve(async (req) => {
   }
   }
 
-  // 3. Get or create unsubscribe token (one token per email address)
-  // Must-deliver templates skip token generation — no unsubscribe footer.
+  // 3. Get or create unsubscribe token (one token per email address).
+  // Must-deliver templates still include a token because the email API requires
+  // it, but they do NOT honor suppression or used tokens as a delivery blocker.
   const normalizedEmail = effectiveRecipient.toLowerCase()
   let unsubscribeToken: string | undefined
-
-  if (!mustDeliver) {
 
   // Check for existing token for this email
   const { data: existingToken, error: tokenLookupError } = await supabase
@@ -244,8 +248,9 @@ Deno.serve(async (req) => {
     )
   }
 
-  if (existingToken && !existingToken.used_at) {
-    // Reuse existing unused token
+  if (existingToken && (mustDeliver || !existingToken.used_at)) {
+    // Reuse existing token. For must-deliver templates, even a used token must
+    // not block booking-related delivery.
     unsubscribeToken = existingToken.token
   } else if (!existingToken) {
     // Create new token — upsert handles concurrent inserts gracefully
@@ -328,7 +333,6 @@ Deno.serve(async (req) => {
       }
     )
   }
-  } // end if (!mustDeliver) for unsubscribe token
 
   // 4. Render React Email template to HTML and plain text
   const html = await renderAsync(
@@ -395,7 +399,12 @@ Deno.serve(async (req) => {
     })
   }
 
-  console.log('Transactional email enqueued', { templateName, effectiveRecipient })
+  console.log('Transactional email enqueued', {
+    templateName,
+    effectiveRecipient,
+    mustDeliver,
+    hasUnsubscribeToken: Boolean(unsubscribeToken),
+  })
 
   return new Response(
     JSON.stringify({ success: true, queued: true }),
