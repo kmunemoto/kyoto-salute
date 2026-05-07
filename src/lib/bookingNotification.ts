@@ -13,41 +13,55 @@ export const sendBookingNotification = async (
   startTime: string,
   endTime: string,
   planName: string,
+  customerUserId?: string,
 ) => {
   try {
     // Find the trainer via secure RPC (avoids exposing user_roles table)
     const { data: trainerRoles } = await supabase.rpc("get_trainer_ids");
     const trainerRole = trainerRoles?.[0] ?? null;
 
-    if (!trainerRole) {
-      console.warn("No trainer found for booking notification");
-      return;
-    }
-
-    // Get trainer's auth email via profiles - we can't access auth.users,
-    // so we'll pass the trainer user_id and let the Edge Function resolve it.
-    // Actually, pass recipientEmail — we need to get it somehow.
-    // The simplest: use supabase admin to get email in the edge function.
-    // For now, pass trainer user_id in templateData and resolve in edge function.
-
     const dateObj = new Date(date + "T00:00:00+09:00");
     const formattedDate = format(dateObj, "M月d日（E）", { locale: ja });
+    const bookingTime = `${startTime}〜${endTime}`;
 
-    await supabase.functions.invoke("send-transactional-email", {
-      body: {
-        templateName: "new-booking-notification",
-        recipientEmail: "_resolve_trainer_", // placeholder — edge function resolves
-        idempotencyKey: `booking-notify-${bookingId}`,
-        templateData: {
-          customerName,
-          bookingDate: formattedDate,
-          bookingTime: `${startTime}〜${endTime}`,
-          planName,
-          dashboardUrl: window.location.origin,
-          trainerUserId: trainerRole.user_id,
+    // Notify trainer
+    if (trainerRole) {
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "new-booking-notification",
+          recipientEmail: "_resolve_trainer_",
+          idempotencyKey: `booking-notify-${bookingId}`,
+          templateData: {
+            customerName,
+            bookingDate: formattedDate,
+            bookingTime,
+            planName,
+            dashboardUrl: window.location.origin,
+            trainerUserId: trainerRole.user_id,
+          },
         },
-      },
-    });
+      });
+    } else {
+      console.warn("No trainer found for booking notification");
+    }
+
+    // Notify customer (booking confirmation email)
+    if (customerUserId) {
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "booking-confirmation",
+          recipientEmail: "_resolve_user_",
+          idempotencyKey: `booking-confirm-customer-${bookingId}`,
+          templateData: {
+            customerName,
+            bookingDate: formattedDate,
+            bookingTime,
+            planName,
+            resolveUserId: customerUserId,
+          },
+        },
+      });
+    }
   } catch (e) {
     console.error("Failed to send booking notification email:", e);
   }
