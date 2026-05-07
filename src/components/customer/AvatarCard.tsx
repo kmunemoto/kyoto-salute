@@ -5,9 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import AvatarDetailDialog from "./AvatarDetailDialog";
 import AvatarLevelUpDialog from "./AvatarLevelUpDialog";
+import { getComboColor, getComboFlames, getComboMultiplier } from "@/lib/comboSystem";
+import { getTitleDef } from "@/lib/titleSystem";
 
 const AvatarCard = () => {
-  const { avatar, logs, achievements, loading, levelUp, clearLevelUp } = useAvatar(true);
+  const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle } = useAvatar(true);
   const [open, setOpen] = useState(false);
 
   if (loading || !avatar) {
@@ -21,6 +23,8 @@ const AvatarCard = () => {
   }
 
   const p = getExpProgress(avatar.total_exp);
+  const combo = avatar.combo_count || 0;
+  const equipped = getTitleDef(avatar.equipped_title);
 
   return (
     <>
@@ -40,7 +44,20 @@ const AvatarCard = () => {
               <span className="text-base font-extrabold">Lv.{p.level}</span>
               <span className="text-xs font-bold" style={{ color: p.rank.color }}>{p.rank.name}</span>
             </div>
+            {equipped && (
+              <p className="text-[11px] font-bold mt-0.5" style={{ color: "hsl(174, 65%, 50%)" }}>
+                {equipped.icon} {equipped.name}
+              </p>
+            )}
             <p className="text-[11px] text-muted-foreground mt-0.5">EXP: {p.totalExp.toLocaleString()}</p>
+            {combo >= 2 && (
+              <p
+                className={`text-[11px] font-extrabold mt-0.5 ${combo >= 5 ? "animate-pulse" : ""}`}
+                style={{ color: getComboColor(combo) }}
+              >
+                {getComboFlames(combo)} {combo}コンボ！EXP {getComboMultiplier(combo)}倍
+              </p>
+            )}
             <div className="mt-1.5 h-2 rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
@@ -59,6 +76,8 @@ const AvatarCard = () => {
         avatar={avatar}
         logs={logs}
         achievements={achievements}
+        titles={titles}
+        onEquipTitle={equipTitle}
       />
       <AvatarLevelUpDialog
         open={!!levelUp}
