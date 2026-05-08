@@ -16,6 +16,7 @@ import { getJSTNow } from "@/lib/timezone";
 import DiagnosisHistorySection from "./posture/DiagnosisHistorySection";
 import { useAvatar } from "@/hooks/useAvatar";
 import { getAvatarImage, getRankInfo } from "@/lib/avatarSystem";
+import EmoteSection from "./EmoteSection";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",
@@ -270,6 +271,9 @@ const CustomerSettings = () => {
             </div>
           </CardContent>
         </Card>
+        <div className="mt-3">
+          <EmoteSection />
+        </div>
       </section>
 
       {/* LINE連携 */}

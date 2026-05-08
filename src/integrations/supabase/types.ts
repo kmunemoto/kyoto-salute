@@ -97,6 +97,42 @@ export type Database = {
         }
         Relationships: []
       }
+      avatar_customization_items: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          item_key: string
+          name: string
+          price: number
+          rarity: string
+          required_level: number
+          sort_order: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          item_key: string
+          name: string
+          price?: number
+          rarity?: string
+          required_level?: number
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          item_key?: string
+          name?: string
+          price?: number
+          rarity?: string
+          required_level?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
       avatar_exp_logs: {
         Row: {
           created_at: string
@@ -1135,6 +1171,7 @@ export type Database = {
           combo_count: number
           created_at: string
           equipped_background: string | null
+          equipped_emote: string | null
           equipped_title: string | null
           equipped_weapon: string | null
           gender: string | null
@@ -1153,6 +1190,7 @@ export type Database = {
           combo_count?: number
           created_at?: string
           equipped_background?: string | null
+          equipped_emote?: string | null
           equipped_title?: string | null
           equipped_weapon?: string | null
           gender?: string | null
@@ -1171,6 +1209,7 @@ export type Database = {
           combo_count?: number
           created_at?: string
           equipped_background?: string | null
+          equipped_emote?: string | null
           equipped_title?: string | null
           equipped_weapon?: string | null
           gender?: string | null
@@ -1181,6 +1220,27 @@ export type Database = {
           max_combo_reached?: number
           total_exp?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_customization_items: {
+        Row: {
+          acquired_at: string
+          id: string
+          item_key: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          id?: string
+          item_key: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          id?: string
+          item_key?: string
           user_id?: string
         }
         Relationships: []
@@ -1494,6 +1554,10 @@ export type Database = {
       }
       process_session_rewards: {
         Args: { _user_id: string; _workout_date: string }
+        Returns: Json
+      }
+      purchase_customization_item: {
+        Args: { p_item_key: string }
         Returns: Json
       }
       read_email_batch: {
