@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { planPrices, PlanType } from "@/lib/dummyData";
 import { useAllCustomerProfiles, ProfileWithBooking } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,12 +24,19 @@ interface TrainerClientListProps {
 const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
   const { profiles, loading, setProfiles } = useAllCustomerProfiles();
   const [search, setSearch] = useState("");
+  const [genderTab, setGenderTab] = useState<"all" | "male" | "female">("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const filtered = profiles.filter(c =>
+  const searchFiltered = profiles.filter(c =>
     (c.display_name || "").includes(search) || (c.plan || "").includes(search)
   );
+  const maleCount = searchFiltered.filter(c => c.gender === "male").length;
+  const femaleCount = searchFiltered.filter(c => c.gender === "female").length;
+  const filtered = searchFiltered.filter(c => {
+    if (genderTab === "all") return true;
+    return c.gender === genderTab;
+  });
 
   const formatPrice = (plan: string) => {
     const p = planPrices[plan as PlanType];
@@ -86,6 +94,14 @@ const TrainerClientList = ({ onSelectClient }: TrainerClientListProps) => {
           className="pl-9 h-11"
         />
       </div>
+
+      <Tabs value={genderTab} onValueChange={(v) => setGenderTab(v as "all" | "male" | "female")} className="mb-3 sm:mb-4">
+        <TabsList className="grid grid-cols-3 w-full h-9">
+          <TabsTrigger value="all" className="text-xs">全体（{searchFiltered.length}）</TabsTrigger>
+          <TabsTrigger value="male" className="text-xs">男性（{maleCount}）</TabsTrigger>
+          <TabsTrigger value="female" className="text-xs">女性（{femaleCount}）</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {profiles.length === 0 ? (
         <Card>
