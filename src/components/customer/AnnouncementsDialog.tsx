@@ -22,6 +22,11 @@ const AnnouncementsDialog = ({ open, onClose }: Props) => {
     if (!readIds.has(a.id)) markRead(a.id);
   };
 
+  const handleClose = () => {
+    setSelected(null);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[60] bg-background flex flex-col w-full max-w-md mx-auto">
       {/* Header */}
@@ -36,7 +41,7 @@ const AnnouncementsDialog = ({ open, onClose }: Props) => {
             <span className="text-base font-bold">お知らせ</span>
           </div>
         )}
-        <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground">
+        <button onClick={handleClose} className="p-1 text-muted-foreground hover:text-foreground">
           <X className="w-5 h-5" />
         </button>
       </div>
