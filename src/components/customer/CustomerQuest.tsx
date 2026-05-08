@@ -5,12 +5,15 @@ import { useQuestProgress } from "@/hooks/useQuestProgress";
 import { useBossProgress, useCombatStats } from "@/hooks/useQuestBattle";
 import { getBossIcon } from "@/lib/questBosses";
 import EquipmentDialog from "./EquipmentDialog";
+import QuestBossVisual from "./QuestBossVisual";
+import QuestStoryDialog from "./QuestStoryDialog";
 
 const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
   const { data, loading } = useQuestProgress();
   const { bosses, progress } = useBossProgress();
   const { stats } = useCombatStats();
   const [equipOpen, setEquipOpen] = useState(false);
+  const [openStage, setOpenStage] = useState<number | null>(null);
 
   if (loading || !data) {
     return (
@@ -117,13 +120,21 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
                   }}
                 />
               )}
-              <div
-                className={`rounded-2xl p-5 text-white shadow-md ${isLocked ? "opacity-60" : ""} ${isCompleted ? "animate-pulse" : ""}`}
+              <button
+                type="button"
+                onClick={() => setOpenStage(stage.stage_number)}
+                className={`w-full text-left rounded-2xl p-5 text-white shadow-md transition-transform active:scale-[0.98] ${isLocked ? "opacity-70" : ""}`}
                 style={{ background: bg }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shrink-0">
-                    {isLocked ? <Lock className="w-5 h-5" /> : isCompleted ? <Check className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
+                  <div className="shrink-0">
+                    <QuestBossVisual
+                      stageNumber={stage.stage_number}
+                      Icon={isCompleted ? Check : Icon}
+                      size={64}
+                      locked={isLocked}
+                      completed={isCompleted}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold tracking-wider opacity-80">第{stage.stage_number}章</p>
@@ -132,6 +143,9 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
                     </p>
                     {isCurrent && boss && (
                       <p className="text-[11px] opacity-90 mt-0.5 break-all">{boss.boss_name}</p>
+                    )}
+                    {!isLocked && (
+                      <p className="text-[10px] opacity-70 mt-1">タップで物語を見る</p>
                     )}
                   </div>
                 </div>
@@ -154,13 +168,44 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
                     <p className="text-[10px] opacity-80 leading-snug break-all">{boss.boss_description}</p>
                   </div>
                 )}
-              </div>
+              </button>
             </div>
           );
         })}
       </div>
 
       <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
+
+      {openStage !== null && (() => {
+        const stage = data.stages.find((s) => s.stage_number === openStage);
+        if (!stage) return null;
+        const isCompleted = completedSet.has(stage.id);
+        const isCurrent = !isCompleted && stage.stage_number === data.current_stage;
+        const isLocked = !isCompleted && !isCurrent;
+        const boss = bosses.find((b) => b.stage_id === stage.id);
+        const bp = progress.find((p) => p.stage_id === stage.id);
+        const Icon = boss ? getBossIcon(boss.boss_icon) : Lock;
+        const storyText = isCompleted
+          ? (stage.story_complete || stage.story_intro)
+          : stage.story_intro;
+        return (
+          <QuestStoryDialog
+            open
+            onClose={() => setOpenStage(null)}
+            stageNumber={stage.stage_number}
+            stageName={isCompleted ? stage.name : stage.name_before}
+            storyText={storyText}
+            bossName={boss?.boss_name}
+            bossHp={boss?.boss_hp}
+            bossAtk={boss?.boss_atk}
+            bossDef={boss?.boss_def}
+            curHp={bp?.boss_current_hp ?? boss?.boss_hp}
+            Icon={Icon}
+            locked={isLocked}
+            completed={isCompleted}
+          />
+        );
+      })()}
     </div>
   );
 };
