@@ -11,6 +11,7 @@ import { getExpProgress, ACHIEVEMENTS, getRarityColor, getRarityStarCount } from
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { MISSIONS, getMissionDef, MISSION_BONUS_EXP } from "@/lib/missionSystem";
 import BadgeIcon from "@/components/customer/BadgeIcon";
+import FeaturedBadgesRow from "@/components/customer/FeaturedBadgesRow";
 import { getJSTToday } from "@/lib/timezone";
 import { evaluateAndAwardMissions, ensureDailyMissions } from "@/lib/missionRewards";
 import { pickDailyMissions } from "@/lib/missionSystem";
@@ -26,6 +27,7 @@ interface AvatarRow {
   level: number; total_exp: number; coins: number; combo_count: number;
   equipped_title: string | null; max_combo_reached: number; last_session_date: string | null;
   equipped_emote?: string | null;
+  featured_badges?: string[] | null;
 }
 interface DailyMissionRow {
   mission_keys: string[]; completed_keys: string[]; all_completed: boolean; exp_earned: number;
@@ -68,7 +70,7 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
         avatarRes, achRes, titleRes, missionRes, ticketRes, raidLogRes, raidBossRes, gachaRes,
         bookingRes, workoutRes,
       ] = await Promise.all([
-       supabase.from("user_avatars").select("level,total_exp,coins,combo_count,equipped_title,max_combo_reached,last_session_date,gender,hair_color,equipped_emote").eq("user_id", clientId).maybeSingle(),
+       supabase.from("user_avatars").select("level,total_exp,coins,combo_count,equipped_title,max_combo_reached,last_session_date,gender,hair_color,equipped_emote,featured_badges").eq("user_id", clientId).maybeSingle(),
         supabase.from("avatar_achievements").select("achievement_key,unlocked_at").eq("user_id", clientId).order("unlocked_at", { ascending: false }),
         supabase.from("user_titles").select("title_key").eq("user_id", clientId),
         supabase.from("daily_missions").select("mission_keys,completed_keys,all_completed,exp_earned").eq("user_id", clientId).eq("mission_date", today).maybeSingle(),
@@ -198,6 +200,9 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
                 <p className="text-xs font-semibold mt-0.5 flex items-center gap-1" style={{ color: "hsl(174, 65%, 45%)" }}>
                   <Star className="w-3 h-3 fill-current" />{equippedTitle.name}
                 </p>
+              )}
+              {avatar.featured_badges && avatar.featured_badges.length > 0 && (
+                <FeaturedBadgesRow badgeKeys={avatar.featured_badges} size={18} className="mt-1" />
               )}
               <div className="mt-2">
                 <div className="h-2 rounded-full bg-muted overflow-hidden">

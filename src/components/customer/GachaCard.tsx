@@ -10,11 +10,29 @@ import {
   GACHA_RARITY_LABEL,
 } from "@/lib/gachaSystem";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { ACHIEVEMENTS } from "@/lib/avatarSystem";
 
 const SPIN_DURATION = 1800;
 
 const GachaCard = () => {
   const { ticketCount, loading, spinning, spin } = useGacha();
+  const { user } = useAuth();
+  const [epicBonus, setEpicBonus] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("avatar_achievements")
+      .select("achievement_key")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        const keys = ((data as any[]) || []).map((r) => r.achievement_key as string);
+        const epicSet = new Set(ACHIEVEMENTS.filter((a) => a.rarity === "epic").map((a) => a.key));
+        const epicCount = keys.filter((k) => epicSet.has(k)).length;
+        setEpicBonus(epicCount >= 10 ? 2 : epicCount >= 5 ? 1 : 0);
+      });
+  }, [user]);
   const [phase, setPhase] = useState<"idle" | "spinning" | "result">("idle");
   const [revealed, setRevealed] = useState<GachaSpinResult | null>(null);
   const [open, setOpen] = useState(false);
@@ -155,6 +173,12 @@ const GachaCard = () => {
                 未使用チケット <span className="text-base font-extrabold">{ticketCount}</span> 枚
               </p>
             </div>
+            {epicBonus > 0 && (
+              <p className="text-[10px] mt-0.5 opacity-90 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                バッジボーナス: legendary +{epicBonus}%
+              </p>
+            )}
           </div>
         </div>
         <Button
