@@ -1,82 +1,82 @@
-## ライバルバトルシステム実装計画
+## 概要
 
-会員同士が匿名で1対1の週間バトルを行う仕組みを構築します。範囲が大きいため、3つのフェーズで進めます。
-
----
-
-### フェーズ1：データベース基盤（マイグレーション）
-
-新規テーブル3つを作成し、RLSとRPC関数を整備します。
-
-**テーブル**
-- `rival_battles`：対戦カード（player1/2、挙上量、勝者、status）
-- `rival_battle_entries`：週次エントリー（user_id、week_start、matched）
-- `rival_battle_rewards`：報酬（result、coins、exp、win_streak、claimed）
-
-**注意点**：仕様書では `profiles(id)` を参照とありますが、本プロジェクトでは `user_id`（auth uid）を一貫して使うため、外部キーは付けず `user_id uuid NOT NULL` とします（既存テーブルと同じ規約）。
-
-**RLSポリシー**
-- 自分のレコードのみSELECT/INSERT/UPDATE
-- トレーナー（`has_role(auth.uid(), 'trainer')`）は全レコード閲覧可
-
-**RPC関数（SECURITY DEFINER）**
-- `enter_rival_battle()`：JST月曜のみエントリー可
-- `run_rival_matching(week_start)`：同性 × アバターレベル近い順でペアリング
-- `update_rival_battle_volumes(week_start)`：`workouts` テーブルから期間中の総挙上量を集計（jsonb sets と weight×reps の両対応 = `get_ranking` と同じロジックを流用）
-- `complete_rival_battles(week_start)`：勝敗確定 + 連勝計算 + 報酬レコード作成
-- `claim_rival_reward(battle_id)`：コイン/EXPを実付与しclaimed=true
+王国復興クエストを「条件達成方式」から「ボスバトル方式」に変更し、装備システムを追加。あわせてホームカードのタップ遷移バグを修正します。
 
 ---
 
-### フェーズ2：お客様向けUI
+## A. バグ修正（最優先・即時対応可）
 
-**新規ファイル**
-- `src/hooks/useRivalBattle.ts`：今週のエントリー・進行中バトル・未claim報酬を取得
-- `src/components/customer/RivalBattleCard.tsx`：ホーム画面用カード（A〜F の状態分岐）
-- `src/components/customer/RivalBattleDetailDialog.tsx`：詳細表示（履歴・通算戦績・連勝数）
-
-**変更ファイル**
-- `src/components/customer/CustomerHome.tsx`：「次回の予約」直下に `<RivalBattleCard />` を挿入
-
-カードの状態分岐：
-- A: 月曜かつ未エントリー → エントリーボタン
-- B: エントリー済みマッチング待ち → ローディング
-- C: バトル進行中 → VS画面 + 挙上量比較プログレスバー + 残り日数
-- D: 結果あり未claim → WIN/LOSE/DRAW 演出 + 報酬受け取りボタン
-- E: マッチング不成立 / エントリー期間外 → 案内
-- F: 月曜以外で対象なし → 非表示
+1. `src/App.tsx` に `/quest` ルートが無いため、QuestCard タップ時の遷移が機能していません。現状はホームの内部タブ（CustomerView の `quest` タブ）に依存しています。
+2. **対応方針**：URL ルーティングではなく既存の **CustomerView の内部タブ切替** を使用します（既存実装と整合）。`QuestCard` の `onOpen` が確実に `setActiveTab("quest")` を呼ぶよう CustomerHome から渡されているか検証し、未配線なら修正。
+   - もし URL での `/quest` を強く望まれる場合は、別途 `pages/Quest.tsx` を作成し App.tsx に Route 追加します（要選択）。
 
 ---
 
-### フェーズ3：トレーナー管理画面
+## B. データベース構築（マイグレーション1本）
 
-**新規ファイル**
-- `src/components/trainer/TrainerRivalBattleManager.tsx`
+新規テーブル：
 
-**変更ファイル**
-- `src/components/trainer/TrainerSidebar.tsx`：「バトル管理」メニュー追加
-- `src/components/trainer/TrainerView.tsx`：ルーティング追加
+- `quest_bosses`（マスタ、stage_id 1〜8 にそれぞれボス1体）
+- `user_quest_boss_progress`（user_id × stage_id の現在ボスHP、討伐状況）
+- `quest_battle_logs`（戦闘ログ）
+- `equipment_items`（マスタ：武器/盾/護符）
+- `user_equipment`（所持・装備状態）
 
-機能：
-- 今週のバトル一覧（プレイヤー名、進行状況、挙上量）
-- 「マッチング実行」「結果確定」「挙上量更新」ボタン
-- 過去の週のバトル結果一覧
+RLS：
+- マスタ系は全認証ユーザー SELECT 可
+- user系は本人 + トレーナー閲覧可、本人のみ書込み（ただし戦闘進行は SECURITY DEFINER RPC 経由）
 
----
-
-### デザイン
-
-- メインカラー：`#0ABAB5`（既存のティファニーブルー、index.cssのトークンを使用）
-- アイコン：`Swords`, `Trophy`, `Shield`, `Flame`（Lucide React）
-- 絵文字なし、日本語表記
-- モバイルファースト（max-w-md内に収まる）
+初期データ：
+- ボス8体（仕様書のHP/ATK/DEF）
+- 装備12種（初期3種 + レイド3種 + クエスト報酬6種）
 
 ---
 
-### 確認事項
+## C. RPC 関数
 
-1. 自動実行（cron）は今回は組み込まず、トレーナー画面からの手動実行のみで運用する想定でよいか？（仕様書にもそう記載あり）
-2. アバター画像の表示は、既存の `getAvatarImage(rank, gender, hairColor)` を流用してOKか？
-3. 連勝判定は「直近の連続勝利数」（敗北/引き分けでリセット）の解釈でよいか？
+- `get_player_combat_stats(p_user_id)` — レベル+装備からHP/ATK/DEF算出
+- `execute_quest_battle(p_user_id, p_session_volume)` — ダメージ計算、ボスHP減算、撃破時に報酬付与＆次ステージ進行
+- `equip_item(p_user_id, p_item_id)` — 同枠の他装備を外して装備
+- `initialize_quest_boss_progress()` — トレーナー用：初期装備配布 + ステージ1進捗レコード作成
+- 既存 `complete_quest_stage` は呼出しを廃止（戦闘経由のみで進行）。関数は残置。
 
-問題なければこの計画で着手します。
+---
+
+## D. トレーニング記録時のフック
+
+`CustomerTraining.tsx` のセッション保存処理で：
+1. セッション総挙上量を算出（既存の workouts.sets/weight×reps ロジック流用）
+2. `execute_quest_battle` を呼出し
+3. 結果を `QuestBattleResultDialog` に渡して表示
+
+---
+
+## E. UI 実装
+
+### 既存修正
+- `QuestCard.tsx` — ボス名・ボスHPバー・ATK表示に変更
+- `CustomerQuest.tsx` — マップ表示をボスバトル方式に刷新（プレイヤーステータスパネル、各エリアのボス情報、装備ボタン）
+- `TrainerQuestManager.tsx` — 初期化ボタンに装備配布追加、各会員にボス残HP・装備表示
+
+### 新規
+- `src/components/customer/EquipmentDialog.tsx` — 装備変更モーダル
+- `src/components/customer/QuestBattleResultDialog.tsx` — バトル結果演出（フラッシュ、HPバーアニメ、撃破時の復興演出）
+- `src/lib/questBosses.ts` — ボスアイコンマップ（Bot, Bug, Snowflake, Flame, Worm, Wand2, CloudLightning, Skull）
+- `src/hooks/useQuestBattle.ts` — 戦闘ステータス取得フック
+
+---
+
+## F. 装備とレイド武器の連携
+
+既存のレイド報酬（`equipped_weapon`/`equipped_background` on user_avatars）はそのまま残し、`equipment_items` に同期テーブルを新設。レイド完了時の武器付与に `user_equipment` への INSERT を追加（既存処理を壊さない）。
+
+---
+
+## 確認事項
+
+実装ボリュームが非常に大きいため（約15ファイルの新規/修正、長尺マイグレーション1本、新RPC 4本）、以下を確認させてください：
+
+1. **ルーティング**：QuestCard タップは「内部タブ切替（既存方式）」で OK か、それとも `/quest` URL ルートを新設するか
+2. **既存の条件達成方式の扱い**：旧 `complete_quest_stage` ボタン（CustomerQuest 内「復興する！」）は完全に削除して良いか（ボス撃破でのみ進行するか）
+3. **進行リセット**：既に旧方式でステージを進めた会員がいる場合、ボス進捗は「現ステージから満HPで開始」で良いか
+4. **段階リリース**：1メッセージで全実装すると差分が膨大になり検証が困難です。**Phase1: バグ修正＋DB＋RPC＋フック**、**Phase2: UI演出（バトル結果ダイアログ・装備モーダル）** の2段階に分けても良いですか？
