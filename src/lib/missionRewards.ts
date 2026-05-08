@@ -42,7 +42,7 @@ const setsOf = (w: WorkoutRow) =>
 
 /** Fetch today's workouts + previous max weight per exercise + booking time. */
 async function loadEvalData(userId: string, date: string) {
-  const [todayRes, allRes, bookingRes] = await Promise.all([
+  const [todayRes, allRes, bookingRes, weightRes] = await Promise.all([
     supabase
       .from("workouts")
       .select("workout_date, weight, reps, sets, exercise_id, exercises(name, muscle_group)")
@@ -58,6 +58,15 @@ async function loadEvalData(userId: string, date: string) {
       .select("booking_date")
       .eq("user_id", userId)
       .neq("status", "キャンセル済み"),
+    supabase
+      .from("user_measurements")
+      .select("weight, measured_date")
+      .eq("user_id", userId)
+      .not("weight", "is", null)
+      .lte("measured_date", date)
+      .order("measured_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const todayWorkouts: WorkoutRow[] = (todayRes.data || []).map((w: any) => ({
@@ -89,14 +98,16 @@ async function loadEvalData(userId: string, date: string) {
     }
   }
 
-  return { todayWorkouts, prevMaxByExercise, bookingHour };
+  const bodyWeight = (weightRes as any)?.data?.weight ?? null;
+
+  return { todayWorkouts, prevMaxByExercise, bookingHour, bodyWeight };
 }
 
 function evaluateMission(
   key: MissionKey,
-  ctx: { todayWorkouts: WorkoutRow[]; prevMaxByExercise: Map<string, number>; bookingHour: number | null },
+  ctx: { todayWorkouts: WorkoutRow[]; prevMaxByExercise: Map<string, number>; bookingHour: number | null; bodyWeight: number | null },
 ): boolean {
-  const { todayWorkouts: ws, prevMaxByExercise, bookingHour } = ctx;
+  const { todayWorkouts: ws, prevMaxByExercise, bookingHour, bodyWeight } = ctx;
   if (ws.length === 0) return false;
 
   switch (key) {
@@ -118,7 +129,7 @@ function evaluateMission(
         (s, w) => s + setsOf(w).reduce((ss, st) => ss + (Number(st.weight) || 0) * (Number(st.reps) || 0), 0),
         0,
       );
-      return total >= 5000;
+      return total >= 3000;
     }
     case "three_parts": {
       const groups = new Set(
@@ -161,6 +172,68 @@ function evaluateMission(
       return bookingHour != null && bookingHour < 12;
     case "night_fighter":
       return bookingHour != null && bookingHour >= 19;
+    case "set_master": {
+      const total = ws.reduce((s, w) => s + setsOf(w).length, 0);
+      return total >= 12;
+    }
+    case "super_setter": {
+      const total = ws.reduce((s, w) => s + setsOf(w).length, 0);
+      return total >= 15;
+    }
+    case "full_menu": {
+      const exIds = new Set(ws.map((w) => w.exercise_id));
+      return exIds.size >= 4;
+    }
+    case "endurance": {
+      const repsByEx = new Map<string, number>();
+      for (const w of ws) {
+        const total = setsOf(w).reduce((ss, st) => ss + (Number(st.reps) || 0), 0);
+        repsByEx.set(w.exercise_id, (repsByEx.get(w.exercise_id) ?? 0) + total);
+      }
+      return [...repsByEx.values()].some((n) => n >= 30);
+    }
+    case "heavy_lifter": {
+      if (!bodyWeight || bodyWeight <= 0) return false;
+      for (const w of ws) {
+        for (const s of setsOf(w)) {
+          if (Number(s.weight) >= bodyWeight) return true;
+        }
+      }
+      return false;
+    }
+    case "balancer": {
+      const upper = new Set(["胸", "背中", "肩", "二頭筋", "三頭筋", "腕"]);
+      const lower = new Set(["脚", "臀部", "お尻"]);
+      let hasUpper = false;
+      let hasLower = false;
+      for (const w of ws) {
+        const g = w.muscle_group || getMuscleGroup(w.exercise_name || "");
+        if (upper.has(g)) hasUpper = true;
+        if (lower.has(g)) hasLower = true;
+      }
+      return hasUpper && hasLower;
+    }
+    case "double_best": {
+      const todayMaxByEx = new Map<string, number>();
+      for (const w of ws) {
+        const m = setsOf(w).reduce((mx, s) => Math.max(mx, Number(s.weight) || 0), 0);
+        todayMaxByEx.set(w.exercise_id, Math.max(todayMaxByEx.get(w.exercise_id) ?? 0, m));
+      }
+      let count = 0;
+      for (const [exId, todayMax] of todayMaxByEx) {
+        const prev = prevMaxByExercise.get(exId) ?? 0;
+        if (todayMax > prev && todayMax > 0) count++;
+      }
+      return count >= 2;
+    }
+    case "high_rep": {
+      for (const w of ws) {
+        for (const s of setsOf(w)) {
+          if (Number(s.reps) >= 15) return true;
+        }
+      }
+      return false;
+    }
   }
 }
 
@@ -183,7 +256,15 @@ export async function evaluateAndAwardMissions(
 
   // Auto-create today's mission row if missing (e.g., training saved without booking).
   if (!missionRow) {
-    const keys = pickDailyMissions();
+    // Check if user has body weight recorded to decide if heavy_lifter is eligible
+    const { data: w } = await supabase
+      .from("user_measurements")
+      .select("weight")
+      .eq("user_id", userId)
+      .not("weight", "is", null)
+      .limit(1)
+      .maybeSingle();
+    const keys = pickDailyMissions({ hasBodyWeight: !!(w as any)?.weight });
     await ensureDailyMissions(userId, date, keys);
     const { data: created } = await supabase
       .from("daily_missions")

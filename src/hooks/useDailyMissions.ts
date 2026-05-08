@@ -76,7 +76,14 @@ export const useDailyMissions = () => {
         if (existing) {
           setMission(existing as DailyMissionRow);
         } else {
-          const keys = pickDailyMissions();
+          const { data: w } = await supabase
+            .from("user_measurements")
+            .select("weight")
+            .eq("user_id", user.id)
+            .not("weight", "is", null)
+            .limit(1)
+            .maybeSingle();
+          const keys = pickDailyMissions({ hasBodyWeight: !!(w as any)?.weight });
           await ensureDailyMissions(user.id, today, keys);
           await refetch();
         }
