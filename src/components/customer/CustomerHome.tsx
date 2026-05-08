@@ -283,19 +283,22 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       {/* 2. Avatar */}
       <AvatarCard />
 
-      {/* 3. Raid Boss */}
+      {/* 3. Next Booking */}
+      {nextBookingSection}
+
+      {/* 4. Raid Boss */}
       <RaidBossCard />
 
-      {/* 4. Gacha (only if tickets exist — handled inside) */}
+      {/* 5. Gacha (only if tickets exist — handled inside) */}
       <GachaCard />
 
-      {/* 5. Daily Mission (only when has booking today — handled inside) */}
+      {/* 6. Daily Mission (only when has booking today — handled inside) */}
       <DailyMissionCard />
 
-      {/* 6. Season Event (only when active — handled inside) */}
+      {/* 7. Season Event (only when active — handled inside) */}
       <SeasonEventCard />
 
-      {/* 7. Streak */}
+      {/* 8. Streak */}
       {!streakLoading && (
         <StreakCard
           currentStreak={currentStreak}
@@ -303,9 +306,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           hasFutureBookingThisWeek={hasFutureBookingThisWeek}
         />
       )}
-
-      {/* 8. Next Booking */}
-      {nextBookingSection}
 
       <RivalBattleCard />
       <QuestCard onOpen={() => onNavigate?.("quest")} />
