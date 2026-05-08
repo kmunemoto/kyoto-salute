@@ -65,8 +65,12 @@ export const useAvatar = (autoSync = true) => {
 
   // Initial sync: backfill from workouts if needed
   useEffect(() => {
-    if (!user || !autoSync) {
+    if (!user) {
       setLoading(false);
+      return;
+    }
+    if (!autoSync) {
+      refetch().finally(() => setLoading(false));
       return;
     }
     let cancelled = false;
