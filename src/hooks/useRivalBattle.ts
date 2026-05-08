@@ -88,7 +88,7 @@ export const useRivalBattle = () => {
       .eq("status", "active")
       .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
       .limit(1);
-    const active = (activeRows && activeRows[0]) as RivalBattleRow | undefined;
+    const active = (activeRows && (activeRows as any)[0]) as RivalBattleRow | undefined;
     setActiveBattle(active || null);
 
     // Latest unclaimed reward
@@ -99,14 +99,14 @@ export const useRivalBattle = () => {
       .eq("claimed", false)
       .order("created_at", { ascending: false })
       .limit(1);
-    const reward = (rewardRows && rewardRows[0]) as RivalRewardRow | undefined;
+    const reward = (rewardRows && (rewardRows as any)[0]) as RivalRewardRow | undefined;
     if (reward) {
       const { data: bRow } = await supabase
         .from("rival_battles" as any)
         .select("*")
         .eq("id", reward.battle_id)
         .maybeSingle();
-      if (bRow) setUnclaimedReward({ battle: bRow as RivalBattleRow, reward });
+      if (bRow) setUnclaimedReward({ battle: bRow as unknown as RivalBattleRow, reward });
     } else {
       setUnclaimedReward(null);
     }
