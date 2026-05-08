@@ -738,6 +738,42 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 <Switch checked={showUsagePeriod} onCheckedChange={handleShowUsagePeriodToggle} />
               </div>
             </div>
+
+            {/* Gender Setting */}
+            <div className="pt-2 border-t border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">性別</span>
+                {!clientGender && (
+                  <span className="text-xs text-muted-foreground">未設定</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleGenderChange("male")}
+                  className={cn(
+                    "h-10 rounded-md border text-sm font-medium transition-colors",
+                    clientGender === "male"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-input bg-background text-foreground hover:bg-muted"
+                  )}
+                >
+                  男性
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleGenderChange("female")}
+                  className={cn(
+                    "h-10 rounded-md border text-sm font-medium transition-colors",
+                    clientGender === "female"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-input bg-background text-foreground hover:bg-muted"
+                  )}
+                >
+                  女性
+                </button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </section>
