@@ -16,6 +16,9 @@ const AvatarCard = () => {
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch } = useAvatar(true);
   const { items: rewardItems, owned, participation, refetch: refetchRewards } = useRaidRewards();
   const [open, setOpen] = useState(false);
+  const [emoteFailed, setEmoteFailed] = useState(false);
+  const emoteSrc = getEmoteVideoSrc(avatar?.equipped_emote);
+  useEffect(() => { setEmoteFailed(false); }, [emoteSrc]);
 
   useEffect(() => {
     const handler = () => { refetch(); };
@@ -40,9 +43,6 @@ const AvatarCard = () => {
   const equipped = getTitleDef(avatar.equipped_title);
   const weaponItem = rewardItems.find((it) => it.item_key === avatar.equipped_weapon);
   const bgItem = rewardItems.find((it) => it.item_key === avatar.equipped_background);
-  const emoteSrc = getEmoteVideoSrc(avatar.equipped_emote);
-  const [emoteFailed, setEmoteFailed] = useState(false);
-  useEffect(() => { setEmoteFailed(false); }, [emoteSrc]);
 
   return (
     <>
