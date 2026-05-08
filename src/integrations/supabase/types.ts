@@ -97,6 +97,30 @@ export type Database = {
         }
         Relationships: []
       }
+      avatar_collection_rewards: {
+        Row: {
+          coins_awarded: number
+          created_at: string
+          id: string
+          milestone: number
+          user_id: string
+        }
+        Insert: {
+          coins_awarded?: number
+          created_at?: string
+          id?: string
+          milestone: number
+          user_id: string
+        }
+        Update: {
+          coins_awarded?: number
+          created_at?: string
+          id?: string
+          milestone?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       avatar_customization_items: {
         Row: {
           category: string
@@ -1172,8 +1196,10 @@ export type Database = {
           created_at: string
           equipped_background: string | null
           equipped_emote: string | null
+          equipped_frame: string | null
           equipped_title: string | null
           equipped_weapon: string | null
+          featured_badges: string[]
           gender: string | null
           hair_color: string
           id: string
@@ -1191,8 +1217,10 @@ export type Database = {
           created_at?: string
           equipped_background?: string | null
           equipped_emote?: string | null
+          equipped_frame?: string | null
           equipped_title?: string | null
           equipped_weapon?: string | null
+          featured_badges?: string[]
           gender?: string | null
           hair_color?: string
           id?: string
@@ -1210,8 +1238,10 @@ export type Database = {
           created_at?: string
           equipped_background?: string | null
           equipped_emote?: string | null
+          equipped_frame?: string | null
           equipped_title?: string | null
           equipped_weapon?: string | null
+          featured_badges?: string[]
           gender?: string | null
           hair_color?: string
           id?: string
@@ -1506,6 +1536,7 @@ export type Database = {
         Args: { _damage: number; _user_id: string; _workout_date: string }
         Returns: Json
       }
+      check_collection_milestones: { Args: { _user_id: string }; Returns: Json }
       delete_customer_cascade: {
         Args: { _customer_id: string }
         Returns: undefined
@@ -1573,6 +1604,7 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: Json
       }
+      set_featured_badges: { Args: { p_badges: string[] }; Returns: undefined }
       spin_gacha: {
         Args: { _result_date: string; _user_id: string }
         Returns: Json
