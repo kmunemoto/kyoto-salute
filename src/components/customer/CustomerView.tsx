@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 import BottomNav from "./BottomNav";
@@ -15,12 +15,16 @@ import PwaInstallBanner from "./PwaInstallBanner";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
 import { useUnreadCount } from "@/hooks/useMessages";
+import { useAnnouncementUnreadCount } from "@/hooks/useAnnouncements";
+import AnnouncementsDialog from "./AnnouncementsDialog";
 
 export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings" | "posture" | "report";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
   const { count: unreadChat, refetch: refetchUnread } = useUnreadCount();
+  const { count: unreadAnnouncements, refetch: refetchAnnouncements } = useAnnouncementUnreadCount();
+  const [announcementsOpen, setAnnouncementsOpen] = useState(false);
 
   // Refetch unread when leaving chat
   useEffect(() => {
@@ -48,14 +52,30 @@ const CustomerView = () => {
             {/* ⚠️ DO NOT change this app name. Keep exactly as-is: "パーソナルジムSalute御所南" — never convert "Salute" to katakana */}
             <span className="text-sm font-bold">パーソナルジムSalute御所南</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setTab("chat")} className="text-muted-foreground relative">
-            <MessageCircle className="w-4 h-4" />
-            {unreadChat > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
-                {unreadChat}
-              </span>
-            )}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAnnouncementsOpen(true)}
+              className="text-muted-foreground relative"
+              aria-label="お知らせ"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadAnnouncements > 0 && (
+                <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
+                  {unreadAnnouncements > 9 ? "9+" : unreadAnnouncements}
+                </span>
+              )}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setTab("chat")} className="text-muted-foreground relative" aria-label="チャット">
+              <MessageCircle className="w-4 h-4" />
+              {unreadChat > 0 && (
+                <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
+                  {unreadChat > 9 ? "9+" : unreadChat}
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
       <div className="pt-12" key={tab}>
@@ -70,6 +90,13 @@ const CustomerView = () => {
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
       <PwaInstallBanner />
+      <AnnouncementsDialog
+        open={announcementsOpen}
+        onClose={() => {
+          setAnnouncementsOpen(false);
+          refetchAnnouncements();
+        }}
+      />
     </div>
   );
 };
