@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Trophy, Dumbbell, CalendarCheck, Flame, Medal, Crown } from "lucide-react";
 import { getRankInfo, type Gender } from "@/lib/avatarSystem";
 import { getTitleDef } from "@/lib/titleSystem";
+import FeaturedBadgesRow from "./FeaturedBadgesRow";
 
 type RankType = "volume" | "sessions" | "combo";
 type GenderTab = "male" | "female";
@@ -14,6 +15,7 @@ interface RankRow {
   level: number;
   equipped_title: string | null;
   value: number;
+  featured_badges?: string[] | null;
 }
 
 const RANK_LABELS: Record<RankType, { label: string; icon: any; unit: (v: number) => string }> = {
@@ -177,6 +179,7 @@ const CustomerRanking = () => {
                       <p className="text-[10px] font-bold mt-1 truncate max-w-full text-center" style={{ color }}>
                         {isMe ? "あなた" : titleName(row.equipped_title)}
                       </p>
+                      <FeaturedBadgesRow badgeKeys={row.featured_badges} size={14} className="justify-center mb-1" />
                       <p className="text-[11px] font-extrabold text-foreground mb-1">
                         {config.unit(row.value)}
                       </p>
@@ -215,9 +218,12 @@ const CustomerRanking = () => {
                           {rank}
                         </span>
                         {renderAvatar(row, 32)}
-                        <span className="flex-1 text-xs font-semibold truncate">
-                          {isMe ? "あなた" : titleName(row.equipped_title)}
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-xs font-semibold truncate">
+                            {isMe ? "あなた" : titleName(row.equipped_title)}
+                          </span>
+                          <FeaturedBadgesRow badgeKeys={row.featured_badges} size={12} className="mt-0.5" />
+                        </div>
                         <span className="text-xs font-extrabold">{config.unit(row.value)}</span>
                       </div>
                     );
