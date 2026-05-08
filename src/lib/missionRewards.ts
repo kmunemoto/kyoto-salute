@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { calculateLevel } from "./avatarSystem";
 import { getMissionDef, MISSION_BONUS_EXP, pickDailyMissions, type MissionKey } from "./missionSystem";
-import { getMuscleGroup } from "./muscleGroup";
+import { getMuscleGroup, loadMuscleGroupMap } from "./muscleGroup";
 import { formatJST } from "./timezone";
 import { getRankInfo } from "./avatarSystem";
 import { MISSION_EXP_MULT } from "./rankPerks";
@@ -30,6 +30,7 @@ interface WorkoutRow {
   sets: { set: number; weight: number; reps: number }[] | null;
   exercise_id: string;
   exercise_name: string;
+  muscle_group: string | null;
 }
 
 const setsOf = (w: WorkoutRow) =>
@@ -44,7 +45,7 @@ async function loadEvalData(userId: string, date: string) {
   const [todayRes, allRes, bookingRes] = await Promise.all([
     supabase
       .from("workouts")
-      .select("workout_date, weight, reps, sets, exercise_id, exercises(name)")
+      .select("workout_date, weight, reps, sets, exercise_id, exercises(name, muscle_group)")
       .eq("user_id", userId)
       .eq("workout_date", date),
     supabase
@@ -66,6 +67,7 @@ async function loadEvalData(userId: string, date: string) {
     sets: w.sets,
     exercise_id: w.exercise_id,
     exercise_name: w.exercises?.name || "",
+    muscle_group: w.exercises?.muscle_group || null,
   }));
 
   const prevMaxByExercise = new Map<string, number>();
@@ -119,8 +121,11 @@ function evaluateMission(
       return total >= 5000;
     }
     case "three_parts": {
-      const groups = new Set(ws.map((w) => getMuscleGroup(w.exercise_name || "")));
+      const groups = new Set(
+        ws.map((w) => w.muscle_group || getMuscleGroup(w.exercise_name || "")),
+      );
       groups.delete("その他");
+      groups.delete("");
       return groups.size >= 3;
     }
     case "rep_master": {
@@ -167,6 +172,8 @@ export async function evaluateAndAwardMissions(
   userId: string,
   date: string,
 ): Promise<MissionEvalResult> {
+  // Ensure exercise→muscle_group map is loaded for any name-based lookup fallback.
+  try { await loadMuscleGroupMap(); } catch { /* non-fatal */ }
   let { data: missionRow } = await supabase
     .from("daily_missions")
     .select("id, mission_keys, completed_keys, all_completed, exp_earned")
