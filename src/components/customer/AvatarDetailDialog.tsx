@@ -58,7 +58,12 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             className="w-44 h-44 rounded-3xl flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: `${p.rank.color}15` }}
           >
-            <img src={p.rank.image} alt={p.rank.name} className="w-full h-full object-cover" />
+            <img
+              src={p.rank.image}
+              alt={p.rank.name}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+            />
           </div>
           <div className="mt-3 text-center">
             <p className="text-2xl font-extrabold">Lv.{p.level}</p>

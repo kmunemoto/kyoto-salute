@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAvatar } from "@/hooks/useAvatar";
 import { getExpProgress } from "@/lib/avatarSystem";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +11,14 @@ import BadgeIcon from "./BadgeIcon";
 import { Flame } from "lucide-react";
 
 const AvatarCard = () => {
-  const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle } = useAvatar(true);
+  const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch } = useAvatar(true);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => { refetch(); };
+    window.addEventListener("avatar-gender-updated", handler);
+    return () => window.removeEventListener("avatar-gender-updated", handler);
+  }, [refetch]);
 
   if (loading || !avatar) {
     return (
@@ -41,7 +47,12 @@ const AvatarCard = () => {
             className="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: `${p.rank.color}15` }}
           >
-            <img src={p.rank.image} alt={p.rank.name} className="w-full h-full object-cover" />
+            <img
+              src={p.rank.image}
+              alt={p.rank.name}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
