@@ -8,9 +8,9 @@ import { getMissionDef, MISSION_BONUS_EXP } from "@/lib/missionSystem";
 const TIFFANY = "hsl(174, 65%, 50%)";
 
 const DailyMissionCard = () => {
-  const { mission, hasBookingToday, hasWorkoutToday, loading } = useDailyMissions();
+  const { mission, hasBookingToday, loading } = useDailyMissions();
 
-  const shouldShow = hasBookingToday || hasWorkoutToday;
+  const shouldShow = hasBookingToday;
   if (!shouldShow || loading || !mission) {
     if (loading && shouldShow) {
       return (
