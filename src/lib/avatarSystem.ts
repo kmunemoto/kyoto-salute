@@ -1,4 +1,6 @@
 export type RankKey = "rookie" | "regular" | "athlete" | "elite" | "legend";
+export type Gender = "male" | "female";
+export type HairColor = "orange";
 
 export interface RankInfo {
   key: RankKey;
@@ -85,12 +87,22 @@ export const calculateLevel = (totalExp: number): number => {
   return level;
 };
 
-export const getRankInfo = (level: number): RankInfo => {
-  if (level <= 5) return { key: "rookie", name: "ルーキー", image: "/avatars/rookie.png", color: "#10b981" };
-  if (level <= 15) return { key: "regular", name: "レギュラー", image: "/avatars/regular.png", color: "#3b82f6" };
-  if (level <= 30) return { key: "athlete", name: "アスリート", image: "/avatars/athlete.png", color: "#8b5cf6" };
-  if (level <= 50) return { key: "elite", name: "エリート", image: "/avatars/elite.png", color: "#f59e0b" };
-  return { key: "legend", name: "レジェンド", image: "/avatars/legend.png", color: "#d4af37" };
+export const getAvatarImage = (
+  rank: RankKey,
+  gender: Gender = "female",
+  hairColor: HairColor = "orange"
+): string => `/avatars/${gender}_${rank}_${hairColor}.png`;
+
+export const getRankInfo = (
+  level: number,
+  gender: Gender = "female",
+  hairColor: HairColor = "orange"
+): RankInfo => {
+  if (level <= 5) return { key: "rookie", name: "ルーキー", image: getAvatarImage("rookie", gender, hairColor), color: "#10b981" };
+  if (level <= 15) return { key: "regular", name: "レギュラー", image: getAvatarImage("regular", gender, hairColor), color: "#3b82f6" };
+  if (level <= 30) return { key: "athlete", name: "アスリート", image: getAvatarImage("athlete", gender, hairColor), color: "#8b5cf6" };
+  if (level <= 50) return { key: "elite", name: "エリート", image: getAvatarImage("elite", gender, hairColor), color: "#f59e0b" };
+  return { key: "legend", name: "レジェンド", image: getAvatarImage("legend", gender, hairColor), color: "#d4af37" };
 };
 
 export interface ExpProgress {
@@ -103,7 +115,11 @@ export interface ExpProgress {
   remainingExp: number;
 }
 
-export const getExpProgress = (totalExp: number): ExpProgress => {
+export const getExpProgress = (
+  totalExp: number,
+  gender: Gender = "female",
+  hairColor: HairColor = "orange"
+): ExpProgress => {
   const level = calculateLevel(totalExp);
   let cumulative = 0;
   for (let l = 1; l < level; l++) cumulative += getRequiredExp(l);
@@ -112,7 +128,7 @@ export const getExpProgress = (totalExp: number): ExpProgress => {
   const percent = Math.min(100, Math.round((currentLevelExp / required) * 100));
   return {
     level,
-    rank: getRankInfo(level),
+    rank: getRankInfo(level, gender, hairColor),
     totalExp,
     currentLevelExp,
     requiredExp: required,
