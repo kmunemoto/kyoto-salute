@@ -49,6 +49,7 @@ export const useAvatar = (autoSync = true) => {
   const [titles, setTitles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [levelUp, setLevelUp] = useState<{ newLevel: number; earnedCoins: number } | null>(null);
+  const [newAchievement, setNewAchievement] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
     if (!user) return;
@@ -234,7 +235,10 @@ export const useAvatar = (autoSync = true) => {
         raidMvpCount,
         hasProgressPhoto: (photoCount || 0) > 0,
       });
-      await unlockAchievements(user.id, achKeys);
+      const newlyUnlocked = await unlockAchievements(user.id, achKeys);
+      if (newlyUnlocked.length > 0) {
+        setNewAchievement(newlyUnlocked[0]);
+      }
 
       // Trigger collection milestone evaluation (idempotent)
       try {
@@ -316,5 +320,5 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
-  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote, setFeaturedBadges, equipFrame };
+  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote, setFeaturedBadges, equipFrame, newAchievement, clearNewAchievement: () => setNewAchievement(null) };
 };
