@@ -41,7 +41,9 @@ const reasonLabel = (reason: string): string => {
 };
 
 const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles = [], onEquipTitle }: Props) => {
-  const p = getExpProgress(avatar.total_exp);
+  const gender = (avatar.gender as "male" | "female") ?? "female";
+  const hairColor = (avatar.hair_color as any) ?? "orange";
+  const p = getExpProgress(avatar.total_exp, gender, hairColor);
   const acquired = new Set(achievements);
   const acquiredTitles = new Set(titles);
   const equipped = avatar.equipped_title || null;

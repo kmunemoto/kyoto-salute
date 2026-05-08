@@ -24,7 +24,9 @@ const AvatarCard = () => {
     );
   }
 
-  const p = getExpProgress(avatar.total_exp);
+  const gender = (avatar.gender as "male" | "female") ?? "female";
+  const hairColor = (avatar.hair_color as any) ?? "orange";
+  const p = getExpProgress(avatar.total_exp, gender, hairColor);
   const combo = avatar.combo_count || 0;
   const equipped = getTitleDef(avatar.equipped_title);
 
@@ -92,6 +94,8 @@ const AvatarCard = () => {
         onClose={clearLevelUp}
         newLevel={levelUp?.newLevel ?? 1}
         earnedCoins={levelUp?.earnedCoins ?? 0}
+        gender={gender}
+        hairColor={hairColor}
       />
     </>
   );

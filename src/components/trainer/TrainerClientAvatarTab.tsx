@@ -61,7 +61,7 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
         avatarRes, achRes, titleRes, missionRes, ticketRes, raidLogRes, raidBossRes, gachaRes,
         bookingRes, workoutRes,
       ] = await Promise.all([
-        supabase.from("user_avatars").select("level,total_exp,coins,combo_count,equipped_title,max_combo_reached,last_session_date").eq("user_id", clientId).maybeSingle(),
+       supabase.from("user_avatars").select("level,total_exp,coins,combo_count,equipped_title,max_combo_reached,last_session_date,gender,hair_color").eq("user_id", clientId).maybeSingle(),
         supabase.from("avatar_achievements").select("achievement_key,unlocked_at").eq("user_id", clientId).order("unlocked_at", { ascending: false }),
         supabase.from("user_titles").select("title_key").eq("user_id", clientId),
         supabase.from("daily_missions").select("mission_keys,completed_keys,all_completed,exp_earned").eq("user_id", clientId).eq("mission_date", today).maybeSingle(),
@@ -110,7 +110,9 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
     );
   }
 
-  const p = getExpProgress(avatar.total_exp);
+  const gender = ((avatar as any).gender as "male" | "female") ?? "female";
+  const hairColor = ((avatar as any).hair_color as any) ?? "orange";
+  const p = getExpProgress(avatar.total_exp, gender, hairColor);
   const equippedTitle = getTitleDef(avatar.equipped_title);
   const acquiredAch = new Set(achievements.map((a) => a.achievement_key));
   const acquiredTitles = new Set(titles);
