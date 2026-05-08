@@ -239,57 +239,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* Plan badge - only show if user has a plan */}
       <AvatarCard />
-      <RaidBossCard />
-      <GachaCard />
-      <DailyMissionCard />
-      <SeasonEventCard />
-
-      {hasPlan && (
-        <Card className="border-l-4 border-l-accent bg-accent/5">
-          <CardContent className="p-3 flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-accent" />
-            <span className="text-sm font-bold">現在のプラン：{currentPlan?.endsWith("プラン") ? currentPlan : `${currentPlan}プラン`}</span>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Streak Card */}
-      {!streakLoading && (
-        <StreakCard
-          currentStreak={currentStreak}
-          bestStreak={bestStreak}
-          hasFutureBookingThisWeek={hasFutureBookingThisWeek}
-        />
-      )}
-
-
-      {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
-        const currentCycle = getCycleWindow(profile.cycle_start_date, now);
-        if (!currentCycle) return null;
-        const { start: cycleStart, end: cycleEnd } = currentCycle;
-        const remaining = differenceInDays(cycleEnd, now);
-        const isExpiringSoon = remaining >= 0 && remaining <= 3;
-        const isExpired = remaining < 0;
-        return (
-          <Card className={`border-l-4 ${isExpired ? 'border-l-destructive bg-destructive/5' : isExpiringSoon ? 'border-l-warning bg-warning/5' : 'border-l-accent bg-accent/5'}`}>
-            <CardContent className="p-3 flex items-center gap-2">
-              <Clock className={`w-4 h-4 ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-accent'}`} />
-              <div className="flex-1">
-                <p className="text-sm font-bold">
-                  今回の利用期間：{format(cycleStart, "M月d日", { locale: ja })} 〜 {format(cycleEnd, "M月d日", { locale: ja })}
-                </p>
-                {isExpired ? (
-                  <p className="text-xs font-bold text-destructive mt-0.5">利用期限が過ぎています</p>
-                ) : isExpiringSoon ? (
-                  <p className="text-xs font-bold text-warning mt-0.5">残り{remaining}日で期限切れ</p>
-                ) : (
-                  <p className="text-xs text-muted-foreground mt-0.5">残り{remaining}日</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
 
       {/* Next Booking - real data */}
       <section>
@@ -326,6 +275,57 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           </Card>
         )}
       </section>
+
+      <DailyMissionCard />
+      <RaidBossCard />
+      <SeasonEventCard />
+      <GachaCard />
+
+      {/* Streak Card */}
+      {!streakLoading && (
+        <StreakCard
+          currentStreak={currentStreak}
+          bestStreak={bestStreak}
+          hasFutureBookingThisWeek={hasFutureBookingThisWeek}
+        />
+      )}
+
+      {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
+        const currentCycle = getCycleWindow(profile.cycle_start_date, now);
+        if (!currentCycle) return null;
+        const { start: cycleStart, end: cycleEnd } = currentCycle;
+        const remaining = differenceInDays(cycleEnd, now);
+        const isExpiringSoon = remaining >= 0 && remaining <= 3;
+        const isExpired = remaining < 0;
+        return (
+          <Card className={`border-l-4 ${isExpired ? 'border-l-destructive bg-destructive/5' : isExpiringSoon ? 'border-l-warning bg-warning/5' : 'border-l-accent bg-accent/5'}`}>
+            <CardContent className="p-3 flex items-center gap-2">
+              <Clock className={`w-4 h-4 ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-accent'}`} />
+              <div className="flex-1">
+                <p className="text-sm font-bold">
+                  今回の利用期間：{format(cycleStart, "M月d日", { locale: ja })} 〜 {format(cycleEnd, "M月d日", { locale: ja })}
+                </p>
+                {isExpired ? (
+                  <p className="text-xs font-bold text-destructive mt-0.5">利用期限が過ぎています</p>
+                ) : isExpiringSoon ? (
+                  <p className="text-xs font-bold text-warning mt-0.5">残り{remaining}日で期限切れ</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">残り{remaining}日</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {hasPlan && (
+        <Card className="border-l-4 border-l-accent bg-accent/5">
+          <CardContent className="p-3 flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-accent" />
+            <span className="text-sm font-bold">現在のプラン：{currentPlan?.endsWith("プラン") ? currentPlan : `${currentPlan}プラン`}</span>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       {latest && (latest.weight != null || latest.body_fat != null) && (
