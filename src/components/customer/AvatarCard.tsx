@@ -47,7 +47,12 @@ const AvatarCard = () => {
             className="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: `${p.rank.color}15` }}
           >
-            <img src={p.rank.image} alt={p.rank.name} className="w-full h-full object-cover" />
+            <img
+              src={p.rank.image}
+              alt={p.rank.name}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
