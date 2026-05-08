@@ -12,6 +12,7 @@ import CustomerSettings from "./CustomerSettings";
 import CustomerPosture from "./CustomerPosture";
 import CustomerMonthlyReport from "./CustomerMonthlyReport";
 import CustomerQuest from "./CustomerQuest";
+import QuestBattleResultDialog from "./QuestBattleResultDialog";
 import PwaInstallBanner from "./PwaInstallBanner";
 import { Button } from "@/components/ui/button";
 import GymLogo from "@/components/GymLogo";
@@ -92,6 +93,7 @@ const CustomerView = () => {
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
       <PwaInstallBanner />
+      <QuestBattleResultDialog />
       <AnnouncementsDialog
         open={announcementsOpen}
         onClose={() => {
