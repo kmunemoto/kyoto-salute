@@ -334,11 +334,6 @@ const CustomerBooking = () => {
                   </span>
                 </div>
               )}
-              {maxSessions > 0 && (
-                <p className="text-xs font-semibold text-accent pl-6">
-                  今回 {cycleVisitedCount}/{maxSessions}回目
-                </p>
-              )}
             </CardContent>
           </Card>
         )}
