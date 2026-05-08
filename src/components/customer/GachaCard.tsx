@@ -173,6 +173,12 @@ const GachaCard = () => {
                 未使用チケット <span className="text-base font-extrabold">{ticketCount}</span> 枚
               </p>
             </div>
+            {epicBonus > 0 && (
+              <p className="text-[10px] mt-0.5 opacity-90 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                バッジボーナス: legendary +{epicBonus}%
+              </p>
+            )}
           </div>
         </div>
         <Button
