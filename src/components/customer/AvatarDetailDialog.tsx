@@ -10,6 +10,7 @@ import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
 import EmoteSection from "./EmoteSection";
+import HairColorSection from "./HairColorSection";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { equipRaidItem, RANK_LABEL_JP, type RaidRewardItem, type UserRaidReward, type RaidParticipationStat } from "@/hooks/useRaidRewards";
@@ -215,6 +216,14 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             <Sparkles className="w-3.5 h-3.5" /> エモーション
           </h3>
           <EmoteSection />
+        </section>
+
+        {/* 髪色 */}
+        <section className="mt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" /> 髪色
+          </h3>
+          <HairColorSection />
         </section>
 
         <section className="mt-4">
