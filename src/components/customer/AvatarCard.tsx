@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAvatar } from "@/hooks/useAvatar";
 import { getExpProgress } from "@/lib/avatarSystem";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +11,14 @@ import BadgeIcon from "./BadgeIcon";
 import { Flame } from "lucide-react";
 
 const AvatarCard = () => {
-  const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle } = useAvatar(true);
+  const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch } = useAvatar(true);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => { refetch(); };
+    window.addEventListener("avatar-gender-updated", handler);
+    return () => window.removeEventListener("avatar-gender-updated", handler);
+  }, [refetch]);
 
   if (loading || !avatar) {
     return (
