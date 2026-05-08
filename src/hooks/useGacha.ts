@@ -9,6 +9,10 @@ export interface GachaSpinResult {
   reward_amount: number;
   rarity: GachaRarity;
   remaining: number;
+  frame_key?: string;
+  frame_name?: string;
+  frame_image?: string;
+  is_duplicate?: boolean;
 }
 
 export const useGacha = () => {
@@ -51,6 +55,10 @@ export const useGacha = () => {
         reward_amount: r.reward_amount,
         rarity: r.rarity as GachaRarity,
         remaining: r.remaining ?? 0,
+        frame_key: r.frame_key,
+        frame_name: r.frame_name,
+        frame_image: r.frame_image,
+        is_duplicate: r.is_duplicate,
       };
       setTicketCount(result.remaining);
 
