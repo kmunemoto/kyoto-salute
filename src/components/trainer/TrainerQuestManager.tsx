@@ -10,6 +10,9 @@ interface UserProgress {
   display_name: string | null;
   current_stage: number;
   completed_count: number;
+  boss_hp: number | null;
+  boss_max: number | null;
+  total_turns: number;
 }
 
 const TrainerQuestManager = () => {
@@ -28,20 +31,35 @@ const TrainerQuestManager = () => {
     const { data: completions } = await supabase
       .from("user_quest_stage_completions")
       .select("user_id, stage_id");
+    const { data: bossProg } = await (supabase as any)
+      .from("user_quest_boss_progress")
+      .select("user_id, stage_id, boss_current_hp, total_turns, defeated");
+    const { data: bosses } = await (supabase as any)
+      .from("quest_bosses")
+      .select("stage_id, boss_hp");
 
     const progMap = new Map((progress || []).map((p: any) => [p.user_id, p.current_stage]));
+    const bossMaxMap = new Map((bosses || []).map((b: any) => [b.stage_id, b.boss_hp]));
     const compMap = new Map<string, number>();
     (completions || []).forEach((c: any) => {
       compMap.set(c.user_id, (compMap.get(c.user_id) || 0) + 1);
     });
 
     const list: UserProgress[] = (profiles || [])
-      .map((p: any) => ({
-        user_id: p.user_id,
-        display_name: p.display_name,
-        current_stage: progMap.get(p.user_id) || 1,
-        completed_count: compMap.get(p.user_id) || 0,
-      }))
+      .map((p: any) => {
+        const cur = progMap.get(p.user_id) || 1;
+        // Find stage_id for current stage_number isn't trivial without stages master; use bossProg lookup by user
+        const userBp = (bossProg || []).find((b: any) => b.user_id === p.user_id && !b.defeated);
+        return {
+          user_id: p.user_id,
+          display_name: p.display_name,
+          current_stage: cur,
+          completed_count: compMap.get(p.user_id) || 0,
+          boss_hp: userBp?.boss_current_hp ?? null,
+          boss_max: userBp ? (bossMaxMap.get(userBp.stage_id) ?? null) : null,
+          total_turns: userBp?.total_turns ?? 0,
+        };
+      })
       .sort((a, b) => b.completed_count - a.completed_count);
     setUsers(list);
     setLoading(false);
@@ -50,18 +68,16 @@ const TrainerQuestManager = () => {
   useEffect(() => { fetchData(); }, []);
 
   const handleInitialize = async () => {
-    if (!confirm("全会員のクエスト進行状況を、既存の実績から自動算出します。よろしいですか？")) return;
+    if (!confirm("全会員に初期装備（木の剣・革の盾・石の護符）を配布し、現在ステージのボス進捗を初期化します。よろしいですか？")) return;
     setRunning(true);
-    const { data, error } = await supabase.rpc("initialize_quest_progress");
+    const { data, error } = await supabase.rpc("initialize_quest_boss_progress");
     setRunning(false);
     if (error) {
       toast.error("初期化に失敗しました", { description: error.message });
       return;
     }
-    const result = data as { users?: number; completions?: number } | null;
-    toast.success(
-      `初期化完了: ${result?.users ?? 0}名 / クリア記録 ${result?.completions ?? 0}件`,
-    );
+    const result = data as { users?: number } | null;
+    toast.success(`初期化完了: ${result?.users ?? 0}名`);
     fetchData();
   };
 
@@ -77,11 +93,11 @@ const TrainerQuestManager = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">既存実績から進行状況を初期化</CardTitle>
+          <CardTitle className="text-base">初期化（初期装備配布＋ボス進捗作成）</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            既存のセッション・ミッション・レイド・ガチャ等の累計実績を元に、達成済みステージを自動で記録します。実行はいつでも安全（重複登録なし）。
+            未配布の会員に初期装備3種を付与し、現在ステージのボス進捗レコードを作成します。何度実行しても安全（重複登録なし）。
           </p>
           <Button onClick={handleInitialize} disabled={running}>
             {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -101,24 +117,35 @@ const TrainerQuestManager = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {users.map((u) => (
-                <div
-                  key={u.user_id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-card/50"
-                >
-                  <span className="text-sm font-semibold truncate">
-                    {u.display_name || "(名前未設定)"}
-                  </span>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-muted-foreground">
-                      クリア <span className="font-bold text-foreground">{u.completed_count}</span>/8
-                    </span>
-                    <span className="px-2 py-1 rounded-md bg-accent/10 text-accent font-bold">
-                      ステージ {Math.min(u.current_stage, 8)}
-                    </span>
+              {users.map((u) => {
+                const hpPct = u.boss_hp != null && u.boss_max ? (u.boss_hp / u.boss_max) * 100 : 0;
+                return (
+                  <div key={u.user_id} className="p-3 rounded-lg border border-border bg-card/50 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold truncate">
+                        {u.display_name || "(名前未設定)"}
+                      </span>
+                      <div className="flex items-center gap-2 text-xs shrink-0">
+                        <span className="text-muted-foreground">クリア {u.completed_count}/8</span>
+                        <span className="px-2 py-0.5 rounded-md bg-accent/10 text-accent font-bold">
+                          Stage {Math.min(u.current_stage, 8)}
+                        </span>
+                      </div>
+                    </div>
+                    {u.boss_max != null && (
+                      <div>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
+                          <span>ボスHP</span>
+                          <span>{(u.boss_hp ?? 0).toLocaleString()}/{u.boss_max.toLocaleString()} · {u.total_turns}ターン</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                          <div className="h-full bg-red-500 transition-all" style={{ width: `${hpPct}%` }} />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {users.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">会員がいません</p>
               )}
