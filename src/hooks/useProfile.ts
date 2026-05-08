@@ -23,6 +23,7 @@ export interface Profile {
 export interface ProfileWithBooking extends Profile {
   next_booking_date: string | null;
   next_booking_type: string | null;
+  gender: "male" | "female" | null;
 }
 
 const PROFILE_UPDATED_EVENT = "profile-updated";
@@ -175,6 +176,14 @@ export const useAllCustomerProfiles = () => {
       .neq("status", "キャンセル済み")
       .order("booking_date", { ascending: true });
 
+    // 4b. Fetch genders from user_avatars
+    const { data: avatarRows } = await supabase
+      .from("user_avatars")
+      .select("user_id, gender")
+      .in("user_id", customerIds);
+    const genderMap: Record<string, "male" | "female" | null> = {};
+    (avatarRows || []).forEach((r: any) => { genderMap[r.user_id] = r.gender ?? null; });
+
     // Build next-booking map: nearest FUTURE booking per user
     const now = new Date();
     const nextBookingMap: Record<string, { booking_date: string; booking_type: string }> = {};
@@ -214,6 +223,7 @@ export const useAllCustomerProfiles = () => {
         updated_at: p?.updated_at || new Date().toISOString(),
         next_booking_date: nextBookingMap[uid]?.booking_date || null,
         next_booking_type: nextBookingMap[uid]?.booking_type || null,
+        gender: genderMap[uid] ?? null,
       };
     });
 
@@ -234,6 +244,9 @@ export const useAllCustomerProfiles = () => {
         fetchProfiles();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        fetchProfiles();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_avatars" }, () => {
         fetchProfiles();
       })
       .subscribe();
