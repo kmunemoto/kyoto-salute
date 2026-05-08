@@ -1,6 +1,7 @@
-import { useQuestProgress, isStageComplete } from "@/hooks/useQuestProgress";
-import { getQuestIcon } from "@/lib/questIcons";
-import { ChevronRight, Sparkles, Castle } from "lucide-react";
+import { useQuestProgress } from "@/hooks/useQuestProgress";
+import { useBossProgress, useCombatStats } from "@/hooks/useQuestBattle";
+import { getBossIcon } from "@/lib/questBosses";
+import { ChevronRight, Sparkles, Castle, Swords } from "lucide-react";
 
 interface Props {
   onOpen: () => void;
@@ -8,6 +9,8 @@ interface Props {
 
 const QuestCard = ({ onOpen }: Props) => {
   const { data, loading } = useQuestProgress();
+  const { bosses, progress } = useBossProgress();
+  const { stats } = useCombatStats();
   if (loading) return null;
 
   // Fallback: no progress data yet → invite to start
@@ -49,11 +52,14 @@ const QuestCard = ({ onOpen }: Props) => {
     );
   }
 
-  const ready = isStageComplete(stage);
-  const Icon = getQuestIcon(stage.theme_icon);
-
-  // Card always shows the "before" (dark) state until ready, then switches to "after" (bright)
-  const bg = ready
+  const boss = bosses.find((b) => b.stage_id === stage.id);
+  const bp = progress.find((p) => p.stage_id === stage.id);
+  const Icon = boss ? getBossIcon(boss.boss_icon) : Castle;
+  const maxHp = boss?.boss_hp ?? 0;
+  const curHp = bp?.boss_current_hp ?? maxHp;
+  const justDefeated = bp?.defeated;
+  const hpPct = maxHp > 0 ? Math.max(0, (curHp / maxHp) * 100) : 0;
+  const bg = justDefeated
     ? `linear-gradient(135deg, ${stage.theme_gradient_from} 0%, ${stage.theme_gradient_to} 100%)`
     : `linear-gradient(135deg, ${stage.theme_dark_from} 0%, ${stage.theme_dark_to} 100%)`;
 
@@ -69,42 +75,31 @@ const QuestCard = ({ onOpen }: Props) => {
             <Icon className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-wider opacity-80">王国復興クエスト 第{stage.stage_number}章</p>
-            <p className="font-bold text-base leading-tight">
-              {ready ? stage.name : stage.name_before}
-            </p>
+            <p className="text-[10px] font-bold tracking-wider opacity-80">第{stage.stage_number}章 · {justDefeated ? stage.name : stage.name_before}</p>
+            <p className="font-bold text-base leading-tight break-all">{boss?.boss_name || "ボス"}</p>
           </div>
         </div>
         <ChevronRight className="w-5 h-5 opacity-70" />
       </div>
 
-      {ready ? (
+      {justDefeated ? (
         <div className="rounded-xl bg-white/25 backdrop-blur-sm px-3 py-2 text-center">
-          <p className="text-sm font-bold">復興する！タップで進む</p>
+          <p className="text-sm font-bold">復興完了！報酬を受け取る</p>
         </div>
       ) : (
         <div className="space-y-1.5">
-          <p className="text-[11px] opacity-90">光を取り戻せ</p>
-          {stage.conditions.map((c) => {
-            const pct = Math.min(100, (Number(c.current_value) / Number(c.target_value)) * 100);
-            const done = Number(c.current_value) >= Number(c.target_value);
-            return (
-              <div key={c.condition_type}>
-                <div className="flex items-center justify-between text-[10px] mb-0.5">
-                  <span className="opacity-90 truncate">{c.display_label}</span>
-                  <span className="font-bold opacity-90 shrink-0 ml-2">
-                    {Math.floor(Number(c.current_value)).toLocaleString()}/{Number(c.target_value).toLocaleString()}
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: done ? "#0ABAB5" : "rgba(255,255,255,0.7)" }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="opacity-90">ボスHP</span>
+            <span className="font-bold opacity-95">{curHp.toLocaleString()} / {maxHp.toLocaleString()}</span>
+          </div>
+          <div className="h-2.5 rounded-full bg-black/30 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${hpPct}%`, background: "#ef4444" }} />
+          </div>
+          {stats && (
+            <div className="flex items-center gap-2 text-[10px] opacity-90 pt-1">
+              <Swords className="w-3 h-3" /> ATK {stats.total_atk} · DEF {stats.total_def}
+            </div>
+          )}
         </div>
       )}
     </button>
