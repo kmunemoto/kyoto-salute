@@ -873,6 +873,104 @@ export type Database = {
         }
         Relationships: []
       }
+      quest_stage_conditions: {
+        Row: {
+          condition_type: string
+          display_label: string
+          id: string
+          sort_order: number
+          stage_id: number
+          target_value: number
+        }
+        Insert: {
+          condition_type: string
+          display_label: string
+          id?: string
+          sort_order?: number
+          stage_id: number
+          target_value: number
+        }
+        Update: {
+          condition_type?: string
+          display_label?: string
+          id?: string
+          sort_order?: number
+          stage_id?: number
+          target_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_stage_conditions_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "quest_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_stages: {
+        Row: {
+          created_at: string
+          description: string
+          id: number
+          name: string
+          name_before: string
+          reward_badge_key: string | null
+          reward_coins: number
+          reward_exp: number
+          reward_frame: boolean
+          reward_title: string | null
+          stage_number: number
+          story_complete: string
+          story_intro: string
+          theme_dark_from: string
+          theme_dark_to: string
+          theme_gradient_from: string
+          theme_gradient_to: string
+          theme_icon: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id: number
+          name: string
+          name_before: string
+          reward_badge_key?: string | null
+          reward_coins: number
+          reward_exp: number
+          reward_frame?: boolean
+          reward_title?: string | null
+          stage_number: number
+          story_complete: string
+          story_intro: string
+          theme_dark_from: string
+          theme_dark_to: string
+          theme_gradient_from: string
+          theme_gradient_to: string
+          theme_icon: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: number
+          name?: string
+          name_before?: string
+          reward_badge_key?: string | null
+          reward_coins?: number
+          reward_exp?: number
+          reward_frame?: boolean
+          reward_title?: string | null
+          stage_number?: number
+          story_complete?: string
+          story_intro?: string
+          theme_dark_from?: string
+          theme_dark_to?: string
+          theme_gradient_from?: string
+          theme_gradient_to?: string
+          theme_icon?: string
+        }
+        Relationships: []
+      }
       raid_bosses: {
         Row: {
           boss_hp: number
@@ -1525,6 +1623,62 @@ export type Database = {
         }
         Relationships: []
       }
+      user_quest_progress: {
+        Row: {
+          created_at: string
+          current_stage: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_stage?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_stage?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_quest_stage_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          rewards_claimed: boolean
+          stage_id: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          rewards_claimed?: boolean
+          stage_id: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          rewards_claimed?: boolean
+          stage_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quest_stage_completions_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "quest_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_raid_rewards: {
         Row: {
           earned_at: string
@@ -1648,12 +1802,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _quest_condition_values: { Args: { _user_id: string }; Returns: Json }
       apply_raid_damage: {
         Args: { _damage: number; _user_id: string; _workout_date: string }
         Returns: Json
       }
       check_collection_milestones: { Args: { _user_id: string }; Returns: Json }
       claim_rival_reward: { Args: { p_battle_id: string }; Returns: Json }
+      complete_quest_stage: {
+        Args: { p_stage_id: number; p_user_id: string }
+        Returns: Json
+      }
       complete_rival_battles: { Args: { p_week_start: string }; Returns: Json }
       current_jst_monday: { Args: never; Returns: string }
       delete_customer_cascade: {
@@ -1681,6 +1840,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_quest_progress: { Args: { p_user_id: string }; Returns: Json }
       get_ranking: { Args: { p_gender: string; p_type: string }; Returns: Json }
       get_trainer_ids: {
         Args: never
@@ -1695,6 +1855,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      initialize_quest_progress: { Args: never; Returns: Json }
       move_to_dlq: {
         Args: {
           dlq_name: string

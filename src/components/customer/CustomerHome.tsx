@@ -17,6 +17,7 @@ import RaidBossCard from "./RaidBossCard";
 import GachaCard from "./GachaCard";
 import SeasonEventCard from "./SeasonEventCard";
 import RivalBattleCard from "./RivalBattleCard";
+import QuestCard from "./QuestCard";
 import { Loader2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { getJSTNow, formatJST } from "@/lib/timezone";
@@ -282,6 +283,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       <DailyMissionCard />
       <RaidBossCard />
       <SeasonEventCard />
+      <QuestCard onOpen={() => onNavigate?.("quest")} />
       <GachaCard />
 
       {/* Streak Card */}

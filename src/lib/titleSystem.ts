@@ -31,6 +31,12 @@ export const TITLES: TitleDef[] = [
   { key: "badge_master", name: "バッジマスター", condition: "バッジ20個取得" },
   { key: "complete_road", name: "コンプリートへの道", condition: "バッジ30個取得" },
   { key: "legend_collector", name: "レジェンドコレクター", condition: "全バッジ制覇" },
+  // Quest titles (granted server-side by complete_quest_stage)
+  { key: "liberator", name: "解放者", condition: "王国復興クエスト ステージ1クリア" },
+  { key: "harbor_guardian", name: "港の守り手", condition: "王国復興クエスト ステージ3クリア" },
+  { key: "spirit_ally", name: "精霊の盟友", condition: "王国復興クエスト ステージ5クリア" },
+  { key: "sky_pioneer", name: "天空の開拓者", condition: "王国復興クエスト ステージ7クリア" },
+  { key: "kingdom_hero", name: "王国の英雄", condition: "王国復興クエスト 全ステージクリア" },
 ];
 
 export const getTitleDef = (key: string | null | undefined): TitleDef | undefined =>
