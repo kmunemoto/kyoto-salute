@@ -277,6 +277,8 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         )}
       </section>
 
+      <RivalBattleCard />
+
       <DailyMissionCard />
       <RaidBossCard />
       <SeasonEventCard />
