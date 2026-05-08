@@ -383,6 +383,47 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             </div>
           </section>
         )}
+
+        {/* ランク特典一覧 */}
+        <section className="mt-5 mb-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Crown className="w-3.5 h-3.5" /> ランク特典一覧
+          </h3>
+          <div className="rounded-xl border overflow-hidden">
+            <table className="w-full text-[11px]">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left font-bold py-1.5 px-2">ランク</th>
+                  <th className="text-center font-bold py-1.5 px-1">レイド倍率</th>
+                  <th className="text-center font-bold py-1.5 px-1">ミッション倍率</th>
+                  <th className="text-center font-bold py-1.5 px-1">昇格報酬</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rankKeys.map((rk) => {
+                  const isCurrent = p.rank.key === rk;
+                  const rew = rk === "rookie" ? null : RANK_UP_REWARDS[rk];
+                  return (
+                    <tr key={rk} className={`border-t ${isCurrent ? "bg-accent/10 font-bold" : ""}`}>
+                      <td className="py-1.5 px-2">{RANK_LABEL[rk]}{isCurrent && <span className="ml-1 text-[9px] text-accent">現在</span>}</td>
+                      <td className="text-center py-1.5 px-1">×{RAID_DAMAGE_MULT[rk]}</td>
+                      <td className="text-center py-1.5 px-1">×{MISSION_EXP_MULT[rk]}</td>
+                      <td className="text-center py-1.5 px-1">
+                        {rew ? (
+                          <span className="whitespace-nowrap">{rew.coins}コイン<br />ガチャ×{rew.tickets}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1.5">レベルが上がると、ランクに応じた特典が自動で適用されます</p>
+        </section>
+
       </DialogContent>
       <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
     </Dialog>
