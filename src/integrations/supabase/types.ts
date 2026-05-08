@@ -1003,6 +1003,122 @@ export type Database = {
           },
         ]
       }
+      rival_battle_entries: {
+        Row: {
+          entered_at: string
+          id: string
+          matched: boolean
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          entered_at?: string
+          id?: string
+          matched?: boolean
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          entered_at?: string
+          id?: string
+          matched?: boolean
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
+      rival_battle_rewards: {
+        Row: {
+          battle_id: string
+          claimed: boolean
+          claimed_at: string | null
+          coins_earned: number
+          created_at: string
+          exp_earned: number
+          id: string
+          result: string
+          streak_bonus_coins: number
+          user_id: string
+          win_streak: number
+        }
+        Insert: {
+          battle_id: string
+          claimed?: boolean
+          claimed_at?: string | null
+          coins_earned: number
+          created_at?: string
+          exp_earned: number
+          id?: string
+          result: string
+          streak_bonus_coins?: number
+          user_id: string
+          win_streak?: number
+        }
+        Update: {
+          battle_id?: string
+          claimed?: boolean
+          claimed_at?: string | null
+          coins_earned?: number
+          created_at?: string
+          exp_earned?: number
+          id?: string
+          result?: string
+          streak_bonus_coins?: number
+          user_id?: string
+          win_streak?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rival_battle_rewards_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "rival_battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rival_battles: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          player1_id: string
+          player1_volume: number
+          player2_id: string
+          player2_volume: number
+          status: string
+          week_end: string
+          week_start: string
+          winner_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          player1_id: string
+          player1_volume?: number
+          player2_id: string
+          player2_volume?: number
+          status?: string
+          week_end: string
+          week_start: string
+          winner_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          player1_id?: string
+          player1_volume?: number
+          player2_id?: string
+          player2_volume?: number
+          status?: string
+          week_end?: string
+          week_start?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       season_event_tasks: {
         Row: {
           created_at: string
@@ -1537,6 +1653,9 @@ export type Database = {
         Returns: Json
       }
       check_collection_milestones: { Args: { _user_id: string }; Returns: Json }
+      claim_rival_reward: { Args: { p_battle_id: string }; Returns: Json }
+      complete_rival_battles: { Args: { p_week_start: string }; Returns: Json }
+      current_jst_monday: { Args: never; Returns: string }
       delete_customer_cascade: {
         Args: { _customer_id: string }
         Returns: undefined
@@ -1553,6 +1672,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      enter_rival_battle: { Args: never; Returns: Json }
       get_booked_slots: {
         Args: { check_date: string }
         Returns: {
@@ -1604,12 +1724,17 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: Json
       }
+      run_rival_matching: { Args: { p_week_start: string }; Returns: Json }
       set_featured_badges: { Args: { p_badges: string[] }; Returns: undefined }
       spin_gacha: {
         Args: { _result_date: string; _user_id: string }
         Returns: Json
       }
       update_event_progress: { Args: { _user_id: string }; Returns: Json }
+      update_rival_battle_volumes: {
+        Args: { p_week_start: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "customer" | "trainer"
