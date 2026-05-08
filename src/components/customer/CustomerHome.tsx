@@ -51,8 +51,10 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
     if (!user) return;
     let cancelled = false;
     (async () => {
-      // ensure row exists
-      await supabase.from("user_avatars").insert({ user_id: user.id }).select().maybeSingle().then(() => {}).catch(() => {});
+      // ensure row exists (ignore conflict)
+      try {
+        await supabase.from("user_avatars").insert({ user_id: user.id });
+      } catch {}
       const { data } = await supabase
         .from("user_avatars")
         .select("gender")
