@@ -9,6 +9,7 @@ import AvatarLevelUpDialog from "./AvatarLevelUpDialog";
 import { getComboColor, getComboFlameCount, getComboMultiplier } from "@/lib/comboSystem";
 import { getTitleDef } from "@/lib/titleSystem";
 import BadgeIcon from "./BadgeIcon";
+import FeaturedBadgesRow from "./FeaturedBadgesRow";
 import { Flame } from "lucide-react";
 import { useRaidRewards } from "@/hooks/useRaidRewards";
 
@@ -43,6 +44,8 @@ const AvatarCard = () => {
   const equipped = getTitleDef(avatar.equipped_title);
   const weaponItem = rewardItems.find((it) => it.item_key === avatar.equipped_weapon);
   const bgItem = rewardItems.find((it) => it.item_key === avatar.equipped_background);
+  const hasFrame = avatar.equipped_frame === "rainbow_legend";
+  const featured = (avatar as any).featured_badges as string[] | undefined;
 
   return (
     <>
@@ -51,8 +54,9 @@ const AvatarCard = () => {
         className="card-hover cursor-pointer overflow-hidden"
       >
         <CardContent className="p-3 flex items-center gap-3">
+          <div className={hasFrame ? "rainbow-frame rounded-2xl flex-shrink-0" : "flex-shrink-0"}>
           <div
-            className="relative w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden"
+            className="relative w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: `${p.rank.color}15` }}
           >
             {bgItem?.image_url && (
@@ -94,6 +98,7 @@ const AvatarCard = () => {
               />
             )}
           </div>
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
               <span className="text-base font-extrabold">Lv.{p.level}</span>
@@ -128,6 +133,9 @@ const AvatarCard = () => {
             <p className="text-[10px] text-muted-foreground mt-1">
               次のレベルまで {p.remainingExp} EXP
             </p>
+            {featured && featured.length > 0 && (
+              <FeaturedBadgesRow badgeKeys={featured} size={20} className="mt-1.5" />
+            )}
           </div>
         </CardContent>
       </Card>
