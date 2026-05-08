@@ -12,6 +12,7 @@ import {
 import { getMuscleGroup } from "@/lib/muscleGroup";
 import { computeTitles } from "@/lib/titleSystem";
 import { formatJST } from "@/lib/timezone";
+import { toast } from "sonner";
 
 export interface AvatarRow {
   total_exp: number;
@@ -27,6 +28,8 @@ export interface AvatarRow {
   equipped_weapon?: string | null;
   equipped_background?: string | null;
   equipped_emote?: string | null;
+  featured_badges?: string[];
+  equipped_frame?: string | null;
 }
 
 export interface ExpLogRow {
@@ -50,7 +53,7 @@ export const useAvatar = (autoSync = true) => {
   const refetch = useCallback(async () => {
     if (!user) return;
     const [avRes, logRes, achRes, titleRes] = await Promise.all([
-      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background, equipped_emote").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background, equipped_emote, featured_badges, equipped_frame").eq("user_id", user.id).maybeSingle(),
       supabase
         .from("avatar_exp_logs")
         .select("id, exp_amount, reason, reference_date, created_at")
@@ -233,6 +236,19 @@ export const useAvatar = (autoSync = true) => {
       });
       await unlockAchievements(user.id, achKeys);
 
+      // Trigger collection milestone evaluation (idempotent)
+      try {
+        const { data: milestoneRes } = await supabase.rpc("check_collection_milestones" as any, { _user_id: user.id });
+        const granted = (milestoneRes as any)?.granted as Array<{ milestone: number; coins: number; title_name: string; frame?: string | null }> | undefined;
+        if (granted && granted.length > 0) {
+          for (const g of granted) {
+            toast.success(`バッジ${g.milestone}個達成！+${g.coins}コイン / 称号「${g.title_name}」獲得`);
+          }
+        }
+      } catch (e) {
+        // non-fatal
+      }
+
       const titleKeys = computeTitles({
         workouts: workouts as any,
         bookingHours,
@@ -283,5 +299,22 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
-  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote };
+  const setFeaturedBadges = useCallback(async (badges: string[]) => {
+    if (!user) return;
+    const trimmed = badges.slice(0, 3);
+    const { error } = await supabase.rpc("set_featured_badges" as any, { p_badges: trimmed });
+    if (error) {
+      toast.error("お気に入りの保存に失敗しました", { description: error.message });
+      return;
+    }
+    await refetch();
+  }, [user, refetch]);
+
+  const equipFrame = useCallback(async (frameKey: string | null) => {
+    if (!user) return;
+    await supabase.from("user_avatars").update({ equipped_frame: frameKey } as any).eq("user_id", user.id);
+    await refetch();
+  }, [user, refetch]);
+
+  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote, setFeaturedBadges, equipFrame };
 };
