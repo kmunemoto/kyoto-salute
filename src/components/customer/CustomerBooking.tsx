@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, Clock, Check, Trash2, CalendarPlus, Loader2, Swords } from "lucide-react";
+import { CalendarDays, Clock, Check, Trash2, CalendarPlus, Loader2, Swords, CreditCard } from "lucide-react";
 import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMyBookings, createBooking, cancelBooking, BookingWithTime } from "@/hooks/useBookings";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, addMonths, startOfDay } from "date-fns";
+import { format, addMonths, startOfDay, parseISO, differenceInDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { trialLabel } from "@/lib/dummyData";
@@ -17,6 +17,7 @@ import { sendBookingNotification } from "@/lib/bookingNotification";
 import BookingCompleteDialog from "./BookingCompleteDialog";
 import BookingCancelledDialog from "./BookingCancelledDialog";
 import { getJSTNow, getJSTToday, toJSTDate, formatJST } from "@/lib/timezone";
+import { getCycleWindow } from "@/lib/courseProgress";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",
@@ -24,6 +25,13 @@ const PLAN_LABELS: Record<string, string> = {
   "月6回": "月6回プラン",
   "月8回": "月8回プラン",
   "通い放題": "通い放題プラン",
+};
+
+const PLAN_MAX_SESSIONS: Record<string, number> = {
+  "月4回": 4,
+  "月6回": 6,
+  "月8回": 8,
+  "通い放題": 15,
 };
 
 const BOOKING_BUFFER_MINUTES = 15;
@@ -271,7 +279,24 @@ const CustomerBooking = () => {
 
   const planLabel = (type: string) => PLAN_LABELS[type] || type;
 
-  
+  // Current cycle / plan summary (mirrors home screen logic)
+  const currentPlan = profile?.plan;
+  const hasPlan = !!currentPlan && currentPlan !== "初回無料体験";
+  const now = getJSTNow();
+  const currentCycle = hasPlan && profile?.cycle_start_date
+    ? getCycleWindow(profile.cycle_start_date, now)
+    : null;
+  const remainingDays = currentCycle ? differenceInDays(currentCycle.end, now) : null;
+  const cycleVisitedCount = currentCycle
+    ? myBookings.filter((b) => {
+        if (b.status === "キャンセル済み") return false;
+        const d = parseISO(b.date);
+        return d >= currentCycle.start && d < currentCycle.end;
+      }).length
+    : 0;
+  const maxSessions = hasPlan ? (PLAN_MAX_SESSIONS[currentPlan!] || 0) : 0;
+  const isExpired = remainingDays !== null && remainingDays < 0;
+  const isExpiringSoon = remainingDays !== null && remainingDays >= 0 && remainingDays <= 3;
 
   return (
     <>
@@ -286,6 +311,37 @@ const CustomerBooking = () => {
           </p>
           <p className="text-xs text-muted-foreground/70 mt-1">※ご予約は24時間前までにお願いいたします</p>
         </div>
+
+        {hasPlan && (
+          <Card className={`border-l-4 ${isExpired ? "border-l-destructive bg-destructive/5" : isExpiringSoon ? "border-l-warning bg-warning/5" : "border-l-accent bg-accent/5"}`}>
+            <CardContent className="p-3 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-accent shrink-0" />
+                <span className="text-sm font-bold">
+                  現在のプラン：{planLabel(currentPlan!)}
+                </span>
+              </div>
+              {currentCycle && (
+                <div className="flex items-center gap-2">
+                  <Clock className={`w-4 h-4 shrink-0 ${isExpired ? "text-destructive" : isExpiringSoon ? "text-warning" : "text-accent"}`} />
+                  <span className="text-xs text-muted-foreground">
+                    利用期間：{format(currentCycle.start, "M/d", { locale: ja })}〜{format(currentCycle.end, "M/d", { locale: ja })}
+                    {isExpired ? (
+                      <span className="font-bold text-destructive ml-1">（期限切れ）</span>
+                    ) : (
+                      <span className={`font-bold ml-1 ${isExpiringSoon ? "text-warning" : "text-foreground"}`}>（残り{remainingDays}日）</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {maxSessions > 0 && (
+                <p className="text-xs font-semibold text-accent pl-6">
+                  今回 {cycleVisitedCount}/{maxSessions}回目
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Button
           type="button"
