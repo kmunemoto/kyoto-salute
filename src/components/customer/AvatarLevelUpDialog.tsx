@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { getRankInfo } from "@/lib/avatarSystem";
+import { getRankInfo, type Gender, type HairColor } from "@/lib/avatarSystem";
 import { Coins, Sparkles } from "lucide-react";
 
 interface Props {
@@ -7,10 +7,12 @@ interface Props {
   onClose: () => void;
   newLevel: number;
   earnedCoins: number;
+  gender?: Gender;
+  hairColor?: HairColor;
 }
 
-const AvatarLevelUpDialog = ({ open, onClose, newLevel, earnedCoins }: Props) => {
-  const rank = getRankInfo(newLevel);
+const AvatarLevelUpDialog = ({ open, onClose, newLevel, earnedCoins, gender = "female", hairColor = "orange" }: Props) => {
+  const rank = getRankInfo(newLevel, gender, hairColor);
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-sm text-center">
