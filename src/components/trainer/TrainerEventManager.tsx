@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -82,7 +82,7 @@ const TrainerEventManager = () => {
       return;
     }
     setCreating(true);
-    const { error } = await supabase.from("season_events").insert({
+    const { data: created, error } = await supabase.from("season_events").insert({
       event_name: form.event_name,
       event_description: form.event_description || null,
       start_date: form.start_date,
@@ -93,11 +93,23 @@ const TrainerEventManager = () => {
       reward_badge_key: form.reward_badge_key || null,
       badge_name: form.badge_name || null,
       badge_icon: form.badge_icon || null,
-    });
+    }).select("id, start_date").single();
     setCreating(false);
     if (error) { toast.error("作成に失敗", { description: error.message }); return; }
     toast.success("イベントを作成しました");
+    // If start date is past/today, auto-recalc to credit existing workouts
+    if (created && created.start_date && new Date(created.start_date) <= new Date()) {
+      const { error: rerr } = await supabase.rpc("recalculate_event_progress" as any, { p_event_id: created.id });
+      if (!rerr) toast.success("過去の記録を反映しました");
+    }
     setForm({ event_name: "", event_description: "", start_date: "", end_date: "", event_icon: "PartyPopper", reward_exp: 500, reward_coins: 50, reward_badge_key: "", badge_name: "", badge_icon: "Medal" });
+    refresh();
+  };
+
+  const recalcEvent = async (id: string) => {
+    const { error } = await supabase.rpc("recalculate_event_progress" as any, { p_event_id: id });
+    if (error) { toast.error("再集計に失敗", { description: error.message }); return; }
+    toast.success("進捗を再集計しました");
     refresh();
   };
 
@@ -172,7 +184,12 @@ const TrainerEventManager = () => {
                   <p className="text-xs text-muted-foreground">{ev.start_date} 〜 {ev.end_date}</p>
                   <p className="text-xs">報酬: {ev.reward_exp} EXP + {ev.reward_coins}コイン{ev.badge_name ? ` + 「${ev.badge_name}」` : ""}</p>
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => deleteEvent(ev.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="outline" onClick={() => recalcEvent(ev.id)}>
+                    <RefreshCw className="w-3.5 h-3.5 mr-1" />進捗再集計
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => deleteEvent(ev.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                </div>
               </div>
 
               <div className="space-y-2 pl-2">
