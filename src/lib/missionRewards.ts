@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { calculateLevel } from "./avatarSystem";
-import { getMissionDef, MISSION_BONUS_EXP, type MissionKey } from "./missionSystem";
+import { getMissionDef, MISSION_BONUS_EXP, pickDailyMissions, type MissionKey } from "./missionSystem";
 import { getMuscleGroup } from "./muscleGroup";
 import { formatJST } from "./timezone";
 import { getRankInfo } from "./avatarSystem";
@@ -167,14 +167,26 @@ export async function evaluateAndAwardMissions(
   userId: string,
   date: string,
 ): Promise<MissionEvalResult> {
-  const { data: missionRow } = await supabase
+  let { data: missionRow } = await supabase
     .from("daily_missions")
     .select("id, mission_keys, completed_keys, all_completed, exp_earned")
     .eq("user_id", userId)
     .eq("mission_date", date)
     .maybeSingle();
 
-  if (!missionRow) return { newlyCompleted: [], bonusAwarded: false, allCompleted: false };
+  // Auto-create today's mission row if missing (e.g., training saved without booking).
+  if (!missionRow) {
+    const keys = pickDailyMissions();
+    await ensureDailyMissions(userId, date, keys);
+    const { data: created } = await supabase
+      .from("daily_missions")
+      .select("id, mission_keys, completed_keys, all_completed, exp_earned")
+      .eq("user_id", userId)
+      .eq("mission_date", date)
+      .maybeSingle();
+    missionRow = created;
+    if (!missionRow) return { newlyCompleted: [], bonusAwarded: false, allCompleted: false };
+  }
 
   const data = await loadEvalData(userId, date);
   const mult = await getMissionMult(userId);
