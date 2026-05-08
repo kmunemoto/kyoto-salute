@@ -278,14 +278,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         )}
       </section>
 
-      <RivalBattleCard />
-
-      <DailyMissionCard />
-      <RaidBossCard />
-      <SeasonEventCard />
-      <QuestCard onOpen={() => onNavigate?.("quest")} />
-      <GachaCard />
-
       {/* Streak Card */}
       {!streakLoading && (
         <StreakCard
@@ -331,6 +323,14 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           </CardContent>
         </Card>
       )}
+
+      <RivalBattleCard />
+
+      <DailyMissionCard />
+      <RaidBossCard />
+      <SeasonEventCard />
+      <QuestCard onOpen={() => onNavigate?.("quest")} />
+      <GachaCard />
 
       {/* Stats Cards */}
       {latest && (latest.weight != null || latest.body_fat != null) && (
