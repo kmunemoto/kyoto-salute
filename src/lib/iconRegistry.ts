@@ -3,7 +3,7 @@ import {
   Award, Medal, Swords, TrendingUp, Calendar, Sunrise, Moon, Mountain,
   Footprints, Compass, Scale, Repeat, Layers, Sparkles, Sun, Apple,
   Utensils, Coins, Gift, CheckCircle2, PartyPopper, Bot, BarChart3,
-  Sword, Ban, UserPlus, RefreshCw, Bell, MessageCircle, Check, X,
+  Sword, Ban, UserPlus, RefreshCw, Bell, MessageCircle, Check, X, Megaphone, Info,
   CalendarDays, ThumbsUp, Smile, Snowflake, Leaf, Waves,
   type LucideIcon,
 } from "lucide-react";
@@ -14,12 +14,12 @@ export const ICON_REGISTRY: Record<string, LucideIcon> = {
   Award, Medal, Swords, TrendingUp, Calendar, CalendarDays, Sunrise, Moon, Mountain,
   Footprints, Compass, Scale, Repeat, Layers, Sparkles, Sun, Apple,
   Utensils, Coins, Gift, CheckCircle2, PartyPopper, Bot, BarChart3,
-  Sword, Ban, UserPlus, RefreshCw, Bell, MessageCircle, ThumbsUp, Smile,
+  Sword, Ban, UserPlus, RefreshCw, Bell, MessageCircle, ThumbsUp, Smile, Megaphone, Info,
   Snowflake, Leaf, Waves,
 };
 
 export const PICKER_ICON_NAMES: string[] = [
-  "Trophy", "Target", "Flame", "Dumbbell", "Star", "Zap", "Heart", "Shield",
+  "Bell", "Megaphone", "Info", "Trophy", "Target", "Flame", "Dumbbell", "Star", "Zap", "Heart", "Shield",
   "Crown", "Award", "Medal", "Swords", "TrendingUp", "Calendar", "Sunrise",
   "Moon", "Mountain", "Footprints", "Compass", "Scale", "Repeat", "Layers",
   "Sparkles", "Sun", "Apple", "Utensils", "Coins", "Gift", "PartyPopper",
