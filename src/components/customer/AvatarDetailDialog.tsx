@@ -5,7 +5,7 @@ import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { useAvatar } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Coins, Trophy, Plus, Star, User as UserIcon, Crown } from "lucide-react";
+import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, CheckCircle2 } from "lucide-react";
 import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
@@ -54,7 +54,7 @@ const reasonLabel = (reason: string): string => {
 
 const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles = [], onEquipTitle, rewardItems = [], ownedRewards = [], participation = [], onRewardsChanged, onAvatarChanged }: Props) => {
   const { user } = useAuth();
-  const { updateGender } = useAvatar(false);
+  const { updateGender, setFeaturedBadges } = useAvatar(false);
   const gender = (avatar.gender as "male" | "female") ?? "female";
   const hairColor = (avatar.hair_color as any) ?? "orange";
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
@@ -62,6 +62,48 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
   const acquiredTitles = new Set(titles);
   const equipped = avatar.equipped_title || null;
   const [shopOpen, setShopOpen] = useState(false);
+  const [badgeSheet, setBadgeSheet] = useState<string | null>(null);
+  const [replacePicker, setReplacePicker] = useState<string | null>(null);
+  const featured = (avatar.featured_badges as string[] | undefined) || [];
+  const featuredSet = new Set(featured);
+
+  const MILESTONES = [
+    { count: 10, label: "称号「コレクター」+50コイン" },
+    { count: 20, label: "称号「バッジマスター」+100コイン" },
+    { count: 30, label: "+200コイン" },
+    { count: ACHIEVEMENTS.length, label: "称号「レジェンドコレクター」+500コイン+虹フレーム" },
+  ];
+  const acquiredCount = acquired.size;
+  const totalCount = ACHIEVEMENTS.length;
+  const nextMilestone = MILESTONES.find((m) => acquiredCount < m.count);
+
+  const toggleFeatured = async (key: string) => {
+    if (featuredSet.has(key)) {
+      await setFeaturedBadges(featured.filter((k) => k !== key));
+      setBadgeSheet(null);
+      onAvatarChanged?.();
+      toast.success("お気に入りから外しました");
+      return;
+    }
+    if (featured.length >= 3) {
+      setReplacePicker(key);
+      return;
+    }
+    await setFeaturedBadges([...featured, key]);
+    setBadgeSheet(null);
+    onAvatarChanged?.();
+    toast.success("お気に入りに追加しました");
+  };
+
+  const handleReplace = async (removeKey: string) => {
+    if (!replacePicker) return;
+    const next = featured.filter((k) => k !== removeKey).concat(replacePicker);
+    await setFeaturedBadges(next);
+    setReplacePicker(null);
+    setBadgeSheet(null);
+    onAvatarChanged?.();
+    toast.success("お気に入りを入れ替えました");
+  };
 
   const ownedKeys = new Set(ownedRewards.map((o) => o.item_key));
   const ownedWeapons = rewardItems.filter((it) => it.category === "weapon" && ownedKeys.has(it.item_key));
@@ -197,14 +239,69 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
             <Trophy className="w-3.5 h-3.5" /> 実績バッジ
           </h3>
+
+          {/* Collection progress */}
+          <div className="mb-3 p-3 rounded-xl bg-muted/40">
+            <div className="flex items-end justify-between mb-1.5">
+              <span className="text-xs font-bold">
+                {acquiredCount}<span className="text-muted-foreground">/{totalCount}</span> バッジ取得
+              </span>
+              {nextMilestone && (
+                <span className="text-[10px] text-muted-foreground">
+                  次まで あと{nextMilestone.count - acquiredCount}個
+                </span>
+              )}
+            </div>
+            <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${(acquiredCount / totalCount) * 100}%`,
+                  background: "linear-gradient(90deg, hsl(174,65%,50%), #D4AF37)",
+                }}
+              />
+              {MILESTONES.map((m) => (
+                <span
+                  key={m.count}
+                  className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-background"
+                  style={{
+                    left: `calc(${(m.count / totalCount) * 100}% - 4px)`,
+                    background: acquiredCount >= m.count ? "#D4AF37" : "#D1D5DB",
+                  }}
+                />
+              ))}
+            </div>
+            <div className="mt-2 space-y-0.5">
+              {MILESTONES.map((m) => {
+                const done = acquiredCount >= m.count;
+                return (
+                  <div key={m.count} className="flex items-center gap-1.5 text-[10px]">
+                    {done ? (
+                      <CheckCircle2 className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                    ) : (
+                      <span className="w-3 h-3 rounded-full border border-muted-foreground/40 flex-shrink-0" />
+                    )}
+                    <span className={done ? "text-amber-700 font-semibold" : "text-muted-foreground"}>
+                      {m.count}個：{m.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             {ACHIEVEMENTS.map((a) => {
               const got = acquired.has(a.key);
               const starColor = getRarityColor(a.rarity);
               const stars = getRarityStarCount(a.rarity);
+              const isFeat = featuredSet.has(a.key);
               return (
-                <div
+                <button
                   key={a.key}
+                  type="button"
+                  disabled={!got}
+                  onClick={() => setBadgeSheet(a.key)}
                   className={`p-2.5 rounded-xl border text-center relative flex flex-col items-center ${got ? "bg-accent/10 border-accent/30" : "bg-muted/30 border-border"}`}
                 >
                   <div className="absolute top-1 right-1 flex gap-0.5">
@@ -212,10 +309,15 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                       <Star key={i} className="w-2.5 h-2.5" style={{ color: starColor, fill: starColor }} />
                     ))}
                   </div>
+                  {isFeat && (
+                    <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center shadow">
+                      <Heart className="w-3 h-3 text-white fill-white" />
+                    </div>
+                  )}
                   <BadgeIcon type="achievement" iconKey={a.key} rarity={a.rarity} acquired={got} size={48} />
                   <p className="text-xs font-bold mt-1.5">{a.name}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 break-all">{a.description}</p>
-                </div>
+                </button>
               );
             })}
           </div>
