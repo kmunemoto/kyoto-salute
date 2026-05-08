@@ -13,6 +13,8 @@ import BadgeIcon from "./BadgeIcon";
 import FeaturedBadgesRow from "./FeaturedBadgesRow";
 import { Flame } from "lucide-react";
 import { useRaidRewards } from "@/hooks/useRaidRewards";
+import AvatarFrameOverlay from "./AvatarFrameOverlay";
+import { getFrameImage } from "@/hooks/useFrames";
 
 const AvatarCard = () => {
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch, newAchievement, clearNewAchievement } = useAvatar(true);
@@ -52,6 +54,7 @@ const AvatarCard = () => {
       : frameKey === "quest_kingdom_hero"
         ? "golden-frame"
         : null;
+  const frameImg = getFrameImage(frameKey);
   const featured = (avatar as any).featured_badges as string[] | undefined;
 
   return (
@@ -104,6 +107,7 @@ const AvatarCard = () => {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
             )}
+            {frameImg && <AvatarFrameOverlay frameKey={frameKey} scale={1.22} />}
           </div>
           </div>
           <div className="flex-1 min-w-0">
