@@ -215,6 +215,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
+      <AvatarGenderSetupDialog open={needsGender} onSelect={handleSelectGender} />
       {/* Greeting Header */}
       <div className="gym-gradient rounded-2xl p-5 text-primary-foreground relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-accent/10 -translate-y-8 translate-x-8" />
