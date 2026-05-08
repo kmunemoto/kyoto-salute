@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Sword, Trash2, Plus } from "lucide-react";
+import { Loader2, Sword, Trash2, Plus, Gift } from "lucide-react";
 
 interface RaidRow {
   id: string;
@@ -31,6 +31,8 @@ const TrainerRaidManager = () => {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ boss_name: "", boss_hp: 200000, start_date: "", end_date: "", reward_exp: 300, reward_coins: 30 });
   const [contribs, setContribs] = useState<Record<string, ContribRow[]>>({});
+  const [distributed, setDistributed] = useState<Record<string, number>>({});
+  const [distributing, setDistributing] = useState<string | null>(null);
 
   const refresh = async () => {
     const { data } = await supabase
@@ -57,6 +59,15 @@ const TrainerRaidManager = () => {
         .sort((a, b) => b.damage - a.damage);
     });
     setContribs(final);
+
+    const { data: rewards } = await (supabase as any)
+      .from("user_raid_rewards")
+      .select("raid_boss_id");
+    const counts: Record<string, number> = {};
+    ((rewards as any[]) || []).forEach((r) => {
+      if (r.raid_boss_id) counts[r.raid_boss_id] = (counts[r.raid_boss_id] || 0) + 1;
+    });
+    setDistributed(counts);
   };
 
   useEffect(() => { refresh(); }, []);
@@ -86,6 +97,20 @@ const TrainerRaidManager = () => {
     if (!confirm("このレイドを削除しますか？")) return;
     await supabase.from("raid_bosses").delete().eq("id", id);
     toast.success("削除しました");
+    refresh();
+  };
+
+  const handleDistribute = async (id: string) => {
+    if (!confirm("このボスの限定報酬を全参加者に配布しますか？")) return;
+    setDistributing(id);
+    const { data, error } = await (supabase as any).rpc("distribute_raid_rewards", { p_raid_boss_id: id });
+    setDistributing(null);
+    if (error) {
+      toast.error(error.message || "配布に失敗しました");
+      return;
+    }
+    const r = data || {};
+    toast.success(`配布完了：参加者${r.participants ?? 0}人 / 貢献者${r.contributors ?? 0}人 / MVP${r.mvps ?? 0}人 / アイテム${r.items_granted ?? 0}個`);
     refresh();
   };
 
@@ -154,6 +179,18 @@ const TrainerRaidManager = () => {
                   <div className="h-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #DC2626, #F97316)" }} />
                 </div>
                 <p className="text-xs">{r.current_damage.toLocaleString()} / {r.boss_hp.toLocaleString()} kg ({pct}%) ／ 報酬 +{r.reward_exp}EXP +{r.reward_coins}コイン</p>
+                {r.defeated && (
+                  distributed[r.id] > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <Gift className="w-3 h-3" /> 配布済み（{distributed[r.id]}個）
+                    </span>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => handleDistribute(r.id)} disabled={distributing === r.id} className="gap-1">
+                      {distributing === r.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Gift className="w-3 h-3" />}
+                      限定報酬を配布
+                    </Button>
+                  )
+                )}
                 {list.length > 0 && (
                   <div className="border-t pt-2 mt-2">
                     <p className="text-xs font-bold mb-1">貢献ランキング ({list.length}人)</p>

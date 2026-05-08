@@ -827,6 +827,7 @@ export type Database = {
           reward_coins: number
           reward_exp: number
           start_date: string
+          theme_color: string | null
         }
         Insert: {
           boss_hp: number
@@ -841,6 +842,7 @@ export type Database = {
           reward_coins?: number
           reward_exp?: number
           start_date: string
+          theme_color?: string | null
         }
         Update: {
           boss_hp?: number
@@ -855,6 +857,7 @@ export type Database = {
           reward_coins?: number
           reward_exp?: number
           start_date?: string
+          theme_color?: string | null
         }
         Relationships: []
       }
@@ -887,6 +890,53 @@ export type Database = {
           {
             foreignKeyName: "raid_damage_logs_raid_id_fkey"
             columns: ["raid_id"]
+            isOneToOne: false
+            referencedRelation: "raid_bosses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raid_reward_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          item_key: string
+          name: string
+          raid_boss_id: string | null
+          required_rank: string
+          theme_color: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          item_key: string
+          name: string
+          raid_boss_id?: string | null
+          required_rank: string
+          theme_color?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          item_key?: string
+          name?: string
+          raid_boss_id?: string | null
+          required_rank?: string
+          theme_color?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raid_reward_items_raid_boss_id_fkey"
+            columns: ["raid_boss_id"]
             isOneToOne: false
             referencedRelation: "raid_bosses"
             referencedColumns: ["id"]
@@ -1084,7 +1134,9 @@ export type Database = {
           combo_5_count: number
           combo_count: number
           created_at: string
+          equipped_background: string | null
           equipped_title: string | null
+          equipped_weapon: string | null
           gender: string | null
           hair_color: string
           id: string
@@ -1100,7 +1152,9 @@ export type Database = {
           combo_5_count?: number
           combo_count?: number
           created_at?: string
+          equipped_background?: string | null
           equipped_title?: string | null
+          equipped_weapon?: string | null
           gender?: string | null
           hair_color?: string
           id?: string
@@ -1116,7 +1170,9 @@ export type Database = {
           combo_5_count?: number
           combo_count?: number
           created_at?: string
+          equipped_background?: string | null
           equipped_title?: string | null
+          equipped_weapon?: string | null
           gender?: string | null
           hair_color?: string
           id?: string
@@ -1263,6 +1319,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_raid_rewards: {
+        Row: {
+          earned_at: string
+          earned_rank: string
+          id: string
+          item_key: string
+          raid_boss_id: string | null
+          user_id: string
+        }
+        Insert: {
+          earned_at?: string
+          earned_rank: string
+          id?: string
+          item_key: string
+          raid_boss_id?: string | null
+          user_id: string
+        }
+        Update: {
+          earned_at?: string
+          earned_rank?: string
+          id?: string
+          item_key?: string
+          raid_boss_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_raid_rewards_raid_boss_id_fkey"
+            columns: ["raid_boss_id"]
+            isOneToOne: false
+            referencedRelation: "raid_bosses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1362,6 +1453,10 @@ export type Database = {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      distribute_raid_rewards: {
+        Args: { p_raid_boss_id: string }
+        Returns: Json
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }

@@ -24,6 +24,8 @@ export interface AvatarRow {
   equipped_title?: string | null;
   gender?: "male" | "female";
   hair_color?: string;
+  equipped_weapon?: string | null;
+  equipped_background?: string | null;
 }
 
 export interface ExpLogRow {
@@ -47,7 +49,7 @@ export const useAvatar = (autoSync = true) => {
   const refetch = useCallback(async () => {
     if (!user) return;
     const [avRes, logRes, achRes, titleRes] = await Promise.all([
-      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background").eq("user_id", user.id).maybeSingle(),
       supabase
         .from("avatar_exp_logs")
         .select("id, exp_amount, reason, reference_date, created_at")

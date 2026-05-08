@@ -9,9 +9,11 @@ import { getComboColor, getComboFlameCount, getComboMultiplier } from "@/lib/com
 import { getTitleDef } from "@/lib/titleSystem";
 import BadgeIcon from "./BadgeIcon";
 import { Flame } from "lucide-react";
+import { useRaidRewards } from "@/hooks/useRaidRewards";
 
 const AvatarCard = () => {
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch } = useAvatar(true);
+  const { items: rewardItems, owned, participation, refetch: refetchRewards } = useRaidRewards();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -35,6 +37,8 @@ const AvatarCard = () => {
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
   const combo = avatar.combo_count || 0;
   const equipped = getTitleDef(avatar.equipped_title);
+  const weaponItem = rewardItems.find((it) => it.item_key === avatar.equipped_weapon);
+  const bgItem = rewardItems.find((it) => it.item_key === avatar.equipped_background);
 
   return (
     <>
@@ -44,15 +48,34 @@ const AvatarCard = () => {
       >
         <CardContent className="p-3 flex items-center gap-3">
           <div
-            className="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden"
+            className="relative w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: `${p.rank.color}15` }}
           >
+            {bgItem?.image_url && (
+              <img
+                src={bgItem.image_url}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover opacity-60 z-0"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
             <img
               src={p.rank.image}
               alt={p.rank.name}
-              className="w-full h-full object-cover"
+              className="relative w-full h-full object-cover z-10"
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
             />
+            {weaponItem?.image_url && (
+              <img
+                src={weaponItem.image_url}
+                alt=""
+                aria-hidden
+                className="absolute right-0 bottom-0 w-2/5 h-2/5 object-contain z-20"
+                style={{ transform: "rotate(-15deg)" }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
@@ -99,6 +122,11 @@ const AvatarCard = () => {
         achievements={achievements}
         titles={titles}
         onEquipTitle={equipTitle}
+        rewardItems={rewardItems}
+        ownedRewards={owned}
+        participation={participation}
+        onRewardsChanged={refetchRewards}
+        onAvatarChanged={refetch}
       />
       <AvatarLevelUpDialog
         open={!!levelUp}
