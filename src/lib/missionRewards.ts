@@ -3,6 +3,14 @@ import { calculateLevel } from "./avatarSystem";
 import { getMissionDef, MISSION_BONUS_EXP, type MissionKey } from "./missionSystem";
 import { getMuscleGroup } from "./muscleGroup";
 import { formatJST } from "./timezone";
+import { getRankInfo } from "./avatarSystem";
+import { MISSION_EXP_MULT } from "./rankPerks";
+
+async function getMissionMult(userId: string): Promise<number> {
+  const { data } = await supabase.from("user_avatars").select("level").eq("user_id", userId).maybeSingle();
+  const lvl = (data as any)?.level || 1;
+  return MISSION_EXP_MULT[getRankInfo(lvl).key];
+}
 
 export interface MissionEvalContext {
   userId: string;
@@ -169,6 +177,7 @@ export async function evaluateAndAwardMissions(
   if (!missionRow) return { newlyCompleted: [], bonusAwarded: false, allCompleted: false };
 
   const data = await loadEvalData(userId, date);
+  const mult = await getMissionMult(userId);
 
   const already = new Set<string>(missionRow.completed_keys || []);
   const newlyCompleted: { key: string; name: string; exp: number }[] = [];
@@ -180,10 +189,11 @@ export async function evaluateAndAwardMissions(
       const def = getMissionDef(key);
       if (!def) continue;
       already.add(key);
-      newlyCompleted.push({ key, name: `${def.icon} ${def.name}`, exp: def.exp });
+      const exp = Math.ceil(def.exp * mult);
+      newlyCompleted.push({ key, name: `${def.icon} ${def.name}`, exp });
       newExpLogs.push({
         user_id: userId,
-        exp_amount: def.exp,
+        exp_amount: exp,
         reason: `mission|${key}|${date}`,
         reference_date: date,
       });
@@ -193,9 +203,10 @@ export async function evaluateAndAwardMissions(
   const allCompleted = (missionRow.mission_keys as string[]).every((k) => already.has(k));
   const bonusJustAwarded = allCompleted && !missionRow.all_completed;
   if (bonusJustAwarded) {
+    const bonusExp = Math.ceil(MISSION_BONUS_EXP * mult);
     newExpLogs.push({
       user_id: userId,
-      exp_amount: MISSION_BONUS_EXP,
+      exp_amount: bonusExp,
       reason: `mission_bonus|${date}`,
       reference_date: date,
     });
@@ -214,7 +225,7 @@ export async function evaluateAndAwardMissions(
 
   // Update daily_missions row
   const expEarnedDelta =
-    newlyCompleted.reduce((s, m) => s + m.exp, 0) + (bonusJustAwarded ? MISSION_BONUS_EXP : 0);
+    newlyCompleted.reduce((s, m) => s + m.exp, 0) + (bonusJustAwarded ? Math.ceil(MISSION_BONUS_EXP * mult) : 0);
   await supabase
     .from("daily_missions")
     .update({
