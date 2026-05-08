@@ -1530,6 +1530,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_ranking: { Args: { p_gender: string; p_type: string }; Returns: Json }
       get_trainer_ids: {
         Args: never
         Returns: {
