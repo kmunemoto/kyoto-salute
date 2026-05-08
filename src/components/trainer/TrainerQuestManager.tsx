@@ -39,7 +39,7 @@ const TrainerQuestManager = () => {
       .select("stage_id, boss_hp");
 
     const progMap = new Map((progress || []).map((p: any) => [p.user_id, p.current_stage]));
-    const bossMaxMap = new Map((bosses || []).map((b: any) => [b.stage_id, b.boss_hp]));
+    const bossMaxMap = new Map<number, number>((bosses || []).map((b: any) => [b.stage_id as number, b.boss_hp as number]));
     const compMap = new Map<string, number>();
     (completions || []).forEach((c: any) => {
       compMap.set(c.user_id, (compMap.get(c.user_id) || 0) + 1);
