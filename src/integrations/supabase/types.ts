@@ -989,6 +989,7 @@ export type Database = {
           boss_icon: string
           boss_name: string
           created_at: string
+          gender: string
           id: number
           stage_id: number
         }
@@ -1000,6 +1001,7 @@ export type Database = {
           boss_icon?: string
           boss_name: string
           created_at?: string
+          gender?: string
           id?: number
           stage_id: number
         }
@@ -1011,6 +1013,7 @@ export type Database = {
           boss_icon?: string
           boss_name?: string
           created_at?: string
+          gender?: string
           id?: number
           stage_id?: number
         }
@@ -1018,7 +1021,7 @@ export type Database = {
           {
             foreignKeyName: "quest_bosses_stage_id_fkey"
             columns: ["stage_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "quest_stages"
             referencedColumns: ["id"]
           },
