@@ -45,7 +45,13 @@ const AvatarCard = () => {
   const equipped = getTitleDef(avatar.equipped_title);
   const weaponItem = rewardItems.find((it) => it.item_key === avatar.equipped_weapon);
   const bgItem = rewardItems.find((it) => it.item_key === avatar.equipped_background);
-  const hasFrame = avatar.equipped_frame === "rainbow_legend";
+  const frameKey = avatar.equipped_frame;
+  const frameClass =
+    frameKey === "rainbow_legend"
+      ? "rainbow-frame"
+      : frameKey === "quest_kingdom_hero"
+        ? "golden-frame"
+        : null;
   const featured = (avatar as any).featured_badges as string[] | undefined;
 
   return (
@@ -55,7 +61,7 @@ const AvatarCard = () => {
         className="card-hover cursor-pointer overflow-hidden"
       >
         <CardContent className="p-3 flex items-center gap-3">
-          <div className={hasFrame ? "rainbow-frame rounded-2xl flex-shrink-0" : "flex-shrink-0"}>
+          <div className={frameClass ? `${frameClass} rounded-2xl flex-shrink-0` : "flex-shrink-0"}>
           <div
             className="relative w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: `${p.rank.color}15` }}
