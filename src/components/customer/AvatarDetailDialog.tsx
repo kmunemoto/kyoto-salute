@@ -11,6 +11,8 @@ import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
 import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
+import FrameSection from "./FrameSection";
+import AvatarFrameOverlay from "./AvatarFrameOverlay";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { equipRaidItem, RANK_LABEL_JP, type RaidRewardItem, type UserRaidReward, type RaidParticipationStat } from "@/hooks/useRaidRewards";
@@ -141,15 +143,18 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
         <DialogTitle className="sr-only">アバター詳細</DialogTitle>
         <div className="flex flex-col items-center pt-2">
           <div
-            className="w-44 h-44 rounded-3xl flex items-center justify-center overflow-hidden"
-            style={{ backgroundColor: `${p.rank.color}15` }}
+            className="relative w-44 h-44 rounded-3xl flex items-center justify-center overflow-visible"
+            style={{ backgroundColor: `${p.rank.color}15`, borderRadius: "1.5rem" }}
           >
-            <img
-              src={p.rank.image}
-              alt={p.rank.name}
-              className="w-full h-full object-cover"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
-            />
+            <div className="absolute inset-0 rounded-3xl overflow-hidden">
+              <img
+                src={p.rank.image}
+                alt={p.rank.name}
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+              />
+            </div>
+            <AvatarFrameOverlay frameKey={avatar.equipped_frame} />
           </div>
           <div className="mt-3 text-center">
             <p className="text-2xl font-extrabold">Lv.{p.level}</p>
@@ -224,6 +229,14 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             <Sparkles className="w-3.5 h-3.5" /> 髪色
           </h3>
           <HairColorSection />
+        </section>
+
+        {/* フレーム */}
+        <section className="mt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <ImageIcon className="w-3.5 h-3.5" /> フレーム
+          </h3>
+          <FrameSection />
         </section>
 
         <section className="mt-4">

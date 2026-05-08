@@ -13,6 +13,8 @@ import BadgeIcon from "./BadgeIcon";
 import FeaturedBadgesRow from "./FeaturedBadgesRow";
 import { Flame } from "lucide-react";
 import { useRaidRewards } from "@/hooks/useRaidRewards";
+import AvatarFrameOverlay from "./AvatarFrameOverlay";
+import { getFrameImage } from "@/hooks/useFrames";
 
 const AvatarCard = () => {
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch, newAchievement, clearNewAchievement } = useAvatar(true);
@@ -52,6 +54,7 @@ const AvatarCard = () => {
       : frameKey === "quest_kingdom_hero"
         ? "golden-frame"
         : null;
+  const frameImg = getFrameImage(frameKey);
   const featured = (avatar as any).featured_badges as string[] | undefined;
 
   return (
@@ -63,9 +66,10 @@ const AvatarCard = () => {
         <CardContent className="p-3 flex items-center gap-3">
           <div className={frameClass ? `${frameClass} rounded-2xl flex-shrink-0` : "flex-shrink-0"}>
           <div
-            className="relative w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
-            style={{ backgroundColor: `${p.rank.color}15` }}
+            className="relative w-20 h-20 rounded-2xl flex items-center justify-center"
+            style={{ backgroundColor: `${p.rank.color}15`, borderRadius: "1rem" }}
           >
+            <div className="absolute inset-0 rounded-2xl overflow-hidden">
             {bgItem?.image_url && (
               <img
                 src={bgItem.image_url}
@@ -104,6 +108,8 @@ const AvatarCard = () => {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
             )}
+            </div>
+            {frameImg && <AvatarFrameOverlay frameKey={frameKey} scale={1.22} />}
           </div>
           </div>
           <div className="flex-1 min-w-0">

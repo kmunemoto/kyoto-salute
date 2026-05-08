@@ -184,6 +184,36 @@ export type Database = {
         }
         Relationships: []
       }
+      avatar_frames: {
+        Row: {
+          created_at: string
+          frame_key: string
+          frame_name: string
+          id: string
+          image_path: string
+          rarity: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          frame_key: string
+          frame_name: string
+          id?: string
+          image_path: string
+          rarity: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          frame_key?: string
+          frame_name?: string
+          id?: string
+          image_path?: string
+          rarity?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       avatar_rank_up_rewards: {
         Row: {
           coins_awarded: number
@@ -1752,6 +1782,38 @@ export type Database = {
           },
         ]
       }
+      user_frame_inventory: {
+        Row: {
+          frame_key: string
+          id: string
+          obtained_at: string
+          obtained_via: string
+          user_id: string
+        }
+        Insert: {
+          frame_key: string
+          id?: string
+          obtained_at?: string
+          obtained_via?: string
+          user_id: string
+        }
+        Update: {
+          frame_key?: string
+          id?: string
+          obtained_at?: string
+          obtained_via?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_frame_inventory_frame_key_fkey"
+            columns: ["frame_key"]
+            isOneToOne: false
+            referencedRelation: "avatar_frames"
+            referencedColumns: ["frame_key"]
+          },
+        ]
+      }
       user_gacha_tickets: {
         Row: {
           created_at: string
@@ -2065,6 +2127,7 @@ export type Database = {
         Returns: number
       }
       enter_rival_battle: { Args: never; Returns: Json }
+      equip_frame: { Args: { p_frame_key: string }; Returns: Json }
       equip_item: {
         Args: { p_item_id: string; p_user_id: string }
         Returns: Json

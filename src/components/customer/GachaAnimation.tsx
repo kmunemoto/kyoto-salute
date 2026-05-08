@@ -432,6 +432,8 @@ const ResultView = ({
   const isLegendary = rarity === "legendary";
   const isEpic = rarity === "epic";
   const isRare = rarity === "rare";
+  const isFrame = result.reward_type === "frame" || result.reward_type === "frame_dup";
+  const isDup = result.reward_type === "frame_dup";
 
   const popClass = isLegendary
     ? "anim-legendary-pop"
@@ -498,6 +500,25 @@ const ResultView = ({
         />
 
         {/* Reward icon */}
+        {isFrame && result.frame_image ? (
+          <div className={`relative mt-6 ${popClass}`} style={{ width: 160, height: 160 }}>
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: gradient,
+                boxShadow: isLegendary
+                  ? "0 0 50px 12px rgba(251,191,36,0.7)"
+                  : "0 0 30px 6px rgba(139,92,246,0.6)",
+                opacity: 0.35,
+              }}
+            />
+            <img
+              src={result.frame_image}
+              alt={result.frame_name || "frame"}
+              className="relative w-full h-full object-contain z-10"
+            />
+          </div>
+        ) : (
         <div
           className={`relative mt-6 ${popClass}`}
           style={{
@@ -526,8 +547,21 @@ const ResultView = ({
             />
           </div>
         </div>
+        )}
 
         {/* Reward amount with countup */}
+        {isFrame ? (
+          <div className="mt-6 text-center anim-fade-up" style={{ animationDelay: "0.45s" }}>
+            <p className="text-2xl font-extrabold text-white">
+              {result.frame_name}
+            </p>
+            <p className="text-sm text-white/80 mt-1">
+              {isDup
+                ? `所持済み → ${result.reward_amount}コインに変換`
+                : "フレームを獲得！"}
+            </p>
+          </div>
+        ) : (
         <p
           className="mt-6 text-4xl font-extrabold text-white anim-fade-up"
           style={{ animationDelay: "0.45s", letterSpacing: "0.02em" }}
@@ -537,6 +571,7 @@ const ResultView = ({
             {d.iconKind === "coins" ? "コイン" : "EXP"}
           </span>
         </p>
+        )}
 
         {/* Remaining tickets */}
         <div
