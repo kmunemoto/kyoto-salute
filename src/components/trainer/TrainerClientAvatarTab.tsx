@@ -12,6 +12,10 @@ import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { MISSIONS, getMissionDef, MISSION_BONUS_EXP } from "@/lib/missionSystem";
 import BadgeIcon from "@/components/customer/BadgeIcon";
 import { getJSTToday } from "@/lib/timezone";
+import { evaluateAndAwardMissions, ensureDailyMissions } from "@/lib/missionRewards";
+import { pickDailyMissions } from "@/lib/missionSystem";
+import { toast } from "sonner";
+import { RefreshCw } from "lucide-react";
 
 interface Props {
   clientId: string;
@@ -41,6 +45,7 @@ const RARITY_LABEL: Record<string, string> = {
 
 const TrainerClientAvatarTab = ({ clientId }: Props) => {
   const [loading, setLoading] = useState(true);
+  const [reEvaluating, setReEvaluating] = useState(false);
   const [avatar, setAvatar] = useState<AvatarRow | null>(null);
   const [achievements, setAchievements] = useState<{ achievement_key: string; unlocked_at: string }[]>([]);
   const [titles, setTitles] = useState<string[]>([]);
@@ -91,10 +96,53 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
       setRaidLogs([...agg.values()].sort((a, b) => (b.workout_date > a.workout_date ? 1 : -1)));
       setGachaHistory((gachaRes.data as any) ?? []);
       setLoading(false);
+
+      // If customer has training today, auto-ensure + evaluate today's missions.
+      if ((workoutRes.count ?? 0) > 0) {
+        try {
+          if (!missionRes.data) {
+            await ensureDailyMissions(clientId, today, pickDailyMissions());
+          }
+          await evaluateAndAwardMissions(clientId, today);
+          const { data: refreshed } = await supabase
+            .from("daily_missions")
+            .select("mission_keys,completed_keys,all_completed,exp_earned")
+            .eq("user_id", clientId).eq("mission_date", today).maybeSingle();
+          if (!cancelled) setTodayMission((refreshed as any) ?? null);
+        } catch { /* non-fatal */ }
+      }
     };
     load();
     return () => { cancelled = true; };
   }, [clientId]);
+
+  const handleReEvaluate = async () => {
+    setReEvaluating(true);
+    try {
+      const today = getJSTToday();
+      const { data: existing } = await supabase
+        .from("daily_missions")
+        .select("id").eq("user_id", clientId).eq("mission_date", today).maybeSingle();
+      if (!existing) {
+        await ensureDailyMissions(clientId, today, pickDailyMissions());
+      }
+      const result = await evaluateAndAwardMissions(clientId, today);
+      const { data: refreshed } = await supabase
+        .from("daily_missions")
+        .select("mission_keys,completed_keys,all_completed,exp_earned")
+        .eq("user_id", clientId).eq("mission_date", today).maybeSingle();
+      setTodayMission((refreshed as any) ?? null);
+      if (result.newlyCompleted.length > 0) {
+        toast.success(`${result.newlyCompleted.length}件のミッションを達成しました`);
+      } else {
+        toast.info("更新しました");
+      }
+    } catch (e) {
+      toast.error("再判定に失敗しました");
+    } finally {
+      setReEvaluating(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -175,6 +223,16 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
             <span className="flex items-center gap-2"><Target className="w-4 h-4" />本日のデイリーミッション</span>
           </AccordionTrigger>
           <AccordionContent>
+            <div className="flex justify-end pb-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleReEvaluate(); }}
+                disabled={reEvaluating}
+                className="text-[11px] font-semibold text-accent flex items-center gap-1 disabled:opacity-50"
+              >
+                {reEvaluating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                ミッション再判定
+              </button>
+            </div>
             {!todayMission ? (
               <p className="text-xs text-muted-foreground py-2">
                 {hasContextToday ? "本日のミッションはまだ生成されていません" : "本日は予約・トレーニング記録がないためミッション未生成"}
