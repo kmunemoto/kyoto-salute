@@ -127,11 +127,6 @@ const TrainerRaidManager = () => {
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mt-10" />;
 
-  const rankInfo = (level?: number | null): { label: string; mult: number } => {
-    // We don't have per-user level here; show damage rank only. Multiplier shown contextually.
-    return { label: "—", mult: 1 };
-  };
-
   const renderRanking = (raidId: string, list: ContribRow[]) => {
     const males = list.filter((c) => c.gender === "male").sort((a, b) => b.damage - a.damage);
     const females = list.filter((c) => c.gender === "female").sort((a, b) => b.damage - a.damage);
