@@ -1,6 +1,6 @@
 export type RankKey = "rookie" | "regular" | "athlete" | "elite" | "legend";
 export type Gender = "male" | "female";
-export type HairColor = "orange";
+export type HairColor = "orange" | "black";
 
 export interface RankInfo {
   key: RankKey;
