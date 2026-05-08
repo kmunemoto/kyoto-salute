@@ -13,7 +13,6 @@ import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { equipRaidItem, RANK_LABEL_JP, type RaidRewardItem, type UserRaidReward, type RaidParticipationStat } from "@/hooks/useRaidRewards";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { format, parseISO as parseISO2 } from "date-fns";
 
 interface Props {
   open: boolean;
