@@ -50,8 +50,7 @@ export const useAvatar = (autoSync = true) => {
   const refetch = useCallback(async () => {
     if (!user) return;
     const [avRes, logRes, achRes, titleRes] = await Promise.all([
-      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background").eq("user_id", user.id).maybeSingle(),
-      // emote field appended below via separate fetch to avoid breaking older type cache
+      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background, equipped_emote").eq("user_id", user.id).maybeSingle(),
       supabase
         .from("avatar_exp_logs")
         .select("id, exp_amount, reason, reference_date, created_at")
@@ -278,5 +277,11 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
-  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender };
+  const equipEmote = useCallback(async (emoteKey: string | null) => {
+    if (!user) return;
+    await supabase.from("user_avatars").update({ equipped_emote: emoteKey } as any).eq("user_id", user.id);
+    await refetch();
+  }, [user, refetch]);
+
+  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote };
 };
