@@ -45,6 +45,7 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
   const [achievements, setAchievements] = useState<{ achievement_key: string; unlocked_at: string }[]>([]);
   const [titles, setTitles] = useState<string[]>([]);
   const [todayMission, setTodayMission] = useState<DailyMissionRow | null>(null);
+  const [hasContextToday, setHasContextToday] = useState(false);
   const [tickets, setTickets] = useState(0);
   const [raidLogs, setRaidLogs] = useState<RaidDamageRow[]>([]);
   const [gachaHistory, setGachaHistory] = useState<GachaResultRow[]>([]);
@@ -54,8 +55,11 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
     const load = async () => {
       setLoading(true);
       const today = getJSTToday();
+      const startOfDay = `${today}T00:00:00+09:00`;
+      const endOfDay = `${today}T23:59:59+09:00`;
       const [
         avatarRes, achRes, titleRes, missionRes, ticketRes, raidLogRes, raidBossRes, gachaRes,
+        bookingRes, workoutRes,
       ] = await Promise.all([
         supabase.from("user_avatars").select("level,total_exp,coins,combo_count,equipped_title,max_combo_reached,last_session_date").eq("user_id", clientId).maybeSingle(),
         supabase.from("avatar_achievements").select("achievement_key,unlocked_at").eq("user_id", clientId).order("unlocked_at", { ascending: false }),
@@ -65,12 +69,15 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
         supabase.from("raid_damage_logs").select("raid_id,damage,workout_date").eq("user_id", clientId).order("workout_date", { ascending: false }),
         supabase.from("raid_bosses").select("id,boss_name,defeated,start_date,end_date"),
         supabase.from("gacha_results").select("id,result_date,reward_type,reward_amount,rarity").eq("user_id", clientId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("bookings").select("id", { count: "exact", head: true }).eq("user_id", clientId).neq("status", "キャンセル済み").gte("booking_date", startOfDay).lte("booking_date", endOfDay),
+        supabase.from("workouts").select("id", { count: "exact", head: true }).eq("user_id", clientId).eq("workout_date", today),
       ]);
       if (cancelled) return;
       setAvatar((avatarRes.data as any) ?? null);
       setAchievements((achRes.data as any) ?? []);
       setTitles(((titleRes.data as any) ?? []).map((r: any) => r.title_key));
       setTodayMission((missionRes.data as any) ?? null);
+      setHasContextToday(((bookingRes.count ?? 0) + (workoutRes.count ?? 0)) > 0);
       setTickets(ticketRes.count ?? 0);
       const raidMap = new Map<string, any>();
       ((raidBossRes.data as any) ?? []).forEach((r: any) => raidMap.set(r.id, r));
@@ -162,7 +169,9 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
           </AccordionTrigger>
           <AccordionContent>
             {!todayMission ? (
-              <p className="text-xs text-muted-foreground py-2">本日の予約がないためミッション未生成</p>
+              <p className="text-xs text-muted-foreground py-2">
+                {hasContextToday ? "本日のミッションはまだ生成されていません" : "本日は予約・トレーニング記録がないためミッション未生成"}
+              </p>
             ) : (
               <div className="space-y-1.5 pb-1">
                 {todayMission.mission_keys.map((k) => {
