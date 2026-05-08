@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import AvatarDetailDialog from "./AvatarDetailDialog";
 import AvatarLevelUpDialog from "./AvatarLevelUpDialog";
+import BadgeUnlockShareModal from "./BadgeUnlockShareModal";
 import { getComboColor, getComboFlameCount, getComboMultiplier } from "@/lib/comboSystem";
 import { getTitleDef } from "@/lib/titleSystem";
 import BadgeIcon from "./BadgeIcon";
@@ -14,7 +15,7 @@ import { Flame } from "lucide-react";
 import { useRaidRewards } from "@/hooks/useRaidRewards";
 
 const AvatarCard = () => {
-  const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch } = useAvatar(true);
+  const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch, newAchievement, clearNewAchievement } = useAvatar(true);
   const { items: rewardItems, owned, participation, refetch: refetchRewards } = useRaidRewards();
   const [open, setOpen] = useState(false);
   const [emoteFailed, setEmoteFailed] = useState(false);
@@ -161,6 +162,7 @@ const AvatarCard = () => {
         gender={gender}
         hairColor={hairColor}
       />
+      <BadgeUnlockShareModal achievementKey={newAchievement} onClose={clearNewAchievement} />
     </>
   );
 };
