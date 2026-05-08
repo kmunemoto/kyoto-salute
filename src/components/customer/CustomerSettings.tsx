@@ -228,6 +228,42 @@ const CustomerSettings = () => {
         </Card>
       </section>
 
+      {/* アバター */}
+      <section>
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <Award className="w-3.5 h-3.5" />
+          アバター
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground mb-3">表示するアバターの性別を選択できます</p>
+            <div className="grid grid-cols-2 gap-3">
+              {(["female", "male"] as const).map((g) => {
+                const selected = ((avatar?.gender as any) ?? "female") === g;
+                const rank = getRankInfo(avatar?.level ?? 1, g, "orange");
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => updateGender(g)}
+                    className={`rounded-2xl border-2 p-3 flex flex-col items-center transition ${selected ? "border-accent bg-accent/10" : "border-border bg-card hover:bg-muted/40"}`}
+                  >
+                    <div
+                      className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center"
+                      style={{ backgroundColor: `${rank.color}15` }}
+                    >
+                      <img src={getAvatarImage(rank.key, g, "orange")} alt={g} className="w-full h-full object-cover" />
+                    </div>
+                    <span className="mt-2 text-sm font-bold">{g === "female" ? "女性" : "男性"}</span>
+                    {selected && <span className="mt-0.5 text-[10px] font-bold text-accent">選択中</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* LINE連携 */}
       <section>
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
