@@ -289,6 +289,9 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       {/* 4. Raid Boss */}
       <RaidBossCard />
 
+      {/* 王国復興クエスト */}
+      <QuestCard onOpen={() => onNavigate?.("quest")} />
+
       {/* 5. Gacha (only if tickets exist — handled inside) */}
       <GachaCard />
 
@@ -308,7 +311,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       )}
 
       <RivalBattleCard />
-      <QuestCard onOpen={() => onNavigate?.("quest")} />
 
       {/* Stats Cards */}
       {latest && (latest.weight != null || latest.body_fat != null) && (
