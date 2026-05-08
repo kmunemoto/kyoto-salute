@@ -65,7 +65,7 @@ export const useDailyMissions = () => {
       setHasBookingToday(hasBooking);
       setHasWorkoutToday(hasWorkout);
 
-      if (hasBooking || hasWorkout) {
+      if (hasBooking) {
         // Ensure mission row exists
         const { data: existing } = await supabase
           .from("daily_missions")
