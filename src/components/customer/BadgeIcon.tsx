@@ -154,3 +154,9 @@ const BadgeIcon = ({ type, iconKey, rarity = "normal", acquired = true, equipped
 };
 
 export default BadgeIcon;
+
+export const getAchievementIconComponent = (key: string): LucideIcon =>
+  ACHIEVEMENT_ICONS[key] || Star;
+
+export const getTitleIconComponent = (key: string): LucideIcon =>
+  TITLE_ICONS[key] || Star;
