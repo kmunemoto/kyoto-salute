@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Sword, Trash2, Plus, Gift } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface RaidRow {
   id: string;
@@ -23,6 +24,7 @@ interface ContribRow {
   user_id: string;
   damage: number;
   display_name?: string;
+  gender?: string | null;
 }
 
 const TrainerRaidManager = () => {
@@ -33,6 +35,7 @@ const TrainerRaidManager = () => {
   const [contribs, setContribs] = useState<Record<string, ContribRow[]>>({});
   const [distributed, setDistributed] = useState<Record<string, number>>({});
   const [distributing, setDistributing] = useState<string | null>(null);
+  const [tabByRaid, setTabByRaid] = useState<Record<string, string>>({});
 
   const refresh = async () => {
     const { data } = await supabase
@@ -51,11 +54,13 @@ const TrainerRaidManager = () => {
     });
     const userIds = [...new Set((dmg as any[]).map((r) => r.user_id))];
     const { data: profs } = await supabase.from("profiles").select("user_id, display_name").in("user_id", userIds);
+    const { data: avs } = await (supabase as any).from("user_avatars").select("user_id, gender").in("user_id", userIds);
     const nameMap = new Map((profs || []).map((p: any) => [p.user_id, p.display_name]));
+    const genderMap = new Map(((avs as any[]) || []).map((a) => [a.user_id, a.gender]));
     const final: Record<string, ContribRow[]> = {};
     Object.entries(grouped).forEach(([raidId, byUser]) => {
       final[raidId] = Object.entries(byUser)
-        .map(([user_id, damage]) => ({ user_id, damage, display_name: nameMap.get(user_id) || "—" }))
+        .map(([user_id, damage]) => ({ user_id, damage, display_name: nameMap.get(user_id) || "—", gender: genderMap.get(user_id) ?? null }))
         .sort((a, b) => b.damage - a.damage);
     });
     setContribs(final);
@@ -110,11 +115,82 @@ const TrainerRaidManager = () => {
       return;
     }
     const r = data || {};
-    toast.success(`配布完了：参加者${r.participants ?? 0}人 / 貢献者${r.contributors ?? 0}人 / MVP${r.mvps ?? 0}人 / アイテム${r.items_granted ?? 0}個`);
+    const fmt = (arr: any[]) => (arr && arr.length > 0)
+      ? arr.map((m) => `${m.display_name || "—"} (${(m.damage ?? 0).toLocaleString()}kg)`).join(", ")
+      : "なし";
+    toast.success(
+      `配布完了\n参加者${r.participants ?? 0}人 (男${r.male_participants ?? 0}/女${r.female_participants ?? 0})\n貢献者${r.contributors ?? 0}人 / MVP${r.mvps ?? 0}人\n男性MVP: ${fmt(r.male_mvps || [])}\n女性MVP: ${fmt(r.female_mvps || [])}\nアイテム配布: ${r.items_granted ?? 0}個`,
+      { duration: 10000 }
+    );
     refresh();
   };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mt-10" />;
+
+  const rankInfo = (level?: number | null): { label: string; mult: number } => {
+    // We don't have per-user level here; show damage rank only. Multiplier shown contextually.
+    return { label: "—", mult: 1 };
+  };
+
+  const renderRanking = (raidId: string, list: ContribRow[]) => {
+    const males = list.filter((c) => c.gender === "male").sort((a, b) => b.damage - a.damage);
+    const females = list.filter((c) => c.gender === "female").sort((a, b) => b.damage - a.damage);
+    const maleMax = males[0]?.damage;
+    const femaleMax = females[0]?.damage;
+    const cutoff = Math.ceil(list.length / 2);
+
+    const rowsFor = (rows: ContribRow[], variant: "all" | "male" | "female") => (
+      <div className="space-y-1 max-h-56 overflow-y-auto">
+        {rows.map((c, i) => {
+          let badge: { label: string; cls: string } | null = null;
+          if (variant === "male" && maleMax != null && c.damage === maleMax) {
+            badge = { label: "MVP", cls: "bg-amber-100 text-amber-800" };
+          } else if (variant === "female" && femaleMax != null && c.damage === femaleMax) {
+            badge = { label: "MVP", cls: "bg-pink-100 text-pink-800" };
+          } else {
+            // Determine global contributor cutoff for "all" tab
+            const globalIdx = list.findIndex((x) => x.user_id === c.user_id);
+            const isMaleMvp = c.gender === "male" && maleMax != null && c.damage === maleMax;
+            const isFemaleMvp = c.gender === "female" && femaleMax != null && c.damage === femaleMax;
+            if (variant === "all" && (isMaleMvp || isFemaleMvp)) {
+              badge = { label: "MVP", cls: isMaleMvp ? "bg-amber-100 text-amber-800" : "bg-pink-100 text-pink-800" };
+            } else if (globalIdx < cutoff) {
+              badge = { label: "貢献者", cls: "bg-emerald-100 text-emerald-800" };
+            } else {
+              badge = { label: "参加者", cls: "bg-slate-100 text-slate-700" };
+            }
+          }
+          return (
+            <div key={c.user_id} className="flex items-center justify-between text-xs gap-2">
+              <span className="truncate flex-1">{i + 1}. {c.display_name}</span>
+              {badge && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badge.cls}`}>{badge.label}</span>
+              )}
+              <span className="font-bold tabular-nums">{c.damage.toLocaleString()} kg</span>
+            </div>
+          );
+        })}
+        {rows.length === 0 && <p className="text-xs text-muted-foreground">該当者なし</p>}
+      </div>
+    );
+
+    const tab = tabByRaid[raidId] || "all";
+    return (
+      <div className="border-t pt-2 mt-2">
+        <p className="text-xs font-bold mb-2">貢献ランキング ({list.length}人 / 男{males.length}・女{females.length})</p>
+        <Tabs value={tab} onValueChange={(v) => setTabByRaid((s) => ({ ...s, [raidId]: v }))}>
+          <TabsList className="h-8">
+            <TabsTrigger value="all" className="text-xs h-6">全体</TabsTrigger>
+            <TabsTrigger value="male" className="text-xs h-6">男性</TabsTrigger>
+            <TabsTrigger value="female" className="text-xs h-6">女性</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="mt-2">{rowsFor(list, "all")}</TabsContent>
+          <TabsContent value="male" className="mt-2">{rowsFor(males, "male")}</TabsContent>
+          <TabsContent value="female" className="mt-2">{rowsFor(females, "female")}</TabsContent>
+        </Tabs>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -192,17 +268,7 @@ const TrainerRaidManager = () => {
                   )
                 )}
                 {list.length > 0 && (
-                  <div className="border-t pt-2 mt-2">
-                    <p className="text-xs font-bold mb-1">貢献ランキング ({list.length}人)</p>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {list.map((c, i) => (
-                        <div key={c.user_id} className="flex items-center justify-between text-xs">
-                          <span>{i + 1}. {c.display_name}</span>
-                          <span className="font-bold">{c.damage.toLocaleString()} kg</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  renderRanking(r.id, list)
                 )}
               </CardContent>
             </Card>
