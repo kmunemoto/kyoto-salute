@@ -245,7 +245,10 @@ const CustomerSettings = () => {
                   <button
                     key={g}
                     type="button"
-                    onClick={() => updateGender(g)}
+                    onClick={async () => {
+                      await updateGender(g);
+                      window.dispatchEvent(new CustomEvent("avatar-gender-updated"));
+                    }}
                     className={`rounded-2xl border-2 p-3 flex flex-col items-center transition ${selected ? "border-accent bg-accent/10" : "border-border bg-card hover:bg-muted/40"}`}
                   >
                     <div
