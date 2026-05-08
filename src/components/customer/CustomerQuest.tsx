@@ -1,18 +1,16 @@
 import { useState } from "react";
-import { ArrowLeft, Lock, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Lock, Check, Loader2, Shirt, Heart, Swords, Shield as ShieldIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuestProgress, isStageComplete, type QuestStage } from "@/hooks/useQuestProgress";
-import { getQuestIcon } from "@/lib/questIcons";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import QuestStageClearDialog from "./QuestStageClearDialog";
+import { useQuestProgress } from "@/hooks/useQuestProgress";
+import { useBossProgress, useCombatStats } from "@/hooks/useQuestBattle";
+import { getBossIcon } from "@/lib/questBosses";
+import EquipmentDialog from "./EquipmentDialog";
 
 const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
-  const { user } = useAuth();
-  const { data, loading, refetch } = useQuestProgress();
-  const [completing, setCompleting] = useState(false);
-  const [clearedStage, setClearedStage] = useState<QuestStage | null>(null);
+  const { data, loading } = useQuestProgress();
+  const { bosses, progress } = useBossProgress();
+  const { stats } = useCombatStats();
+  const [equipOpen, setEquipOpen] = useState(false);
 
   if (loading || !data) {
     return (
@@ -31,24 +29,11 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
     ? `linear-gradient(135deg, ${currentStage.theme_dark_from} 0%, ${currentStage.theme_dark_to} 100%)`
     : `linear-gradient(135deg, #fde68a 0%, #ffffff 100%)`;
 
-  const handleComplete = async (stageId: number) => {
-    if (!user || completing) return;
-    setCompleting(true);
-    try {
-      const { error } = await supabase.rpc("complete_quest_stage", { p_user_id: user.id, p_stage_id: stageId });
-      if (error) throw error;
-      const stage = data.stages.find((s) => s.id === stageId)!;
-      setClearedStage(stage);
-      await refetch();
-      window.dispatchEvent(new Event("quest-progress-updated"));
-    } catch (e: any) {
-      toast.error(e.message || "クリア処理に失敗しました");
-    } finally {
-      setCompleting(false);
-    }
+  const eqBonus = (k: "atk" | "def" | "hp") => {
+    if (!stats) return 0;
+    return [stats.equipped_weapon, stats.equipped_shield, stats.equipped_amulet]
+      .reduce((s, e) => s + (e ? (e as any)[`${k}_bonus`] : 0), 0);
   };
-
-  const nextStageOf = (stageNum: number) => data.stages.find((s) => s.stage_number === stageNum + 1);
 
   return (
     <div className="min-h-screen pb-20">
@@ -67,13 +52,50 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
         </div>
       </div>
 
-      <div className="px-4 py-6 space-y-3">
+      {/* Player stats panel */}
+      {stats && (
+        <div className="mx-4 -mt-4 mb-2 rounded-2xl bg-white shadow-md p-4 border border-border">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-[10px] font-bold tracking-wider opacity-70">プレイヤー</p>
+              <p className="text-sm font-bold">Lv.{stats.level}</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setEquipOpen(true)} className="text-xs h-8">
+              <Shirt className="w-3.5 h-3.5 mr-1" /> 装備
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { label: "HP", icon: Heart, val: stats.total_hp, base: stats.base_hp, color: "#0ABAB5" },
+              { label: "ATK", icon: Swords, val: stats.total_atk, base: stats.base_atk, color: "#ef4444" },
+              { label: "DEF", icon: ShieldIcon, val: stats.total_def, base: stats.base_def, color: "#3b82f6" },
+            ].map((s) => (
+              <div key={s.label} className="rounded-xl bg-secondary/50 p-2">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <s.icon className="w-3 h-3" style={{ color: s.color }} />
+                  <span className="text-[10px] font-bold opacity-70">{s.label}</span>
+                </div>
+                <p className="text-base font-bold leading-none">
+                  {s.val}
+                  {s.val > s.base && <span className="text-[9px] opacity-60 ml-0.5">+{s.val - s.base}</span>}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="px-4 py-4 space-y-3">
         {data.stages.map((stage, i) => {
           const isCompleted = completedSet.has(stage.id);
           const isCurrent = !isCompleted && stage.stage_number === data.current_stage;
           const isLocked = !isCompleted && !isCurrent;
-          const ready = isCurrent && isStageComplete(stage);
-          const Icon = getQuestIcon(stage.theme_icon);
+          const boss = bosses.find((b) => b.stage_id === stage.id);
+          const bp = progress.find((p) => p.stage_id === stage.id);
+          const Icon = boss ? getBossIcon(boss.boss_icon) : Lock;
+          const maxHp = boss?.boss_hp ?? 0;
+          const curHp = bp?.boss_current_hp ?? maxHp;
+          const hpPct = maxHp > 0 ? Math.max(0, (curHp / maxHp) * 100) : 0;
 
           let bg: string;
           if (isCompleted) {
@@ -108,37 +130,28 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
                     <p className="font-bold text-base leading-tight break-all">
                       {isLocked ? "？？？" : isCompleted ? stage.name : stage.name_before}
                     </p>
+                    {isCurrent && boss && (
+                      <p className="text-[11px] opacity-90 mt-0.5 break-all">{boss.boss_name}</p>
+                    )}
                   </div>
                 </div>
 
-                {isCurrent && (
-                  <div className="mt-3 space-y-1.5">
-                    {stage.conditions.map((c) => {
-                      const pct = Math.min(100, (Number(c.current_value) / Number(c.target_value)) * 100);
-                      const done = Number(c.current_value) >= Number(c.target_value);
-                      return (
-                        <div key={c.condition_type}>
-                          <div className="flex items-center justify-between text-[11px] mb-0.5">
-                            <span className="opacity-90 truncate">{c.display_label}</span>
-                            <span className="font-bold opacity-90 shrink-0 ml-2">
-                              {Math.floor(Number(c.current_value)).toLocaleString()}/{Number(c.target_value).toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="h-1.5 rounded-full bg-black/25 overflow-hidden">
-                            <div className="h-full transition-all" style={{ width: `${pct}%`, background: done ? "#0ABAB5" : "rgba(255,255,255,0.85)" }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {ready && (
-                      <Button
-                        className="w-full mt-3 bg-white text-foreground hover:bg-white/90 font-bold"
-                        onClick={() => handleComplete(stage.id)}
-                        disabled={completing}
-                      >
-                        {completing ? <Loader2 className="w-4 h-4 animate-spin" /> : "復興する！"}
-                      </Button>
-                    )}
+                {isCurrent && boss && (
+                  <div className="mt-3 space-y-2">
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] mb-0.5">
+                        <span className="opacity-90">ボスHP</span>
+                        <span className="font-bold">{curHp.toLocaleString()}/{maxHp.toLocaleString()}</span>
+                      </div>
+                      <div className="h-2.5 rounded-full bg-black/30 overflow-hidden">
+                        <div className="h-full transition-all duration-700" style={{ width: `${hpPct}%`, background: "#ef4444" }} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[10px] opacity-90">
+                      <div className="bg-black/20 rounded px-2 py-1">ATK {boss.boss_atk} · DEF {boss.boss_def}</div>
+                      <div className="bg-black/20 rounded px-2 py-1 text-right">ターン {bp?.total_turns ?? 0}</div>
+                    </div>
+                    <p className="text-[10px] opacity-80 leading-snug break-all">{boss.boss_description}</p>
                   </div>
                 )}
               </div>
@@ -147,14 +160,7 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
         })}
       </div>
 
-      {clearedStage && (
-        <QuestStageClearDialog
-          stage={clearedStage}
-          nextStage={nextStageOf(clearedStage.stage_number)}
-          open={!!clearedStage}
-          onClose={() => setClearedStage(null)}
-        />
-      )}
+      <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
     </div>
   );
 };

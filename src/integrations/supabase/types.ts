@@ -496,6 +496,48 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_items: {
+        Row: {
+          atk_bonus: number
+          created_at: string
+          def_bonus: number
+          hp_bonus: number
+          icon_name: string
+          id: string
+          item_key: string
+          item_name: string
+          item_type: string
+          rarity: string
+          source: string
+        }
+        Insert: {
+          atk_bonus?: number
+          created_at?: string
+          def_bonus?: number
+          hp_bonus?: number
+          icon_name: string
+          id?: string
+          item_key: string
+          item_name: string
+          item_type: string
+          rarity: string
+          source: string
+        }
+        Update: {
+          atk_bonus?: number
+          created_at?: string
+          def_bonus?: number
+          hp_bonus?: number
+          icon_name?: string
+          id?: string
+          item_key?: string
+          item_name?: string
+          item_type?: string
+          rarity?: string
+          source?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           category: string
@@ -872,6 +914,115 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      quest_battle_logs: {
+        Row: {
+          boss_atk: number
+          boss_counter_damage: number
+          boss_def: number
+          boss_hp_after: number
+          boss_hp_before: number
+          created_at: string
+          damage_dealt: number
+          id: string
+          is_boss_defeated: boolean
+          is_full_power: boolean
+          player_atk: number
+          player_def: number
+          player_hp: number
+          session_volume: number
+          stage_id: number
+          user_id: string
+        }
+        Insert: {
+          boss_atk: number
+          boss_counter_damage: number
+          boss_def: number
+          boss_hp_after: number
+          boss_hp_before: number
+          created_at?: string
+          damage_dealt: number
+          id?: string
+          is_boss_defeated?: boolean
+          is_full_power: boolean
+          player_atk: number
+          player_def: number
+          player_hp: number
+          session_volume?: number
+          stage_id: number
+          user_id: string
+        }
+        Update: {
+          boss_atk?: number
+          boss_counter_damage?: number
+          boss_def?: number
+          boss_hp_after?: number
+          boss_hp_before?: number
+          created_at?: string
+          damage_dealt?: number
+          id?: string
+          is_boss_defeated?: boolean
+          is_full_power?: boolean
+          player_atk?: number
+          player_def?: number
+          player_hp?: number
+          session_volume?: number
+          stage_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_battle_logs_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "quest_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_bosses: {
+        Row: {
+          boss_atk: number
+          boss_def: number
+          boss_description: string
+          boss_hp: number
+          boss_icon: string
+          boss_name: string
+          created_at: string
+          id: number
+          stage_id: number
+        }
+        Insert: {
+          boss_atk: number
+          boss_def: number
+          boss_description: string
+          boss_hp: number
+          boss_icon?: string
+          boss_name: string
+          created_at?: string
+          id?: number
+          stage_id: number
+        }
+        Update: {
+          boss_atk?: number
+          boss_def?: number
+          boss_description?: string
+          boss_hp?: number
+          boss_icon?: string
+          boss_name?: string
+          created_at?: string
+          id?: number
+          stage_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_bosses_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: true
+            referencedRelation: "quest_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quest_stage_conditions: {
         Row: {
@@ -1489,6 +1640,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_equipment: {
+        Row: {
+          equipped: boolean
+          id: string
+          item_id: string
+          obtained_at: string
+          user_id: string
+        }
+        Insert: {
+          equipped?: boolean
+          id?: string
+          item_id: string
+          obtained_at?: string
+          user_id: string
+        }
+        Update: {
+          equipped?: boolean
+          id?: string
+          item_id?: string
+          obtained_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_equipment_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_event_completion: {
         Row: {
           completed_at: string
@@ -1622,6 +1805,53 @@ export type Database = {
           weight?: number | null
         }
         Relationships: []
+      }
+      user_quest_boss_progress: {
+        Row: {
+          boss_current_hp: number
+          created_at: string
+          defeated: boolean
+          defeated_at: string | null
+          id: string
+          stage_id: number
+          total_damage_dealt: number
+          total_turns: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          boss_current_hp: number
+          created_at?: string
+          defeated?: boolean
+          defeated_at?: string | null
+          id?: string
+          stage_id: number
+          total_damage_dealt?: number
+          total_turns?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          boss_current_hp?: number
+          created_at?: string
+          defeated?: boolean
+          defeated_at?: string | null
+          id?: string
+          stage_id?: number
+          total_damage_dealt?: number
+          total_turns?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quest_boss_progress_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "quest_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_quest_progress: {
         Row: {
@@ -1832,6 +2062,14 @@ export type Database = {
         Returns: number
       }
       enter_rival_battle: { Args: never; Returns: Json }
+      equip_item: {
+        Args: { p_item_id: string; p_user_id: string }
+        Returns: Json
+      }
+      execute_quest_battle: {
+        Args: { p_session_volume: number; p_user_id: string }
+        Returns: Json
+      }
       get_booked_slots: {
         Args: { check_date: string }
         Returns: {
@@ -1840,6 +2078,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_player_combat_stats: { Args: { p_user_id: string }; Returns: Json }
       get_quest_progress: { Args: { p_user_id: string }; Returns: Json }
       get_ranking: { Args: { p_gender: string; p_type: string }; Returns: Json }
       get_trainer_ids: {
@@ -1855,6 +2094,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      initialize_quest_boss_progress: { Args: never; Returns: Json }
       initialize_quest_progress: { Args: never; Returns: Json }
       move_to_dlq: {
         Args: {
