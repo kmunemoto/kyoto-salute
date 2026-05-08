@@ -1,6 +1,6 @@
 import { useQuestProgress, isStageComplete } from "@/hooks/useQuestProgress";
 import { getQuestIcon } from "@/lib/questIcons";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles, Castle } from "lucide-react";
 
 interface Props {
   onOpen: () => void;
@@ -8,7 +8,25 @@ interface Props {
 
 const QuestCard = ({ onOpen }: Props) => {
   const { data, loading } = useQuestProgress();
-  if (loading || !data) return null;
+  if (loading) return null;
+
+  // Fallback: no progress data yet → invite to start
+  if (!data) {
+    return (
+      <button
+        onClick={onOpen}
+        className="w-full rounded-2xl p-5 text-left text-white shadow-lg transition active:scale-[0.99]"
+        style={{ background: "linear-gradient(135deg, #1f2937 0%, #374151 100%)" }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <Castle className="w-4 h-4" />
+          <p className="text-[10px] font-bold tracking-wider uppercase opacity-80">王国復興クエスト</p>
+        </div>
+        <p className="font-bold text-base">冒険を始めよう！</p>
+        <p className="text-[11px] opacity-80 mt-1">眠れる王国を取り戻す旅へ</p>
+      </button>
+    );
+  }
 
   const stage = data.stages.find((s) => s.stage_number === data.current_stage);
   const allDone = data.completed_stage_ids.length >= 8;
