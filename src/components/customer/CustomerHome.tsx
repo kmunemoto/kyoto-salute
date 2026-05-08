@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import StreakCard from "./StreakCard";
 import AvatarCard from "./AvatarCard";
+import AvatarGenderSetupDialog from "./AvatarGenderSetupDialog";
 import DailyMissionCard from "./DailyMissionCard";
 import RaidBossCard from "./RaidBossCard";
 import GachaCard from "./GachaCard";
@@ -43,6 +44,32 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const [latestDate, setLatestDate] = useState<string | null>(null);
   const [totalSessions, setTotalSessions] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
+  const [needsGender, setNeedsGender] = useState(false);
+
+  // Check if user has selected a gender for their avatar
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      // ensure row exists
+      await supabase.from("user_avatars").insert({ user_id: user.id }).select().maybeSingle().then(() => {}).catch(() => {});
+      const { data } = await supabase
+        .from("user_avatars")
+        .select("gender")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) setNeedsGender(!data?.gender);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const handleSelectGender = async (gender: "male" | "female") => {
+    if (!user) return;
+    await supabase.from("user_avatars").update({ gender } as any).eq("user_id", user.id);
+    setNeedsGender(false);
+    // Trigger AvatarCard refresh via custom event
+    window.dispatchEvent(new CustomEvent("avatar-gender-updated"));
+  };
 
   // Fetch all workouts (for PR + latest session) and total sessions count
   useEffect(() => {
