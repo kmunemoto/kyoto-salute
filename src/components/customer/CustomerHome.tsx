@@ -215,11 +215,8 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const fatChange = latest && first && latest.body_fat != null && first.bodyFat != null
     ? (latest.body_fat - (first.bodyFat as number)).toFixed(1) : null;
 
-  return (
-    <div className="px-4 py-4 space-y-5 slide-up">
-      <AvatarGenderSetupDialog open={needsGender} onSelect={handleSelectGender} />
-      {/* Greeting Header */}
-      <div className="gym-gradient rounded-2xl p-5 text-primary-foreground relative overflow-hidden">
+  const greetingHeader = (
+    <div className="gym-gradient rounded-2xl p-5 text-primary-foreground relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-accent/10 -translate-y-8 translate-x-8" />
         <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-accent/5 translate-y-6 -translate-x-4" />
         <div className="relative">
@@ -236,14 +233,11 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
             </div>
           </div>
         </div>
-      </div>
+    </div>
+  );
 
-
-      {/* Plan badge - only show if user has a plan */}
-      <AvatarCard />
-
-      {/* Next Booking - real data */}
-      <section>
+  const nextBookingSection = (
+    <section>
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
           <CalendarDays className="w-3.5 h-3.5" />
           次回の予約
@@ -276,9 +270,32 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
             </CardContent>
           </Card>
         )}
-      </section>
+    </section>
+  );
 
-      {/* Streak Card */}
+  return (
+    <div className="px-4 py-4 space-y-5 slide-up">
+      <AvatarGenderSetupDialog open={needsGender} onSelect={handleSelectGender} />
+
+      {/* 1. Greeting */}
+      {greetingHeader}
+
+      {/* 2. Avatar */}
+      <AvatarCard />
+
+      {/* 3. Raid Boss */}
+      <RaidBossCard />
+
+      {/* 4. Gacha (only if tickets exist — handled inside) */}
+      <GachaCard />
+
+      {/* 5. Daily Mission (only when has booking today — handled inside) */}
+      <DailyMissionCard />
+
+      {/* 6. Season Event (only when active — handled inside) */}
+      <SeasonEventCard />
+
+      {/* 7. Streak */}
       {!streakLoading && (
         <StreakCard
           currentStreak={currentStreak}
@@ -287,50 +304,11 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         />
       )}
 
-      {hasPlan && profile?.cycle_start_date && profile?.show_usage_period !== false && (() => {
-        const currentCycle = getCycleWindow(profile.cycle_start_date, now);
-        if (!currentCycle) return null;
-        const { start: cycleStart, end: cycleEnd } = currentCycle;
-        const remaining = differenceInDays(cycleEnd, now);
-        const isExpiringSoon = remaining >= 0 && remaining <= 3;
-        const isExpired = remaining < 0;
-        return (
-          <Card className={`border-l-4 ${isExpired ? 'border-l-destructive bg-destructive/5' : isExpiringSoon ? 'border-l-warning bg-warning/5' : 'border-l-accent bg-accent/5'}`}>
-            <CardContent className="p-3 flex items-center gap-2">
-              <Clock className={`w-4 h-4 ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-accent'}`} />
-              <div className="flex-1">
-                <p className="text-sm font-bold">
-                  今回の利用期間：{format(cycleStart, "M月d日", { locale: ja })} 〜 {format(cycleEnd, "M月d日", { locale: ja })}
-                </p>
-                {isExpired ? (
-                  <p className="text-xs font-bold text-destructive mt-0.5">利用期限が過ぎています</p>
-                ) : isExpiringSoon ? (
-                  <p className="text-xs font-bold text-warning mt-0.5">残り{remaining}日で期限切れ</p>
-                ) : (
-                  <p className="text-xs text-muted-foreground mt-0.5">残り{remaining}日</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
-
-      {hasPlan && (
-        <Card className="border-l-4 border-l-accent bg-accent/5">
-          <CardContent className="p-3 flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-accent" />
-            <span className="text-sm font-bold">現在のプラン：{currentPlan?.endsWith("プラン") ? currentPlan : `${currentPlan}プラン`}</span>
-          </CardContent>
-        </Card>
-      )}
+      {/* 8. Next Booking */}
+      {nextBookingSection}
 
       <RivalBattleCard />
-
-      <DailyMissionCard />
-      <RaidBossCard />
-      <SeasonEventCard />
       <QuestCard onOpen={() => onNavigate?.("quest")} />
-      <GachaCard />
 
       {/* Stats Cards */}
       {latest && (latest.weight != null || latest.body_fat != null) && (
