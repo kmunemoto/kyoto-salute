@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Dumbbell, TrendingUp, Calendar, Loader2, Share2, Camera } from "lucide-react";
+import { Dumbbell, TrendingUp, Calendar, Loader2, Share2, Camera, Trophy } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,6 +17,7 @@ import MuscleGroupBadge from "./MuscleGroupBadge";
 import { summarizeMuscleGroups, subscribeMuscleGroup, loadMuscleGroupMap } from "@/lib/muscleGroup";
 import ProgressPhotosTab from "./progress/ProgressPhotosTab";
 import MuscleBalanceRadar from "./MuscleBalanceRadar";
+import CustomerRanking from "./CustomerRanking";
 import {
   LineChart,
   Line,
@@ -45,7 +46,7 @@ interface WorkoutWithExercise {
 
 const CustomerTraining = () => {
   const { user } = useAuth();
-  const [subTab, setSubTab] = useState<"workout" | "photos">("workout");
+  const [subTab, setSubTab] = useState<"workout" | "photos" | "ranking">("workout");
   const [workouts, setWorkouts] = useState<WorkoutWithExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareDate, setShareDate] = useState<string | null>(null);
@@ -174,29 +175,40 @@ const CustomerTraining = () => {
       </div>
 
       {/* Sub tabs */}
-      <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted">
+      <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-muted">
         <button
           onClick={() => setSubTab("workout")}
-          className={`h-9 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition ${
+          className={`h-9 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition ${
             subTab === "workout" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
           }`}
         >
-          <Dumbbell className="w-4 h-4" />
+          <Dumbbell className="w-3.5 h-3.5" />
           トレーニング
         </button>
         <button
           onClick={() => setSubTab("photos")}
-          className={`h-9 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition ${
+          className={`h-9 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition ${
             subTab === "photos" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
           }`}
         >
-          <Camera className="w-4 h-4" />
+          <Camera className="w-3.5 h-3.5" />
           写真
+        </button>
+        <button
+          onClick={() => setSubTab("ranking")}
+          className={`h-9 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition ${
+            subTab === "ranking" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          ランキング
         </button>
       </div>
 
       {subTab === "photos" ? (
         <ProgressPhotosTab />
+      ) : subTab === "ranking" ? (
+        <CustomerRanking />
       ) : (
         <>
           <MuscleBalanceRadar />
