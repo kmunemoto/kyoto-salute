@@ -252,7 +252,12 @@ const CustomerSettings = () => {
                       className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center"
                       style={{ backgroundColor: `${rank.color}15` }}
                     >
-                      <img src={getAvatarImage(rank.key, g, "orange")} alt={g} className="w-full h-full object-cover" />
+                      <img
+                        src={getAvatarImage(rank.key, g, "orange")}
+                        alt={g}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${rank.key}.png`; }}
+                      />
                     </div>
                     <span className="mt-2 text-sm font-bold">{g === "female" ? "女性" : "男性"}</span>
                     {selected && <span className="mt-0.5 text-[10px] font-bold text-accent">選択中</span>}
