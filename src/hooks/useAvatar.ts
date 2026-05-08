@@ -22,6 +22,8 @@ export interface AvatarRow {
   max_combo_reached?: number;
   combo_5_count?: number;
   equipped_title?: string | null;
+  gender?: "male" | "female";
+  hair_color?: string;
 }
 
 export interface ExpLogRow {
@@ -45,7 +47,7 @@ export const useAvatar = (autoSync = true) => {
   const refetch = useCallback(async () => {
     if (!user) return;
     const [avRes, logRes, achRes, titleRes] = await Promise.all([
-      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color").eq("user_id", user.id).maybeSingle(),
       supabase
         .from("avatar_exp_logs")
         .select("id, exp_amount, reason, reference_date, created_at")
@@ -262,5 +264,11 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
-  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle };
+  const updateGender = useCallback(async (gender: "male" | "female") => {
+    if (!user) return;
+    await supabase.from("user_avatars").update({ gender } as any).eq("user_id", user.id);
+    await refetch();
+  }, [user, refetch]);
+
+  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender };
 };
