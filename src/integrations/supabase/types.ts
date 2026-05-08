@@ -62,6 +62,33 @@ export type Database = {
         }
         Relationships: []
       }
+      avatar_rank_up_rewards: {
+        Row: {
+          coins_awarded: number
+          created_at: string
+          id: string
+          rank_name: string
+          tickets_awarded: number
+          user_id: string
+        }
+        Insert: {
+          coins_awarded?: number
+          created_at?: string
+          id?: string
+          rank_name: string
+          tickets_awarded?: number
+          user_id: string
+        }
+        Update: {
+          coins_awarded?: number
+          created_at?: string
+          id?: string
+          rank_name?: string
+          tickets_awarded?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       blocked_slots: {
         Row: {
           blocked_date: string
@@ -1115,7 +1142,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          session_date: string
+          session_date: string | null
           used: boolean
           used_at: string | null
           user_id: string
@@ -1123,7 +1150,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          session_date: string
+          session_date?: string | null
           used?: boolean
           used_at?: string | null
           user_id: string
@@ -1131,7 +1158,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          session_date?: string
+          session_date?: string | null
           used?: boolean
           used_at?: string | null
           user_id?: string
