@@ -1569,6 +1569,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recalculate_event_progress: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
       spin_gacha: {
         Args: { _result_date: string; _user_id: string }
         Returns: Json
