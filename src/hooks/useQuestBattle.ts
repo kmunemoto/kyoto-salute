@@ -77,8 +77,11 @@ export const useBossProgress = () => {
   const fetch = useCallback(async () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
+    const { data: av } = await (supabase as any)
+      .from("user_avatars").select("gender").eq("user_id", user.id).maybeSingle();
+    const gender = av?.gender === "male" ? "male" : "female";
     const [{ data: b }, { data: p }] = await Promise.all([
-      (supabase as any).from("quest_bosses").select("*").order("stage_id"),
+      (supabase as any).from("quest_bosses").select("*").eq("gender", gender).order("stage_id"),
       (supabase as any).from("user_quest_boss_progress").select("stage_id, boss_current_hp, total_damage_dealt, total_turns, defeated").eq("user_id", user.id),
     ]);
     setBosses((b as BossMaster[]) || []);
