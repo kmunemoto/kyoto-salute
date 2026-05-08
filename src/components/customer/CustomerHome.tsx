@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, CreditCard, Clock, ScanLine, BarChart3, ChevronRight, Dumbbell, Share2 } from "lucide-react";
+import { TrendingDown, TrendingUp, CalendarDays, Flame, Target, ScanLine, BarChart3, ChevronRight, Dumbbell, Share2 } from "lucide-react";
 import ProgressCharts from "./ProgressCharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import SeasonEventCard from "./SeasonEventCard";
 import RivalBattleCard from "./RivalBattleCard";
 import QuestCard from "./QuestCard";
 import { Loader2 } from "lucide-react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { getJSTNow, formatJST } from "@/lib/timezone";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
