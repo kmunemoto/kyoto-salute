@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { getJSTNow } from "@/lib/timezone";
 import DiagnosisHistorySection from "./posture/DiagnosisHistorySection";
+import { useAvatar } from "@/hooks/useAvatar";
+import { getAvatarImage, getRankInfo } from "@/lib/avatarSystem";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",
@@ -28,6 +30,7 @@ const CustomerSettings = () => {
   const { profile, loading, updateDisplayName, refetch } = useProfile();
   const { user, signOut } = useAuth();
   const { bookings: myBookings, loading: bookingsLoading } = useMyBookings();
+  const { avatar, updateGender } = useAvatar(false);
   
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
