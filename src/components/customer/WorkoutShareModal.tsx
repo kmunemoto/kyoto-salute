@@ -5,6 +5,7 @@ import WorkoutShareCard, { type ShareTheme } from "./WorkoutShareCard";
 import { formatShareDate, type WorkoutSession } from "@/lib/workoutShare";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   open: boolean;
@@ -17,6 +18,19 @@ interface Props {
 type PhotoLayout = "center" | "grid" | "bottom";
 
 const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions }: Props) => {
+  const { user } = useAuth();
+  const [featuredBadges, setFeaturedBadges] = useState<string[]>([]);
+  useEffect(() => {
+    if (!open || !user) return;
+    supabase
+      .from("user_avatars")
+      .select("featured_badges")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setFeaturedBadges(((data as any)?.featured_badges as string[]) || []);
+      });
+  }, [open, user]);
   const [theme, setTheme] = useState<ShareTheme>("dark");
   const [busy, setBusy] = useState(false);
   const previewBoxRef = useRef<HTMLDivElement>(null);
@@ -552,6 +566,7 @@ const WorkoutShareModal = ({ open, onClose, session, streakWeeks, totalSessions 
               theme={theme}
               streakWeeks={streakWeeks}
               totalSessions={totalSessions}
+              featuredBadges={featuredBadges}
             />
           </div>
         </div>
