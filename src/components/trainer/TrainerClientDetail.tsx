@@ -215,6 +215,7 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [deleteTarget, setDeleteTarget] = useState<WorkoutRecord | null>(null);
   const [cycleStartDate, setCycleStartDate] = useState<string>("");
   const [chatInput, setChatInput] = useState("");
+  const [clientGender, setClientGender] = useState<"male" | "female" | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Check if client has an auth account (user_roles entry)
@@ -248,6 +249,19 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
       setLoadingProfile(false);
     };
     fetchProfile();
+  }, [clientId]);
+
+  // Fetch user_avatars gender
+  useEffect(() => {
+    const fetchGender = async () => {
+      const { data } = await supabase
+        .from("user_avatars")
+        .select("gender")
+        .eq("user_id", clientId)
+        .maybeSingle();
+      setClientGender(((data as any)?.gender as "male" | "female" | null) ?? null);
+    };
+    fetchGender();
   }, [clientId]);
 
   // Fetch exercises master
@@ -571,6 +585,29 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     toast.success(checked ? "利用期間を表示にしました" : "利用期間を非表示にしました");
   };
 
+  const handleGenderChange = async (g: "male" | "female") => {
+    // Ensure avatar row exists, then update
+    const { data: existing } = await supabase
+      .from("user_avatars")
+      .select("user_id")
+      .eq("user_id", clientId)
+      .maybeSingle();
+    if (!existing) {
+      const { error: insErr } = await (supabase as any)
+        .from("user_avatars")
+        .insert({ user_id: clientId, gender: g });
+      if (insErr) { toast.error("性別の更新に失敗しました"); return; }
+    } else {
+      const { error } = await (supabase as any)
+        .from("user_avatars")
+        .update({ gender: g })
+        .eq("user_id", clientId);
+      if (error) { toast.error("性別の更新に失敗しました"); return; }
+    }
+    setClientGender(g);
+    toast.success(g === "male" ? "性別を「男性」に設定しました" : "性別を「女性」に設定しました");
+  };
+
   const openEdit = (dateKey: string) => {
     const records = groupedRecords[dateKey] || [];
     if (records.length === 0) return;
@@ -699,6 +736,42 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                   {showUsagePeriod ? '表示' : '非表示'}
                 </span>
                 <Switch checked={showUsagePeriod} onCheckedChange={handleShowUsagePeriodToggle} />
+              </div>
+            </div>
+
+            {/* Gender Setting */}
+            <div className="pt-2 border-t border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">性別</span>
+                {!clientGender && (
+                  <span className="text-xs text-muted-foreground">未設定</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleGenderChange("male")}
+                  className={cn(
+                    "h-10 rounded-md border text-sm font-medium transition-colors",
+                    clientGender === "male"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-input bg-background text-foreground hover:bg-muted"
+                  )}
+                >
+                  男性
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleGenderChange("female")}
+                  className={cn(
+                    "h-10 rounded-md border text-sm font-medium transition-colors",
+                    clientGender === "female"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-input bg-background text-foreground hover:bg-muted"
+                  )}
+                >
+                  女性
+                </button>
               </div>
             </div>
           </CardContent>
