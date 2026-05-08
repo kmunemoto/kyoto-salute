@@ -3,6 +3,7 @@ import {
   CalendarCheck, Flame, Star, Trophy, Shield, Zap, Sparkles, Clover, Crown,
   Swords, Mountain, Footprints, CircleDot, Sunrise, Moon, TrendingUp, Radar,
   Weight, Coins, Camera, Gift, Rocket, Medal, PartyPopper, Hexagon, Boxes,
+  Flower2, Hammer, DoorOpen, Anchor, TreePine, CloudSun, Church,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,6 +53,10 @@ const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
   raid_mvp: Trophy,
   month_200k: Hexagon,
   level_50: Crown,
+  // Quest badges
+  quest_garden_bloom: Flower2,
+  quest_forge_master: Hammer,
+  quest_stargazer: Star,
 };
 
 const TITLE_ICONS: Record<string, LucideIcon> = {
@@ -82,6 +87,12 @@ const TITLE_ICONS: Record<string, LucideIcon> = {
   badge_master: Medal,
   complete_road: Rocket,
   legend_collector: Crown,
+  // Quest titles
+  liberator: DoorOpen,
+  harbor_guardian: Anchor,
+  spirit_ally: TreePine,
+  sky_pioneer: CloudSun,
+  kingdom_hero: Church,
 };
 
 const RARITY_GRADIENT: Record<BadgeRarity, string> = {

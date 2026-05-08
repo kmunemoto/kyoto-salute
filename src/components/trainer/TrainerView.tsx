@@ -12,6 +12,7 @@ import TrainerGymSettings from "./TrainerGymSettings";
 import TrainerRaidManager from "./TrainerRaidManager";
 import TrainerEventManager from "./TrainerEventManager";
 import TrainerRivalBattleManager from "./TrainerRivalBattleManager";
+import TrainerQuestManager from "./TrainerQuestManager";
 import TrainerAnnouncementManager from "./TrainerAnnouncementManager";
 import CounselingResponseList from "./CounselingResponseList";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +22,7 @@ import { useUnreadCount } from "@/hooks/useMessages";
 import { useCounselingResponses } from "@/hooks/useCounselingResponses";
 import { supabase } from "@/integrations/supabase/client";
 
-export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "counseling" | "raid" | "events" | "rival" | "announcements" | "gym-settings";
+export type TrainerTab = "dashboard" | "clients" | "schedule" | "messages" | "exercises" | "counseling" | "raid" | "events" | "rival" | "quest" | "announcements" | "gym-settings";
 
 const TrainerView = () => {
   const [tab, setTab] = useState<TrainerTab>("dashboard");
@@ -122,6 +123,7 @@ const TrainerView = () => {
               {tab === "raid" && <TrainerRaidManager />}
               {tab === "events" && <TrainerEventManager />}
               {tab === "rival" && <TrainerRivalBattleManager />}
+              {tab === "quest" && <TrainerQuestManager />}
               {tab === "announcements" && <TrainerAnnouncementManager />}
               {tab === "gym-settings" && <TrainerGymSettings onSignOut={signOut} />}
             </main>

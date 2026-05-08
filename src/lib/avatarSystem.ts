@@ -60,6 +60,10 @@ export const ACHIEVEMENTS: { key: string; name: string; description: string; rar
   { key: "raid_mvp", name: "レイドMVP", description: "1回のレイドで最大貢献者", rarity: "epic" },
   { key: "month_200k", name: "月間20万kg突破", description: "月間総挙上量200,000kg以上", rarity: "epic" },
   { key: "level_50", name: "Lv50到達", description: "アバターレベル50到達", rarity: "epic" },
+  // === Quest badges (granted server-side by complete_quest_stage) ===
+  { key: "quest_garden_bloom", name: "庭園の復興者", description: "王国復興クエスト 花咲く庭園を復興", rarity: "epic" },
+  { key: "quest_forge_master", name: "鍛冶屋の復興者", description: "王国復興クエスト 鍛冶屋通りを復興", rarity: "epic" },
+  { key: "quest_stargazer", name: "星見の復興者", description: "王国復興クエスト 星見の塔を復興", rarity: "epic" },
 ];
 
 export const getRarityColor = (rarity: AchievementRarity): string => {
