@@ -16,6 +16,7 @@ import { evaluateAndAwardMissions, ensureDailyMissions } from "@/lib/missionRewa
 import { pickDailyMissions } from "@/lib/missionSystem";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
+import { getEmoteVideoSrc } from "@/lib/emotes";
 
 interface Props {
   clientId: string;
@@ -24,6 +25,7 @@ interface Props {
 interface AvatarRow {
   level: number; total_exp: number; coins: number; combo_count: number;
   equipped_title: string | null; max_combo_reached: number; last_session_date: string | null;
+  equipped_emote?: string | null;
 }
 interface DailyMissionRow {
   mission_keys: string[]; completed_keys: string[]; all_completed: boolean; exp_earned: number;
@@ -66,7 +68,7 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
         avatarRes, achRes, titleRes, missionRes, ticketRes, raidLogRes, raidBossRes, gachaRes,
         bookingRes, workoutRes,
       ] = await Promise.all([
-       supabase.from("user_avatars").select("level,total_exp,coins,combo_count,equipped_title,max_combo_reached,last_session_date,gender,hair_color").eq("user_id", clientId).maybeSingle(),
+       supabase.from("user_avatars").select("level,total_exp,coins,combo_count,equipped_title,max_combo_reached,last_session_date,gender,hair_color,equipped_emote").eq("user_id", clientId).maybeSingle(),
         supabase.from("avatar_achievements").select("achievement_key,unlocked_at").eq("user_id", clientId).order("unlocked_at", { ascending: false }),
         supabase.from("user_titles").select("title_key").eq("user_id", clientId),
         supabase.from("daily_missions").select("mission_keys,completed_keys,all_completed,exp_earned").eq("user_id", clientId).eq("mission_date", today).maybeSingle(),
@@ -176,8 +178,19 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
               className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0"
               style={{ backgroundColor: `${p.rank.color}15` }}
             >
-              <img
-                src={p.rank.image}
+              {(() => {
+                const eSrc = getEmoteVideoSrc(avatar.equipped_emote);
+                return eSrc ? (
+                  <video src={eSrc} autoPlay loop muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                ) : (
+                  <img
+                    src={p.rank.image}
+                    alt={p.rank.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+                  />
+                );
+              })()}
                 alt={p.rank.name}
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
