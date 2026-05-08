@@ -5,10 +5,15 @@ import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Coins, Trophy, Plus, Star } from "lucide-react";
+import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
+import { equipRaidItem, RANK_LABEL_JP, type RaidRewardItem, type UserRaidReward, type RaidParticipationStat } from "@/hooks/useRaidRewards";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { format, parseISO as parseISO2 } from "date-fns";
 
 interface Props {
   open: boolean;
@@ -18,6 +23,11 @@ interface Props {
   achievements: string[];
   titles?: string[];
   onEquipTitle?: (titleKey: string | null) => void | Promise<void>;
+  rewardItems?: RaidRewardItem[];
+  ownedRewards?: UserRaidReward[];
+  participation?: RaidParticipationStat[];
+  onRewardsChanged?: () => void;
+  onAvatarChanged?: () => void;
 }
 
 const reasonLabel = (reason: string): string => {
@@ -40,7 +50,8 @@ const reasonLabel = (reason: string): string => {
   }
 };
 
-const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles = [], onEquipTitle }: Props) => {
+const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles = [], onEquipTitle, rewardItems = [], ownedRewards = [], participation = [], onRewardsChanged, onAvatarChanged }: Props) => {
+  const { user } = useAuth();
   const gender = (avatar.gender as "male" | "female") ?? "female";
   const hairColor = (avatar.hair_color as any) ?? "orange";
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
@@ -48,6 +59,25 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
   const acquiredTitles = new Set(titles);
   const equipped = avatar.equipped_title || null;
   const [shopOpen, setShopOpen] = useState(false);
+
+  const ownedKeys = new Set(ownedRewards.map((o) => o.item_key));
+  const ownedWeapons = rewardItems.filter((it) => it.category === "weapon" && ownedKeys.has(it.item_key));
+  const ownedBackgrounds = rewardItems.filter((it) => it.category === "background" && ownedKeys.has(it.item_key));
+  const equippedWeapon = avatar.equipped_weapon || null;
+  const equippedBg = avatar.equipped_background || null;
+
+  const handleEquip = async (cat: "weapon" | "background", key: string | null) => {
+    if (!user) return;
+    try {
+      await equipRaidItem(user.id, cat, key);
+      toast.success(key ? "装備しました" : "装備を解除しました");
+      onAvatarChanged?.();
+    } catch {
+      toast.error("装備変更に失敗しました");
+    }
+  };
+
+  const bossNameByRaid = new Map(participation.map((p) => [p.raid_id, p.boss_name]));
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -166,6 +196,137 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             })}
           </div>
         </section>
+
+        {(ownedWeapons.length > 0 || ownedBackgrounds.length > 0) && (
+          <section className="mt-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <SwordIcon className="w-3.5 h-3.5" /> レイド装備
+            </h3>
+            {ownedWeapons.length > 0 && (
+              <div className="mb-3">
+                <p className="text-[11px] font-bold mb-1.5">武器</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => handleEquip("weapon", null)}
+                    className={`p-2 rounded-xl border text-center text-[11px] font-bold ${equippedWeapon === null ? "border-2" : "bg-muted/30"}`}
+                    style={equippedWeapon === null ? { borderColor: "hsl(174,65%,50%)", backgroundColor: "hsla(174,65%,50%,0.1)" } : {}}
+                  >
+                    <div className="w-12 h-12 mx-auto rounded-lg bg-muted flex items-center justify-center text-muted-foreground">なし</div>
+                    <p className="mt-1">装備しない</p>
+                  </button>
+                  {ownedWeapons.map((it) => {
+                    const eq = equippedWeapon === it.item_key;
+                    return (
+                      <button
+                        key={it.item_key}
+                        onClick={() => handleEquip("weapon", eq ? null : it.item_key)}
+                        className={`p-2 rounded-xl border text-center text-[11px] font-bold ${eq ? "border-2" : "bg-accent/5"}`}
+                        style={eq ? { borderColor: it.theme_color || "hsl(174,65%,50%)", backgroundColor: `${it.theme_color || "#0ABAB5"}1A` } : {}}
+                      >
+                        <div className="w-12 h-12 mx-auto rounded-lg overflow-hidden flex items-center justify-center bg-white/40">
+                          {it.image_url ? (
+                            <img src={it.image_url} alt={it.name} className="w-full h-full object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                          ) : (
+                            <SwordIcon className="w-6 h-6" style={{ color: it.theme_color || undefined }} />
+                          )}
+                        </div>
+                        <p className="mt-1 truncate">{it.name}</p>
+                        {eq && <p className="text-[10px]" style={{ color: it.theme_color || undefined }}>装備中</p>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {ownedBackgrounds.length > 0 && (
+              <div>
+                <p className="text-[11px] font-bold mb-1.5">背景エフェクト</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => handleEquip("background", null)}
+                    className={`p-2 rounded-xl border text-center text-[11px] font-bold ${equippedBg === null ? "border-2" : "bg-muted/30"}`}
+                    style={equippedBg === null ? { borderColor: "hsl(174,65%,50%)", backgroundColor: "hsla(174,65%,50%,0.1)" } : {}}
+                  >
+                    <div className="w-12 h-12 mx-auto rounded-lg bg-muted flex items-center justify-center text-muted-foreground">なし</div>
+                    <p className="mt-1">装備しない</p>
+                  </button>
+                  {ownedBackgrounds.map((it) => {
+                    const eq = equippedBg === it.item_key;
+                    return (
+                      <button
+                        key={it.item_key}
+                        onClick={() => handleEquip("background", eq ? null : it.item_key)}
+                        className={`p-2 rounded-xl border text-center text-[11px] font-bold ${eq ? "border-2" : "bg-accent/5"}`}
+                        style={eq ? { borderColor: it.theme_color || "hsl(174,65%,50%)", backgroundColor: `${it.theme_color || "#0ABAB5"}1A` } : {}}
+                      >
+                        <div className="w-12 h-12 mx-auto rounded-lg overflow-hidden flex items-center justify-center bg-white/40">
+                          {it.image_url ? (
+                            <img src={it.image_url} alt={it.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                          ) : (
+                            <ImageIcon className="w-6 h-6" style={{ color: it.theme_color || undefined }} />
+                          )}
+                        </div>
+                        <p className="mt-1 truncate">{it.name}</p>
+                        {eq && <p className="text-[10px]" style={{ color: it.theme_color || undefined }}>装備中</p>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {participation.length > 0 && (
+          <section className="mt-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> レイド戦績
+            </h3>
+            <div className="space-y-2">
+              {participation.map((r) => {
+                const joined = r.my_rank !== "none";
+                const myItems = rewardItems.filter((it) => r.earned_items.includes(it.item_key));
+                return (
+                  <div
+                    key={r.raid_id}
+                    className={`p-2.5 rounded-xl border ${joined ? "" : "opacity-50"}`}
+                    style={joined ? { borderColor: r.theme_color || undefined } : {}}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+                        {r.boss_image_url ? (
+                          <img src={r.boss_image_url} alt={r.boss_name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                        ) : (
+                          <SwordIcon className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{r.boss_name}</p>
+                        <p className="text-[10px] text-muted-foreground">{r.start_date} 〜 {r.end_date}</p>
+                        {joined ? (
+                          <p className="text-[11px] font-bold mt-0.5" style={{ color: r.theme_color || undefined }}>
+                            {RANK_LABEL_JP[r.my_rank]} ／ {r.my_damage.toLocaleString()} kg
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">未参加</p>
+                        )}
+                      </div>
+                    </div>
+                    {myItems.length > 0 && (
+                      <div className="flex gap-1.5 mt-2 flex-wrap">
+                        {myItems.map((it) => (
+                          <span key={it.item_key} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${it.theme_color || "#0ABAB5"}1A`, color: it.theme_color || undefined }}>
+                            {it.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </DialogContent>
       <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
     </Dialog>
