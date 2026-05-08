@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ACHIEVEMENTS, getExpProgress, getRarityColor, getRarityStarCount } from "@/lib/avatarSystem";
+import { ACHIEVEMENTS, getAvatarImage, getExpProgress, getRankInfo, getRarityColor, getRarityStarCount } from "@/lib/avatarSystem";
 import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
+import { useAvatar } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Coins, Trophy, Plus, Star } from "lucide-react";
+import { Coins, Trophy, Plus, Star, User as UserIcon, Crown } from "lucide-react";
 import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
+import EmoteSection from "./EmoteSection";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { equipRaidItem, RANK_LABEL_JP, type RaidRewardItem, type UserRaidReward, type RaidParticipationStat } from "@/hooks/useRaidRewards";
+import { RAID_DAMAGE_MULT, MISSION_EXP_MULT, GACHA_PROBS, RANK_UP_REWARDS, RANK_LABEL } from "@/lib/rankPerks";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -51,6 +54,7 @@ const reasonLabel = (reason: string): string => {
 
 const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles = [], onEquipTitle, rewardItems = [], ownedRewards = [], participation = [], onRewardsChanged, onAvatarChanged }: Props) => {
   const { user } = useAuth();
+  const { updateGender } = useAvatar(false);
   const gender = (avatar.gender as "male" | "female") ?? "female";
   const hairColor = (avatar.hair_color as any) ?? "orange";
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
@@ -77,6 +81,16 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
   };
 
   const bossNameByRaid = new Map(participation.map((p) => [p.raid_id, p.boss_name]));
+
+  const handleGenderChange = async (g: "male" | "female") => {
+    if (gender === g) return;
+    await updateGender(g);
+    window.dispatchEvent(new CustomEvent("avatar-gender-updated"));
+    onAvatarChanged?.();
+    toast.success(g === "female" ? "女性アバターに変更しました" : "男性アバターに変更しました");
+  };
+
+  const rankKeys: Array<"rookie" | "regular" | "athlete" | "elite" | "legend"> = ["rookie", "regular", "athlete", "elite", "legend"];
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -117,6 +131,49 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             <Plus className="w-3.5 h-3.5 ml-1" />
           </button>
         </div>
+
+        {/* 性別 */}
+        <section className="mt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <UserIcon className="w-3.5 h-3.5" /> 性別
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            {(["female", "male"] as const).map((g) => {
+              const selected = gender === g;
+              const rank = getRankInfo(avatar.level ?? 1, g, hairColor);
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => handleGenderChange(g)}
+                  className={`relative rounded-2xl border-2 p-3 flex flex-col items-center transition ${selected ? "border-accent bg-accent/10" : "border-border bg-card hover:bg-muted/40"}`}
+                >
+                  <div
+                    className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center"
+                    style={{ backgroundColor: `${rank.color}15` }}
+                  >
+                    <img
+                      src={getAvatarImage(rank.key, g, hairColor)}
+                      alt={g}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${rank.key}.png`; }}
+                    />
+                  </div>
+                  <span className="mt-2 text-sm font-bold">{g === "female" ? "女性" : "男性"}</span>
+                  {selected && <span className="text-[10px] font-bold text-accent">選択中</span>}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* エモーション */}
+        <section className="mt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" /> エモーション
+          </h3>
+          <EmoteSection />
+        </section>
 
         <section className="mt-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">EXP獲得履歴</h3>
@@ -326,6 +383,47 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             </div>
           </section>
         )}
+
+        {/* ランク特典一覧 */}
+        <section className="mt-5 mb-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Crown className="w-3.5 h-3.5" /> ランク特典一覧
+          </h3>
+          <div className="rounded-xl border overflow-hidden">
+            <table className="w-full text-[11px]">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left font-bold py-1.5 px-2">ランク</th>
+                  <th className="text-center font-bold py-1.5 px-1">レイド倍率</th>
+                  <th className="text-center font-bold py-1.5 px-1">ミッション倍率</th>
+                  <th className="text-center font-bold py-1.5 px-1">昇格報酬</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rankKeys.map((rk) => {
+                  const isCurrent = p.rank.key === rk;
+                  const rew = rk === "rookie" ? null : RANK_UP_REWARDS[rk];
+                  return (
+                    <tr key={rk} className={`border-t ${isCurrent ? "bg-accent/10 font-bold" : ""}`}>
+                      <td className="py-1.5 px-2">{RANK_LABEL[rk]}{isCurrent && <span className="ml-1 text-[9px] text-accent">現在</span>}</td>
+                      <td className="text-center py-1.5 px-1">×{RAID_DAMAGE_MULT[rk]}</td>
+                      <td className="text-center py-1.5 px-1">×{MISSION_EXP_MULT[rk]}</td>
+                      <td className="text-center py-1.5 px-1">
+                        {rew ? (
+                          <span className="whitespace-nowrap">{rew.coins}コイン<br />ガチャ×{rew.tickets}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1.5">レベルが上がると、ランクに応じた特典が自動で適用されます</p>
+        </section>
+
       </DialogContent>
       <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
     </Dialog>
