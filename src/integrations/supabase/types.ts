@@ -1023,7 +1023,7 @@ export type Database = {
           combo_count: number
           created_at: string
           equipped_title: string | null
-          gender: string
+          gender: string | null
           hair_color: string
           id: string
           last_session_date: string | null
@@ -1039,7 +1039,7 @@ export type Database = {
           combo_count?: number
           created_at?: string
           equipped_title?: string | null
-          gender?: string
+          gender?: string | null
           hair_color?: string
           id?: string
           last_session_date?: string | null
@@ -1055,7 +1055,7 @@ export type Database = {
           combo_count?: number
           created_at?: string
           equipped_title?: string | null
-          gender?: string
+          gender?: string | null
           hair_color?: string
           id?: string
           last_session_date?: string | null
