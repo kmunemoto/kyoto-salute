@@ -47,12 +47,15 @@ if ("serviceWorker" in navigator && !isInIframe && !isPreviewHost) {
     const watchInstallingWorker = (worker: ServiceWorker) => {
       worker.addEventListener("statechange", () => {
         if (worker.state === "installed" && navigator.serviceWorker.controller) {
+          // New SW is ready — activate it immediately
+          worker.postMessage("SKIP_WAITING");
           showAppUpdateBanner();
         }
       });
     };
 
     if (registration.waiting) {
+      registration.waiting.postMessage("SKIP_WAITING");
       showAppUpdateBanner();
     }
 
@@ -69,7 +72,8 @@ if ("serviceWorker" in navigator && !isInIframe && !isPreviewHost) {
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (refreshing) return;
       refreshing = true;
-      showAppUpdateBanner();
+      // New SW took control — reload to pick up fresh assets
+      window.location.reload();
     });
 
     document.addEventListener("visibilitychange", () => {
