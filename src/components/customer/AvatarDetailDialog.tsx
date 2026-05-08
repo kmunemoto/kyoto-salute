@@ -528,6 +528,83 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
 
       </DialogContent>
       <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
+
+      {/* Featured badge bottom sheet */}
+      {badgeSheet && (() => {
+        const a = ACHIEVEMENTS.find((x) => x.key === badgeSheet);
+        if (!a) return null;
+        const got = acquired.has(a.key);
+        const isFeat = featuredSet.has(a.key);
+        return (
+          <div
+            className="fixed inset-0 z-[110] flex items-end justify-center bg-black/50"
+            onClick={() => { setBadgeSheet(null); setReplacePicker(null); }}
+          >
+            <div
+              className="w-full max-w-md rounded-t-3xl bg-background p-5 pb-8 animate-in slide-in-from-bottom"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mx-auto w-10 h-1 rounded-full bg-muted mb-4" />
+              {!replacePicker ? (
+                <>
+                  <div className="flex flex-col items-center text-center">
+                    <BadgeIcon type="achievement" iconKey={a.key} rarity={a.rarity} acquired={got} size={64} />
+                    <p className="mt-2 font-extrabold">{a.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1 break-all">{a.description}</p>
+                  </div>
+                  {got ? (
+                    <button
+                      onClick={() => toggleFeatured(a.key)}
+                      className="mt-5 w-full h-12 rounded-xl font-bold text-white flex items-center justify-center gap-2"
+                      style={{ background: isFeat ? "#9CA3AF" : "linear-gradient(135deg, #F472B6, #EC4899)" }}
+                    >
+                      <Heart className={`w-4 h-4 ${isFeat ? "" : "fill-white"}`} />
+                      {isFeat ? "お気に入りから外す" : "お気に入りに追加"}
+                    </button>
+                  ) : (
+                    <p className="mt-4 text-center text-xs text-muted-foreground">未獲得のバッジです</p>
+                  )}
+                  <button
+                    onClick={() => setBadgeSheet(null)}
+                    className="mt-2 w-full h-10 rounded-xl font-semibold text-muted-foreground"
+                  >
+                    閉じる
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-bold text-center">どのバッジと入れ替えますか？</p>
+                  <p className="text-[11px] text-muted-foreground text-center mt-1">お気に入りは最大3つまでです</p>
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    {featured.map((k) => {
+                      const def = ACHIEVEMENTS.find((x) => x.key === k);
+                      return (
+                        <button
+                          key={k}
+                          onClick={() => handleReplace(k)}
+                          className="p-2 rounded-xl border bg-card hover:bg-muted/40 flex flex-col items-center"
+                        >
+                          <BadgeIcon type="achievement" iconKey={k} rarity={def?.rarity || "normal"} acquired size={40} />
+                          <p className="text-[10px] font-bold mt-1 truncate w-full text-center">{def?.name}</p>
+                          <span className="text-[9px] text-rose-500 mt-0.5 flex items-center gap-0.5">
+                            <XIcon className="w-2.5 h-2.5" />外す
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => setReplacePicker(null)}
+                    className="mt-4 w-full h-10 rounded-xl font-semibold text-muted-foreground"
+                  >
+                    キャンセル
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </Dialog>
   );
 };
