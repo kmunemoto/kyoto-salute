@@ -26,6 +26,11 @@ export const TITLES: TitleDef[] = [
   { key: "streaker", name: "ストリーカー", condition: "最大コンボ10回以上" },
   { key: "record_child", name: "記録の申し子", condition: "自己ベスト累計30回以上" },
   { key: "legend_title", name: "レジェンド", condition: "アバターレベル50到達" },
+  // Collection milestone titles (granted server-side)
+  { key: "collector", name: "コレクター", condition: "バッジ10個取得" },
+  { key: "badge_master", name: "バッジマスター", condition: "バッジ20個取得" },
+  { key: "complete_road", name: "コンプリートへの道", condition: "バッジ30個取得" },
+  { key: "legend_collector", name: "レジェンドコレクター", condition: "全バッジ制覇" },
 ];
 
 export const getTitleDef = (key: string | null | undefined): TitleDef | undefined =>
