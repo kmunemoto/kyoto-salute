@@ -301,12 +301,14 @@ export const useAvatar = (autoSync = true) => {
     if (!user) return;
     await supabase.from("user_avatars").update({ equipped_emote: emoteKey } as any).eq("user_id", user.id);
     await refetch();
+    window.dispatchEvent(new Event("avatar-gender-updated"));
   }, [user, refetch]);
 
   const equipHairColor = useCallback(async (hairColor: string) => {
     if (!user) return;
     await supabase.from("user_avatars").update({ hair_color: hairColor } as any).eq("user_id", user.id);
     await refetch();
+    window.dispatchEvent(new Event("avatar-gender-updated"));
   }, [user, refetch]);
 
   const setFeaturedBadges = useCallback(async (badges: string[]) => {
