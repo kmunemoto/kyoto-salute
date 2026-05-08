@@ -212,3 +212,19 @@ html, body {
   padding: 3px;
   border-radius: inherit;
 }
+
+/* Golden kingdom hero frame for quest stage 8 clear */
+@keyframes golden-frame-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.golden-frame {
+  position: relative;
+  background: linear-gradient(135deg, #fde68a, #f59e0b, #fbbf24, #d97706, #fde68a);
+  background-size: 300% 300%;
+  animation: golden-frame-shimmer 6s ease-in-out infinite;
+  padding: 3px;
+  border-radius: inherit;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
+}
