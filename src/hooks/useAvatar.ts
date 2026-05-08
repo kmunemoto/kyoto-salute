@@ -303,6 +303,12 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
+  const equipHairColor = useCallback(async (hairColor: string) => {
+    if (!user) return;
+    await supabase.from("user_avatars").update({ hair_color: hairColor } as any).eq("user_id", user.id);
+    await refetch();
+  }, [user, refetch]);
+
   const setFeaturedBadges = useCallback(async (badges: string[]) => {
     if (!user) return;
     const trimmed = badges.slice(0, 3);
@@ -320,5 +326,5 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
-  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote, setFeaturedBadges, equipFrame, newAchievement, clearNewAchievement: () => setNewAchievement(null) };
+  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote, equipHairColor, setFeaturedBadges, equipFrame, newAchievement, clearNewAchievement: () => setNewAchievement(null) };
 };
