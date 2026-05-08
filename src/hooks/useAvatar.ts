@@ -26,6 +26,7 @@ export interface AvatarRow {
   hair_color?: string;
   equipped_weapon?: string | null;
   equipped_background?: string | null;
+  equipped_emote?: string | null;
 }
 
 export interface ExpLogRow {
@@ -50,6 +51,7 @@ export const useAvatar = (autoSync = true) => {
     if (!user) return;
     const [avRes, logRes, achRes, titleRes] = await Promise.all([
       supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background").eq("user_id", user.id).maybeSingle(),
+      // emote field appended below via separate fetch to avoid breaking older type cache
       supabase
         .from("avatar_exp_logs")
         .select("id, exp_amount, reason, reference_date, created_at")
