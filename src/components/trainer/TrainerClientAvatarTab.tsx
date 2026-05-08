@@ -162,7 +162,7 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
           </AccordionTrigger>
           <AccordionContent>
             {!todayMission ? (
-              <p className="text-xs text-muted-foreground py-2">本日のミッションはまだ生成されていません</p>
+              <p className="text-xs text-muted-foreground py-2">本日の予約がないためミッション未生成</p>
             ) : (
               <div className="space-y-1.5 pb-1">
                 {todayMission.mission_keys.map((k) => {
