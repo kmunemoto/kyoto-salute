@@ -77,6 +77,11 @@ const TITLE_ICONS: Record<string, LucideIcon> = {
   streaker: Flame,
   record_child: Rocket,
   legend_title: Crown,
+  // Collection milestone titles
+  collector: Award,
+  badge_master: Medal,
+  complete_road: Rocket,
+  legend_collector: Crown,
 };
 
 const RARITY_GRADIENT: Record<BadgeRarity, string> = {
