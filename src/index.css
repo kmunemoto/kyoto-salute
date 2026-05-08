@@ -197,3 +197,18 @@ html, body {
   animation: raid-swords-pulse 1.5s ease-in-out infinite;
   transform-origin: center;
 }
+
+/* Rainbow legend frame for full-collection unlock */
+@keyframes rainbow-frame-spin {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.rainbow-frame {
+  position: relative;
+  background: linear-gradient(135deg, #ff5e62, #ff9966, #ffd166, #06d6a0, #118ab2, #b066ff, #ff5e62);
+  background-size: 400% 400%;
+  animation: rainbow-frame-spin 8s linear infinite;
+  padding: 3px;
+  border-radius: inherit;
+}
