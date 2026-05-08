@@ -10,11 +10,29 @@ import {
   GACHA_RARITY_LABEL,
 } from "@/lib/gachaSystem";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { ACHIEVEMENTS } from "@/lib/avatarSystem";
 
 const SPIN_DURATION = 1800;
 
 const GachaCard = () => {
   const { ticketCount, loading, spinning, spin } = useGacha();
+  const { user } = useAuth();
+  const [epicBonus, setEpicBonus] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("avatar_achievements")
+      .select("achievement_key")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        const keys = ((data as any[]) || []).map((r) => r.achievement_key as string);
+        const epicSet = new Set(ACHIEVEMENTS.filter((a) => a.rarity === "epic").map((a) => a.key));
+        const epicCount = keys.filter((k) => epicSet.has(k)).length;
+        setEpicBonus(epicCount >= 10 ? 2 : epicCount >= 5 ? 1 : 0);
+      });
+  }, [user]);
   const [phase, setPhase] = useState<"idle" | "spinning" | "result">("idle");
   const [revealed, setRevealed] = useState<GachaSpinResult | null>(null);
   const [open, setOpen] = useState(false);
