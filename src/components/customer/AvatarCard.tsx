@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getEmoteVideoSrc } from "@/lib/emotes";
 import { useAvatar } from "@/hooks/useAvatar";
 import { getExpProgress } from "@/lib/avatarSystem";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +40,9 @@ const AvatarCard = () => {
   const equipped = getTitleDef(avatar.equipped_title);
   const weaponItem = rewardItems.find((it) => it.item_key === avatar.equipped_weapon);
   const bgItem = rewardItems.find((it) => it.item_key === avatar.equipped_background);
+  const emoteSrc = getEmoteVideoSrc(avatar.equipped_emote);
+  const [emoteFailed, setEmoteFailed] = useState(false);
+  useEffect(() => { setEmoteFailed(false); }, [emoteSrc]);
 
   return (
     <>
@@ -60,12 +64,25 @@ const AvatarCard = () => {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
             )}
-            <img
-              src={p.rank.image}
-              alt={p.rank.name}
-              className="relative w-full h-full object-cover z-10"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
-            />
+            {emoteSrc && !emoteFailed ? (
+              <video
+                src={emoteSrc}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
+                className="relative w-full h-full object-cover z-10"
+                onError={() => setEmoteFailed(true)}
+              />
+            ) : (
+              <img
+                src={p.rank.image}
+                alt={p.rank.name}
+                className="relative w-full h-full object-cover z-10"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+              />
+            )}
             {weaponItem?.image_url && (
               <img
                 src={weaponItem.image_url}
