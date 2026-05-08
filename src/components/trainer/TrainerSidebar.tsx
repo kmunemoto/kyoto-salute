@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, CalendarDays, MessageCircle, Dumbbell, Settings2, ClipboardList, Sword, PartyPopper, Megaphone } from "lucide-react";
+import { LayoutDashboard, Users, CalendarDays, MessageCircle, Dumbbell, Settings2, ClipboardList, Sword, PartyPopper, Megaphone, Swords } from "lucide-react";
 import type { TrainerTab } from "./TrainerView";
 
 interface TrainerSidebarProps {
@@ -17,6 +17,7 @@ const desktopTabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard
   { id: "counseling", label: "カウンセリング", icon: ClipboardList },
   { id: "raid", label: "レイド管理", icon: Sword },
   { id: "events", label: "イベント管理", icon: PartyPopper },
+  { id: "rival", label: "バトル管理", icon: Swords },
   { id: "announcements", label: "お知らせ", icon: Megaphone },
   { id: "gym-settings", label: "ジム設定", icon: Settings2 },
 ];
@@ -29,6 +30,7 @@ const mobileTabs: { id: TrainerTab; label: string; icon: typeof LayoutDashboard 
   { id: "counseling", label: "カウンセリング", icon: ClipboardList },
   { id: "raid", label: "レイド", icon: Sword },
   { id: "events", label: "イベント", icon: PartyPopper },
+  { id: "rival", label: "バトル", icon: Swords },
   { id: "announcements", label: "お知らせ", icon: Megaphone },
   { id: "gym-settings", label: "ジム設定", icon: Settings2 },
 ];
