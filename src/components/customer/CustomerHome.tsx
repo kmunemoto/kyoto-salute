@@ -281,7 +281,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       <RaidBossCard />
       <SeasonEventCard />
       <GachaCard />
-      <RivalBattleCard />
 
       {/* Streak Card */}
       {!streakLoading && (
