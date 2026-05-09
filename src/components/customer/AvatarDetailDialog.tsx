@@ -215,7 +215,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                     <img
                       src={getAvatarImage(rank.key, g, hairColor)}
                       alt={g}
-                      className="w-full h-full object-cover pixel-avatar"
+                      className="w-full h-full object-contain pixel-avatar"
                       onError={handleAvatarImgError}
                     />
                   </div>
