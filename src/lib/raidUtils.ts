@@ -51,7 +51,7 @@ export async function processSessionRewards(userId: string, workoutDate: string)
     console.error("process_session_rewards", error);
     return null;
   }
-  return data as SessionRewardResult;
+  return data as unknown as SessionRewardResult;
 }
 
 export interface SessionRewardResult {
