@@ -2162,6 +2162,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      grant_equipment: {
+        Args: { p_item_key: string; p_obtained_via?: string; p_user_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2171,6 +2175,11 @@ export type Database = {
       }
       initialize_quest_boss_progress: { Args: never; Returns: Json }
       initialize_quest_progress: { Args: never; Returns: Json }
+      initialize_starter_equipment: { Args: never; Returns: Json }
+      initialize_starter_equipment_for_user: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
