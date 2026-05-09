@@ -188,8 +188,8 @@ const TrainerClientAvatarTab = ({ clientId }: Props) => {
                   <img
                     src={p.rank.image}
                     alt={p.rank.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+                    className="w-full h-full object-cover pixel-avatar"
+                    
                   />
                 );
               })()}

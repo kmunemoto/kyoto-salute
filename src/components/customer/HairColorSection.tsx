@@ -122,8 +122,8 @@ const HairColorSection = () => {
               <img
                 src={getAvatarImage(rank.key, gender, item.item_key as any)}
                 alt={item.item_key}
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${rank.key}.png`; }}
+                className="w-full h-full object-cover pixel-avatar"
+                
               />
             </div>
             <span className="mt-1 text-[11px] font-bold">{item.name}</span>

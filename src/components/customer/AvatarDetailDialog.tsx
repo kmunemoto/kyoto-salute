@@ -158,8 +158,8 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
               <img
                 src={p.rank.image}
                 alt={p.rank.name}
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+                className="w-full h-full object-cover pixel-avatar"
+                
               />
             </div>
             <AvatarFrameOverlay frameKey={avatar.equipped_frame} scale={1.2} />
@@ -211,8 +211,8 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                     <img
                       src={getAvatarImage(rank.key, g, hairColor)}
                       alt={g}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${rank.key}.png`; }}
+                      className="w-full h-full object-cover pixel-avatar"
+                      
                     />
                   </div>
                   <span className="mt-2 text-sm font-bold">{g === "female" ? "女性" : "男性"}</span>
