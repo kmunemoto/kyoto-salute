@@ -6,7 +6,8 @@ export interface EquippedGearItem {
   item_name: string;
   item_type: "weapon" | "shield" | "amulet";
   rarity: "common" | "rare" | "epic" | "legendary";
-  image_path: string;
+  image_path: string | null;
+  icon_name: string | null;
 }
 
 export interface EquippedGear {
@@ -33,7 +34,7 @@ export const useEquippedGear = (userId?: string | null) => {
     setLoading(true);
     let { data } = await (supabase as any)
       .from("user_equipment")
-      .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path)")
+      .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path,icon_name)")
       .eq("user_id", userId)
       .eq("equipped", true);
 
@@ -48,7 +49,7 @@ export const useEquippedGear = (userId?: string | null) => {
         await (supabase as any).rpc("initialize_starter_equipment_for_user", { p_user_id: userId });
         const r = await (supabase as any)
           .from("user_equipment")
-          .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path)")
+          .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path,icon_name)")
           .eq("user_id", userId)
           .eq("equipped", true);
         data = r.data;
@@ -58,7 +59,7 @@ export const useEquippedGear = (userId?: string | null) => {
     const next: EquippedGear = { weapon: null, shield: null, amulet: null };
     (data || []).forEach((row: any) => {
       const it = row.item;
-      if (!it || !it.image_path) return;
+      if (!it) return;
       if (it.item_type === "weapon") next.weapon = it;
       else if (it.item_type === "shield") next.shield = it;
       else if (it.item_type === "amulet") next.amulet = it;

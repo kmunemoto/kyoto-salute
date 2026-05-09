@@ -1,4 +1,5 @@
-import type { EquippedGear } from "@/hooks/useEquippedGear";
+import type { EquippedGear, EquippedGearItem } from "@/hooks/useEquippedGear";
+import { getEquipIcon, RARITY_COLOR } from "@/lib/questBosses";
 
 const RARITY_GLOW: Record<string, string> = {
   common: "",
@@ -15,45 +16,58 @@ interface Props {
   zBase?: number;
 }
 
+const renderItem = (
+  it: EquippedGearItem,
+  style: React.CSSProperties,
+  filter: string,
+) => {
+  if (it.image_path) {
+    return (
+      <img
+        src={it.image_path}
+        alt=""
+        aria-hidden
+        className="absolute pointer-events-none object-contain pixel-avatar"
+        style={{ ...style, filter }}
+      />
+    );
+  }
+  // Icon-based fallback for items without an image (e.g. gacha equipment)
+  const Icon = getEquipIcon(it.icon_name || undefined);
+  const color = RARITY_COLOR[it.rarity] || "#fff";
+  return (
+    <div
+      aria-hidden
+      className="absolute pointer-events-none flex items-center justify-center"
+      style={{ ...style, filter }}
+    >
+      <Icon
+        className="w-full h-full"
+        style={{ color, strokeWidth: 2.5 }}
+      />
+    </div>
+  );
+};
+
 const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
   // In compact spots (ranking rows, small avatars) skip overlay entirely.
   if (compact) return null;
   return (
     <>
-      {gear.shield && (
-        <img
-          src={gear.shield.image_path}
-          alt=""
-          aria-hidden
-          className="absolute pointer-events-none object-contain"
-          style={{
-            bottom: "5%",
-            left: "-5%",
-            height: "25%",
-            width: "auto",
-            zIndex: zBase,
-            opacity: 0.9,
-            filter: `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
-          }}
-        />
+      {gear.shield && renderItem(
+        gear.shield,
+        { bottom: "5%", left: "-5%", height: "25%", width: "25%", zIndex: zBase, opacity: 0.95 },
+        `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
       )}
-      {gear.weapon && (
-        <img
-          src={gear.weapon.image_path}
-          alt=""
-          aria-hidden
-          className="absolute pointer-events-none object-contain"
-          style={{
-            bottom: "2%",
-            right: "-5%",
-            height: "30%",
-            width: "auto",
-            zIndex: zBase + 1,
-            transform: "rotate(15deg)",
-            opacity: 0.9,
-            filter: `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
-          }}
-        />
+      {gear.amulet && renderItem(
+        gear.amulet,
+        { top: "-8%", left: "50%", transform: "translateX(-50%)", height: "22%", width: "22%", zIndex: zBase + 2, opacity: 0.95 },
+        `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.amulet.rarity]}`,
+      )}
+      {gear.weapon && renderItem(
+        gear.weapon,
+        { bottom: "2%", right: "-5%", height: "30%", width: "30%", zIndex: zBase + 1, transform: "rotate(15deg)", opacity: 0.95 },
+        `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
       )}
     </>
   );
