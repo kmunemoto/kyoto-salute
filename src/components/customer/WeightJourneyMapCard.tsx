@@ -78,8 +78,6 @@ const WeightJourneyMapCard = () => {
   const progress = currentW != null ? Math.min(100, Math.max(0, (lost / totalGoal) * 100)) : 0;
   const remaining = currentW != null ? Math.max(0, currentW - targetW) : totalGoal;
 
-  const achievedTypes = new Set(milestones.map((m) => m.milestone_type));
-
   // Avatar image
   const gender = (avatar?.gender as "male" | "female") ?? "female";
   const hairColor = (avatar?.hair_color as any) ?? "orange";
