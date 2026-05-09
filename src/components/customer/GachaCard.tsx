@@ -27,7 +27,8 @@ const GachaCard = () => {
   }, [user]);
   const [open, setOpen] = useState(false);
 
-  if (loading || ticketCount <= 0) return null;
+  if (loading) return null;
+  if (ticketCount <= 0 && !open) return null;
 
   const emphasize = ticketCount >= 2;
 
