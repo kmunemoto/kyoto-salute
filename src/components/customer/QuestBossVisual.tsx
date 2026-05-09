@@ -27,9 +27,10 @@ interface Props {
   size?: number;
   locked?: boolean;
   completed?: boolean;
+  imageUrl?: string | null;
 }
 
-const QuestBossVisual = ({ stageNumber, Icon, size = 120, locked, completed }: Props) => {
+const QuestBossVisual = ({ stageNumber, Icon, size = 120, locked, completed, imageUrl }: Props) => {
   const theme = getChapterTheme(stageNumber);
   const glow =
     stageNumber >= 8 ? "quest-glow-3" :
@@ -66,7 +67,15 @@ const QuestBossVisual = ({ stageNumber, Icon, size = 120, locked, completed }: P
         style={{ width: size, height: size, background: bg }}
       >
         {decoCls && <div className={decoCls}>{particles}</div>}
-        {locked ? (
+        {!locked && imageUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover rounded-full drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+            style={{ filter: completed ? "saturate(0.85)" : undefined }}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        ) : locked ? (
           <Lock className="text-white/90 relative" style={{ width: size * 0.4, height: size * 0.4 }} />
         ) : (
           <Icon className="text-white relative drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]" style={{ width: size * 0.4, height: size * 0.4 }} />

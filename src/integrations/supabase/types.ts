@@ -1017,6 +1017,7 @@ export type Database = {
           boss_description: string
           boss_hp: number
           boss_icon: string
+          boss_image_url: string | null
           boss_name: string
           created_at: string
           gender: string
@@ -1029,6 +1030,7 @@ export type Database = {
           boss_description: string
           boss_hp: number
           boss_icon?: string
+          boss_image_url?: string | null
           boss_name: string
           created_at?: string
           gender?: string
@@ -1041,6 +1043,7 @@ export type Database = {
           boss_description?: string
           boss_hp?: number
           boss_icon?: string
+          boss_image_url?: string | null
           boss_name?: string
           created_at?: string
           gender?: string
@@ -1094,6 +1097,7 @@ export type Database = {
       }
       quest_stages: {
         Row: {
+          background_image_url: string | null
           created_at: string
           description: string
           id: number
@@ -1114,6 +1118,7 @@ export type Database = {
           theme_icon: string
         }
         Insert: {
+          background_image_url?: string | null
           created_at?: string
           description: string
           id: number
@@ -1134,6 +1139,7 @@ export type Database = {
           theme_icon: string
         }
         Update: {
+          background_image_url?: string | null
           created_at?: string
           description?: string
           id?: number

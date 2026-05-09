@@ -43,6 +43,7 @@ export interface BossMaster {
   boss_def: number;
   boss_description: string;
   boss_icon: string;
+  boss_image_url?: string | null;
 }
 
 export const useCombatStats = () => {

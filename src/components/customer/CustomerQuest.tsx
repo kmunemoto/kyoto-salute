@@ -134,6 +134,7 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
                       size={64}
                       locked={isLocked}
                       completed={isCompleted}
+                      imageUrl={boss?.boss_image_url}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -203,6 +204,8 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
             Icon={Icon}
             locked={isLocked}
             completed={isCompleted}
+            bossImageUrl={boss?.boss_image_url}
+            backgroundImageUrl={stage.background_image_url}
           />
         );
       })()}

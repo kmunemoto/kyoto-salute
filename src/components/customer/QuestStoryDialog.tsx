@@ -17,11 +17,14 @@ interface Props {
   locked?: boolean;
   completed?: boolean;
   curHp?: number;
+  bossImageUrl?: string | null;
+  backgroundImageUrl?: string | null;
 }
 
 const QuestStoryDialog = ({
   open, onClose, stageNumber, stageName, storyText,
   bossName, bossHp, bossAtk, bossDef, Icon, locked, completed, curHp,
+  bossImageUrl, backgroundImageUrl,
 }: Props) => {
   useEffect(() => {
     if (!open) return;
@@ -44,7 +47,20 @@ const QuestStoryDialog = ({
         className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative px-5 py-6 text-white" style={{ background: headerBg }}>
+        <div className="relative px-5 py-6 text-white overflow-hidden" style={{ background: headerBg }}>
+          {!locked && backgroundImageUrl && (
+            <>
+              <img
+                src={backgroundImageUrl}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+            </>
+          )}
+          <div className="relative">
           <button
             onClick={onClose}
             className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/30 flex items-center justify-center"
@@ -56,11 +72,12 @@ const QuestStoryDialog = ({
           <h2 className="text-xl font-bold mt-1 break-all">{locked ? "？？？" : stageName}</h2>
 
           <div className="flex justify-center mt-4">
-            <QuestBossVisual stageNumber={stageNumber} Icon={locked ? Lock : Icon} locked={locked} completed={completed} />
+            <QuestBossVisual stageNumber={stageNumber} Icon={locked ? Lock : Icon} locked={locked} completed={completed} imageUrl={bossImageUrl} />
           </div>
           {!locked && bossName && (
             <p className="text-center font-bold mt-3 break-all">{bossName}</p>
           )}
+          </div>
         </div>
 
         <div className="px-5 py-5 space-y-4">
