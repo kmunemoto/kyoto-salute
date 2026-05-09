@@ -20,7 +20,6 @@ import RivalBattleCard from "./RivalBattleCard";
 import QuestCard from "./QuestCard";
 import LoginBonusBanner from "./LoginBonusBanner";
 import LoginBonusDialog from "./LoginBonusDialog";
-import SeasonPassCard from "./SeasonPassCard";
 import { useLoginBonus } from "@/hooks/useLoginBonus";
 import { Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -297,8 +296,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       {loginBonusStatus && !loginBonusStatus.claimed_today && (
         <LoginBonusBanner onOpen={() => setLoginBonusOpen(true)} />
       )}
-
-      <SeasonPassCard />
 
       {/* 2. Avatar */}
       <AvatarCard />
