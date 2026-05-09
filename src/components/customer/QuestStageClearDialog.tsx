@@ -1,9 +1,22 @@
 import { useEffect, useState } from "react";
-import { Coins, Sparkles, Trophy, Award, X } from "lucide-react";
+import { Coins, Sparkles, Trophy, Award, X, Shield as ShieldIcon, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getQuestIcon } from "@/lib/questIcons";
 import { getTitleDef } from "@/lib/titleSystem";
 import type { QuestStage } from "@/hooks/useQuestProgress";
+
+const STAGE_EQUIPMENT: Record<number, { name: string; type: "shield" | "amulet"; rarity: "rare" | "epic" | "legendary"; image: string }> = {
+  3: { name: "氷の盾", type: "shield", rarity: "rare", image: "/equipment/shield_ice.png" },
+  4: { name: "森の護符", type: "amulet", rarity: "rare", image: "/equipment/amulet_forest.png" },
+  7: { name: "嵐の障壁", type: "shield", rarity: "epic", image: "/equipment/shield_storm.png" },
+  8: { name: "光の王冠", type: "amulet", rarity: "legendary", image: "/equipment/amulet_crown.png" },
+};
+
+const RARITY_COLOR: Record<string, string> = {
+  rare: "#3b82f6",
+  epic: "#8b5cf6",
+  legendary: "#f59e0b",
+};
 
 interface Props {
   stage: QuestStage;
@@ -26,6 +39,7 @@ const QuestStageClearDialog = ({ stage, nextStage, open, onClose }: Props) => {
 
   const titleDef = stage.reward_title ? getTitleDef(stage.reward_title) : null;
   const Icon = getQuestIcon(stage.theme_icon);
+  const equipReward = STAGE_EQUIPMENT[stage.stage_number];
 
   const bgComplete = `linear-gradient(135deg, ${stage.theme_gradient_from} 0%, ${stage.theme_gradient_to} 100%)`;
   const bgIntro = nextStage
@@ -119,6 +133,32 @@ const QuestStageClearDialog = ({ stage, nextStage, open, onClose }: Props) => {
                 </div>
               )}
             </div>
+
+            {equipReward && (
+              <div
+                className="rounded-2xl p-4 bg-white/15 backdrop-blur space-y-2"
+                style={{ boxShadow: `inset 0 0 0 2px ${RARITY_COLOR[equipReward.rarity]}` }}
+              >
+                <p className="text-xs font-bold tracking-wider opacity-80 flex items-center justify-center gap-1">
+                  {equipReward.type === "shield" ? <ShieldIcon className="w-3.5 h-3.5" /> : <Gem className="w-3.5 h-3.5" />}
+                  装備品を入手
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <img
+                    src={equipReward.image}
+                    alt={equipReward.name}
+                    className="w-16 h-16 object-contain"
+                    style={{ filter: `drop-shadow(0 0 8px ${RARITY_COLOR[equipReward.rarity]})` }}
+                  />
+                  <div className="text-left">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: RARITY_COLOR[equipReward.rarity] }}>
+                      {equipReward.rarity}
+                    </p>
+                    <p className="text-base font-bold">{equipReward.name}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {nextStage ? (
               <Button
