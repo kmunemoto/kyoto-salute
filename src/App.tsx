@@ -11,7 +11,6 @@ import Unsubscribe from "./pages/Unsubscribe.tsx";
 import TrialBooking from "./pages/TrialBooking.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
-import SeasonPass from "./pages/SeasonPass.tsx";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +27,6 @@ const App = () => (
             <Route path="/trial" element={<TrialBooking />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/season-pass" element={<SeasonPass />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
