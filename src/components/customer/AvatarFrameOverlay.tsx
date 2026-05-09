@@ -19,7 +19,7 @@ const AvatarFrameOverlay = ({ frameKey, scale = 1.2, className }: Props) => {
       src={src}
       alt=""
       aria-hidden
-      className={`pointer-events-none absolute top-1/2 left-1/2 w-full h-full object-contain z-30 ${className || ""}`}
+      className={`pointer-events-none absolute top-1/2 left-1/2 w-full h-full object-contain z-0 ${className || ""}`}
       style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
       onError={(e) => {
         (e.currentTarget as HTMLImageElement).style.display = "none";
