@@ -85,12 +85,13 @@ const TrainerWeightJourneyPanel = ({ clientId }: Props) => {
       return;
     }
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("weight_journey" as any).insert({
+    const { error } = await supabase.from("weight_journey" as any).upsert({
       user_id: clientId,
       start_weight: s,
       target_weight: t,
+      is_active: true,
       created_by: user?.id,
-    } as any);
+    } as any, { onConflict: "user_id" });
     if (error) {
       toast.error("設定に失敗しました: " + error.message);
       return;
