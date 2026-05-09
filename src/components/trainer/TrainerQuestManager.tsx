@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Castle, RefreshCw } from "lucide-react";
+import { Loader2, Castle, RefreshCw, Swords } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ interface UserProgress {
 const TrainerQuestManager = () => {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [distributing, setDistributing] = useState(false);
   const [users, setUsers] = useState<UserProgress[]>([]);
 
   const fetchData = async () => {
@@ -81,6 +82,19 @@ const TrainerQuestManager = () => {
     fetchData();
   };
 
+  const handleDistributeStarter = async () => {
+    if (!confirm("初期装備を持っていない全会員に、木の剣・革の盾・石の護符を配布します。")) return;
+    setDistributing(true);
+    const { data, error } = await supabase.rpc("initialize_starter_equipment");
+    setDistributing(false);
+    if (error) {
+      toast.error("配布に失敗しました", { description: error.message });
+      return;
+    }
+    const n = (data as any)?.users_initialized ?? 0;
+    toast.success(`${n}名に初期装備を配布しました`);
+  };
+
   return (
     <div className="space-y-4 max-w-3xl">
       <div className="flex items-center gap-2">
@@ -102,6 +116,21 @@ const TrainerQuestManager = () => {
           <Button onClick={handleInitialize} disabled={running}>
             {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             進行状況を再計算
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">初期装備を全員に配布</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            まだ装備を持っていない会員に、木の剣・革の盾・石の護符（装備済み）を一括で配布します。
+          </p>
+          <Button onClick={handleDistributeStarter} disabled={distributing} variant="outline">
+            {distributing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Swords className="w-4 h-4 mr-2" />}
+            全員に初期装備を配布
           </Button>
         </CardContent>
       </Card>
