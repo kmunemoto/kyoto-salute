@@ -1388,6 +1388,18 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SessionExpSummaryDialog
+        open={showSessionSummary}
+        result={sessionResult}
+        onClose={() => setShowSessionSummary(false)}
+      />
+      {milestoneQueue.length > 0 && (
+        <MilestoneAchievedDialog
+          milestones={milestoneQueue}
+          onClose={() => setMilestoneQueue([])}
+        />
+      )}
     </div>
   );
 };
