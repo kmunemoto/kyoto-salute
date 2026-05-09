@@ -208,6 +208,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [workoutRecords, setWorkoutRecords] = useState<WorkoutRecord[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sessionResult, setSessionResult] = useState<SessionRewardResult | null>(null);
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
+  const [milestoneQueue, setMilestoneQueue] = useState<MilestoneAchieved[]>([]);
   const [clientMeals, setClientMeals] = useState<MealRecord[]>([]);
   const [loadingMeals, setLoadingMeals] = useState(true);
   const [clientBookings2, setClientBookings2] = useState<any[]>([]);
