@@ -227,13 +227,15 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
           </div>
         </section>
 
-        {/* エモーション */}
-        <section className="mt-5">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> エモーション
-          </h3>
-          <EmoteSection />
-        </section>
+        {/* エモーション（一時非表示: ドット絵版のエモートが用意でき次第復活） */}
+        {false && (
+          <section className="mt-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> エモーション
+            </h3>
+            <EmoteSection />
+          </section>
+        )}
 
         {/* 髪色 */}
         <section className="mt-5">
