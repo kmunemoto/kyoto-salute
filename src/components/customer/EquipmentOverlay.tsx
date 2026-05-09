@@ -56,17 +56,17 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
     <>
       {gear.shield && renderItem(
         gear.shield,
-        { bottom: "8%", left: "5%", height: "32%", width: "32%", zIndex: zBase, opacity: 0.95 },
+        { position: "absolute", bottom: "5%", left: "5%", height: "32%", width: "32%", zIndex: zBase, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
       )}
       {gear.amulet && renderItem(
         gear.amulet,
-        { top: "0%", left: "50%", transform: "translateX(-50%)", height: "26%", width: "26%", zIndex: zBase + 2, opacity: 0.95 },
+        { position: "absolute", top: "0%", left: "50%", transform: "translateX(-50%)", height: "30%", width: "30%", zIndex: zBase + 2, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.amulet.rarity]}`,
       )}
       {gear.weapon && renderItem(
         gear.weapon,
-        { bottom: "5%", right: "5%", height: "35%", width: "35%", zIndex: zBase + 1, transform: "rotate(15deg)", opacity: 0.95 },
+        { position: "absolute", bottom: "5%", right: "5%", height: "35%", width: "35%", zIndex: zBase + 1, transform: "rotate(15deg)", opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
       )}
     </>
