@@ -62,6 +62,9 @@ const WeightJourneyMapCard = () => {
     })();
   }, [user, journey, latest, refetch]);
 
+  const totalGoalForMemo = journey ? Number(journey.start_weight) - Number(journey.target_weight) : 0;
+  const checkpoints = useMemo(() => computeCheckpoints(totalGoalForMemo), [totalGoalForMemo]);
+
   if (loading || mLoading || !journey) return null;
 
   const startW = Number(journey.start_weight);
@@ -74,8 +77,6 @@ const WeightJourneyMapCard = () => {
   const lost = currentW != null ? Math.max(0, startW - currentW) : 0;
   const progress = currentW != null ? Math.min(100, Math.max(0, (lost / totalGoal) * 100)) : 0;
   const remaining = currentW != null ? Math.max(0, currentW - targetW) : totalGoal;
-
-  const checkpoints = useMemo(() => computeCheckpoints(totalGoal), [totalGoal]);
 
   const achievedTypes = new Set(milestones.map((m) => m.milestone_type));
 
