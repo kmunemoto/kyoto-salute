@@ -16,21 +16,24 @@ interface Props {
 }
 
 const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
+  // In compact spots (ranking rows, small avatars) skip overlay entirely.
+  if (compact) return null;
   return (
     <>
-      {gear.shield && !compact && (
+      {gear.shield && (
         <img
           src={gear.shield.image_path}
           alt=""
           aria-hidden
           className="absolute pointer-events-none object-contain"
           style={{
-            bottom: "8%",
-            left: "-4%",
-            height: "42%",
+            bottom: "5%",
+            left: "-5%",
+            height: "25%",
             width: "auto",
             zIndex: zBase,
-            filter: RARITY_GLOW[gear.shield.rarity],
+            opacity: 0.9,
+            filter: `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
           }}
         />
       )}
@@ -42,29 +45,13 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
           className="absolute pointer-events-none object-contain"
           style={{
             bottom: "2%",
-            right: "-6%",
-            height: compact ? "60%" : "55%",
+            right: "-5%",
+            height: "30%",
             width: "auto",
             zIndex: zBase + 1,
             transform: "rotate(15deg)",
-            filter: RARITY_GLOW[gear.weapon.rarity],
-          }}
-        />
-      )}
-      {gear.amulet && !compact && (
-        <img
-          src={gear.amulet.image_path}
-          alt=""
-          aria-hidden
-          className="absolute pointer-events-none object-contain"
-          style={{
-            top: "32%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            height: "22%",
-            width: "auto",
-            zIndex: zBase + 2,
-            filter: RARITY_GLOW[gear.amulet.rarity],
+            opacity: 0.9,
+            filter: `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
           }}
         />
       )}
