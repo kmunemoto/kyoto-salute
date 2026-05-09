@@ -52,7 +52,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const [totalSessions, setTotalSessions] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
   const [needsGender, setNeedsGender] = useState(false);
-  const { status: loginBonusStatus } = useLoginBonus();
+  const { status: loginBonusStatus, refetch: refetchLoginBonus } = useLoginBonus();
   const [loginBonusOpen, setLoginBonusOpen] = useState(false);
   const nextMilestone = useNextMilestone();
 
@@ -62,6 +62,12 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
     const t = setTimeout(() => setLoginBonusOpen(true), 500);
     return () => clearTimeout(t);
   }, [loginBonusStatus]);
+
+  useEffect(() => {
+    const handler = () => { void refetchLoginBonus(); };
+    window.addEventListener("login-bonus-claimed", handler);
+    return () => window.removeEventListener("login-bonus-claimed", handler);
+  }, [refetchLoginBonus]);
 
   // Check if user has selected a gender for their avatar
   useEffect(() => {
