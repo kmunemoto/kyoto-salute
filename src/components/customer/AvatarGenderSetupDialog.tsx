@@ -53,7 +53,7 @@ const AvatarGenderSetupDialog = ({ open, onSelect }: Props) => {
                   <img
                     src={getAvatarImage("rookie", g, "orange")}
                     alt={g}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover pixel-avatar"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src = "/avatars/rookie.png";
                     }}

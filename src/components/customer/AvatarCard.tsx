@@ -79,15 +79,15 @@ const AvatarCard = () => {
                   muted
                   playsInline
                   preload="metadata"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover pixel-avatar"
                   onError={() => setEmoteFailed(true)}
                 />
               ) : (
                 <img
                   src={p.rank.image}
                   alt={p.rank.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+                  className="w-full h-full object-cover pixel-avatar"
+                  
                 />
               )}
             </div>

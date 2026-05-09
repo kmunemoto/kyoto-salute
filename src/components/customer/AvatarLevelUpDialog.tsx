@@ -28,8 +28,8 @@ const AvatarLevelUpDialog = ({ open, onClose, newLevel, earnedCoins, gender = "f
             <img
               src={rank.image}
               alt={rank.name}
-              className="w-full h-full object-cover"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${rank.key}.png`; }}
+              className="w-full h-full object-cover pixel-avatar"
+              
             />
           </div>
           <p className="mt-4 text-3xl font-black tracking-wider" style={{ color: rank.color }}>LEVEL UP!</p>

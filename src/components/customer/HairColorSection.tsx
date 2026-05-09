@@ -98,7 +98,7 @@ const HairColorSection = () => {
         className={`relative rounded-2xl border-2 p-2 flex flex-col items-center transition ${currentHair === "orange" ? "border-accent bg-accent/10" : "border-border bg-card hover:bg-muted/40"}`}
       >
         <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: `${rank.color}15` }}>
-          <img src={getAvatarImage(rank.key, gender, "orange")} alt="orange" className="w-full h-full object-cover" />
+          <img src={getAvatarImage(rank.key, gender, "orange")} alt="orange" className="w-full h-full object-cover pixel-avatar" />
         </div>
         <span className="mt-1 text-[11px] font-bold">オレンジ</span>
         <span className="text-[10px] text-muted-foreground">デフォルト</span>
@@ -122,8 +122,8 @@ const HairColorSection = () => {
               <img
                 src={getAvatarImage(rank.key, gender, item.item_key as any)}
                 alt={item.item_key}
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${rank.key}.png`; }}
+                className="w-full h-full object-cover pixel-avatar"
+                
               />
             </div>
             <span className="mt-1 text-[11px] font-bold">{item.name}</span>
