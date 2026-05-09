@@ -39,13 +39,15 @@ import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import { evaluateAndAwardMissions } from "@/lib/missionRewards";
-import { applyRaidDamage, computeSessionVolume, processSessionRewards } from "@/lib/raidUtils";
+import { applyRaidDamage, checkTrainingMilestones, computeSessionVolume, processSessionRewards, type MilestoneAchieved, type SessionRewardResult } from "@/lib/raidUtils";
 import { updateEventProgress } from "@/hooks/useSeasonEvents";
 import { getComboMultiplier } from "@/lib/comboSystem";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
 import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
 import TrainerClientAvatarTab from "./TrainerClientAvatarTab";
+import SessionExpSummaryDialog from "@/components/customer/SessionExpSummaryDialog";
+import MilestoneAchievedDialog from "@/components/customer/MilestoneAchievedDialog";
 
 interface TrainerClientDetailProps {
   clientId: string;
@@ -206,6 +208,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
   const [workoutRecords, setWorkoutRecords] = useState<WorkoutRecord[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sessionResult, setSessionResult] = useState<SessionRewardResult | null>(null);
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
+  const [milestoneQueue, setMilestoneQueue] = useState<MilestoneAchieved[]>([]);
   const [clientMeals, setClientMeals] = useState<MealRecord[]>([]);
   const [loadingMeals, setLoadingMeals] = useState(true);
   const [clientBookings2, setClientBookings2] = useState<any[]>([]);
@@ -514,10 +519,19 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     // Process session rewards (session exp + combo bonus + level recompute)
     try {
       const sess = await processSessionRewards(clientId, trainingDate);
-      if (sess && sess.combo >= 2 && sess.combo_bonus > 0) {
-        toast.success(`${sess.combo}コンボ！EXP ${getComboMultiplier(sess.combo)}倍`, {
-          description: `+${sess.combo_bonus} EXP ボーナス`,
-        });
+      if (sess) {
+        setSessionResult(sess);
+        setShowSessionSummary(true);
+      }
+    } catch (e) {
+      // non-fatal
+    }
+
+    // Check milestones (cumulative session count rewards)
+    try {
+      const mr = await checkTrainingMilestones(clientId);
+      if (mr && mr.achieved && mr.achieved.length > 0) {
+        setMilestoneQueue(mr.achieved);
       }
     } catch (e) {
       // non-fatal
@@ -1374,6 +1388,18 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SessionExpSummaryDialog
+        open={showSessionSummary}
+        result={sessionResult}
+        onClose={() => setShowSessionSummary(false)}
+      />
+      {milestoneQueue.length > 0 && (
+        <MilestoneAchievedDialog
+          milestones={milestoneQueue}
+          onClose={() => setMilestoneQueue([])}
+        />
+      )}
     </div>
   );
 };

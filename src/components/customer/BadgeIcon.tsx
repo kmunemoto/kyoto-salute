@@ -57,6 +57,14 @@ const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
   quest_garden_bloom: Flower2,
   quest_forge_master: Hammer,
   quest_stargazer: Star,
+  // Training milestones
+  milestone_10: Award,
+  milestone_25: Medal,
+  milestone_50: Trophy,
+  milestone_75: Star,
+  milestone_100: Crown,
+  milestone_150: Hexagon,
+  milestone_200: Flame,
 };
 
 const TITLE_ICONS: Record<string, LucideIcon> = {
