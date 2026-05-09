@@ -13,6 +13,14 @@ export interface GachaSpinResult {
   frame_name?: string;
   frame_image?: string;
   is_duplicate?: boolean;
+  // Equipment fields (when reward_type === 'equipment' or 'equipment_dup')
+  equipment_key?: string;
+  equipment_name?: string;
+  equipment_image?: string;
+  equipment_type?: "weapon" | "shield" | "amulet";
+  equipment_atk?: number;
+  equipment_def?: number;
+  equipment_hp?: number;
 }
 
 export const useGacha = () => {
@@ -59,6 +67,13 @@ export const useGacha = () => {
         frame_name: r.frame_name,
         frame_image: r.frame_image,
         is_duplicate: r.is_duplicate,
+        equipment_key: r.equipment_key,
+        equipment_name: r.equipment_name,
+        equipment_image: r.equipment_image,
+        equipment_type: r.equipment_type,
+        equipment_atk: r.equipment_atk,
+        equipment_def: r.equipment_def,
+        equipment_hp: r.equipment_hp,
       };
       setTicketCount(result.remaining);
 

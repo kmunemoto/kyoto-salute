@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Coins, Zap, Ticket, X, RotateCw, Sparkles } from "lucide-react";
+import { Coins, Zap, Ticket, X, RotateCw, Sparkles, Sword, Shield as ShieldIcon, Gem, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   describeGachaReward,
   GACHA_RARITY_COLOR,
@@ -434,6 +436,22 @@ const ResultView = ({
   const isRare = rarity === "rare";
   const isFrame = result.reward_type === "frame" || result.reward_type === "frame_dup";
   const isDup = result.reward_type === "frame_dup";
+  const isEquipment = result.reward_type === "equipment" || result.reward_type === "equipment_dup";
+  const isEquipDup = result.reward_type === "equipment_dup";
+
+  if (isEquipment) {
+    return (
+      <EquipmentResultView
+        result={result}
+        rarity={rarity}
+        showCloseBtn={showCloseBtn}
+        onAgain={onAgain}
+        onClose={onClose}
+        busy={busy}
+        isDuplicate={isEquipDup}
+      />
+    );
+  }
 
   const popClass = isLegendary
     ? "anim-legendary-pop"
@@ -617,6 +635,135 @@ const ResultView = ({
             <X className="w-4 h-4 mr-1.5" />
             閉じる
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Equipment Result View ---------------------------------------------
+const EquipmentResultView = ({
+  result, rarity, showCloseBtn, onAgain, onClose, busy, isDuplicate,
+}: {
+  result: GachaSpinResult;
+  rarity: GachaRarity;
+  showCloseBtn: boolean;
+  onAgain: () => void;
+  onClose: () => void;
+  busy: boolean;
+  isDuplicate: boolean;
+}) => {
+  const color = GACHA_RARITY_COLOR[rarity];
+  const gradient = GACHA_RARITY_GRADIENT[rarity];
+  const TypeIcon = result.equipment_type === "weapon" ? Sword
+    : result.equipment_type === "shield" ? ShieldIcon : Gem;
+  const [equipping, setEquipping] = useState(false);
+  const [equipped, setEquipped] = useState(false);
+
+  const handleEquip = async () => {
+    if (!result.equipment_key) return;
+    setEquipping(true);
+    const { data: item } = await (supabase as any)
+      .from("equipment_items").select("id").eq("item_key", result.equipment_key).maybeSingle();
+    if (item?.id) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase.rpc("equip_item", { p_user_id: user.id, p_item_id: item.id });
+        if (!error) {
+          setEquipped(true);
+          window.dispatchEvent(new Event("equipment-updated"));
+          toast.success("装備しました");
+        } else {
+          toast.error("装備変更に失敗", { description: error.message });
+        }
+      }
+    }
+    setEquipping(false);
+  };
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center px-6">
+      <div className="absolute inset-0 pointer-events-none opacity-40"
+        style={{ background: "conic-gradient(from 0deg, transparent 0deg, rgba(139,92,246,0.5) 30deg, transparent 60deg, transparent 180deg, rgba(139,92,246,0.5) 210deg, transparent 240deg)", animation: "conic-spin 6s linear infinite" }} />
+      <div className="relative w-full max-w-sm flex flex-col items-center text-center">
+        <p className="text-xs font-extrabold tracking-[0.5em] anim-fade-up" style={{ color }}>
+          {GACHA_RARITY_LABEL[rarity]}
+        </p>
+        <div className="mx-auto mt-2 h-px w-16 anim-fade-up"
+          style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)`, animationDelay: "0.05s" }} />
+
+        <div className="anim-epic-pop relative mt-6" style={{ width: 180, height: 180 }}>
+          <div className="absolute inset-0 rounded-full"
+            style={{ background: gradient, boxShadow: "0 0 30px 6px rgba(139,92,246,0.6)", opacity: 0.35 }} />
+          {result.equipment_image ? (
+            <img src={result.equipment_image} alt={result.equipment_name || ""}
+              className="relative w-full h-full object-contain z-10" />
+          ) : (
+            <TypeIcon className="relative w-24 h-24 text-white m-auto inset-0" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+          )}
+        </div>
+
+        <p className="mt-4 text-xl font-extrabold text-white anim-fade-up" style={{ animationDelay: "0.45s" }}>
+          {result.equipment_name}
+        </p>
+
+        {isDuplicate ? (
+          <div className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full anim-fade-up"
+            style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.4)", animationDelay: "0.55s" }}>
+            <Coins className="w-4 h-4 text-yellow-300" />
+            <span className="text-sm font-bold text-yellow-200">所持済み → +{result.reward_amount}コインに変換！</span>
+          </div>
+        ) : (
+          <div className="mt-3 flex items-center gap-2 anim-fade-up" style={{ animationDelay: "0.55s" }}>
+            {(result.equipment_atk ?? 0) > 0 && (
+              <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500/20 text-red-200 inline-flex items-center gap-1">
+                <Sword className="w-3 h-3" />ATK +{result.equipment_atk}
+              </span>
+            )}
+            {(result.equipment_def ?? 0) > 0 && (
+              <span className="px-2 py-1 rounded-md text-xs font-bold bg-blue-500/20 text-blue-200 inline-flex items-center gap-1">
+                <ShieldIcon className="w-3 h-3" />DEF +{result.equipment_def}
+              </span>
+            )}
+            {(result.equipment_hp ?? 0) > 0 && (
+              <span className="px-2 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-200 inline-flex items-center gap-1">
+                <Heart className="w-3 h-3" />HP +{result.equipment_hp}
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full anim-fade-up"
+          style={{ animationDelay: "0.6s", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}>
+          <Ticket className="w-3.5 h-3.5 text-white/70" />
+          <span className="text-xs text-white/80">残り <span className="font-bold text-white">{result.remaining}</span> 枚</span>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-2 w-full"
+          style={{ opacity: showCloseBtn ? 1 : 0, transform: showCloseBtn ? "translateY(0)" : "translateY(8px)", transition: "opacity 0.4s ease, transform 0.4s ease", pointerEvents: showCloseBtn ? "auto" : "none" }}>
+          {!isDuplicate && !equipped && (
+            <Button onClick={handleEquip} disabled={equipping}
+              className="w-full font-bold h-11 text-white border-0"
+              style={{ background: "linear-gradient(135deg, #8B5CF6, #6366F1)" }}>
+              {equipping ? "装備中..." : "装備する"}
+            </Button>
+          )}
+          {equipped && (
+            <p className="text-xs text-emerald-300 font-bold">装備完了</p>
+          )}
+          <div className="flex gap-3">
+            {result.remaining > 0 && (
+              <Button onClick={onAgain} disabled={busy}
+                className="flex-1 font-bold h-11 text-white border-0"
+                style={{ background: "linear-gradient(135deg, #0ABAB5, #06908C)" }}>
+                <RotateCw className="w-4 h-4 mr-1.5" />もう1回
+              </Button>
+            )}
+            <Button onClick={onClose} variant="outline"
+              className="flex-1 font-bold h-11 bg-transparent text-white border-white/25 hover:bg-white/10 hover:text-white">
+              <X className="w-4 h-4 mr-1.5" />閉じる
+            </Button>
+          </div>
         </div>
       </div>
     </div>

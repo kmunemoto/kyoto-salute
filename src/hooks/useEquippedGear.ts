@@ -17,6 +17,9 @@ export interface EquippedGear {
 
 const EMPTY: EquippedGear = { weapon: null, shield: null, amulet: null };
 
+// Track which userIds we've already attempted starter-equipment init this session.
+const _initAttempted = new Set<string>();
+
 export const useEquippedGear = (userId?: string | null) => {
   const [gear, setGear] = useState<EquippedGear>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -28,11 +31,30 @@ export const useEquippedGear = (userId?: string | null) => {
       return;
     }
     setLoading(true);
-    const { data } = await (supabase as any)
+    let { data } = await (supabase as any)
       .from("user_equipment")
       .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path)")
       .eq("user_id", userId)
       .eq("equipped", true);
+
+    // Auto-grant starter equipment on first ever load if user has nothing
+    if ((!data || data.length === 0) && !_initAttempted.has(userId)) {
+      _initAttempted.add(userId);
+      const { count } = await (supabase as any)
+        .from("user_equipment")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if ((count ?? 0) === 0) {
+        await (supabase as any).rpc("initialize_starter_equipment_for_user", { p_user_id: userId });
+        const r = await (supabase as any)
+          .from("user_equipment")
+          .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path)")
+          .eq("user_id", userId)
+          .eq("equipped", true);
+        data = r.data;
+      }
+    }
+
     const next: EquippedGear = { weapon: null, shield: null, amulet: null };
     (data || []).forEach((row: any) => {
       const it = row.item;
