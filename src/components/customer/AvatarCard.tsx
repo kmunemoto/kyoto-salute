@@ -48,13 +48,14 @@ const AvatarCard = () => {
   const combo = avatar.combo_count || 0;
   const equipped = getTitleDef(avatar.equipped_title);
   const frameKey = avatar.equipped_frame;
+  const emoteActive = !!emoteSrc && !emoteFailed;
   const frameClass =
-    frameKey === "rainbow_legend"
+    !emoteActive && frameKey === "rainbow_legend"
       ? "rainbow-frame"
-      : frameKey === "quest_kingdom_hero"
+      : !emoteActive && frameKey === "quest_kingdom_hero"
         ? "golden-frame"
         : null;
-  const frameImg = getFrameImage(frameKey);
+  const frameImg = emoteActive ? null : getFrameImage(frameKey);
   const featured = (avatar as any).featured_badges as string[] | undefined;
 
   return (
