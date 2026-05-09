@@ -67,30 +67,38 @@ const AvatarCard = () => {
           <div className={frameClass ? `${frameClass} rounded-2xl flex-shrink-0` : "flex-shrink-0"}>
           <div
             className="relative w-20 h-20 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: `${p.rank.color}15`, borderRadius: "1rem" }}
+            style={{ backgroundColor: frameImg ? "transparent" : `${p.rank.color}15`, borderRadius: "1rem" }}
           >
-            <div className="absolute inset-0 rounded-2xl overflow-hidden">
-            {emoteSrc && !emoteFailed ? (
-              <video
-                src={emoteSrc}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-                className="relative w-full h-full object-cover z-10"
-                onError={() => setEmoteFailed(true)}
-              />
-            ) : (
-              <img
-                src={p.rank.image}
-                alt={p.rank.name}
-                className="relative w-full h-full object-cover z-10"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
-              />
-            )}
+            <div
+              className={`absolute top-1/2 left-1/2 overflow-hidden ${frameImg ? "rounded-full" : "rounded-2xl"}`}
+              style={{
+                width: frameImg ? "75%" : "100%",
+                height: frameImg ? "75%" : "100%",
+                transform: "translate(-50%, -50%)",
+                zIndex: 1,
+              }}
+            >
+              {emoteSrc && !emoteFailed ? (
+                <video
+                  src={emoteSrc}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                  onError={() => setEmoteFailed(true)}
+                />
+              ) : (
+                <img
+                  src={p.rank.image}
+                  alt={p.rank.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
+                />
+              )}
             </div>
-            {frameImg && <AvatarFrameOverlay frameKey={frameKey} scale={1.22} />}
+            {frameImg && <AvatarFrameOverlay frameKey={frameKey} scale={1} />}
           </div>
           </div>
           <div className="flex-1 min-w-0">
