@@ -1,6 +1,6 @@
 export type RankKey = "rookie" | "regular" | "athlete" | "elite" | "legend";
 export type Gender = "male" | "female";
-export type HairColor = "orange" | "black";
+export type HairColor = "orange" | "black" | "brown" | "blonde" | "pink" | "silver";
 
 export interface RankInfo {
   key: RankKey;
@@ -96,11 +96,19 @@ export const calculateLevel = (totalExp: number): number => {
   return level;
 };
 
+/**
+ * Pixel-art avatar images live in the Supabase Storage `avatars` PUBLIC bucket
+ * and are referenced via a CDN URL. Always render with `image-rendering: pixelated`
+ * (use the `.pixel-avatar` class) so they stay crisp.
+ */
+export const AVATAR_CDN_BASE =
+  "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars";
+
 export const getAvatarImage = (
   rank: RankKey,
   gender: Gender = "female",
   hairColor: HairColor = "orange"
-): string => `/avatars/${gender}_${rank}_${hairColor}.png`;
+): string => `${AVATAR_CDN_BASE}/${gender}_${rank}_${hairColor}.png`;
 
 export const getRankInfo = (
   level: number,
