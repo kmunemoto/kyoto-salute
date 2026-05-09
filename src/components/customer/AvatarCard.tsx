@@ -15,15 +15,12 @@ import { Flame } from "lucide-react";
 import { useRaidRewards } from "@/hooks/useRaidRewards";
 import AvatarFrameOverlay from "./AvatarFrameOverlay";
 import { getFrameImage } from "@/hooks/useFrames";
-import EquipmentOverlay from "./EquipmentOverlay";
-import { useEquippedGear } from "@/hooks/useEquippedGear";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AvatarCard = () => {
-  const { user } = useAuth();
+  useAuth();
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch, newAchievement, clearNewAchievement } = useAvatar(true);
   const { items: rewardItems, owned, participation, refetch: refetchRewards } = useRaidRewards();
-  const { gear } = useEquippedGear(user?.id);
   const [open, setOpen] = useState(false);
   const [emoteFailed, setEmoteFailed] = useState(false);
   const emoteSrc = getEmoteVideoSrc(avatar?.equipped_emote);
@@ -113,7 +110,6 @@ const AvatarCard = () => {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
             )}
-            <EquipmentOverlay gear={gear} />
             </div>
             {frameImg && <AvatarFrameOverlay frameKey={frameKey} scale={1.22} />}
           </div>
