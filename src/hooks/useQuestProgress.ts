@@ -28,6 +28,7 @@ export interface QuestStage {
   reward_title: string | null;
   reward_badge_key: string | null;
   reward_frame: boolean;
+  background_image_url?: string | null;
   conditions: QuestCondition[];
 }
 
