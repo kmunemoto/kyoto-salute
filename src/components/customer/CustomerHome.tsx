@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import StreakCard from "./StreakCard";
 import AvatarCard from "./AvatarCard";
+import WeightJourneyMapCard from "./WeightJourneyMapCard";
 import AvatarGenderSetupDialog from "./AvatarGenderSetupDialog";
 import DailyMissionCard from "./DailyMissionCard";
 import RaidBossCard from "./RaidBossCard";
@@ -308,6 +309,9 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* 2. Avatar */}
       <AvatarCard />
+
+      {/* Weight journey map (only if trainer set a goal — handled inside) */}
+      <WeightJourneyMapCard />
 
       {nextMilestone && nextMilestone.nextSessionCount && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
