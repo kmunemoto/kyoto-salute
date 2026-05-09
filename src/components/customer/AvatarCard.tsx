@@ -47,8 +47,6 @@ const AvatarCard = () => {
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
   const combo = avatar.combo_count || 0;
   const equipped = getTitleDef(avatar.equipped_title);
-  const weaponItem = rewardItems.find((it) => it.item_key === avatar.equipped_weapon);
-  const bgItem = rewardItems.find((it) => it.item_key === avatar.equipped_background);
   const frameKey = avatar.equipped_frame;
   const frameClass =
     frameKey === "rainbow_legend"
@@ -72,15 +70,6 @@ const AvatarCard = () => {
             style={{ backgroundColor: `${p.rank.color}15`, borderRadius: "1rem" }}
           >
             <div className="absolute inset-0 rounded-2xl overflow-hidden">
-            {bgItem?.image_url && (
-              <img
-                src={bgItem.image_url}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover opacity-60 z-0"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-              />
-            )}
             {emoteSrc && !emoteFailed ? (
               <video
                 src={emoteSrc}
@@ -98,16 +87,6 @@ const AvatarCard = () => {
                 alt={p.rank.name}
                 className="relative w-full h-full object-cover z-10"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
-              />
-            )}
-            {weaponItem?.image_url && (
-              <img
-                src={weaponItem.image_url}
-                alt=""
-                aria-hidden
-                className="absolute right-0 bottom-0 w-2/5 h-2/5 object-contain z-20"
-                style={{ transform: "rotate(-15deg)" }}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
             )}
             </div>
