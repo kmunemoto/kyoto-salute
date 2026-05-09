@@ -39,13 +39,15 @@ import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { getJSTNow, getJSTToday, formatJST } from "@/lib/timezone";
 import { evaluateAndAwardMissions } from "@/lib/missionRewards";
-import { applyRaidDamage, computeSessionVolume, processSessionRewards } from "@/lib/raidUtils";
+import { applyRaidDamage, checkTrainingMilestones, computeSessionVolume, processSessionRewards, type MilestoneAchieved, type SessionRewardResult } from "@/lib/raidUtils";
 import { updateEventProgress } from "@/hooks/useSeasonEvents";
 import { getComboMultiplier } from "@/lib/comboSystem";
 import DiagnosisHistorySection from "@/components/customer/posture/DiagnosisHistorySection";
 import TrainerMonthlyComment from "./TrainerMonthlyComment";
 import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
 import TrainerClientAvatarTab from "./TrainerClientAvatarTab";
+import SessionExpSummaryDialog from "@/components/customer/SessionExpSummaryDialog";
+import MilestoneAchievedDialog from "@/components/customer/MilestoneAchievedDialog";
 
 interface TrainerClientDetailProps {
   clientId: string;
