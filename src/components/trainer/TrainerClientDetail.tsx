@@ -519,10 +519,19 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
     // Process session rewards (session exp + combo bonus + level recompute)
     try {
       const sess = await processSessionRewards(clientId, trainingDate);
-      if (sess && sess.combo >= 2 && sess.combo_bonus > 0) {
-        toast.success(`${sess.combo}コンボ！EXP ${getComboMultiplier(sess.combo)}倍`, {
-          description: `+${sess.combo_bonus} EXP ボーナス`,
-        });
+      if (sess) {
+        setSessionResult(sess);
+        setShowSessionSummary(true);
+      }
+    } catch (e) {
+      // non-fatal
+    }
+
+    // Check milestones (cumulative session count rewards)
+    try {
+      const mr = await checkTrainingMilestones(clientId);
+      if (mr && mr.achieved && mr.achieved.length > 0) {
+        setMilestoneQueue(mr.achieved);
       }
     } catch (e) {
       // non-fatal
