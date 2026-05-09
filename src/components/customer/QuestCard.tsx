@@ -62,13 +62,26 @@ const QuestCard = ({ onOpen }: Props) => {
   const bg = justDefeated
     ? `linear-gradient(135deg, ${stage.theme_gradient_from} 0%, ${stage.theme_gradient_to} 100%)`
     : `linear-gradient(135deg, ${stage.theme_dark_from} 0%, ${stage.theme_dark_to} 100%)`;
+  const bgUrl = stage.background_image_url;
+  const overlayBg = justDefeated ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.45)";
 
   return (
     <button
       onClick={onOpen}
-      className="w-full rounded-2xl p-5 text-left text-white shadow-lg transition active:scale-[0.99] relative overflow-hidden"
+      className="w-full rounded-2xl text-left text-white shadow-lg transition active:scale-[0.99] relative overflow-hidden"
       style={{ background: bg }}
     >
+      {bgUrl && (
+        <img
+          src={bgUrl}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ zIndex: 0 }}
+        />
+      )}
+      <div className="absolute inset-0" style={{ background: overlayBg, zIndex: 1 }} />
+      <div className="relative p-5" style={{ zIndex: 2 }}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
@@ -102,6 +115,7 @@ const QuestCard = ({ onOpen }: Props) => {
           )}
         </div>
       )}
+      </div>
     </button>
   );
 };
