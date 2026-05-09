@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEquipmentInventory } from "@/hooks/useQuestBattle";
 import { getEquipIcon, RARITY_COLOR, RARITY_LABEL } from "@/lib/questBosses";
@@ -18,12 +18,32 @@ const TYPES: Array<{ key: "weapon" | "shield" | "amulet"; label: string }> = [
   { key: "amulet", label: "護符" },
 ];
 
+const SOURCE_LABEL: Record<string, string> = {
+  starter: "初期装備",
+  raid: "レイド報酬",
+  quest: "クエスト報酬",
+  gacha: "ガチャ",
+};
+
 const EquipmentDialog = ({ open, onClose }: Props) => {
   const { user } = useAuth();
   const { items, loading, refetch } = useEquipmentInventory();
   const [busy, setBusy] = useState<string | null>(null);
+  const [allItems, setAllItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    (supabase as any)
+      .from("equipment_items")
+      .select("id,item_key,item_name,item_type,rarity,atk_bonus,def_bonus,hp_bonus,icon_name,source,image_path")
+      .then(({ data }: any) => setAllItems(data || []));
+  }, [open]);
 
   if (!open) return null;
+  const ownedKeys = new Set(items.map((i: any) => i.item_key));
+  const totalCount = allItems.length || 12;
+  const ownedCount = ownedKeys.size;
+  const completePct = totalCount ? Math.round((ownedCount / totalCount) * 100) : 0;
 
   const equip = async (item_id: string) => {
     if (!user) return;
@@ -56,6 +76,9 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
           <div className="p-4 space-y-5">
             {TYPES.map((t) => {
               const list = items.filter((i: any) => i.item_type === t.key);
+              const lockedList = allItems.filter(
+                (i: any) => i.item_type === t.key && !ownedKeys.has(i.item_key),
+              );
               const equipped = list.find((i: any) => i.equipped);
               return (
                 <div key={t.key}>
@@ -92,9 +115,62 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
                       })}
                     </div>
                   )}
+                  {lockedList.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {lockedList.map((it: any) => {
+                        const color = RARITY_COLOR[it.rarity] || "#9ca3af";
+                        return (
+                          <div
+                            key={it.id}
+                            className="relative rounded-xl p-3 bg-white/[0.03] opacity-60"
+                            style={{ boxShadow: `inset 0 0 0 1px ${color}30` }}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Lock className="w-3.5 h-3.5 opacity-70" />
+                              <span className="text-[9px] font-bold uppercase" style={{ color }}>
+                                {RARITY_LABEL[it.rarity]}
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold leading-tight break-all">{it.item_name}</p>
+                            <p className="text-[10px] opacity-70 mt-1">
+                              入手: {SOURCE_LABEL[it.source] || it.source}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
+
+            {/* Collection progress */}
+            <div className="rounded-2xl bg-white/5 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold tracking-wider opacity-80">コレクション</p>
+                <p className="text-sm font-extrabold">
+                  {ownedCount} / {totalCount}
+                </p>
+              </div>
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full transition-all"
+                  style={{
+                    width: `${completePct}%`,
+                    background: "linear-gradient(90deg, #0ABAB5, #f59e0b)",
+                  }}
+                />
+              </div>
+              {ownedCount >= totalCount ? (
+                <p className="text-[11px] font-bold text-center" style={{ color: "#f59e0b" }}>
+                  全装備コンプリート！「武装の達人」称号獲得
+                </p>
+              ) : (
+                <p className="text-[11px] opacity-70 text-center">
+                  全{totalCount}種コンプで称号「武装の達人」と200コイン
+                </p>
+              )}
+            </div>
           </div>
         )}
 
