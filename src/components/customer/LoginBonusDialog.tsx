@@ -1,8 +1,6 @@
-import { useState } from "react";
-import { Coins, Star, Ticket, Check, Gift, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
+import { Coins, Star, Ticket, Check, Gift } from "lucide-react";
 import { useLoginBonus, type ClaimResult } from "@/hooks/useLoginBonus";
-import { toast } from "sonner";
 
 interface Props { open: boolean; onClose: () => void }
 
@@ -24,42 +22,56 @@ const Icon = ({ type, className }: { type: string; className?: string }) => {
 
 const LoginBonusDialog = ({ open, onClose }: Props) => {
   const { status, claim } = useLoginBonus();
-  const [claiming, setClaiming] = useState(false);
   const [result, setResult] = useState<ClaimResult | null>(null);
+  const [closing, setClosing] = useState(false);
+  const claimedRef = useRef(false);
+
+  useEffect(() => {
+    if (!open) {
+      claimedRef.current = false;
+      setResult(null);
+      setClosing(false);
+      return;
+    }
+    if (!status || claimedRef.current) return;
+    claimedRef.current = true;
+    (async () => {
+      try {
+        if (!status.claimed_today) {
+          const r = await claim();
+          if (r) setResult(r);
+        }
+      } catch {
+        // ignore; still auto-close
+      } finally {
+        setTimeout(() => setClosing(true), 1500);
+        setTimeout(() => onClose(), 1800);
+      }
+    })();
+  }, [open, status, claim, onClose]);
 
   if (!open || !status) return null;
 
   const claimedDays = new Set(status.recent.map((r) => r.day_number));
-  // If claimed today already, mark current_day_number as claimed
-  if (status.claimed_today) claimedDays.add(status.current_day_number);
-
-  const handleClaim = async () => {
-    if (claiming) return;
-    setClaiming(true);
-    try {
-      const r = await claim();
-      if (r) {
-        setResult(r);
-        const label = r.reward_type === "coins" ? `${r.reward_amount} コイン` : r.reward_type === "exp" ? `${r.reward_amount} EXP` : `ガチャチケット ${r.reward_amount}枚`;
-        const extra = r.extra_coins > 0 ? ` (+${r.extra_coins} プレミアム)` : "";
-        toast.success(`${label}${extra} 受け取りました`);
-      }
-    } catch (e: any) {
-      toast.error("受け取りに失敗しました");
-    } finally {
-      setClaiming(false);
-    }
-  };
+  if (status.claimed_today || result) claimedDays.add(result?.day_number ?? status.current_day_number);
 
   const todayDay = status.current_day_number;
   const showStreakReset = !status.claimed_today && status.recent.length > 0 && todayDay === 1 && status.recent[0]?.day_number !== 7;
 
+  const rewardLabel = (() => {
+    const r = result;
+    if (!r) return null;
+    const base = r.reward_type === "coins" ? `${r.reward_amount} コイン` : r.reward_type === "exp" ? `${r.reward_amount} EXP` : `ガチャチケット ${r.reward_amount}枚`;
+    const extra = r.extra_coins > 0 ? ` +${r.extra_coins}（プレミアム）` : "";
+    return `Day ${r.day_number}　${base}${extra} 獲得！`;
+  })();
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5 relative" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-3 right-3 text-muted-foreground" aria-label="閉じる">
-          <X className="w-5 h-5" />
-        </button>
+    <div
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 ${closing ? "animate-fade-out" : "animate-fade-in"}`}
+      style={{ pointerEvents: "none" }}
+    >
+      <div className={`w-full max-w-md bg-white rounded-2xl shadow-2xl p-5 relative ${closing ? "animate-scale-out" : "animate-scale-in"}`}>
         <div className="flex items-center gap-2 mb-1">
           <Gift className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-bold">ログインボーナス</h2>
@@ -68,8 +80,9 @@ const LoginBonusDialog = ({ open, onClose }: Props) => {
 
         <div className="grid grid-cols-7 gap-1.5 mb-4">
           {REWARDS.map((r) => {
-            const isClaimed = claimedDays.has(r.day) && (status.claimed_today || r.day !== todayDay);
-            const isToday = r.day === todayDay && !status.claimed_today;
+            const claimedNow = !!result && r.day === result.day_number;
+            const isClaimed = claimedDays.has(r.day) || claimedNow;
+            const isToday = r.day === todayDay && !isClaimed;
             const isDay7 = r.day === 7;
             const baseCls = isDay7
               ? "border-2 border-amber-400 bg-amber-50"
@@ -96,16 +109,9 @@ const LoginBonusDialog = ({ open, onClose }: Props) => {
           <p className="text-[11px] text-muted-foreground text-center mb-3">連続ログインがリセットされました</p>
         )}
 
-        {!status.claimed_today && !result && (
-          <Button onClick={handleClaim} disabled={claiming} className="w-full" size="lg">
-            {claiming ? "受け取り中..." : "受け取る！"}
-          </Button>
-        )}
-        {(status.claimed_today || result) && (
-          <Button onClick={onClose} variant="outline" className="w-full" size="lg">
-            閉じる
-          </Button>
-        )}
+        <div className="text-center text-sm font-bold text-primary min-h-[1.5rem]">
+          {rewardLabel ?? (status.claimed_today ? "本日の受け取りは完了しています" : "受け取り中...")}
+        </div>
       </div>
     </div>
   );
