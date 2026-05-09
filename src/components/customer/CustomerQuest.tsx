@@ -100,14 +100,17 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
           const curHp = bp?.boss_current_hp ?? maxHp;
           const hpPct = maxHp > 0 ? Math.max(0, (curHp / maxHp) * 100) : 0;
 
-          let bg: string;
-          if (isCompleted) {
-            bg = `linear-gradient(135deg, ${stage.theme_gradient_from} 0%, ${stage.theme_gradient_to} 100%)`;
-          } else if (isCurrent) {
-            bg = `linear-gradient(90deg, ${stage.theme_dark_from} 0%, ${stage.theme_dark_to} 50%, ${stage.theme_gradient_from} 50%, ${stage.theme_gradient_to} 100%)`;
-          } else {
-            bg = `linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)`;
-          }
+          const bgUrl = stage.background_image_url;
+          const fallbackBg = isCompleted
+            ? `linear-gradient(135deg, ${stage.theme_gradient_from} 0%, ${stage.theme_gradient_to} 100%)`
+            : isCurrent
+              ? `linear-gradient(135deg, ${stage.theme_dark_from} 0%, ${stage.theme_dark_to} 100%)`
+              : `linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)`;
+          const overlayBg = isCompleted
+            ? "rgba(255,255,255,0.15)"
+            : isCurrent
+              ? "rgba(0,0,0,0.45)"
+              : "rgba(0,0,0,0.55)";
 
           return (
             <div key={stage.id} className="relative">
@@ -123,9 +126,26 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
               <button
                 type="button"
                 onClick={() => setOpenStage(stage.stage_number)}
-                className={`w-full text-left rounded-2xl p-5 text-white shadow-md transition-transform active:scale-[0.98] ${isLocked ? "opacity-70" : ""}`}
-                style={{ background: bg }}
+                className="w-full text-left rounded-2xl text-white shadow-md transition-transform active:scale-[0.98] relative overflow-hidden"
+                style={{ background: fallbackBg }}
               >
+                {bgUrl && (
+                  <img
+                    src={bgUrl}
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                      zIndex: 0,
+                      filter: isLocked ? "grayscale(100%) brightness(0.3)" : undefined,
+                    }}
+                  />
+                )}
+                <div
+                  className="absolute inset-0"
+                  style={{ background: overlayBg, zIndex: 1 }}
+                />
+                <div className="relative p-5" style={{ zIndex: 2 }}>
                 <div className="flex items-center gap-3">
                   <div className="shrink-0">
                     <QuestBossVisual
@@ -169,6 +189,7 @@ const CustomerQuest = ({ onBack }: { onBack: () => void }) => {
                     <p className="text-[10px] opacity-80 leading-snug break-all">{boss.boss_description}</p>
                   </div>
                 )}
+                </div>
               </button>
             </div>
           );
