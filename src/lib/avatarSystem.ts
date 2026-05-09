@@ -104,11 +104,35 @@ export const calculateLevel = (totalExp: number): number => {
 export const AVATAR_CDN_BASE =
   "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars";
 
+/**
+ * Fallback inline SVG (Lucide User-style silhouette) used when an avatar image
+ * fails to load. Keeps img tags self-contained without needing React state.
+ */
+export const AVATAR_FALLBACK_SVG =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>";
+
+export const handleAvatarImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const img = e.currentTarget;
+  if (img.src !== AVATAR_FALLBACK_SVG) img.src = AVATAR_FALLBACK_SVG;
+};
+
 export const getAvatarImage = (
   rank: RankKey,
   gender: Gender = "female",
   hairColor: HairColor = "orange"
-): string => `${AVATAR_CDN_BASE}/${gender}_${rank}_${hairColor}.png`;
+): string => `${AVATAR_CDN_BASE}/avatars/${gender}_${rank}_${hairColor}.png`;
+
+/**
+ * Equipment images live in the same `avatars` bucket under
+ * `equipment/{weapons|shields|accessories}/{item_key}.png`.
+ */
+export const getEquipmentImage = (
+  itemKey: string,
+  itemType: "weapon" | "shield" | "amulet"
+): string => {
+  const folder = itemType === "weapon" ? "weapons" : itemType === "shield" ? "shields" : "accessories";
+  return `${AVATAR_CDN_BASE}/equipment/${folder}/${itemKey}.png`;
+};
 
 export const getRankInfo = (
   level: number,

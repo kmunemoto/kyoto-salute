@@ -6,8 +6,8 @@ export interface EmoteCatalogItem {
 }
 
 export const getEmoteVideoSrc = (itemKey?: string | null): string | null => {
-  if (!itemKey) return null;
-  if (!itemKey.startsWith("emote_")) return null;
-  const name = itemKey.slice("emote_".length);
-  return `/emotes/${name}.mp4`;
+  // Temporarily disabled: legacy 3D emote videos are incompatible with the new
+  // pixel-art avatar system. Always return null until pixel-art emotes ship.
+  void itemKey;
+  return null;
 };

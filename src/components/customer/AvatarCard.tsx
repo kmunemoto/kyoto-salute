@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getEmoteVideoSrc } from "@/lib/emotes";
 import { useAvatar } from "@/hooks/useAvatar";
-import { getExpProgress } from "@/lib/avatarSystem";
+import { getExpProgress, handleAvatarImgError } from "@/lib/avatarSystem";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import AvatarDetailDialog from "./AvatarDetailDialog";
@@ -90,7 +90,7 @@ const AvatarCard = () => {
                   src={p.rank.image}
                   alt={p.rank.name}
                   className="w-full h-full object-cover pixel-avatar"
-                  
+                  onError={handleAvatarImgError}
                 />
               )}
             </div>
