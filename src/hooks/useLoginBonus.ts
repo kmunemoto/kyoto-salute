@@ -40,6 +40,7 @@ export const useLoginBonus = () => {
     if (error) throw error;
     await refetch();
     window.dispatchEvent(new CustomEvent("avatar-updated"));
+    window.dispatchEvent(new CustomEvent("login-bonus-claimed"));
     return data as ClaimResult;
   }, [user, refetch]);
 
