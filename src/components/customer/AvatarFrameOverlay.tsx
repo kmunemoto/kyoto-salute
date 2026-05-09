@@ -11,7 +11,7 @@ interface Props {
  * Renders a decorative frame image overlay over an avatar container.
  * Place inside a `position: relative` parent and the frame will fill it.
  */
-const AvatarFrameOverlay = ({ frameKey, scale = 1, className }: Props) => {
+const AvatarFrameOverlay = ({ frameKey, scale = 1.2, className }: Props) => {
   const src = getFrameImage(frameKey);
   if (!src) return null;
   return (
