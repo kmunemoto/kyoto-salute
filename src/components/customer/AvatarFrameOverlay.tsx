@@ -11,7 +11,7 @@ interface Props {
  * Renders a decorative frame image overlay over an avatar container.
  * Place inside a `position: relative` parent and the frame will fill it.
  */
-const AvatarFrameOverlay = ({ frameKey, scale = 1.18, className }: Props) => {
+const AvatarFrameOverlay = ({ frameKey, scale = 1, className }: Props) => {
   const src = getFrameImage(frameKey);
   if (!src) return null;
   return (
@@ -19,8 +19,8 @@ const AvatarFrameOverlay = ({ frameKey, scale = 1.18, className }: Props) => {
       src={src}
       alt=""
       aria-hidden
-      className={`pointer-events-none absolute inset-0 w-full h-full object-contain z-30 ${className || ""}`}
-      style={{ transform: `scale(${scale})` }}
+      className={`pointer-events-none absolute top-1/2 left-1/2 w-full h-full object-contain z-30 ${className || ""}`}
+      style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
       onError={(e) => {
         (e.currentTarget as HTMLImageElement).style.display = "none";
       }}

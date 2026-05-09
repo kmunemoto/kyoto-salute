@@ -144,9 +144,20 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
         <div className="flex flex-col items-center pt-2">
           <div
             className="relative w-44 h-44 rounded-3xl flex items-center justify-center overflow-visible"
-            style={{ backgroundColor: `${p.rank.color}15`, borderRadius: "1.5rem" }}
+            style={{
+              backgroundColor: avatar.equipped_frame ? "transparent" : `${p.rank.color}15`,
+              borderRadius: "1.5rem",
+            }}
           >
-            <div className="absolute inset-0 rounded-3xl overflow-hidden">
+            <div
+              className={`absolute top-1/2 left-1/2 overflow-hidden ${avatar.equipped_frame ? "rounded-full" : "rounded-3xl"}`}
+              style={{
+                width: avatar.equipped_frame ? "75%" : "100%",
+                height: avatar.equipped_frame ? "75%" : "100%",
+                transform: "translate(-50%, -50%)",
+                zIndex: 1,
+              }}
+            >
               <img
                 src={p.rank.image}
                 alt={p.rank.name}
@@ -154,7 +165,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
               />
             </div>
-            <AvatarFrameOverlay frameKey={avatar.equipped_frame} />
+            <AvatarFrameOverlay frameKey={avatar.equipped_frame} scale={1} />
           </div>
           <div className="mt-3 text-center">
             <p className="text-2xl font-extrabold">Lv.{p.level}</p>
