@@ -64,6 +64,11 @@ export const ACHIEVEMENTS: { key: string; name: string; description: string; rar
   { key: "quest_garden_bloom", name: "庭園の復興者", description: "王国復興クエスト 花咲く庭園を復興", rarity: "epic" },
   { key: "quest_forge_master", name: "鍛冶屋の復興者", description: "王国復興クエスト 鍛冶屋通りを復興", rarity: "epic" },
   { key: "quest_stargazer", name: "星見の復興者", description: "王国復興クエスト 星見の塔を復興", rarity: "epic" },
+  // === Weight journey badges ===
+  { key: "weight_first_step", name: "ファーストステップ", description: "目標に向けて最初の1kg減量", rarity: "normal" },
+  { key: "weight_change_start", name: "チェンジ開始", description: "3kg減量達成", rarity: "rare" },
+  { key: "weight_halfway", name: "ハーフウェイ", description: "目標の折り返し地点に到達", rarity: "rare" },
+  { key: "weight_goal_achieved", name: "ゴール達成", description: "目標体重を達成", rarity: "epic" },
 ];
 
 export const getRarityColor = (rarity: AchievementRarity): string => {
