@@ -2152,6 +2152,80 @@ export type Database = {
         }
         Relationships: []
       }
+      weight_journey: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          start_date: string
+          start_weight: number
+          target_weight: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          start_weight: number
+          target_weight: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          start_weight?: number
+          target_weight?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weight_journey_milestones: {
+        Row: {
+          achieved_at: string
+          badge_key: string | null
+          coins_awarded: number
+          id: string
+          journey_id: string
+          milestone_kg: number
+          milestone_type: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          badge_key?: string | null
+          coins_awarded?: number
+          id?: string
+          journey_id: string
+          milestone_kg: number
+          milestone_type: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          badge_key?: string | null
+          coins_awarded?: number
+          id?: string
+          journey_id?: string
+          milestone_kg?: number
+          milestone_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_journey_milestones_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "weight_journey"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workouts: {
         Row: {
           created_at: string
@@ -2212,6 +2286,7 @@ export type Database = {
       }
       check_collection_milestones: { Args: { _user_id: string }; Returns: Json }
       check_training_milestones: { Args: { p_user_id: string }; Returns: Json }
+      check_weight_milestones: { Args: { p_user_id: string }; Returns: Json }
       claim_daily_login_bonus: { Args: { p_user_id: string }; Returns: Json }
       claim_rival_reward: { Args: { p_battle_id: string }; Returns: Json }
       complete_quest_stage: {
