@@ -153,6 +153,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
               />
+              <DetailEquipmentOverlay userId={user?.id} />
             </div>
             <AvatarFrameOverlay frameKey={avatar.equipped_frame} />
           </div>
