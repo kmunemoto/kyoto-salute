@@ -62,6 +62,16 @@ export function useMeasurements(userId: string | undefined) {
 
       await fetchMeasurements();
       toast.success("計測データを保存しました");
+      // Evaluate weight journey milestones (no-op when none set)
+      try {
+        const { data: res } = await supabase.rpc("check_weight_milestones" as any, { p_user_id: userId });
+        const granted = (res as any)?.granted as any[] | undefined;
+        if (granted && granted.length > 0) {
+          for (const g of granted) {
+            toast.success(`🎉 ${g.badge}達成！+${g.coins}コイン`);
+          }
+        }
+      } catch {}
       return true;
     },
     [userId, measurements, fetchMeasurements]
