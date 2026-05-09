@@ -37,6 +37,7 @@ export const TITLES: TitleDef[] = [
   { key: "spirit_ally", name: "精霊の盟友", condition: "王国復興クエスト ステージ5クリア" },
   { key: "sky_pioneer", name: "天空の開拓者", condition: "王国復興クエスト ステージ7クリア" },
   { key: "kingdom_hero", name: "王国の英雄", condition: "王国復興クエスト 全ステージクリア" },
+  { key: "goal_achiever", name: "ゴール達成者", condition: "目標体重を達成" },
 ];
 
 export const getTitleDef = (key: string | null | undefined): TitleDef | undefined =>
