@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ACHIEVEMENTS, getAvatarImage, getExpProgress, getRankInfo, getRarityColor, getRarityStarCount } from "@/lib/avatarSystem";
+import { ACHIEVEMENTS, getAvatarImage, getExpProgress, getRankInfo, getRarityColor, getRarityStarCount, handleAvatarImgError } from "@/lib/avatarSystem";
 import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { useAvatar } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
@@ -162,7 +162,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                 src={p.rank.image}
                 alt={p.rank.name}
                 className="w-full h-full object-cover pixel-avatar"
-                
+                onError={handleAvatarImgError}
               />
             </div>
             <AvatarFrameOverlay frameKey={avatar.equipped_frame} scale={1.2} />
@@ -216,7 +216,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                       src={getAvatarImage(rank.key, g, hairColor)}
                       alt={g}
                       className="w-full h-full object-cover pixel-avatar"
-                      
+                      onError={handleAvatarImgError}
                     />
                   </div>
                   <span className="mt-2 text-sm font-bold">{g === "female" ? "女性" : "男性"}</span>
