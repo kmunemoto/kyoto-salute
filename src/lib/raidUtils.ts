@@ -51,12 +51,40 @@ export async function processSessionRewards(userId: string, workoutDate: string)
     console.error("process_session_rewards", error);
     return null;
   }
-  return data as {
-    combo: number;
-    multiplier: number;
-    combo_bonus: number;
-    total_exp: number;
-    level: number;
-    leveled_up: boolean;
-  };
+  return data as SessionRewardResult;
+}
+
+export interface SessionRewardResult {
+  combo: number;
+  multiplier: number;
+  combo_bonus: number;
+  total_exp: number;
+  level: number;
+  leveled_up: boolean;
+  session_base: number;
+  volume_kg: number;
+  volume_bonus: number;
+  pr_count: number;
+  pr_exercises: string[];
+  session_subtotal: number;
+  session_total: number;
+  gender: string;
+  rank_up: { rank: string; coins: number; tickets: number } | null;
+}
+
+export interface MilestoneAchieved {
+  id: number;
+  session_count: number;
+  milestone_name: string;
+  reward_coins: number;
+  reward_exp: number;
+  reward_gacha_tickets: number;
+  reward_title: string | null;
+  reward_badge_key: string | null;
+}
+
+export async function checkTrainingMilestones(userId: string): Promise<{ total_sessions: number; achieved: MilestoneAchieved[] } | null> {
+  const { data, error } = await supabase.rpc("check_training_milestones" as any, { p_user_id: userId });
+  if (error) { console.error("check_training_milestones", error); return null; }
+  return data as any;
 }
