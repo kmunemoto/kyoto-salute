@@ -29,29 +29,18 @@ const EquipmentImage = ({
 }) => {
   const [failed, setFailed] = useState(false);
   const src = getEquipmentImage(it.item_key, it.item_type);
-  if (!failed) {
-    return (
-      <img
-        src={src}
-        alt=""
-        aria-hidden
-        onError={() => setFailed(true)}
-        className="absolute pointer-events-none object-contain pixel-avatar"
-        style={{ ...style, filter, background: "transparent" }}
-      />
-    );
-  }
-  // Icon-based fallback when the equipment image is missing.
-  const Icon = getEquipIcon(it.icon_name || undefined);
-  const color = RARITY_COLOR[it.rarity] || "#fff";
+  // Per spec: only render the actual equipment image. If it fails to load,
+  // render nothing (no Lucide icon placeholder).
+  if (failed) return null;
   return (
-    <div
+    <img
+      src={src}
+      alt=""
       aria-hidden
-      className="absolute pointer-events-none flex items-center justify-center"
+      onError={() => setFailed(true)}
+      className="absolute pointer-events-none object-contain pixel-avatar"
       style={{ ...style, filter, background: "transparent" }}
-    >
-      <Icon className="w-full h-full" style={{ color, strokeWidth: 2.5 }} />
-    </div>
+    />
   );
 };
 
@@ -68,17 +57,17 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
     <>
       {gear.shield && renderItem(
         gear.shield,
-        { bottom: "5%", left: "-5%", height: "25%", width: "25%", zIndex: zBase, opacity: 0.95 },
+        { bottom: "8%", left: "5%", height: "32%", width: "32%", zIndex: zBase, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
       )}
       {gear.amulet && renderItem(
         gear.amulet,
-        { top: "-8%", left: "50%", transform: "translateX(-50%)", height: "22%", width: "22%", zIndex: zBase + 2, opacity: 0.95 },
+        { top: "0%", left: "50%", transform: "translateX(-50%)", height: "26%", width: "26%", zIndex: zBase + 2, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.amulet.rarity]}`,
       )}
       {gear.weapon && renderItem(
         gear.weapon,
-        { bottom: "2%", right: "-5%", height: "30%", width: "30%", zIndex: zBase + 1, transform: "rotate(15deg)", opacity: 0.95 },
+        { bottom: "5%", right: "5%", height: "35%", width: "35%", zIndex: zBase + 1, transform: "rotate(15deg)", opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
       )}
     </>
