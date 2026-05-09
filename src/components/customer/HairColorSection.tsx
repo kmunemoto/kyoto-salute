@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAvatar } from "@/hooks/useAvatar";
 import { Coins, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { getRankInfo, getAvatarImage } from "@/lib/avatarSystem";
+import { getRankInfo, getAvatarImage, handleAvatarImgError } from "@/lib/avatarSystem";
 
 interface Item {
   item_key: string;
@@ -98,7 +98,7 @@ const HairColorSection = () => {
         className={`relative rounded-2xl border-2 p-2 flex flex-col items-center transition ${currentHair === "orange" ? "border-accent bg-accent/10" : "border-border bg-card hover:bg-muted/40"}`}
       >
         <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: `${rank.color}15` }}>
-          <img src={getAvatarImage(rank.key, gender, "orange")} alt="orange" className="w-full h-full object-cover pixel-avatar" />
+          <img src={getAvatarImage(rank.key, gender, "orange")} alt="orange" className="w-full h-full object-cover pixel-avatar" onError={handleAvatarImgError} />
         </div>
         <span className="mt-1 text-[11px] font-bold">オレンジ</span>
         <span className="text-[10px] text-muted-foreground">デフォルト</span>
@@ -123,7 +123,7 @@ const HairColorSection = () => {
                 src={getAvatarImage(rank.key, gender, item.item_key as any)}
                 alt={item.item_key}
                 className="w-full h-full object-cover pixel-avatar"
-                
+                onError={handleAvatarImgError}
               />
             </div>
             <span className="mt-1 text-[11px] font-bold">{item.name}</span>
