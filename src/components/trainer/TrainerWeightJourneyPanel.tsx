@@ -42,7 +42,17 @@ const TrainerWeightJourneyPanel = ({ clientId }: Props) => {
       .eq("user_id", clientId)
       .eq("is_active", true)
       .maybeSingle();
-    setJourney((j as any) ?? null);
+    if (j) {
+      setJourney({
+        id: (j as any).id,
+        start_weight: Number((j as any).start_weight),
+        target_weight: Number((j as any).target_weight),
+        start_date: (j as any).start_date,
+        is_active: (j as any).is_active,
+      });
+    } else {
+      setJourney(null);
+    }
     const { data: m } = await supabase
       .from("user_measurements")
       .select("weight")
