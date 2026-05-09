@@ -1535,89 +1535,6 @@ export type Database = {
         }
         Relationships: []
       }
-      season_pass_config: {
-        Row: {
-          created_at: string
-          end_date: string
-          id: string
-          month: string
-          name: string
-          premium_cost_coins: number
-          premium_daily_coins: number
-          premium_exp_multiplier: number
-          start_date: string
-        }
-        Insert: {
-          created_at?: string
-          end_date: string
-          id?: string
-          month: string
-          name: string
-          premium_cost_coins?: number
-          premium_daily_coins?: number
-          premium_exp_multiplier?: number
-          start_date: string
-        }
-        Update: {
-          created_at?: string
-          end_date?: string
-          id?: string
-          month?: string
-          name?: string
-          premium_cost_coins?: number
-          premium_daily_coins?: number
-          premium_exp_multiplier?: number
-          start_date?: string
-        }
-        Relationships: []
-      }
-      season_pass_levels: {
-        Row: {
-          config_id: string
-          free_reward_amount: number
-          free_reward_key: string | null
-          free_reward_type: string | null
-          id: string
-          level: number
-          premium_reward_amount: number
-          premium_reward_key: string | null
-          premium_reward_type: string | null
-          required_points: number
-        }
-        Insert: {
-          config_id: string
-          free_reward_amount?: number
-          free_reward_key?: string | null
-          free_reward_type?: string | null
-          id?: string
-          level: number
-          premium_reward_amount?: number
-          premium_reward_key?: string | null
-          premium_reward_type?: string | null
-          required_points: number
-        }
-        Update: {
-          config_id?: string
-          free_reward_amount?: number
-          free_reward_key?: string | null
-          free_reward_type?: string | null
-          id?: string
-          level?: number
-          premium_reward_amount?: number
-          premium_reward_key?: string | null
-          premium_reward_type?: string | null
-          required_points?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "season_pass_levels_config_id_fkey"
-            columns: ["config_id"]
-            isOneToOne: false
-            referencedRelation: "season_pass_config"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       skeletal_diagnoses: {
         Row: {
           confidence: number
@@ -1672,6 +1589,42 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      training_milestones: {
+        Row: {
+          created_at: string
+          id: number
+          milestone_name: string
+          reward_badge_key: string | null
+          reward_coins: number
+          reward_exp: number
+          reward_gacha_tickets: number
+          reward_title: string | null
+          session_count: number
+        }
+        Insert: {
+          created_at?: string
+          id: number
+          milestone_name: string
+          reward_badge_key?: string | null
+          reward_coins?: number
+          reward_exp?: number
+          reward_gacha_tickets?: number
+          reward_title?: string | null
+          session_count: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          milestone_name?: string
+          reward_badge_key?: string | null
+          reward_coins?: number
+          reward_exp?: number
+          reward_gacha_tickets?: number
+          reward_title?: string | null
+          session_count?: number
         }
         Relationships: []
       }
@@ -1993,6 +1946,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_milestone_claims: {
+        Row: {
+          claimed_at: string
+          id: string
+          milestone_id: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          milestone_id: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          milestone_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_milestone_claims_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "training_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_quest_boss_progress: {
         Row: {
           boss_current_hp: number
@@ -2149,85 +2131,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_season_pass: {
-        Row: {
-          config_id: string
-          created_at: string
-          current_level: number
-          current_points: number
-          id: string
-          is_premium: boolean
-          premium_purchased_at: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          config_id: string
-          created_at?: string
-          current_level?: number
-          current_points?: number
-          id?: string
-          is_premium?: boolean
-          premium_purchased_at?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          config_id?: string
-          created_at?: string
-          current_level?: number
-          current_points?: number
-          id?: string
-          is_premium?: boolean
-          premium_purchased_at?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_season_pass_config_id_fkey"
-            columns: ["config_id"]
-            isOneToOne: false
-            referencedRelation: "season_pass_config"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_season_pass_claims: {
-        Row: {
-          claimed_at: string
-          config_id: string
-          id: string
-          level: number
-          track: string
-          user_id: string
-        }
-        Insert: {
-          claimed_at?: string
-          config_id: string
-          id?: string
-          level: number
-          track: string
-          user_id: string
-        }
-        Update: {
-          claimed_at?: string
-          config_id?: string
-          id?: string
-          level?: number
-          track?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_season_pass_claims_config_id_fkey"
-            columns: ["config_id"]
-            isOneToOne: false
-            referencedRelation: "season_pass_config"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_titles: {
         Row: {
           id: string
@@ -2299,21 +2202,18 @@ export type Database = {
     }
     Functions: {
       _quest_condition_values: { Args: { _user_id: string }; Returns: Json }
-      add_season_pass_points: {
-        Args: { p_action?: string; p_points: number; p_user_id: string }
-        Returns: Json
+      _workout_max_weight: {
+        Args: { _sets: Json; _weight: number }
+        Returns: number
       }
       apply_raid_damage: {
         Args: { _damage: number; _user_id: string; _workout_date: string }
         Returns: Json
       }
       check_collection_milestones: { Args: { _user_id: string }; Returns: Json }
+      check_training_milestones: { Args: { p_user_id: string }; Returns: Json }
       claim_daily_login_bonus: { Args: { p_user_id: string }; Returns: Json }
       claim_rival_reward: { Args: { p_battle_id: string }; Returns: Json }
-      claim_season_pass_reward: {
-        Args: { p_level: number; p_track: string; p_user_id: string }
-        Returns: Json
-      }
       complete_quest_stage: {
         Args: { p_stage_id: number; p_user_id: string }
         Returns: Json
@@ -2353,26 +2253,6 @@ export type Database = {
           end_booking_date: string
           status: string
         }[]
-      }
-      get_current_season_config: {
-        Args: never
-        Returns: {
-          created_at: string
-          end_date: string
-          id: string
-          month: string
-          name: string
-          premium_cost_coins: number
-          premium_daily_coins: number
-          premium_exp_multiplier: number
-          start_date: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "season_pass_config"
-          isOneToOne: true
-          isSetofReturn: false
-        }
       }
       get_login_bonus_status: { Args: { p_user_id: string }; Returns: Json }
       get_player_combat_stats: { Args: { p_user_id: string }; Returns: Json }
@@ -2419,7 +2299,6 @@ export type Database = {
         Args: { p_item_key: string }
         Returns: Json
       }
-      purchase_premium_pass: { Args: { p_user_id: string }; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
