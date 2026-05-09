@@ -48,6 +48,7 @@ import MuscleBalanceRadar from "@/components/customer/MuscleBalanceRadar";
 import TrainerClientAvatarTab from "./TrainerClientAvatarTab";
 import SessionExpSummaryDialog from "@/components/customer/SessionExpSummaryDialog";
 import MilestoneAchievedDialog from "@/components/customer/MilestoneAchievedDialog";
+import TrainerWeightJourneyPanel from "./TrainerWeightJourneyPanel";
 
 interface TrainerClientDetailProps {
   clientId: string;
@@ -788,6 +789,9 @@ const TrainerClientDetail = ({ clientId, onBack }: TrainerClientDetailProps) => 
                 </button>
               </div>
             </div>
+
+            {/* Diet goal (weight journey) */}
+            <TrainerWeightJourneyPanel clientId={clientId} />
           </CardContent>
         </Card>
       </section>
