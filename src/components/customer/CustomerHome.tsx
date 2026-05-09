@@ -18,6 +18,10 @@ import GachaCard from "./GachaCard";
 import SeasonEventCard from "./SeasonEventCard";
 import RivalBattleCard from "./RivalBattleCard";
 import QuestCard from "./QuestCard";
+import LoginBonusBanner from "./LoginBonusBanner";
+import LoginBonusDialog from "./LoginBonusDialog";
+import SeasonPassCard from "./SeasonPassCard";
+import { useLoginBonus } from "@/hooks/useLoginBonus";
 import { Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { getJSTNow, formatJST } from "@/lib/timezone";
@@ -47,6 +51,15 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const [totalSessions, setTotalSessions] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
   const [needsGender, setNeedsGender] = useState(false);
+  const { status: loginBonusStatus } = useLoginBonus();
+  const [loginBonusOpen, setLoginBonusOpen] = useState(false);
+
+  // Auto-open login bonus dialog after 0.5s if not claimed today
+  useEffect(() => {
+    if (!loginBonusStatus || loginBonusStatus.claimed_today) return;
+    const t = setTimeout(() => setLoginBonusOpen(true), 500);
+    return () => clearTimeout(t);
+  }, [loginBonusStatus]);
 
   // Check if user has selected a gender for their avatar
   useEffect(() => {
@@ -276,9 +289,16 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   return (
     <div className="px-4 py-4 space-y-5 slide-up">
       <AvatarGenderSetupDialog open={needsGender} onSelect={handleSelectGender} />
+      <LoginBonusDialog open={loginBonusOpen} onClose={() => setLoginBonusOpen(false)} />
 
       {/* 1. Greeting */}
       {greetingHeader}
+
+      {loginBonusStatus && !loginBonusStatus.claimed_today && (
+        <LoginBonusBanner onOpen={() => setLoginBonusOpen(true)} />
+      )}
+
+      <SeasonPassCard />
 
       {/* 2. Avatar */}
       <AvatarCard />
