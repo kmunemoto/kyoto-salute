@@ -21,6 +21,8 @@ import QuestCard from "./QuestCard";
 import LoginBonusBanner from "./LoginBonusBanner";
 import LoginBonusDialog from "./LoginBonusDialog";
 import { useLoginBonus } from "@/hooks/useLoginBonus";
+import { useNextMilestone } from "@/hooks/useNextMilestone";
+import { Trophy } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { getJSTNow, formatJST } from "@/lib/timezone";
@@ -52,6 +54,7 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
   const [needsGender, setNeedsGender] = useState(false);
   const { status: loginBonusStatus } = useLoginBonus();
   const [loginBonusOpen, setLoginBonusOpen] = useState(false);
+  const nextMilestone = useNextMilestone();
 
   // Auto-open login bonus dialog after 0.5s if not claimed today
   useEffect(() => {
@@ -299,6 +302,15 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* 2. Avatar */}
       <AvatarCard />
+
+      {nextMilestone && nextMilestone.nextSessionCount && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
+          <Trophy className="w-3.5 h-3.5 text-primary shrink-0" />
+          <p className="text-[11px] text-muted-foreground break-all">
+            次のマイルストーン：<span className="font-bold text-foreground">{nextMilestone.milestoneName}</span>まであと <span className="font-bold text-primary">{nextMilestone.remaining}</span> セッション
+          </p>
+        </div>
+      )}
 
       {/* 3. Next Booking */}
       {nextBookingSection}
