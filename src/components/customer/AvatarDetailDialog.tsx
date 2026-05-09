@@ -139,24 +139,21 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogTitle className="sr-only">アバター詳細</DialogTitle>
         <div className="flex flex-col items-center pt-2">
           <div
-            className="relative w-44 h-44 rounded-3xl flex items-center justify-center overflow-visible"
+            className="relative rounded-3xl flex items-center justify-center overflow-visible mx-auto"
             style={{
+              width: "min(250px, 70vw)",
+              height: "min(250px, 70vw)",
               backgroundColor: avatar.equipped_frame ? "transparent" : `${p.rank.color}15`,
               borderRadius: "1.5rem",
             }}
           >
             <div
-              className={`absolute top-1/2 left-1/2 overflow-hidden ${avatar.equipped_frame ? "rounded-full" : "rounded-3xl"}`}
-              style={{
-                width: avatar.equipped_frame ? "75%" : "100%",
-                height: avatar.equipped_frame ? "75%" : "100%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 1,
-              }}
+              className="absolute inset-0 rounded-3xl overflow-hidden"
+              style={{ zIndex: 1 }}
             >
               <img
                 src={p.rank.image}
@@ -165,7 +162,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
               />
             </div>
-            <AvatarFrameOverlay frameKey={avatar.equipped_frame} scale={1} />
+            <AvatarFrameOverlay frameKey={avatar.equipped_frame} scale={1.2} />
           </div>
           <div className="mt-3 text-center">
             <p className="text-2xl font-extrabold">Lv.{p.level}</p>
