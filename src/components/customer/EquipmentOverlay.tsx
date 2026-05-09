@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { EquippedGear, EquippedGearItem } from "@/hooks/useEquippedGear";
-import { getEquipIcon, RARITY_COLOR } from "@/lib/questBosses";
 import { getEquipmentImage } from "@/lib/avatarSystem";
 
 const RARITY_GLOW: Record<string, string> = {
