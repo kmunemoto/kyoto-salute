@@ -13,6 +13,8 @@ import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
 import FrameSection from "./FrameSection";
 import AvatarFrameOverlay from "./AvatarFrameOverlay";
+import EquipmentOverlay from "./EquipmentOverlay";
+import { useEquippedGear } from "@/hooks/useEquippedGear";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { equipRaidItem, RANK_LABEL_JP, type RaidRewardItem, type UserRaidReward, type RaidParticipationStat } from "@/hooks/useRaidRewards";
@@ -58,6 +60,7 @@ const reasonLabel = (reason: string): string => {
 const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles = [], onEquipTitle, rewardItems = [], ownedRewards = [], participation = [], onRewardsChanged, onAvatarChanged }: Props) => {
   const { user } = useAuth();
   const { updateGender, setFeaturedBadges } = useAvatar(false);
+  const { gear } = useEquippedGear(user?.id);
   const gender = (avatar.gender as "male" | "female") ?? "female";
   const hairColor = (avatar.hair_color as any) ?? "orange";
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
@@ -163,6 +166,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
               />
             </div>
             <AvatarFrameOverlay frameKey={avatar.equipped_frame} scale={1.2} />
+            <EquipmentOverlay gear={gear} zBase={20} />
           </div>
           <div className="mt-3 text-center">
             <p className="text-2xl font-extrabold">Lv.{p.level}</p>
