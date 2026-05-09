@@ -1,5 +1,7 @@
+import { useState } from "react";
 import type { EquippedGear, EquippedGearItem } from "@/hooks/useEquippedGear";
 import { getEquipIcon, RARITY_COLOR } from "@/lib/questBosses";
+import { getEquipmentImage } from "@/lib/avatarSystem";
 
 const RARITY_GLOW: Record<string, string> = {
   common: "",
@@ -16,38 +18,48 @@ interface Props {
   zBase?: number;
 }
 
-const renderItem = (
-  it: EquippedGearItem,
-  style: React.CSSProperties,
-  filter: string,
-) => {
-  if (it.image_path) {
+const EquipmentImage = ({
+  it,
+  style,
+  filter,
+}: {
+  it: EquippedGearItem;
+  style: React.CSSProperties;
+  filter: string;
+}) => {
+  const [failed, setFailed] = useState(false);
+  const src = getEquipmentImage(it.item_key, it.item_type);
+  if (!failed) {
     return (
       <img
-        src={it.image_path}
+        src={src}
         alt=""
         aria-hidden
+        onError={() => setFailed(true)}
         className="absolute pointer-events-none object-contain pixel-avatar"
-        style={{ ...style, filter }}
+        style={{ ...style, filter, background: "transparent" }}
       />
     );
   }
-  // Icon-based fallback for items without an image (e.g. gacha equipment)
+  // Icon-based fallback when the equipment image is missing.
   const Icon = getEquipIcon(it.icon_name || undefined);
   const color = RARITY_COLOR[it.rarity] || "#fff";
   return (
     <div
       aria-hidden
       className="absolute pointer-events-none flex items-center justify-center"
-      style={{ ...style, filter }}
+      style={{ ...style, filter, background: "transparent" }}
     >
-      <Icon
-        className="w-full h-full"
-        style={{ color, strokeWidth: 2.5 }}
-      />
+      <Icon className="w-full h-full" style={{ color, strokeWidth: 2.5 }} />
     </div>
   );
 };
+
+const renderItem = (
+  it: EquippedGearItem,
+  style: React.CSSProperties,
+  filter: string,
+) => <EquipmentImage key={it.item_key} it={it} style={style} filter={filter} />;
 
 const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
   // In compact spots (ranking rows, small avatars) skip overlay entirely.
