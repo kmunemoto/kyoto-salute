@@ -6,8 +6,6 @@ import { Loader2, Trophy, Dumbbell, CalendarCheck, Flame, Medal, Crown } from "l
 import { getRankInfo, type Gender } from "@/lib/avatarSystem";
 import { getTitleDef } from "@/lib/titleSystem";
 import FeaturedBadgesRow from "./FeaturedBadgesRow";
-import EquipmentOverlay from "./EquipmentOverlay";
-import type { EquippedGear } from "@/hooks/useEquippedGear";
 
 type RankType = "volume" | "sessions" | "combo";
 type GenderTab = "male" | "female";
@@ -84,18 +82,6 @@ const CustomerRanking = () => {
 
   const renderAvatar = (row: RankRow, size: number) => {
     const rank = getRankInfo(row.level || 1, gender as Gender);
-    const gear: EquippedGear = {
-      weapon: row.weapon_image
-        ? { item_key: "", item_name: "", item_type: "weapon", rarity: (row.weapon_rarity as any) || "common", image_path: row.weapon_image }
-        : null,
-      shield: row.shield_image
-        ? { item_key: "", item_name: "", item_type: "shield", rarity: (row.shield_rarity as any) || "common", image_path: row.shield_image }
-        : null,
-      amulet: row.amulet_image
-        ? { item_key: "", item_name: "", item_type: "amulet", rarity: (row.amulet_rarity as any) || "common", image_path: row.amulet_image }
-        : null,
-    };
-    const isCompact = size < 48;
     return (
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <img
@@ -106,7 +92,6 @@ const CustomerRanking = () => {
             (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
           }}
         />
-        <EquipmentOverlay gear={gear} compact={isCompact} />
       </div>
     );
   };

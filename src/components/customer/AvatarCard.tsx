@@ -15,15 +15,12 @@ import { Flame } from "lucide-react";
 import { useRaidRewards } from "@/hooks/useRaidRewards";
 import AvatarFrameOverlay from "./AvatarFrameOverlay";
 import { getFrameImage } from "@/hooks/useFrames";
-import EquipmentOverlay from "./EquipmentOverlay";
-import { useEquippedGear } from "@/hooks/useEquippedGear";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AvatarCard = () => {
-  const { user } = useAuth();
+  useAuth();
   const { avatar, logs, achievements, titles, loading, levelUp, clearLevelUp, equipTitle, refetch, newAchievement, clearNewAchievement } = useAvatar(true);
   const { items: rewardItems, owned, participation, refetch: refetchRewards } = useRaidRewards();
-  const { gear } = useEquippedGear(user?.id);
   const [open, setOpen] = useState(false);
   const [emoteFailed, setEmoteFailed] = useState(false);
   const emoteSrc = getEmoteVideoSrc(avatar?.equipped_emote);
@@ -50,8 +47,6 @@ const AvatarCard = () => {
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
   const combo = avatar.combo_count || 0;
   const equipped = getTitleDef(avatar.equipped_title);
-  const weaponItem = rewardItems.find((it) => it.item_key === avatar.equipped_weapon);
-  const bgItem = rewardItems.find((it) => it.item_key === avatar.equipped_background);
   const frameKey = avatar.equipped_frame;
   const frameClass =
     frameKey === "rainbow_legend"
@@ -75,15 +70,6 @@ const AvatarCard = () => {
             style={{ backgroundColor: `${p.rank.color}15`, borderRadius: "1rem" }}
           >
             <div className="absolute inset-0 rounded-2xl overflow-hidden">
-            {bgItem?.image_url && (
-              <img
-                src={bgItem.image_url}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover opacity-60 z-0"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-              />
-            )}
             {emoteSrc && !emoteFailed ? (
               <video
                 src={emoteSrc}
@@ -103,17 +89,6 @@ const AvatarCard = () => {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
               />
             )}
-            {weaponItem?.image_url && (
-              <img
-                src={weaponItem.image_url}
-                alt=""
-                aria-hidden
-                className="absolute right-0 bottom-0 w-2/5 h-2/5 object-contain z-20"
-                style={{ transform: "rotate(-15deg)" }}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-              />
-            )}
-            <EquipmentOverlay gear={gear} />
             </div>
             {frameImg && <AvatarFrameOverlay frameKey={frameKey} scale={1.22} />}
           </div>
