@@ -13,12 +13,19 @@ import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
 import FrameSection from "./FrameSection";
 import AvatarFrameOverlay from "./AvatarFrameOverlay";
+import EquipmentOverlay from "./EquipmentOverlay";
+import { useEquippedGear } from "@/hooks/useEquippedGear";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
 import { equipRaidItem, RANK_LABEL_JP, type RaidRewardItem, type UserRaidReward, type RaidParticipationStat } from "@/hooks/useRaidRewards";
 import { RAID_DAMAGE_MULT, MISSION_EXP_MULT, GACHA_PROBS, RANK_UP_REWARDS, RANK_LABEL } from "@/lib/rankPerks";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
+const DetailEquipmentOverlay = ({ userId }: { userId?: string | null }) => {
+  const { gear } = useEquippedGear(userId);
+  return <EquipmentOverlay gear={gear} />;
+};
 
 interface Props {
   open: boolean;
@@ -153,6 +160,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/avatars/${p.rank.key}.png`; }}
               />
+              <DetailEquipmentOverlay userId={user?.id} />
             </div>
             <AvatarFrameOverlay frameKey={avatar.equipped_frame} />
           </div>
