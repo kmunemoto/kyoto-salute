@@ -534,6 +534,7 @@ export type Database = {
           hp_bonus: number
           icon_name: string
           id: string
+          image_path: string | null
           item_key: string
           item_name: string
           item_type: string
@@ -547,6 +548,7 @@ export type Database = {
           hp_bonus?: number
           icon_name: string
           id?: string
+          image_path?: string | null
           item_key: string
           item_name: string
           item_type: string
@@ -560,6 +562,7 @@ export type Database = {
           hp_bonus?: number
           icon_name?: string
           id?: string
+          image_path?: string | null
           item_key?: string
           item_name?: string
           item_type?: string
