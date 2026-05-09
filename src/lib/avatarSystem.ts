@@ -105,6 +105,13 @@ export const AVATAR_CDN_BASE =
   "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars";
 
 /**
+ * Cache-busting version for avatar/equipment images. Bump when assets are
+ * replaced in Supabase Storage so browsers fetch the new files.
+ */
+export const AVATAR_VERSION = "v2";
+const _v = `?${AVATAR_VERSION}`;
+
+/**
  * Fallback inline SVG (Lucide User-style silhouette) used when an avatar image
  * fails to load. Keeps img tags self-contained without needing React state.
  */
@@ -120,7 +127,7 @@ export const getAvatarImage = (
   rank: RankKey,
   gender: Gender = "female",
   hairColor: HairColor = "orange"
-): string => `${AVATAR_CDN_BASE}/avatars/${gender}_${rank}_${hairColor}.png`;
+): string => `${AVATAR_CDN_BASE}/avatars/${gender}_${rank}_${hairColor}.png${_v}`;
 
 /**
  * Equipment images live in the same `avatars` bucket under
@@ -131,7 +138,7 @@ export const getEquipmentImage = (
   itemType: "weapon" | "shield" | "amulet"
 ): string => {
   const folder = itemType === "weapon" ? "weapons" : itemType === "shield" ? "shields" : "accessories";
-  return `${AVATAR_CDN_BASE}/equipment/${folder}/${itemKey}.png`;
+  return `${AVATAR_CDN_BASE}/equipment/${folder}/${itemKey}.png${_v}`;
 };
 
 export const getRankInfo = (
