@@ -5,7 +5,7 @@ import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { useAvatar } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, CheckCircle2 } from "lucide-react";
+import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, CheckCircle2, Droplet, Shield as ShieldIcon } from "lucide-react";
 import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
@@ -190,6 +190,40 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             {avatar.coins} コイン
             <Plus className="w-3.5 h-3.5 ml-1" />
           </button>
+          {(() => {
+            const lv = avatar.level ?? 1;
+            const items = [gear.weapon, gear.shield, gear.amulet, gear.top, gear.bottom];
+            const atkBonus = items.reduce((s, it) => s + (it?.atk_bonus ?? 0), 0);
+            const defBonus = items.reduce((s, it) => s + (it?.def_bonus ?? 0), 0);
+            const hpBonus = items.reduce((s, it) => s + (it?.hp_bonus ?? 0), 0);
+            const hp = 100 + lv * 10 + hpBonus;
+            const mp = 20 + lv * 5;
+            const atk = 10 + lv * 2 + atkBonus;
+            const def = 8 + Math.floor(lv * 1.5) + defBonus;
+            const StatCard = ({
+              label, value, bonus, color, bg, Icon,
+            }: { label: string; value: number; bonus?: number; color: string; bg: string; Icon: any }) => (
+              <div className={`${bg} rounded-xl p-2 text-center`}>
+                <p className={`text-[10px] ${color} font-bold flex items-center justify-center gap-1`}>
+                  <Icon className="w-3 h-3" /> {label}
+                </p>
+                <p className={`text-lg font-extrabold ${color} leading-tight`}>
+                  {value}
+                  {bonus && bonus > 0 ? (
+                    <span className="text-[10px] font-bold ml-0.5 align-top">+{bonus}</span>
+                  ) : null}
+                </p>
+              </div>
+            );
+            return (
+              <div className="grid grid-cols-4 gap-2 w-full mt-3">
+                <StatCard label="HP" value={hp} bonus={hpBonus} color="text-red-500" bg="bg-red-500/10" Icon={Heart} />
+                <StatCard label="MP" value={mp} color="text-blue-500" bg="bg-blue-500/10" Icon={Droplet} />
+                <StatCard label="ATK" value={atk} bonus={atkBonus} color="text-orange-500" bg="bg-orange-500/10" Icon={SwordIcon} />
+                <StatCard label="DEF" value={def} bonus={defBonus} color="text-green-600" bg="bg-green-500/10" Icon={ShieldIcon} />
+              </div>
+            );
+          })()}
           <button
             onClick={() => setEquipOpen(true)}
             className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-muted/70 border border-border transition"
