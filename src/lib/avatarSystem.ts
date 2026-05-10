@@ -135,9 +135,14 @@ export const getAvatarImage = (
  */
 export const getEquipmentImage = (
   itemKey: string,
-  itemType: "weapon" | "shield" | "amulet"
+  itemType: "weapon" | "shield" | "amulet" | "top" | "bottom"
 ): string => {
-  const folder = itemType === "weapon" ? "weapons" : itemType === "shield" ? "shields" : "accessories";
+  const folder =
+    itemType === "weapon" ? "weapons" :
+    itemType === "shield" ? "shields" :
+    itemType === "top" ? "tops" :
+    itemType === "bottom" ? "bottoms" :
+    "accessories";
   return `${AVATAR_CDN_BASE}/equipment/${folder}/${itemKey}.png${_v}`;
 };
 
