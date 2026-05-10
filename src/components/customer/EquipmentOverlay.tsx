@@ -36,7 +36,10 @@ const EquipmentImage = ({
       src={src}
       alt=""
       aria-hidden
-      onError={() => setFailed(true)}
+      onError={() => {
+        console.error("[EquipmentOverlay] Image load failed:", src, it);
+        setFailed(true);
+      }}
       className="absolute pointer-events-none object-contain pixel-avatar"
       style={{ ...style, filter, background: "transparent" }}
     />
@@ -56,17 +59,17 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
     <>
       {gear.shield && renderItem(
         gear.shield,
-        { position: "absolute", bottom: "18%", left: "15%", height: "28%", width: "28%", zIndex: zBase, opacity: 0.95 },
+        { position: "absolute", bottom: "22%", left: "8%", height: "40%", width: "40%", zIndex: zBase, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
       )}
       {gear.amulet && renderItem(
         gear.amulet,
-        { position: "absolute", top: "5%", left: "50%", transform: "translateX(-50%)", height: "22%", width: "22%", zIndex: zBase + 2, opacity: 0.95 },
+        { position: "absolute", top: "2%", left: "50%", transform: "translateX(-50%)", height: "25%", width: "25%", zIndex: zBase + 2, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.amulet.rarity]}`,
       )}
       {gear.weapon && renderItem(
         gear.weapon,
-        { position: "absolute", bottom: "18%", right: "15%", height: "30%", width: "30%", zIndex: zBase + 1, transform: "rotate(15deg)", opacity: 0.95 },
+        { position: "absolute", bottom: "22%", right: "8%", height: "45%", width: "45%", zIndex: zBase + 1, transform: "rotate(20deg)", opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
       )}
     </>
