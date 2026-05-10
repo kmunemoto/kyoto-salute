@@ -33,6 +33,11 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
   const [busy, setBusy] = useState<string | null>(null);
   const [allItems, setAllItems] = useState<any[]>([]);
 
+  const handleClose = () => {
+    window.dispatchEvent(new Event("equipment-updated"));
+    onClose();
+  };
+
   useEffect(() => {
     if (!open) return;
     (supabase as any)
@@ -72,7 +77,7 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
   return (
     <div
       className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4"
-      onClick={onClose}
+      onClick={handleClose}
       onTouchMove={(e) => e.stopPropagation()}
       style={{ overscrollBehavior: 'contain' }}
     >
@@ -83,7 +88,7 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
       >
         <div className="sticky top-0 bg-[#1a1a2e] flex items-center justify-between px-4 py-3 border-b border-white/10 z-[130]">
           <h2 className="text-base font-bold">装備</h2>
-          <button onClick={onClose} className="p-1 hover:opacity-70"><X className="w-5 h-5" /></button>
+          <button onClick={handleClose} className="p-1 hover:opacity-70"><X className="w-5 h-5" /></button>
         </div>
 
         {loading ? (
@@ -191,7 +196,7 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
         )}
 
         <div className="sticky bottom-0 bg-[#1a1a2e] p-3 border-t border-white/10 z-[130]">
-          <Button onClick={onClose} className="w-full bg-white text-[#1a1a2e] hover:bg-white/90 font-bold">閉じる</Button>
+          <Button onClick={handleClose} className="w-full bg-white text-[#1a1a2e] hover:bg-white/90 font-bold">閉じる</Button>
         </div>
       </div>
     </div>

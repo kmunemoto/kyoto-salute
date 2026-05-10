@@ -142,7 +142,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
 
   return (
     <>
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open && !equipOpen} onOpenChange={(o) => !o && !equipOpen && onClose()}>
       <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogTitle className="sr-only">アバター詳細</DialogTitle>
         <div className="flex flex-col items-center pt-2">
