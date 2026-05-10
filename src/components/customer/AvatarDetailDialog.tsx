@@ -564,24 +564,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
       </DialogContent>
     </Dialog>
     <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
-    {(() => {
-      const dummy = null;
-      return dummy;
-    })()}
-    <DialogExtras />
-    </>
-  );
-
-  function DialogExtras() {
-    return null;
-  }
-};
-
-// legacy stub to satisfy old structure removed below
-const _ignore = () => {
-
-      {/* Featured badge bottom sheet */}
-      {badgeSheet && (() => {
+    {badgeSheet && (() => {
         const a = ACHIEVEMENTS.find((x) => x.key === badgeSheet);
         if (!a) return null;
         const got = acquired.has(a.key);
@@ -656,8 +639,8 @@ const _ignore = () => {
           </div>
         );
       })()}
-      <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
-    </Dialog>
+    <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
+    </>
   );
 };
 
