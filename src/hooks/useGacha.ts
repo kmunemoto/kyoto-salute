@@ -9,9 +9,6 @@ export interface GachaSpinResult {
   reward_amount: number;
   rarity: GachaRarity;
   remaining: number;
-  frame_key?: string;
-  frame_name?: string;
-  frame_image?: string;
   is_duplicate?: boolean;
   // Equipment fields (when reward_type === 'equipment' or 'equipment_dup')
   equipment_key?: string;
@@ -58,14 +55,19 @@ export const useGacha = () => {
         setTicketCount(0);
         return null;
       }
+      // Frame rewards have been removed from the UI; convert any frame
+      // result returned by the RPC into a coin reward so it surfaces sanely.
+      let rewardType = r.reward_type as string;
+      let rewardAmount = r.reward_amount as number;
+      if (rewardType === "frame" || rewardType === "frame_dup") {
+        rewardType = "coins";
+        if (!rewardAmount || rewardAmount <= 0) rewardAmount = 100;
+      }
       const result: GachaSpinResult = {
-        reward_type: r.reward_type,
-        reward_amount: r.reward_amount,
+        reward_type: rewardType,
+        reward_amount: rewardAmount,
         rarity: r.rarity as GachaRarity,
         remaining: r.remaining ?? 0,
-        frame_key: r.frame_key,
-        frame_name: r.frame_name,
-        frame_image: r.frame_image,
         is_duplicate: r.is_duplicate,
         equipment_key: r.equipment_key,
         equipment_name: r.equipment_name,

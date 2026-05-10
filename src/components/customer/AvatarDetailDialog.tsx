@@ -11,8 +11,6 @@ import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
 import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
-import FrameSection from "./FrameSection";
-import AvatarFrameOverlay from "./AvatarFrameOverlay";
 import EquipmentOverlay from "./EquipmentOverlay";
 import { useEquippedGear } from "@/hooks/useEquippedGear";
 import { getMissionDef } from "@/lib/missionSystem";
@@ -150,7 +148,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             style={{
               width: "min(250px, 70vw)",
               height: "min(250px, 70vw)",
-              backgroundColor: avatar.equipped_frame ? "transparent" : `${p.rank.color}15`,
+              backgroundColor: `${p.rank.color}15`,
               borderRadius: "1.5rem",
             }}
           >
@@ -165,7 +163,6 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
                 onError={handleAvatarImgError}
               />
             </div>
-            <AvatarFrameOverlay frameKey={avatar.equipped_frame} scale={1.2} />
             <EquipmentOverlay gear={gear} zBase={20} />
           </div>
           <div className="mt-3 text-center">
@@ -243,14 +240,6 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             <Sparkles className="w-3.5 h-3.5" /> 髪色
           </h3>
           <HairColorSection />
-        </section>
-
-        {/* フレーム */}
-        <section className="mt-5">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-            <ImageIcon className="w-3.5 h-3.5" /> フレーム
-          </h3>
-          <FrameSection />
         </section>
 
         <section className="mt-4">
