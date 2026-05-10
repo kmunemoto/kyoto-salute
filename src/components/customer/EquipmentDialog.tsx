@@ -41,6 +41,14 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
       .then(({ data }: any) => setAllItems(data || []));
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [open]);
+
   if (!open) return null;
   const ownedKeys = new Set(items.map((i: any) => i.item_key));
   const totalCount = allItems.length || 12;
@@ -62,10 +70,16 @@ const EquipmentDialog = ({ open, onClose }: Props) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
+      onClick={onClose}
+      onTouchMove={(e) => e.stopPropagation()}
+      style={{ overscrollBehavior: 'contain' }}
+    >
       <div
         className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-[#1a1a2e] text-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        style={{ overscrollBehavior: 'contain' }}
       >
         <div className="sticky top-0 bg-[#1a1a2e] flex items-center justify-between px-4 py-3 border-b border-white/10 z-10">
           <h2 className="text-base font-bold">装備</h2>
