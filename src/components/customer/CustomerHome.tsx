@@ -19,6 +19,7 @@ import GachaCard from "./GachaCard";
 import SeasonEventCard from "./SeasonEventCard";
 import RivalBattleCard from "./RivalBattleCard";
 import QuestCard from "./QuestCard";
+import DungeonCard from "./DungeonCard";
 import LoginBonusBanner from "./LoginBonusBanner";
 import LoginBonusDialog from "./LoginBonusDialog";
 import { useLoginBonus } from "@/hooks/useLoginBonus";
@@ -330,6 +331,9 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* 王国復興クエスト */}
       <QuestCard onOpen={() => onNavigate?.("quest")} />
+
+      {/* ダンジョン探索 */}
+      <DungeonCard onOpen={() => onNavigate?.("dungeon")} />
 
       {/* 5. Gacha (only if tickets exist — handled inside) */}
       <GachaCard />
