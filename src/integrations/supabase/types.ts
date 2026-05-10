@@ -406,6 +406,33 @@ export type Database = {
         }
         Relationships: []
       }
+      craft_materials: {
+        Row: {
+          description: string | null
+          icon_name: string | null
+          id: string
+          material_key: string
+          material_name: string
+          rarity: string
+        }
+        Insert: {
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          material_key: string
+          material_name: string
+          rarity?: string
+        }
+        Update: {
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          material_key?: string
+          material_name?: string
+          rarity?: string
+        }
+        Relationships: []
+      }
       daily_login_bonuses: {
         Row: {
           claimed_at: string
@@ -466,6 +493,151 @@ export type Database = {
           mission_date?: string
           mission_keys?: string[]
           user_id?: string
+        }
+        Relationships: []
+      }
+      dungeon_monsters: {
+        Row: {
+          atk: number
+          coin_reward: number
+          created_at: string
+          def: number
+          drop_material_key: string | null
+          drop_material_rate: number | null
+          drop_ticket_rate: number | null
+          exp_reward: number
+          floor_number: number
+          hp: number
+          icon_name: string | null
+          id: string
+          is_boss: boolean
+          monster_key: string
+          monster_name: string
+          stage_key: string
+        }
+        Insert: {
+          atk: number
+          coin_reward?: number
+          created_at?: string
+          def: number
+          drop_material_key?: string | null
+          drop_material_rate?: number | null
+          drop_ticket_rate?: number | null
+          exp_reward?: number
+          floor_number: number
+          hp: number
+          icon_name?: string | null
+          id?: string
+          is_boss?: boolean
+          monster_key: string
+          monster_name: string
+          stage_key: string
+        }
+        Update: {
+          atk?: number
+          coin_reward?: number
+          created_at?: string
+          def?: number
+          drop_material_key?: string | null
+          drop_material_rate?: number | null
+          drop_ticket_rate?: number | null
+          exp_reward?: number
+          floor_number?: number
+          hp?: number
+          icon_name?: string | null
+          id?: string
+          is_boss?: boolean
+          monster_key?: string
+          monster_name?: string
+          stage_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dungeon_monsters_stage_key_fkey"
+            columns: ["stage_key"]
+            isOneToOne: false
+            referencedRelation: "dungeon_stages"
+            referencedColumns: ["stage_key"]
+          },
+        ]
+      }
+      dungeon_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          floors_cleared: number
+          id: string
+          result: string
+          stage_key: string
+          started_at: string
+          total_coins: number
+          total_exp: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          floors_cleared?: number
+          id?: string
+          result?: string
+          stage_key: string
+          started_at?: string
+          total_coins?: number
+          total_exp?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          floors_cleared?: number
+          id?: string
+          result?: string
+          stage_key?: string
+          started_at?: string
+          total_coins?: number
+          total_exp?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dungeon_runs_stage_key_fkey"
+            columns: ["stage_key"]
+            isOneToOne: false
+            referencedRelation: "dungeon_stages"
+            referencedColumns: ["stage_key"]
+          },
+        ]
+      }
+      dungeon_stages: {
+        Row: {
+          background_css: string | null
+          created_at: string
+          floor_count: number
+          id: string
+          stage_key: string
+          stage_name: string
+          stage_order: number
+          unlock_condition: string | null
+        }
+        Insert: {
+          background_css?: string | null
+          created_at?: string
+          floor_count?: number
+          id?: string
+          stage_key: string
+          stage_name: string
+          stage_order: number
+          unlock_condition?: string | null
+        }
+        Update: {
+          background_css?: string | null
+          created_at?: string
+          floor_count?: number
+          id?: string
+          stage_key?: string
+          stage_name?: string
+          stage_order?: number
+          unlock_condition?: string | null
         }
         Relationships: []
       }
@@ -1916,6 +2088,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_materials: {
+        Row: {
+          id: string
+          material_key: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          material_key: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          id?: string
+          material_key?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_measurements: {
         Row: {
           body_fat: number | null
@@ -2131,6 +2324,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stamina: {
+        Row: {
+          bonus_date: string | null
+          bonus_stamina: number
+          current_stamina: number
+          last_recovery_at: string
+          max_stamina: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_date?: string | null
+          bonus_stamina?: number
+          current_stamina?: number
+          last_recovery_at?: string
+          max_stamina?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_date?: string | null
+          bonus_stamina?: number
+          current_stamina?: number
+          last_recovery_at?: string
+          max_stamina?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_titles: {
         Row: {
           id: string
@@ -2289,6 +2512,17 @@ export type Database = {
       check_weight_milestones: { Args: { p_user_id: string }; Returns: Json }
       claim_daily_login_bonus: { Args: { p_user_id: string }; Returns: Json }
       claim_rival_reward: { Args: { p_battle_id: string }; Returns: Json }
+      complete_dungeon_run: {
+        Args: {
+          p_dropped_materials?: Json
+          p_floors_cleared: number
+          p_result: string
+          p_run_id: string
+          p_total_coins: number
+          p_total_exp: number
+        }
+        Returns: Json
+      }
       complete_quest_stage: {
         Args: { p_stage_id: number; p_user_id: string }
         Returns: Json
@@ -2343,6 +2577,10 @@ export type Database = {
         Args: { p_item_key: string; p_obtained_via?: string; p_user_id: string }
         Returns: Json
       }
+      grant_training_stamina_bonus_for: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2386,10 +2624,15 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: Json
       }
+      recover_stamina: { Args: { p_user_id: string }; Returns: Json }
       run_rival_matching: { Args: { p_week_start: string }; Returns: Json }
       set_featured_badges: { Args: { p_badges: string[] }; Returns: undefined }
       spin_gacha: {
         Args: { _result_date: string; _user_id: string }
+        Returns: Json
+      }
+      start_dungeon_run: {
+        Args: { p_stage_key: string; p_user_id: string }
         Returns: Json
       }
       update_event_progress: { Args: { _user_id: string }; Returns: Json }
