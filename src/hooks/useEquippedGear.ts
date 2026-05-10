@@ -8,6 +8,9 @@ export interface EquippedGearItem {
   rarity: "common" | "rare" | "epic" | "legendary";
   image_path: string | null;
   icon_name: string | null;
+  atk_bonus?: number;
+  def_bonus?: number;
+  hp_bonus?: number;
 }
 
 export interface EquippedGear {
@@ -36,7 +39,7 @@ export const useEquippedGear = (userId?: string | null) => {
     setLoading(true);
     let { data } = await (supabase as any)
       .from("user_equipment")
-      .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path,icon_name)")
+      .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path,icon_name,atk_bonus,def_bonus,hp_bonus)")
       .eq("user_id", userId)
       .eq("equipped", true);
 
@@ -51,7 +54,7 @@ export const useEquippedGear = (userId?: string | null) => {
         await (supabase as any).rpc("initialize_starter_equipment_for_user", { p_user_id: userId });
         const r = await (supabase as any)
           .from("user_equipment")
-          .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path,icon_name)")
+          .select("equipped, item:equipment_items(item_key,item_name,item_type,rarity,image_path,icon_name,atk_bonus,def_bonus,hp_bonus)")
           .eq("user_id", userId)
           .eq("equipped", true);
         data = r.data;
