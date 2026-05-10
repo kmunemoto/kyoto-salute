@@ -12,7 +12,7 @@ import {
 } from "@/lib/gachaSystem";
 import type { GachaSpinResult } from "@/hooks/useGacha";
 
-type Phase = "charge" | "reveal" | "result";
+type Phase = "video" | "result";
 
 interface Props {
   open: boolean;
@@ -22,47 +22,11 @@ interface Props {
   onError?: (e: any) => void;
 }
 
-const PILLAR_COLORS: Record<GachaRarity, string> = {
-  common: "rgba(255,255,255,0.8)",
-  rare: "rgba(10,186,181,0.85)",
-  epic: "rgba(99,102,241,0.9)",
-  legendary: "transparent",
-};
-const PILLAR_WIDTH: Record<GachaRarity, number> = {
-  common: 100,
-  rare: 150,
-  epic: 220,
-  legendary: 360,
-};
-
-// Particle helpers --------------------------------------------------
-const ConvergingParticles = ({ count = 24, color = "rgba(10,186,181,0.9)" }: { count?: number; color?: string }) => {
-  const items = Array.from({ length: count }).map((_, i) => {
-    const angle = (i / count) * Math.PI * 2 + Math.random();
-    const dist = 140 + Math.random() * 120;
-    const dx = Math.cos(angle) * dist;
-    const dy = Math.sin(angle) * dist;
-    const delay = Math.random() * 0.6;
-    const dur = 0.8 + Math.random() * 0.5;
-    const size = 3 + Math.random() * 4;
-    return (
-      <span
-        key={i}
-        className="absolute left-1/2 top-1/2 rounded-full"
-        style={{
-          width: size,
-          height: size,
-          background: color,
-          boxShadow: `0 0 8px 2px ${color}`,
-          animation: `particle-converge ${dur}s ease-in ${delay}s infinite`,
-          ["--sx" as any]: `${dx}px`,
-          ["--sy" as any]: `${dy}px`,
-          willChange: "transform, opacity",
-        }}
-      />
-    );
-  });
-  return <>{items}</>;
+const GACHA_VIDEO_URL: Record<GachaRarity, string> = {
+  common: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_common.mp4",
+  rare: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_rare.mp4",
+  epic: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_epic.mp4",
+  legendary: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_legendary.mp4",
 };
 
 const ExplodingParticles = ({ count = 30, color = "#FBBF24" }: { count?: number; color?: string }) => {
@@ -172,12 +136,13 @@ const CountUp = ({ value, duration = 500 }: { value: number; duration?: number }
 
 // Main component ----------------------------------------------------
 const GachaAnimation = ({ open, requestSpin, onClose, onError }: Props) => {
-  const [phase, setPhase] = useState<Phase>("charge");
+  const [phase, setPhase] = useState<Phase>("video");
   const [result, setResult] = useState<GachaSpinResult | null>(null);
   const [showCloseBtn, setShowCloseBtn] = useState(false);
   const [round, setRound] = useState(0); // 0 = first spin
   const [busy, setBusy] = useState(false);
   const cancelRef = useRef(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Lock scroll
   useEffect(() => {
@@ -187,23 +152,23 @@ const GachaAnimation = ({ open, requestSpin, onClose, onError }: Props) => {
     }
   }, [open]);
 
+  const finishToResult = () => {
+    if (cancelRef.current) return;
+    setPhase("result");
+    setTimeout(() => !cancelRef.current && setShowCloseBtn(true), 900);
+  };
+
   // Run a single gacha cycle
-  const runCycle = async (isFirst: boolean) => {
+  const runCycle = async (_isFirst: boolean) => {
     if (busy) return;
     setBusy(true);
     cancelRef.current = false;
-    setPhase("charge");
+    setPhase("video");
     setResult(null);
     setShowCloseBtn(false);
 
-    const chargeMs = isFirst ? 1500 : 500;
-    const revealMs = 1000;
-
     try {
-      const [r] = await Promise.all([
-        requestSpin(),
-        new Promise((res) => setTimeout(res, chargeMs)),
-      ]);
+      const r = await requestSpin();
       if (cancelRef.current) return;
       if (!r) {
         onError?.(new Error("チケットがありません"));
@@ -211,8 +176,6 @@ const GachaAnimation = ({ open, requestSpin, onClose, onError }: Props) => {
         return;
       }
       setResult(r);
-      setPhase("reveal");
-
       // Vibration
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         try {
@@ -220,12 +183,7 @@ const GachaAnimation = ({ open, requestSpin, onClose, onError }: Props) => {
           else if (r.rarity === "epic") navigator.vibrate(100);
         } catch {}
       }
-
-      await new Promise((res) => setTimeout(res, revealMs));
-      if (cancelRef.current) return;
-      setPhase("result");
-      // Show close button after main pop animation
-      setTimeout(() => !cancelRef.current && setShowCloseBtn(true), 900);
+      // Phase remains "video"; <video> onEnded triggers finishToResult.
     } catch (e: any) {
       onError?.(e);
       onClose();
@@ -279,119 +237,23 @@ const GachaAnimation = ({ open, requestSpin, onClose, onError }: Props) => {
     >
       <style>{styles}</style>
 
-      {/* Background radial gradient during charge */}
-      {phase === "charge" && (
-        <div
-          className="absolute inset-0 pointer-events-none animate-gacha-bg-pulse"
-          style={{
-            background:
-              "radial-gradient(circle at center, rgba(10,186,181,0.25) 0%, transparent 60%)",
-          }}
-        />
-      )}
-
-      {/* ======== STAGE 1: CHARGE ======== */}
-      {phase === "charge" && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full h-full flex items-center justify-center">
-            <ConvergingParticles count={round === 0 ? 26 : 14} />
-            <div
-              className="relative flex items-center justify-center"
-              style={{
-                width: 96,
-                height: 96,
-                animation: `coin-spin ${round === 0 ? "1500ms" : "500ms"} ease-in forwards, coin-glow ${round === 0 ? "1500ms" : "500ms"} ease-in forwards`,
-                transformStyle: "preserve-3d",
-              }}
-            >
-              <Coins className="w-16 h-16 text-yellow-300" strokeWidth={2.2} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ======== STAGE 2: REVEAL ======== */}
-      {phase === "reveal" && rarity && (
-        <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
-          {/* Coin shatter shards */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            {Array.from({ length: 10 }).map((_, i) => {
-              const a = (i / 10) * Math.PI * 2;
-              const dx = Math.cos(a) * (80 + Math.random() * 60);
-              const dy = Math.sin(a) * (80 + Math.random() * 60);
-              return (
-                <span
-                  key={i}
-                  className="absolute w-2 h-2 rounded-sm bg-yellow-300"
-                  style={{
-                    boxShadow: "0 0 6px rgba(252,211,77,0.9)",
-                    animation: "shard-fly 0.5s ease-out forwards",
-                    ["--shx" as any]: `${dx}px`,
-                    ["--shy" as any]: `${dy}px`,
-                  }}
-                />
-              );
-            })}
-          </div>
-
-          {/* Legendary crack + flash */}
-          {isLegendary && (
-            <>
-              <div className="absolute inset-0 pointer-events-none animate-screen-crack" aria-hidden>
-                <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
-                  <path d="M50 50 L20 0 M50 50 L80 0 M50 50 L0 30 M50 50 L100 40 M50 50 L10 100 M50 50 L90 100"
-                        stroke="white" strokeWidth="0.4" fill="none" opacity="0.85"/>
-                </svg>
-              </div>
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{ background: "white", animation: "screen-flash 0.5s ease-out 0.25s forwards", opacity: 0 }}
-              />
-            </>
-          )}
-
-          {/* Epic shake wrapper around pillar */}
-          <div
-            className="absolute inset-0 flex items-end justify-center pointer-events-none"
-            style={{ animation: isEpic ? "screen-shake 0.3s ease-in-out 3" : undefined }}
-          >
-            {/* Light pillar */}
-            <div
-              className="relative"
-              style={{
-                width: PILLAR_WIDTH[rarity],
-                height: "100%",
-                animation: "pillar-rise 0.6s ease-out forwards",
-                transformOrigin: "bottom",
-              }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: isLegendary
-                    ? "linear-gradient(to top, #FF0000, #FF8C00, #FFD700, #00FF00, #0ABAB5, #6366F1, #8B5CF6)"
-                    : `linear-gradient(to top, ${PILLAR_COLORS[rarity]} 0%, transparent 100%)`,
-                  filter: "blur(2px)",
-                  opacity: 0.95,
-                  maskImage: "linear-gradient(to top, black 30%, transparent 100%)",
-                  WebkitMaskImage: "linear-gradient(to top, black 30%, transparent 100%)",
-                  animation: isLegendary ? "pillar-rainbow 1.2s linear infinite" : undefined,
-                  backgroundSize: isLegendary ? "100% 200%" : undefined,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Pillar particles */}
-          {(isRare || isEpic || isLegendary) && (
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute left-1/2 bottom-0 -translate-x-1/2">
-                <ExplodingParticles
-                  count={isLegendary ? 50 : isEpic ? 24 : 12}
-                  color={isLegendary ? "#FBBF24" : isEpic ? "#A5B4FC" : "#5EEAD4"}
-                />
-              </div>
-            </div>
+      {/* ======== STAGE 1: VIDEO ======== */}
+      {phase === "video" && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black">
+          {result ? (
+            <video
+              key={`${result.rarity}-${round}`}
+              ref={videoRef}
+              src={GACHA_VIDEO_URL[result.rarity]}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+              onEnded={finishToResult}
+              onError={finishToResult}
+            />
+          ) : (
+            <div className="animate-spin w-8 h-8 border-2 border-white/30 border-t-white rounded-full" />
           )}
         </div>
       )}
