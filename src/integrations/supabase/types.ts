@@ -241,6 +241,42 @@ export type Database = {
         }
         Relationships: []
       }
+      battle_items: {
+        Row: {
+          created_at: string
+          description: string
+          effect_amount: number
+          effect_type: string
+          icon_name: string | null
+          id: string
+          item_key: string
+          item_name: string
+          shop_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          effect_amount?: number
+          effect_type: string
+          icon_name?: string | null
+          id?: string
+          item_key: string
+          item_name: string
+          shop_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          effect_amount?: number
+          effect_type?: string
+          icon_name?: string | null
+          id?: string
+          item_key?: string
+          item_name?: string
+          shop_price?: number | null
+        }
+        Relationships: []
+      }
       blocked_slots: {
         Row: {
           blocked_date: string
@@ -513,6 +549,7 @@ export type Database = {
           is_boss: boolean
           monster_key: string
           monster_name: string
+          monster_skills: Json | null
           stage_key: string
         }
         Insert: {
@@ -531,6 +568,7 @@ export type Database = {
           is_boss?: boolean
           monster_key: string
           monster_name: string
+          monster_skills?: Json | null
           stage_key: string
         }
         Update: {
@@ -549,6 +587,7 @@ export type Database = {
           is_boss?: boolean
           monster_key?: string
           monster_name?: string
+          monster_skills?: Json | null
           stage_key?: string
         }
         Relationships: [
@@ -638,6 +677,33 @@ export type Database = {
           stage_name?: string
           stage_order?: number
           unlock_condition?: string | null
+        }
+        Relationships: []
+      }
+      dungeon_story: {
+        Row: {
+          id: string
+          message: string
+          sort_order: number
+          speaker: string | null
+          stage_key: string
+          timing: string
+        }
+        Insert: {
+          id?: string
+          message: string
+          sort_order?: number
+          speaker?: string | null
+          stage_key: string
+          timing: string
+        }
+        Update: {
+          id?: string
+          message?: string
+          sort_order?: number
+          speaker?: string | null
+          stage_key?: string
+          timing?: string
         }
         Relationships: []
       }
@@ -1036,6 +1102,57 @@ export type Database = {
           reminder_enabled?: boolean
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      player_skills: {
+        Row: {
+          buff_multiplier: number | null
+          buff_turns: number | null
+          buff_type: string | null
+          created_at: string
+          description: string
+          heal_amount: number | null
+          icon_name: string | null
+          id: string
+          mp_cost: number
+          power: number
+          required_level: number
+          skill_key: string
+          skill_name: string
+          skill_type: string
+        }
+        Insert: {
+          buff_multiplier?: number | null
+          buff_turns?: number | null
+          buff_type?: string | null
+          created_at?: string
+          description: string
+          heal_amount?: number | null
+          icon_name?: string | null
+          id?: string
+          mp_cost?: number
+          power?: number
+          required_level?: number
+          skill_key: string
+          skill_name: string
+          skill_type?: string
+        }
+        Update: {
+          buff_multiplier?: number | null
+          buff_turns?: number | null
+          buff_type?: string | null
+          created_at?: string
+          description?: string
+          heal_amount?: number | null
+          icon_name?: string | null
+          id?: string
+          mp_cost?: number
+          power?: number
+          required_level?: number
+          skill_key?: string
+          skill_name?: string
+          skill_type?: string
         }
         Relationships: []
       }
@@ -1839,6 +1956,7 @@ export type Database = {
           combo_5_count: number
           combo_count: number
           created_at: string
+          current_mp: number
           equipped_background: string | null
           equipped_emote: string | null
           equipped_frame: string | null
@@ -1851,6 +1969,7 @@ export type Database = {
           last_session_date: string | null
           level: number
           max_combo_reached: number
+          max_mp: number
           total_exp: number
           updated_at: string
           user_id: string
@@ -1860,6 +1979,7 @@ export type Database = {
           combo_5_count?: number
           combo_count?: number
           created_at?: string
+          current_mp?: number
           equipped_background?: string | null
           equipped_emote?: string | null
           equipped_frame?: string | null
@@ -1872,6 +1992,7 @@ export type Database = {
           last_session_date?: string | null
           level?: number
           max_combo_reached?: number
+          max_mp?: number
           total_exp?: number
           updated_at?: string
           user_id: string
@@ -1881,6 +2002,7 @@ export type Database = {
           combo_5_count?: number
           combo_count?: number
           created_at?: string
+          current_mp?: number
           equipped_background?: string | null
           equipped_emote?: string | null
           equipped_frame?: string | null
@@ -1893,8 +2015,78 @@ export type Database = {
           last_session_date?: string | null
           level?: number
           max_combo_reached?: number
+          max_mp?: number
           total_exp?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_battle_items: {
+        Row: {
+          id: string
+          item_key: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_key: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_key?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_companions: {
+        Row: {
+          base_atk: number
+          base_def: number
+          base_hp: number
+          companion_key: string
+          companion_name: string
+          created_at: string
+          element: string
+          exp: number
+          icon_name: string | null
+          id: string
+          is_active: boolean
+          level: number
+          user_id: string
+        }
+        Insert: {
+          base_atk?: number
+          base_def?: number
+          base_hp?: number
+          companion_key: string
+          companion_name: string
+          created_at?: string
+          element?: string
+          exp?: number
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          level?: number
+          user_id: string
+        }
+        Update: {
+          base_atk?: number
+          base_def?: number
+          base_hp?: number
+          companion_key?: string
+          companion_name?: string
+          created_at?: string
+          element?: string
+          exp?: number
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          level?: number
           user_id?: string
         }
         Relationships: []
@@ -2545,6 +2737,11 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      ensure_starter_companion: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      ensure_starter_items: { Args: { p_user_id: string }; Returns: undefined }
       enter_rival_battle: { Args: never; Returns: Json }
       equip_frame: { Args: { p_frame_key: string }; Returns: Json }
       equip_item: {
