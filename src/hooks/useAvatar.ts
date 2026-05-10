@@ -284,17 +284,17 @@ export const useAvatar = (autoSync = true) => {
     };
   }, [user, profile?.plan, profile?.best_streak, autoSync, refetch]);
 
-  const equipTitle = useCallback(async (titleKey: string | null) => {
-    if (!user) return;
-    await supabase.from("user_avatars").update({ equipped_title: titleKey } as any).eq("user_id", user.id);
-    await refetch();
-  }, [user, refetch]);
-
   useEffect(() => {
     const handler = () => { refetch(); };
     window.addEventListener("avatar-updated", handler);
     return () => window.removeEventListener("avatar-updated", handler);
   }, [refetch]);
+
+  const equipTitle = useCallback(async (titleKey: string | null) => {
+    if (!user) return;
+    await supabase.from("user_avatars").update({ equipped_title: titleKey } as any).eq("user_id", user.id);
+    await refetch();
+  }, [user, refetch]);
 
   const updateGender = useCallback(async (gender: "male" | "female") => {
     if (!user) return;
