@@ -59,17 +59,13 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
     <>
       {gear.shield && renderItem(
         gear.shield,
-        { position: "absolute", top: "50%", left: "50%", transform: "translate(-85%, -20%)", height: "40%", width: "40%", zIndex: zBase, opacity: 0.95 },
+        { position: "absolute", top: "50%", left: "50%", transform: "translate(-85%, -20%)", height: "80%", width: "80%", zIndex: zBase, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
       )}
-      {gear.amulet && renderItem(
-        gear.amulet,
-        { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -80%)", height: "20%", width: "20%", zIndex: zBase + 2, opacity: 0.95 },
-        `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.amulet.rarity]}`,
-      )}
+      {/* Amulet/accessory intentionally not rendered on avatar overlay */}
       {gear.weapon && renderItem(
         gear.weapon,
-        { position: "absolute", top: "50%", left: "50%", transform: "translate(10%, -10%) rotate(25deg)", transformOrigin: "bottom center", height: "55%", width: "55%", zIndex: zBase + 1, opacity: 0.95 },
+        { position: "absolute", top: "50%", left: "50%", transform: "translate(-20%, -10%) rotate(25deg)", transformOrigin: "bottom center", height: "55%", width: "55%", zIndex: zBase + 1, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
       )}
     </>
