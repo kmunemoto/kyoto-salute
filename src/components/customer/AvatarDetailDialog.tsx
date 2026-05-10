@@ -141,6 +141,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
   const rankKeys: Array<"rookie" | "regular" | "athlete" | "elite" | "legend"> = ["rookie", "regular", "athlete", "elite", "legend"];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogTitle className="sr-only">アバター詳細</DialogTitle>
@@ -561,10 +562,9 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
         </section>
 
       </DialogContent>
-      <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
-
-      {/* Featured badge bottom sheet */}
-      {badgeSheet && (() => {
+    </Dialog>
+    <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
+    {badgeSheet && (() => {
         const a = ACHIEVEMENTS.find((x) => x.key === badgeSheet);
         if (!a) return null;
         const got = acquired.has(a.key);
@@ -639,8 +639,8 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
           </div>
         );
       })()}
-      <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
-    </Dialog>
+    <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
+    </>
   );
 };
 
