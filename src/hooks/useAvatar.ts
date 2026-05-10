@@ -29,7 +29,6 @@ export interface AvatarRow {
   equipped_background?: string | null;
   equipped_emote?: string | null;
   featured_badges?: string[];
-  equipped_frame?: string | null;
 }
 
 export interface ExpLogRow {
@@ -54,7 +53,7 @@ export const useAvatar = (autoSync = true) => {
   const refetch = useCallback(async () => {
     if (!user) return;
     const [avRes, logRes, achRes, titleRes] = await Promise.all([
-      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background, equipped_emote, featured_badges, equipped_frame").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_avatars").select("total_exp, level, coins, combo_count, last_session_date, max_combo_reached, combo_5_count, equipped_title, gender, hair_color, equipped_weapon, equipped_background, equipped_emote, featured_badges").eq("user_id", user.id).maybeSingle(),
       supabase
         .from("avatar_exp_logs")
         .select("id, exp_amount, reason, reference_date, created_at")
@@ -322,11 +321,5 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
-  const equipFrame = useCallback(async (frameKey: string | null) => {
-    if (!user) return;
-    await supabase.from("user_avatars").update({ equipped_frame: frameKey } as any).eq("user_id", user.id);
-    await refetch();
-  }, [user, refetch]);
-
-  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote, equipHairColor, setFeaturedBadges, equipFrame, newAchievement, clearNewAchievement: () => setNewAchievement(null) };
+  return { avatar, logs, achievements, titles, loading, refetch, levelUp, clearLevelUp: () => setLevelUp(null), equipTitle, updateGender, equipEmote, equipHairColor, setFeaturedBadges, newAchievement, clearNewAchievement: () => setNewAchievement(null) };
 };
