@@ -62,7 +62,7 @@ export const useEquippedGear = (userId?: string | null) => {
       if (!it) return;
       if (it.item_type === "weapon") next.weapon = it;
       else if (it.item_type === "shield") next.shield = it;
-      else if (it.item_type === "amulet") next.amulet = it;
+      else if (it.item_type === "amulet" || it.item_type === "accessory") next.amulet = it;
     });
     setGear(next);
     setLoading(false);
