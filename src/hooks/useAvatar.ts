@@ -290,6 +290,12 @@ export const useAvatar = (autoSync = true) => {
     await refetch();
   }, [user, refetch]);
 
+  useEffect(() => {
+    const handler = () => { refetch(); };
+    window.addEventListener("avatar-updated", handler);
+    return () => window.removeEventListener("avatar-updated", handler);
+  }, [refetch]);
+
   const updateGender = useCallback(async (gender: "male" | "female") => {
     if (!user) return;
     await supabase.from("user_avatars").update({ gender } as any).eq("user_id", user.id);
