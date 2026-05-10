@@ -12,10 +12,12 @@ interface Props {
   onClose: () => void;
 }
 
-const TYPES: Array<{ key: "weapon" | "shield" | "amulet"; label: string }> = [
+const TYPES: Array<{ key: "weapon" | "shield" | "amulet" | "top" | "bottom"; label: string }> = [
   { key: "weapon", label: "武器" },
   { key: "shield", label: "盾" },
   { key: "amulet", label: "護符" },
+  { key: "top", label: "トップス" },
+  { key: "bottom", label: "ボトムス" },
 ];
 
 const SOURCE_LABEL: Record<string, string> = {
