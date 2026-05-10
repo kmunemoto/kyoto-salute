@@ -141,6 +141,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
   const rankKeys: Array<"rookie" | "regular" | "athlete" | "elite" | "legend"> = ["rookie", "regular", "athlete", "elite", "legend"];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogTitle className="sr-only">アバター詳細</DialogTitle>
