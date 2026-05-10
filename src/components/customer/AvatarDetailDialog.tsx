@@ -6,7 +6,7 @@ import { useAvatar } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, CheckCircle2 } from "lucide-react";
-import { Sword as SwordIcon, Sparkles } from "lucide-react";
+import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
 import EmoteSection from "./EmoteSection";
