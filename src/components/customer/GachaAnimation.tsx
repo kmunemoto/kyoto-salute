@@ -248,7 +248,7 @@ const GachaAnimation = ({ open, requestSpin, onClose, onError }: Props) => {
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               onEnded={finishToResult}
               onError={finishToResult}
             />
