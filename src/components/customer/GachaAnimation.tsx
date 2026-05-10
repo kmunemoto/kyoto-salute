@@ -12,7 +12,7 @@ import {
 } from "@/lib/gachaSystem";
 import type { GachaSpinResult } from "@/hooks/useGacha";
 
-type Phase = "charge" | "reveal" | "result";
+type Phase = "video" | "result";
 
 interface Props {
   open: boolean;
@@ -22,47 +22,11 @@ interface Props {
   onError?: (e: any) => void;
 }
 
-const PILLAR_COLORS: Record<GachaRarity, string> = {
-  common: "rgba(255,255,255,0.8)",
-  rare: "rgba(10,186,181,0.85)",
-  epic: "rgba(99,102,241,0.9)",
-  legendary: "transparent",
-};
-const PILLAR_WIDTH: Record<GachaRarity, number> = {
-  common: 100,
-  rare: 150,
-  epic: 220,
-  legendary: 360,
-};
-
-// Particle helpers --------------------------------------------------
-const ConvergingParticles = ({ count = 24, color = "rgba(10,186,181,0.9)" }: { count?: number; color?: string }) => {
-  const items = Array.from({ length: count }).map((_, i) => {
-    const angle = (i / count) * Math.PI * 2 + Math.random();
-    const dist = 140 + Math.random() * 120;
-    const dx = Math.cos(angle) * dist;
-    const dy = Math.sin(angle) * dist;
-    const delay = Math.random() * 0.6;
-    const dur = 0.8 + Math.random() * 0.5;
-    const size = 3 + Math.random() * 4;
-    return (
-      <span
-        key={i}
-        className="absolute left-1/2 top-1/2 rounded-full"
-        style={{
-          width: size,
-          height: size,
-          background: color,
-          boxShadow: `0 0 8px 2px ${color}`,
-          animation: `particle-converge ${dur}s ease-in ${delay}s infinite`,
-          ["--sx" as any]: `${dx}px`,
-          ["--sy" as any]: `${dy}px`,
-          willChange: "transform, opacity",
-        }}
-      />
-    );
-  });
-  return <>{items}</>;
+const GACHA_VIDEO_URL: Record<GachaRarity, string> = {
+  common: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_common.mp4",
+  rare: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_rare.mp4",
+  epic: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_epic.mp4",
+  legendary: "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/gacha/gacha_legendary.mp4",
 };
 
 const ExplodingParticles = ({ count = 30, color = "#FBBF24" }: { count?: number; color?: string }) => {
