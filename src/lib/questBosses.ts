@@ -1,7 +1,7 @@
 import {
   Bot, Bug, Snowflake, Flame, Worm, Wand2, CloudLightning, Skull,
   Sword, Shield, Gem, Axe, Swords, ShieldCheck, ShieldAlert, ShieldPlus,
-  TreePine, Star, Crown, type LucideIcon,
+  TreePine, Star, Crown, Shirt, Footprints, type LucideIcon,
 } from "lucide-react";
 
 const BOSS_MAP: Record<string, LucideIcon> = {
@@ -9,7 +9,7 @@ const BOSS_MAP: Record<string, LucideIcon> = {
 };
 const EQUIP_MAP: Record<string, LucideIcon> = {
   Sword, Shield, Gem, Axe, Swords, ShieldCheck, ShieldAlert, ShieldPlus,
-  TreePine, Star, Crown,
+  TreePine, Star, Crown, Shirt, Footprints,
 };
 
 export const getBossIcon = (key: string): LucideIcon => BOSS_MAP[key] || Skull;
