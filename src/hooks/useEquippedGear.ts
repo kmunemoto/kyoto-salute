@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface EquippedGearItem {
   item_key: string;
   item_name: string;
-  item_type: "weapon" | "shield" | "amulet";
+  item_type: "weapon" | "shield" | "amulet" | "top" | "bottom";
   rarity: "common" | "rare" | "epic" | "legendary";
   image_path: string | null;
   icon_name: string | null;
@@ -14,9 +14,11 @@ export interface EquippedGear {
   weapon: EquippedGearItem | null;
   shield: EquippedGearItem | null;
   amulet: EquippedGearItem | null;
+  top: EquippedGearItem | null;
+  bottom: EquippedGearItem | null;
 }
 
-const EMPTY: EquippedGear = { weapon: null, shield: null, amulet: null };
+const EMPTY: EquippedGear = { weapon: null, shield: null, amulet: null, top: null, bottom: null };
 
 // Track which userIds we've already attempted starter-equipment init this session.
 const _initAttempted = new Set<string>();
@@ -56,13 +58,15 @@ export const useEquippedGear = (userId?: string | null) => {
       }
     }
 
-    const next: EquippedGear = { weapon: null, shield: null, amulet: null };
+    const next: EquippedGear = { weapon: null, shield: null, amulet: null, top: null, bottom: null };
     (data || []).forEach((row: any) => {
       const it = row.item;
       if (!it) return;
       if (it.item_type === "weapon") next.weapon = it;
       else if (it.item_type === "shield") next.shield = it;
       else if (it.item_type === "amulet" || it.item_type === "accessory") next.amulet = it;
+      else if (it.item_type === "top") next.top = it;
+      else if (it.item_type === "bottom") next.bottom = it;
     });
     setGear(next);
     setLoading(false);
