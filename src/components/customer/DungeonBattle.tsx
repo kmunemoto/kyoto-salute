@@ -93,6 +93,10 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const [floats, setFloats] = useState<{ id: number; text: string; color: string; target: "player" | "monster" | "comp" }[]>([]);
   const [spellFx, setSpellFx] = useState<{ id: number; kind: string } | null>(null);
 
+  // Image load failures (fallback to gradient/icon)
+  const [bgImgError, setBgImgError] = useState(false);
+  const [monsterImgError, setMonsterImgError] = useState<Record<string, boolean>>({});
+
   // Message system
   const [msgQueue, setMsgQueue] = useState<string[]>([]);
   const [currentMsg, setCurrentMsg] = useState("");
@@ -104,6 +108,9 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const compNameRef = useRef("コンパニオン");
 
   const monster = monsters[floorIdx];
+  const BG_BASE = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/dungeon";
+  const bgImageUrl = `${BG_BASE}/bg_${stage.stage_key}.png`;
+  const monsterImageUrl = monster ? `${BG_BASE}/monsters/${monster.monster_key}.png` : "";
   const playerName = avatar?.equipped_title ? "あなた" : "あなた";
 
   // ---- Initial load ----
@@ -533,12 +540,23 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       }}
       onClick={tappable ? advanceMessage : undefined}
     >
+      {/* Background image (with dark overlay for readability) */}
+      {!bgImgError && (
+        <img
+          src={bgImageUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          onError={() => setBgImgError(true)}
+        />
+      )}
+      <div className="absolute inset-0 pointer-events-none bg-black/50" />
+
       {hurtFlash && <div className="absolute inset-0 pointer-events-none z-10" style={{ boxShadow: "inset 0 0 100px 20px rgba(239,68,68,0.7)" }} />}
       {critFlash && <div className="absolute inset-0 pointer-events-none z-10 bg-white/40" />}
       {bossFlash && <div className="absolute inset-0 pointer-events-none z-20 bg-red-600/40 animate-pulse" />}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-black/40">
+      <div className="relative flex items-center justify-between px-3 py-2 bg-black/40">
         <div>
           <p className="text-[10px] font-bold tracking-wider opacity-70">{stage.stage_name}</p>
           <p className="text-xs font-bold">フロア {floorIdx + 1} / {monsters.length}</p>
@@ -547,15 +565,25 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       </div>
 
       {/* Battle field */}
-      <div className="flex-1 flex flex-col items-center justify-between px-3 py-2 relative overflow-hidden">
+      <div className="relative flex-1 flex flex-col items-center justify-between px-3 py-2 overflow-hidden">
         {/* Monster */}
         <div className="flex flex-col items-center mt-2 relative">
           <div className={`relative ${shake ? "animate-[battle-shake_0.3s]" : ""}`}>
             <div
-              className="w-32 h-32 rounded-3xl flex items-center justify-center bg-white/10 border-2 border-white/20"
+              className="w-32 h-32 rounded-3xl flex items-center justify-center bg-white/10 border-2 border-white/20 overflow-hidden"
               style={{ filter: monster.is_boss ? "drop-shadow(0 0 16px rgba(239,68,68,0.7))" : undefined }}
             >
-              <MIcon className="w-20 h-20" style={{ color: monster.is_boss ? "#fbbf24" : "#fff" }} />
+              {!monsterImgError[monster.monster_key] ? (
+                <img
+                  src={monsterImageUrl}
+                  alt={monster.monster_name}
+                  className="w-full h-full object-contain"
+                  style={{ imageRendering: "pixelated" }}
+                  onError={() => setMonsterImgError((s) => ({ ...s, [monster.monster_key]: true }))}
+                />
+              ) : (
+                <MIcon className="w-20 h-20" style={{ color: monster.is_boss ? "#fbbf24" : "#fff" }} />
+              )}
             </div>
             {floats.filter((f) => f.target === "monster").map((f) => (
               <span key={f.id} className="absolute left-1/2 top-0 -translate-x-1/2 text-xl font-extrabold pointer-events-none"
@@ -616,7 +644,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       </div>
 
       {/* Message window */}
-      <div className="px-3 pt-2">
+      <div className="relative px-3 pt-2">
         <div
           className="relative rounded-lg px-4 py-3 min-h-[72px] text-sm leading-relaxed"
           style={{
@@ -634,7 +662,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       </div>
 
       {/* Command area */}
-      <div className="px-3 py-2">
+      <div className="relative px-3 py-2">
         {showCommand && !currentMsg && (
           <div className="grid grid-cols-2 gap-2">
             <CmdBtn icon={Sword} label="たたかう" onClick={handleAttack} />
@@ -690,7 +718,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-black/80 border-t border-white/20">
+      <div className="relative flex items-center justify-between px-3 py-2 bg-black/80 border-t border-white/20">
         <div className="flex items-center gap-3">
           <div>
             <p className="text-[9px] text-white/60">HP</p>
