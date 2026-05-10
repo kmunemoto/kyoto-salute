@@ -13,8 +13,6 @@ import BadgeIcon from "./BadgeIcon";
 import FeaturedBadgesRow from "./FeaturedBadgesRow";
 import { Flame } from "lucide-react";
 import { useRaidRewards } from "@/hooks/useRaidRewards";
-import AvatarFrameOverlay from "./AvatarFrameOverlay";
-import { getFrameImage } from "@/hooks/useFrames";
 import { useAuth } from "@/contexts/AuthContext";
 import EquipmentOverlay from "./EquipmentOverlay";
 import { useEquippedGear } from "@/hooks/useEquippedGear";
@@ -50,15 +48,7 @@ const AvatarCard = () => {
   const p = getExpProgress(avatar.total_exp, gender, hairColor);
   const combo = avatar.combo_count || 0;
   const equipped = getTitleDef(avatar.equipped_title);
-  const frameKey = avatar.equipped_frame;
   const emoteActive = !!emoteSrc && !emoteFailed;
-  const frameClass =
-    !emoteActive && frameKey === "rainbow_legend"
-      ? "rainbow-frame"
-      : !emoteActive && frameKey === "quest_kingdom_hero"
-        ? "golden-frame"
-        : null;
-  const frameImg = emoteActive ? null : getFrameImage(frameKey);
   const featured = (avatar as any).featured_badges as string[] | undefined;
 
   return (
@@ -68,7 +58,7 @@ const AvatarCard = () => {
         className="card-hover cursor-pointer overflow-hidden"
       >
         <CardContent className="p-3 flex items-center gap-3">
-          <div className={frameClass ? `${frameClass} rounded-2xl flex-shrink-0` : "flex-shrink-0"}>
+          <div className="flex-shrink-0">
           <div
             className="relative w-20 h-20 rounded-2xl flex items-center justify-center"
             style={{ backgroundColor: `${p.rank.color}15`, borderRadius: "1rem" }}
@@ -94,7 +84,6 @@ const AvatarCard = () => {
                 />
               )}
             </div>
-            {frameImg && <AvatarFrameOverlay frameKey={frameKey} scale={1.2} />}
             {!emoteActive && <EquipmentOverlay gear={gear} zBase={20} />}
           </div>
           </div>
