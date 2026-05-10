@@ -11,6 +11,7 @@ import {
   type GachaRarity,
 } from "@/lib/gachaSystem";
 import type { GachaSpinResult } from "@/hooks/useGacha";
+import { AVATAR_CDN_BASE } from "@/lib/avatarSystem";
 
 type Phase = "video" | "result";
 
@@ -525,7 +526,13 @@ const EquipmentResultView = ({
           <div className="absolute inset-0 rounded-full"
             style={{ background: gradient, boxShadow: "0 0 30px 6px rgba(139,92,246,0.6)", opacity: 0.35 }} />
           {result.equipment_image ? (
-            <img src={result.equipment_image} alt={result.equipment_name || ""}
+            <img
+              src={
+                result.equipment_image.startsWith("http")
+                  ? result.equipment_image
+                  : `${AVATAR_CDN_BASE}/${result.equipment_image}`
+              }
+              alt={result.equipment_name || ""}
               className="relative w-full h-full object-contain z-10" />
           ) : (
             <TypeIcon className="relative w-24 h-24 text-white m-auto inset-0" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
