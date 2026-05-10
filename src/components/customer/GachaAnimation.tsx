@@ -205,12 +205,14 @@ const GachaAnimation = ({ open, requestSpin, onClose, onError }: Props) => {
   }, [open]);
 
   const handleAgain = () => {
+    window.dispatchEvent(new Event("avatar-updated"));
     setRound((r) => r + 1);
     runCycle(false);
   };
 
   const handleClose = () => {
     cancelRef.current = true;
+    window.dispatchEvent(new Event("avatar-updated"));
     onClose();
   };
 
