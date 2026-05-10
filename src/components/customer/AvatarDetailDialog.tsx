@@ -12,6 +12,7 @@ import CoinShopDialog from "./CoinShopDialog";
 import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
 import EquipmentOverlay from "./EquipmentOverlay";
+import EquipmentDialog from "./EquipmentDialog";
 import { useEquippedGear } from "@/hooks/useEquippedGear";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
@@ -66,6 +67,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
   const acquiredTitles = new Set(titles);
   const equipped = avatar.equipped_title || null;
   const [shopOpen, setShopOpen] = useState(false);
+  const [equipOpen, setEquipOpen] = useState(false);
   const [badgeSheet, setBadgeSheet] = useState<string | null>(null);
   const [replacePicker, setReplacePicker] = useState<string | null>(null);
   const featured = (avatar.featured_badges as string[] | undefined) || [];
@@ -186,6 +188,13 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
             <Coins className="w-4 h-4" />
             {avatar.coins} コイン
             <Plus className="w-3.5 h-3.5 ml-1" />
+          </button>
+          <button
+            onClick={() => setEquipOpen(true)}
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-muted/70 border border-border transition"
+          >
+            <SwordIcon className="w-4 h-4" />
+            <span className="text-sm font-bold">装備変更</span>
           </button>
         </div>
 
@@ -630,6 +639,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
           </div>
         );
       })()}
+      <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
     </Dialog>
   );
 };
