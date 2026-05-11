@@ -210,6 +210,9 @@ const RPGEngine = ({ map, onExit }: Props) => {
     warpingRef.current = true;
     heldDirRef.current = null;
     setFadeState("fadeOut");
+    setFadeOpacity(0);
+    // 次フレームでopacityを1に上げてトランジション開始
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
     setFadeOpacity(1);
     await new Promise((r) => setTimeout(r, 350));
     const nextMap = MAP_REGISTRY[warp.targetMap];
