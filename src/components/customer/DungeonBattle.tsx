@@ -38,6 +38,22 @@ const ELEMENT_COLOR: Record<string, string> = {
   water: "#60a5fa", fire: "#f97316", earth: "#a16207", wind: "#34d399", neutral: "#cbd5e1",
 };
 
+// Color-variant monsters reuse base images via CSS hue-rotate filter
+const MONSTER_IMAGE_BASE: Record<string, string> = {
+  slime_2: "slime",
+  goblin_3: "goblin",
+  skeleton_4: "skeleton",
+  stone_golem_5: "stone_golem",
+};
+const MONSTER_FILTER: Record<string, string> = {
+  slime_2: "hue-rotate(120deg) saturate(1.5)",
+  goblin_3: "hue-rotate(30deg) brightness(1.2)",
+  skeleton_4: "hue-rotate(-60deg) saturate(2)",
+  stone_golem_5: "hue-rotate(180deg)",
+};
+const getMonsterImageKey = (key: string): string => MONSTER_IMAGE_BASE[key] || key;
+const getMonsterFilter = (key: string): string => MONSTER_FILTER[key] || "none";
+
 const rand = (a: number, b: number) => Math.floor(Math.random() * (b - a + 1)) + a;
 
 type Phase =
