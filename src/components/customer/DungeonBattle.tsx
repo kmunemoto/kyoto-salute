@@ -58,7 +58,7 @@ const rand = (a: number, b: number) => Math.floor(Math.random() * (b - a + 1)) +
 
 type Phase =
   | "loading" | "intro" | "appear" | "command" | "skill_select" | "item_select"
-  | "action" | "boss_intro" | "floor_clear" | "boss_defeat" | "victory" | "defeat" | "revive_prompt";
+  | "action" | "boss_intro" | "floor_clear" | "boss_defeat" | "victory" | "defeat" | "revive_prompt" | "target_select";
 
 interface Buff { type: string; multiplier: number; turnsLeft: number; }
 
@@ -92,7 +92,8 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const [maxHp, setMaxHp] = useState(0);
   const [compHp, setCompHp] = useState(0);
   const [compMaxHp, setCompMaxHp] = useState(0);
-  const [monsterHp, setMonsterHp] = useState(0);
+  const [monsterHps, setMonsterHps] = useState<number[]>([]);
+  const [pendingAction, setPendingAction] = useState<{ kind: "attack" } | { kind: "skill"; skill: PlayerSkill } | null>(null);
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [enemyDebuffs, setEnemyDebuffs] = useState<Buff[]>([]);
   const [defending, setDefending] = useState(false);
@@ -124,6 +125,9 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const compNameRef = useRef("コンパニオン");
 
   const monster = monsters[floorIdx];
+  const monsterCount = monster?.monster_count ?? 1;
+  const aliveIndices = monsterHps.map((h, i) => (h > 0 ? i : -1)).filter((i) => i >= 0);
+  const monsterLabel = (i: number) => monsterCount > 1 ? `${monster!.monster_name} ${["A","B","C","D"][i] || (i+1)}` : monster!.monster_name;
   const BG_BASE = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/dungeon";
   const bgImageUrl = `${BG_BASE}/bg_${stage.stage_key}.png`;
   const monsterImageUrl = monster ? `${BG_BASE}/monsters/${monster.monster_key}.png` : "";
