@@ -70,10 +70,10 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
         const style: React.CSSProperties = isWooden
           ? {
               position: "absolute",
-              bottom: "25%",
-              right: "-2%",
-              height: "60%",
-              width: "60%",
+              bottom: "20%",
+              right: "5%",
+              height: "55%",
+              width: "55%",
               zIndex: zBase + 1,
               transform: "rotate(-30deg)",
               transformOrigin: "center center",
