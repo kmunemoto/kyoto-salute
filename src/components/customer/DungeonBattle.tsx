@@ -257,7 +257,10 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   };
 
   // ---- Combat actions ----
-  const handleAttack = () => {
+  // Reward rewards based on coin/exp per defeated monster (one per copy)
+  const aliveCount = monsterHps.filter((h) => h > 0).length;
+
+  const performAttack = (targetIdx: number) => {
     if (!monster) return;
     setPhase("action");
     const eAtk = getEffectiveAtk();
@@ -270,17 +273,30 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       setShake(true); setTimeout(() => setShake(false), 300);
       if (isCrit) { setCritFlash(true); setTimeout(() => setCritFlash(false), 250); }
       addFloat(isCrit ? `CRITICAL ${dmg}` : `${dmg}`, isCrit ? "#fbbf24" : "#ffffff", "monster");
-      const nh = Math.max(0, monsterHp - dmg);
-      setMonsterHp(nh);
+      const nh = Math.max(0, (monsterHps[targetIdx] ?? 0) - dmg);
+      const newHps = monsterHps.map((h, i) => (i === targetIdx ? nh : h));
+      setMonsterHps(newHps);
       const msgs = [
         ...(isCrit ? ["会心の一撃！"] : []),
-        `${monster.monster_name}に ${dmg}の ダメージ！`,
+        `${monsterLabel(targetIdx)}に ${dmg}の ダメージ！`,
       ];
-      pushMessages(msgs, () => afterPlayerAction(nh));
+      pushMessages(msgs, () => afterPlayerAction(newHps));
     });
   };
 
-  const handleSkill = (sk: PlayerSkill) => {
+  const handleAttack = () => {
+    if (!monster) return;
+    if (aliveCount > 1) {
+      setPendingAction({ kind: "attack" });
+      setPhase("target_select");
+      return;
+    }
+    const t = monsterHps.findIndex((h) => h > 0);
+    if (t < 0) return;
+    performAttack(t);
+  };
+
+  const performSkill = (sk: PlayerSkill, targetIdx: number) => {
     if (!monster) return;
     if (mp.current < sk.mp_cost) return;
     setPhase("action");
@@ -294,31 +310,53 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const dmg = Math.max(1, Math.floor((eAtk - eDef) * sk.power) + rand(-2, 2));
         setShake(true); setTimeout(() => setShake(false), 300);
         addFloat(`${dmg}`, "#ffffff", "monster");
-        const nh = Math.max(0, monsterHp - dmg);
-        setMonsterHp(nh);
-        pushMessages([`${monster.monster_name}に ${dmg}の ダメージ！`], () => afterPlayerAction(nh));
+        const nh = Math.max(0, (monsterHps[targetIdx] ?? 0) - dmg);
+        const newHps = monsterHps.map((h, i) => (i === targetIdx ? nh : h));
+        setMonsterHps(newHps);
+        pushMessages([`${monsterLabel(targetIdx)}に ${dmg}の ダメージ！`], () => afterPlayerAction(newHps));
       } else if (sk.skill_type === "heal") {
         const heal = sk.heal_amount === 9999 ? maxHp : (sk.heal_amount ?? 0);
         const nh = Math.min(maxHp, playerHp + heal);
         const actual = nh - playerHp;
         setPlayerHp(nh);
         addFloat(`+${actual}`, "#34d399", "player");
-        pushMessages([`HPが ${actual} 回復した！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`HPが ${actual} 回復した！`], () => afterPlayerAction(monsterHps));
       } else if (sk.skill_type === "buff") {
         setBuffs((b) => [...b, { type: sk.buff_type!, multiplier: Number(sk.buff_multiplier), turnsLeft: sk.buff_turns }]);
         const label = sk.buff_type === "player_atk" ? "攻撃力" : "守備力";
-        pushMessages([`あなたの ${label}が 上がった！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`あなたの ${label}が 上がった！`], () => afterPlayerAction(monsterHps));
       } else if (sk.skill_type === "debuff") {
         setEnemyDebuffs((b) => [...b, { type: sk.buff_type!, multiplier: Number(sk.buff_multiplier), turnsLeft: sk.buff_turns }]);
-        pushMessages([`${monster.monster_name}の 守備力が 下がった！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`${monsterLabel(targetIdx)}の 守備力が 下がった！`], () => afterPlayerAction(monsterHps));
       }
     });
+  };
+
+  const handleSkill = (sk: PlayerSkill) => {
+    if (!monster) return;
+    if (mp.current < sk.mp_cost) return;
+    const needsTarget = sk.skill_type === "attack" || sk.skill_type === "debuff";
+    if (needsTarget && aliveCount > 1) {
+      setPendingAction({ kind: "skill", skill: sk });
+      setPhase("target_select");
+      return;
+    }
+    const t = needsTarget ? monsterHps.findIndex((h) => h > 0) : 0;
+    performSkill(sk, Math.max(0, t));
+  };
+
+  const handleSelectTarget = (idx: number) => {
+    if (!pendingAction) return;
+    const act = pendingAction;
+    setPendingAction(null);
+    if (act.kind === "attack") performAttack(idx);
+    else performSkill(act.skill, idx);
   };
 
   const handleDefend = () => {
     setDefending(true);
     setPhase("action");
-    pushMessages([`あなたは 身構えた！`], () => afterPlayerAction(monsterHp));
+    pushMessages([`あなたは 身構えた！`], () => afterPlayerAction(monsterHps));
   };
 
   const handleItem = async (key: string) => {
@@ -334,14 +372,14 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const a = nh - playerHp;
         setPlayerHp(nh);
         addFloat(`+${a}`, "#34d399", "player");
-        pushMessages([`HPが ${a} 回復した！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`HPが ${a} 回復した！`], () => afterPlayerAction(monsterHps));
       } else if (it.effect_type === "heal_mp") {
         const nm = Math.min(mp.max, mp.current + it.effect_amount);
         const a = nm - mp.current;
         setMp({ current: nm, max: mp.max });
-        pushMessages([`MPが ${a} 回復した！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`MPが ${a} 回復した！`], () => afterPlayerAction(monsterHps));
       } else {
-        afterPlayerAction(monsterHp);
+        afterPlayerAction(monsterHps);
       }
     });
   };
@@ -352,36 +390,52 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
     if (Math.random() < 0.5) {
       pushMessages([`あなたは 戦場から撤退した！`], () => finishRun("retreat", floorIdx));
     } else {
-      pushMessages([`しかし 回り込まれてしまった！`], () => enemyTurn(monsterHp));
+      pushMessages([`しかし 回り込まれてしまった！`], () => enemyTurn(monsterHps));
     }
   };
 
   // ---- After player action: companion → enemy → next turn ----
-  const afterPlayerAction = (curMonHp: number) => {
-    if (curMonHp <= 0) { onFloorClear(); return; }
+  const afterPlayerAction = (curHps: number[]) => {
+    if (curHps.every((h) => h <= 0)) { onFloorClear(); return; }
     // Companion attacks
     if (companion && compHp > 0) {
+      // Pick alive target (prefer one player isn't attacking - use last alive index)
+      const aliveT = curHps.map((h, i) => (h > 0 ? i : -1)).filter((i) => i >= 0);
+      const compTarget = aliveT[aliveT.length - 1];
       const cAtk = companion.base_atk + companion.level + (companion.level >= 10 && Math.random() < 0.2 ? Math.floor((companion.base_atk + companion.level) * 0.3) : 0);
       const eDef = getEnemyDef(monster!.def);
       const dmg = Math.max(1, cAtk - eDef + rand(-2, 2));
       pushMessages([`${companion.companion_name}の こうげき！`], () => {
         setShake(true); setTimeout(() => setShake(false), 250);
         addFloat(`${dmg}`, "#a3e635", "monster");
-        const nh = Math.max(0, curMonHp - dmg);
-        setMonsterHp(nh);
-        pushMessages([`${monster!.monster_name}に ${dmg}の ダメージ！`], () => {
-          if (nh <= 0) { onFloorClear(); return; }
-          enemyTurn(nh);
+        const nh = Math.max(0, curHps[compTarget] - dmg);
+        const newHps = curHps.map((h, i) => (i === compTarget ? nh : h));
+        setMonsterHps(newHps);
+        pushMessages([`${monsterLabel(compTarget)}に ${dmg}の ダメージ！`], () => {
+          if (newHps.every((h) => h <= 0)) { onFloorClear(); return; }
+          enemyTurn(newHps);
         });
       });
     } else {
-      enemyTurn(curMonHp);
+      enemyTurn(curHps);
     }
   };
 
-  const enemyTurn = (curMonHp: number) => {
-    if (curMonHp <= 0) { onFloorClear(); return; }
+  const enemyTurn = (curHps: number[]) => {
+    if (curHps.every((h) => h <= 0)) { onFloorClear(); return; }
     const m = monster!;
+    const aliveList = curHps.map((h, i) => (h > 0 ? i : -1)).filter((i) => i >= 0);
+    // Each alive monster acts in sequence
+    const runOne = (queue: number[], hps: number[], curPHp: number) => {
+      if (queue.length === 0) {
+        if (curPHp <= 0) { onPlayerDown(); return; }
+        tickAndContinue();
+        return;
+      }
+      const idx = queue[0];
+      const rest = queue.slice(1);
+      if (hps[idx] <= 0) { runOne(rest, hps, curPHp); return; }
+
     const skillList: MonsterSkill[] = (m as any).monster_skills && Array.isArray((m as any).monster_skills) && (m as any).monster_skills.length > 0
       ? (m as any).monster_skills
       : [{ action: "attack", weight: 100, message: "の こうげき！" }];
@@ -390,18 +444,19 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
     let chosen: MonsterSkill = skillList[0];
     for (const s of skillList) { roll -= s.weight; if (roll <= 0) { chosen = s; break; } }
 
-    pushMessages([`${m.monster_name}${chosen.message}`], () => {
-      if (chosen.action === "defend") { tickAndContinue(); return; }
+      pushMessages([`${monsterLabel(idx)}${chosen.message}`], () => {
+        if (chosen.action === "defend") { runOne(rest, hps, curPHp); return; }
       if (chosen.dispel) {
         setBuffs([]);
-        pushMessages([`強化が 消し去られた！`], () => tickAndContinue());
+          pushMessages([`強化が 消し去られた！`], () => runOne(rest, hps, curPHp));
         return;
       }
       if (chosen.heal && chosen.heal > 0) {
-        const nh = Math.min(m.hp, curMonHp + chosen.heal);
-        setMonsterHp(nh);
+          const nh = Math.min(m.hp, hps[idx] + (chosen.heal ?? 0));
+          const newHps = hps.map((h, i) => (i === idx ? nh : h));
+          setMonsterHps(newHps);
         addFloat(`+${chosen.heal}`, "#34d399", "monster");
-        pushMessages([`${m.monster_name}は ${chosen.heal} 回復した！`], () => tickAndContinue());
+          pushMessages([`${monsterLabel(idx)}は ${chosen.heal} 回復した！`], () => runOne(rest, newHps, curPHp));
         return;
       }
       const power = chosen.power ?? 1;
@@ -415,17 +470,18 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       }
       setHurtFlash(true); setTimeout(() => setHurtFlash(false), 250);
       addFloat(`${totalDmg}`, "#ef4444", "player");
-      const nh = Math.max(0, playerHp - totalDmg);
-      setPlayerHp(nh);
+        const nh = Math.max(0, curPHp - totalDmg);
+        setPlayerHp(nh);
       const msgs: string[] = [];
       if (defending) msgs.push(`しかし あなたは 身構えていた！ ダメージが軽減された！`);
       msgs.push(`あなたは ${totalDmg}の ダメージを 受けた！`);
       pushMessages(msgs, () => {
         if (nh <= 0) { onPlayerDown(); return; }
-        // Companion may also be hit slightly
-        tickAndContinue();
+          runOne(rest, hps, nh);
       });
     });
+    };
+    runOne(aliveList, curHps, playerHp);
   };
 
   const tickAndContinue = () => {
