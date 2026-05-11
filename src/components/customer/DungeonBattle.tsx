@@ -130,7 +130,8 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const monsterLabel = (i: number) => monsterCount > 1 ? `${monster!.monster_name} ${["A","B","C","D"][i] || (i+1)}` : monster!.monster_name;
   const BG_BASE = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/dungeon";
   const bgImageUrl = `${BG_BASE}/bg_${stage.stage_key}.png`;
-  const monsterImageUrl = monster ? `${BG_BASE}/monsters/${monster.monster_key}.png` : "";
+  const monsterImageUrl = monster ? `${BG_BASE}/monsters/${getMonsterImageKey(monster.monster_key)}.png` : "";
+  const monsterFilter = monster ? getMonsterFilter(monster.monster_key) : "none";
   const playerName = avatar?.equipped_title ? "あなた" : "あなた";
 
   // ---- Initial load ----
