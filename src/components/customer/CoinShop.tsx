@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Coins, Loader2, Leaf, Droplet, TreeDeciduous, Ticket, type LucideIcon } from "lucide-react";
+import { Coins, Loader2, Leaf, Droplet, TreeDeciduous, Ticket, Zap, Info, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -81,6 +81,22 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
     onPurchased?.();
   };
 
+  const buyStamina = async () => {
+    if (!user) return;
+    if (localCoins < 100) { toast.error("コインが足りません"); return; }
+    setBusy("stamina");
+    const { data, error } = await (supabase as any).rpc("buy_stamina", {
+      p_user_id: user.id, p_quantity: 1,
+    });
+    setBusy(null);
+    if (error || data?.error) { toast.error(error?.message || data?.error || "購入に失敗"); return; }
+    setLocalCoins(data.remaining_coins);
+    toast.success("スタミナを 1回復した！");
+    window.dispatchEvent(new Event("avatar-updated"));
+    window.dispatchEvent(new Event("stamina-updated"));
+    onPurchased?.();
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
@@ -92,6 +108,13 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
               <span className="text-lg">コインショップ</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">所持コイン: {localCoins}</p>
+          </div>
+
+          <div className="mb-3 flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+            <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              トレーニング来店でスタミナ+3を無料獲得できます
+            </p>
           </div>
 
           {loading ? (
@@ -128,6 +151,29 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-muted-foreground mb-2">スタミナ</p>
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
+                  <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center shrink-0">
+                    <Zap className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">スタミナ+1</p>
+                    <p className="text-[11px] text-muted-foreground">ダンジョン1回分</p>
+                    <p className="text-[11px] font-bold text-amber-600 mt-0.5 flex items-center gap-1">
+                      <Coins className="w-3 h-3" />100
+                    </p>
+                  </div>
+                  <button
+                    onClick={buyStamina}
+                    disabled={localCoins < 100 || busy !== null}
+                    className="px-3 py-1.5 rounded-lg bg-yellow-500 text-white text-xs font-bold disabled:opacity-40 active:scale-95"
+                  >
+                    {busy === "stamina" ? <Loader2 className="w-3 h-3 animate-spin" /> : "購入"}
+                  </button>
                 </div>
               </div>
 
