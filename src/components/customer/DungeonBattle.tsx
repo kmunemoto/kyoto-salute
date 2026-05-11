@@ -594,10 +594,12 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
 
   const rank = getRankInfo(avatar.level ?? 1, (avatar.gender as any) ?? "male", avatar.hair_color as any);
   const MIcon = MONSTER_ICON[monster.icon_name] || Bug;
-  const monPct = (monsterHp / monster.hp) * 100;
   const hpPct = (playerHp / Math.max(1, maxHp)) * 100;
   const mpPct = (mp.current / Math.max(1, mp.max)) * 100;
   const compPct = (compHp / Math.max(1, compMaxHp)) * 100;
+  const playerLv = avatar.level ?? 1;
+  const lvColor = monster.monster_level > playerLv ? "#fca5a5" : monster.monster_level < playerLv ? "#86efac" : "#ffffff";
+  const isTargetSelect = phase === "target_select";
 
   const showCommand = phase === "command";
   const showSkillMenu = phase === "skill_select";
