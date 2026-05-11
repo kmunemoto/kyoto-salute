@@ -17,7 +17,6 @@ import DailyMissionCard from "./DailyMissionCard";
 import RaidBossCard from "./RaidBossCard";
 import GachaCard from "./GachaCard";
 import SeasonEventCard from "./SeasonEventCard";
-import RivalBattleCard from "./RivalBattleCard";
 import QuestCard from "./QuestCard";
 import DungeonCard from "./DungeonCard";
 import LoginBonusBanner from "./LoginBonusBanner";
@@ -352,8 +351,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
           hasFutureBookingThisWeek={hasFutureBookingThisWeek}
         />
       )}
-
-      <RivalBattleCard />
 
       {/* Stats Cards */}
       {latest && (latest.weight != null || latest.body_fat != null) && (
