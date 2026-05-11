@@ -367,6 +367,63 @@ export type Database = {
         }
         Relationships: []
       }
+      companion_defs: {
+        Row: {
+          base_atk: number
+          base_def: number
+          base_hp: number
+          companion_key: string
+          companion_name: string
+          element: string
+          evolution_stage: number
+          evolve_level: number | null
+          evolves_from: string | null
+          id: string
+          image_path: string
+          rarity: string
+          skill_description: string
+          skill_name: string
+          skill_power: number
+          skill_type: string
+        }
+        Insert: {
+          base_atk: number
+          base_def: number
+          base_hp: number
+          companion_key: string
+          companion_name: string
+          element: string
+          evolution_stage?: number
+          evolve_level?: number | null
+          evolves_from?: string | null
+          id?: string
+          image_path: string
+          rarity?: string
+          skill_description: string
+          skill_name: string
+          skill_power?: number
+          skill_type?: string
+        }
+        Update: {
+          base_atk?: number
+          base_def?: number
+          base_hp?: number
+          companion_key?: string
+          companion_name?: string
+          element?: string
+          evolution_stage?: number
+          evolve_level?: number | null
+          evolves_from?: string | null
+          id?: string
+          image_path?: string
+          rarity?: string
+          skill_description?: string
+          skill_name?: string
+          skill_power?: number
+          skill_type?: string
+        }
+        Relationships: []
+      }
       counseling_responses: {
         Row: {
           age: string | null
@@ -2065,9 +2122,13 @@ export type Database = {
           created_at: string
           element: string
           exp: number
+          fed_today: boolean
+          feed_streak: number
           icon_name: string | null
           id: string
+          image_path: string | null
           is_active: boolean
+          last_fed_at: string | null
           level: number
           user_id: string
         }
@@ -2080,9 +2141,13 @@ export type Database = {
           created_at?: string
           element?: string
           exp?: number
+          fed_today?: boolean
+          feed_streak?: number
           icon_name?: string | null
           id?: string
+          image_path?: string | null
           is_active?: boolean
+          last_fed_at?: string | null
           level?: number
           user_id: string
         }
@@ -2095,9 +2160,13 @@ export type Database = {
           created_at?: string
           element?: string
           exp?: number
+          fed_today?: boolean
+          feed_streak?: number
           icon_name?: string | null
           id?: string
+          image_path?: string | null
           is_active?: boolean
+          last_fed_at?: string | null
           level?: number
           user_id?: string
         }
@@ -2779,6 +2848,14 @@ export type Database = {
         Args: { p_session_volume: number; p_user_id: string }
         Returns: Json
       }
+      feed_companion: {
+        Args: {
+          p_companion_key: string
+          p_premium?: boolean
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_booked_slots: {
         Args: { check_date: string }
         Returns: {
@@ -2811,6 +2888,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      hatch_companion_egg: {
+        Args: { p_egg_key: string; p_user_id: string }
+        Returns: Json
       }
       initialize_quest_boss_progress: { Args: never; Returns: Json }
       initialize_quest_progress: { Args: never; Returns: Json }
@@ -2850,6 +2931,10 @@ export type Database = {
       }
       recover_stamina: { Args: { p_user_id: string }; Returns: Json }
       run_rival_matching: { Args: { p_week_start: string }; Returns: Json }
+      set_active_companion: {
+        Args: { p_companion_key: string; p_user_id: string }
+        Returns: Json
+      }
       set_featured_badges: { Args: { p_badges: string[] }; Returns: undefined }
       spin_gacha: {
         Args: { _result_date: string; _user_id: string }
