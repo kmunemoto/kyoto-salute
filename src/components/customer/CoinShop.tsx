@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Coins, Loader2, Leaf, Droplet, TreeDeciduous, Ticket, Zap, Info, type LucideIcon } from "lucide-react";
+import { Coins, Loader2, Leaf, Droplet, TreeDeciduous, Ticket, Zap, Info, ChevronRight, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import CoinShopDialog from "./CoinShopDialog";
 
 interface ShopItem {
   item_key: string;
@@ -32,6 +33,7 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [localCoins, setLocalCoins] = useState(coins);
+  const [stripeOpen, setStripeOpen] = useState(false);
 
   useEffect(() => { setLocalCoins(coins); }, [coins]);
 
@@ -98,7 +100,8 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <>
+    <Dialog open={open && !stripeOpen} onOpenChange={(o) => !o && !stripeOpen && onClose()}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
         <DialogTitle className="sr-only">コインショップ</DialogTitle>
         <div className="p-5">
@@ -202,6 +205,27 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
             </div>
           )}
 
+          <div className="mt-4">
+            <p className="text-xs font-bold text-muted-foreground mb-2">コインを購入</p>
+            <div className="space-y-2">
+              <button
+                onClick={() => setStripeOpen(true)}
+                className="w-full p-4 rounded-xl border-2 border-amber-400 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-all text-left"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-amber-800 text-sm">コインをチャージ</p>
+                    <p className="text-[11px] text-amber-600 mt-0.5">クレジットカードでコインを購入</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-amber-600">
+                    <Coins className="w-5 h-5" />
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <button
             onClick={onClose}
             className="w-full mt-5 py-2.5 rounded-xl bg-muted text-foreground text-sm font-bold"
@@ -211,6 +235,15 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
         </div>
       </DialogContent>
     </Dialog>
+    <CoinShopDialog
+      open={stripeOpen}
+      onClose={() => {
+        setStripeOpen(false);
+        window.dispatchEvent(new Event("avatar-updated"));
+        onPurchased?.();
+      }}
+    />
+    </>
   );
 };
 
