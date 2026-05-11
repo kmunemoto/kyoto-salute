@@ -36,6 +36,7 @@ export interface UserCompanion {
   base_hp: number;
   is_active: boolean;
   icon_name: string;
+  image_path?: string | null;
 }
 
 export interface StoryLine {

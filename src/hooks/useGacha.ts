@@ -79,6 +79,13 @@ export const useGacha = () => {
       };
       setTicketCount(result.remaining);
 
+      // Auto-hatch companion eggs
+      if (r.equipment_type === "companion_egg" && r.equipment_key) {
+        await (supabase as any).rpc("hatch_companion_egg", {
+          p_user_id: user.id, p_egg_key: r.equipment_key,
+        });
+      }
+
       const achKeys: string[] = ["gacha_beginner"];
       if (r.rarity === "epic" || r.rarity === "legendary") achKeys.push("gacha_lucky");
       if (r.rarity === "legendary") achKeys.push("gacha_legend");
