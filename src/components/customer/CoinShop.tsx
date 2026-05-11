@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Coins, Loader2, Leaf, Droplet, TreeDeciduous, Ticket, Zap, Info, ChevronRight, type LucideIcon } from "lucide-react";
+import { Coins, Loader2, Leaf, Droplet, TreeDeciduous, Ticket, Zap, Info, ChevronRight, History, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -15,6 +15,21 @@ interface ShopItem {
   effect_type: string;
   effect_amount: number;
 }
+
+interface PurchaseRow {
+  id: string;
+  price_id: string;
+  coins_added: number;
+  amount_jpy: number;
+  is_refund: boolean;
+  created_at: string;
+}
+
+const PACK_NAME: Record<string, string> = {
+  coin_starter_jpy_300: "スターター",
+  coin_value_jpy_800: "バリュー",
+  coin_premium_jpy_1800: "プレミアム",
+};
 
 const ICON: Record<string, LucideIcon> = { Leaf, Droplet, TreeDeciduous, Ticket };
 
@@ -34,6 +49,9 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
   const [busy, setBusy] = useState<string | null>(null);
   const [localCoins, setLocalCoins] = useState(coins);
   const [stripeOpen, setStripeOpen] = useState(false);
+  const [history, setHistory] = useState<PurchaseRow[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => { setLocalCoins(coins); }, [coins]);
 
@@ -51,6 +69,31 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
       setItems(list);
       setLoading(false);
     })();
+  }, [open]);
+
+  const loadHistory = async () => {
+    if (!user) return;
+    setHistoryLoading(true);
+    const { data } = await (supabase as any)
+      .from("coin_purchases")
+      .select("id,price_id,coins_added,amount_jpy,is_refund,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setHistory((data as PurchaseRow[]) || []);
+    setHistoryLoading(false);
+  };
+
+  const toggleHistory = () => {
+    const next = !historyOpen;
+    setHistoryOpen(next);
+    if (next && history.length === 0) loadHistory();
+  };
+
+  useEffect(() => {
+    if (!open) {
+      setHistoryOpen(false);
+    }
   }, [open]);
 
   const buyItem = async (key: string, price: number) => {
@@ -224,6 +267,60 @@ const CoinShop = ({ open, onClose, coins, onPurchased }: Props) => {
                 </div>
               </button>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <button
+              onClick={toggleHistory}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-card text-left"
+            >
+              <span className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                <History className="w-3.5 h-3.5" />
+                購入履歴
+              </span>
+              <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${historyOpen ? "rotate-90" : ""}`} />
+            </button>
+            {historyOpen && (
+              <div className="mt-2 space-y-1.5">
+                {historyLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                  </div>
+                ) : history.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground text-center py-3">購入履歴はありません</p>
+                ) : (
+                  history.map((row) => {
+                    const name = PACK_NAME[row.price_id] || row.price_id;
+                    const date = new Date(row.created_at).toLocaleDateString("ja-JP", {
+                      year: "numeric", month: "2-digit", day: "2-digit",
+                    });
+                    return (
+                      <div
+                        key={row.id}
+                        className={`flex items-center justify-between p-2 rounded-lg border ${
+                          row.is_refund ? "border-red-200 bg-red-50" : "border-border bg-card"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold break-all">
+                            {row.is_refund ? "返金: " : ""}{name}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">{date}</p>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <p className={`text-xs font-bold ${row.is_refund ? "text-red-600" : "text-amber-600"}`}>
+                            {row.coins_added > 0 ? "+" : ""}{row.coins_added} コイン
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {row.amount_jpy > 0 ? "¥" : "-¥"}{Math.abs(row.amount_jpy).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </div>
 
           <button

@@ -341,7 +341,10 @@ export type Database = {
           created_at: string
           environment: string
           id: string
+          is_refund: boolean
           price_id: string
+          refund_of_session_id: string | null
+          stripe_payment_intent_id: string | null
           stripe_session_id: string
           user_id: string
         }
@@ -351,7 +354,10 @@ export type Database = {
           created_at?: string
           environment?: string
           id?: string
+          is_refund?: boolean
           price_id: string
+          refund_of_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id: string
           user_id: string
         }
@@ -361,7 +367,10 @@ export type Database = {
           created_at?: string
           environment?: string
           id?: string
+          is_refund?: boolean
           price_id?: string
+          refund_of_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id?: string
           user_id?: string
         }
