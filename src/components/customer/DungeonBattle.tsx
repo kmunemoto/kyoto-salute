@@ -647,49 +647,75 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       {/* Battle field */}
       <div className="relative flex-1 flex flex-col items-center justify-between px-3 py-2 overflow-hidden">
         {/* Monster */}
-        <div className="flex flex-col items-center mt-2 relative">
-          <div className={`relative ${shake ? "animate-[battle-shake_0.3s]" : ""}`}>
-            <div
-              className="w-32 h-32 rounded-3xl flex items-center justify-center bg-white/10 border-2 border-white/20 overflow-hidden"
-              style={{ filter: monster.is_boss ? "drop-shadow(0 0 16px rgba(239,68,68,0.7))" : undefined }}
-            >
-              {!monsterImgError[monster.monster_key] ? (
-                <img
-                  src={monsterImageUrl}
-                  alt={monster.monster_name}
-                  className="w-full h-full object-contain"
-                  style={{ imageRendering: "pixelated" }}
-                  onError={() => setMonsterImgError((s) => ({ ...s, [monster.monster_key]: true }))}
-                />
-              ) : (
-                <MIcon className="w-20 h-20" style={{ color: monster.is_boss ? "#fbbf24" : "#fff" }} />
-              )}
-            </div>
-            {floats.filter((f) => f.target === "monster").map((f) => (
-              <span key={f.id} className="absolute left-1/2 top-0 -translate-x-1/2 text-xl font-extrabold pointer-events-none"
-                style={{ color: f.color, animation: "battle-float 0.9s ease-out forwards", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
-                {f.text}
-              </span>
-            ))}
-            {/* Spell FX overlay */}
-            {spellFx && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="w-32 h-32 rounded-full"
-                  style={{
-                    background: `radial-gradient(circle, ${spellColor(spellFx.kind)} 0%, transparent 70%)`,
-                    animation: "spell-burst 0.7s ease-out forwards",
-                  }} />
-              </div>
-            )}
-          </div>
-          <p className="text-sm font-bold mt-2">{monster.monster_name}{monster.is_boss && "（ボス）"}</p>
-          <div className="w-48 mt-1">
-            <div className="h-2 rounded-full bg-black/50 overflow-hidden border border-white/20">
-              <div className="h-full transition-all duration-300" style={{ width: `${monPct}%`, background: "#ef4444" }} />
-            </div>
-            <p className="text-[10px] text-center opacity-80 mt-0.5">{monsterHp} / {monster.hp}</p>
-          </div>
+        <div className={`flex flex-row items-start justify-center gap-3 mt-2 relative ${shake ? "animate-[battle-shake_0.3s]" : ""}`}>
+          {monsterHps.map((hp, i) => {
+            const pct = (hp / monster.hp) * 100;
+            const dead = hp <= 0;
+            const size = monsterCount > 1 ? "w-24 h-24" : "w-32 h-32";
+            const iconSize = monsterCount > 1 ? "w-16 h-16" : "w-20 h-20";
+            const barW = monsterCount > 1 ? "w-28" : "w-48";
+            const selectable = isTargetSelect && !dead;
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={!selectable}
+                onClick={(e) => { if (selectable) { e.stopPropagation(); handleSelectTarget(i); } }}
+                className="flex flex-col items-center disabled:cursor-default"
+                style={{ opacity: dead ? 0.3 : 1 }}
+              >
+                <div className="relative">
+                  <div
+                    className={`${size} rounded-3xl flex items-center justify-center bg-white/10 border-2 overflow-hidden ${selectable ? "border-white animate-pulse" : "border-white/20"}`}
+                    style={{ filter: monster.is_boss ? "drop-shadow(0 0 16px rgba(239,68,68,0.7))" : undefined }}
+                  >
+                    {!monsterImgError[monster.monster_key] ? (
+                      <img
+                        src={monsterImageUrl}
+                        alt={monster.monster_name}
+                        className="w-full h-full object-contain"
+                        style={{ imageRendering: "pixelated", filter: monsterFilter }}
+                        onError={() => setMonsterImgError((s) => ({ ...s, [monster.monster_key]: true }))}
+                      />
+                    ) : (
+                      <MIcon className={iconSize} style={{ color: monster.is_boss ? "#fbbf24" : "#fff" }} />
+                    )}
+                  </div>
+                  {i === 0 && floats.filter((f) => f.target === "monster").map((f) => (
+                    <span key={f.id} className="absolute left-1/2 top-0 -translate-x-1/2 text-xl font-extrabold pointer-events-none"
+                      style={{ color: f.color, animation: "battle-float 0.9s ease-out forwards", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
+                      {f.text}
+                    </span>
+                  ))}
+                  {i === 0 && spellFx && (
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full"
+                        style={{
+                          background: `radial-gradient(circle, ${spellColor(spellFx.kind)} 0%, transparent 70%)`,
+                          animation: "spell-burst 0.7s ease-out forwards",
+                        }} />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs font-bold mt-1.5 flex items-center gap-1">
+                  <span>{monsterLabel(i)}{monster.is_boss && "（ボス）"}</span>
+                  <span style={{ color: lvColor }} className="text-[10px] font-extrabold">Lv.{monster.monster_level}</span>
+                </p>
+                <div className={`${barW} mt-1`}>
+                  <div className="h-2 rounded-full bg-black/50 overflow-hidden border border-white/20">
+                    <div className="h-full transition-all duration-300" style={{ width: `${pct}%`, background: "#ef4444" }} />
+                  </div>
+                  <p className="text-[10px] text-center opacity-80 mt-0.5">{hp} / {monster.hp}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
+        {isTargetSelect && (
+          <p className="absolute top-12 left-1/2 -translate-x-1/2 text-xs text-white bg-black/70 px-3 py-1 rounded-full font-bold">
+            どちらを攻撃？
+          </p>
+        )}
 
         {/* Player + Companion */}
         <div className="flex items-end justify-center gap-4 py-2">
