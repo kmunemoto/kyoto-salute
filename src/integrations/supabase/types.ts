@@ -2874,6 +2874,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      grant_companion_exp: {
+        Args: { p_exp: number; p_user_id: string }
+        Returns: Json
+      }
       grant_equipment: {
         Args: { p_item_key: string; p_obtained_via?: string; p_user_id: string }
         Returns: Json
