@@ -68,16 +68,7 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
         { position: "absolute", top: "22%", right: "-16%", transform: "rotate(25deg)", transformOrigin: "center center", height: "75%", width: "75%", zIndex: zBase + 1, opacity: 0.95 },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
       )}
-      {gear.top && renderItem(
-        gear.top,
-        { top: "50%", left: "50%", transform: "translate(-50%, -25%)", height: "50%", width: "50%", zIndex: zBase + 3, opacity: 0.95 },
-        `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.top.rarity]}`,
-      )}
-      {gear.bottom && renderItem(
-        gear.bottom,
-        { top: "50%", left: "50%", transform: "translate(-50%, 20%)", height: "45%", width: "45%", zIndex: zBase + 3, opacity: 0.95 },
-        `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.bottom.rarity]}`,
-      )}
+      {/* Tops/bottoms intentionally not overlaid on avatar; stat bonuses still apply. */}
     </>
   );
 };
