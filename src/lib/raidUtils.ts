@@ -70,6 +70,9 @@ export interface SessionRewardResult {
   session_total: number;
   gender: string;
   rank_up: { rank: string; coins: number; tickets: number } | null;
+  companion_exp_gained?: number;
+  companion_name?: string | null;
+  companion_evolved?: boolean;
 }
 
 export interface MilestoneAchieved {
