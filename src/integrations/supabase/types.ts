@@ -2258,6 +2258,7 @@ export type Database = {
           created_at: string
           id: string
           session_date: string | null
+          ticket_seq: number
           used: boolean
           used_at: string | null
           user_id: string
@@ -2266,6 +2267,7 @@ export type Database = {
           created_at?: string
           id?: string
           session_date?: string | null
+          ticket_seq?: number
           used?: boolean
           used_at?: string | null
           user_id: string
@@ -2274,6 +2276,7 @@ export type Database = {
           created_at?: string
           id?: string
           session_date?: string | null
+          ticket_seq?: number
           used?: boolean
           used_at?: string | null
           user_id?: string
