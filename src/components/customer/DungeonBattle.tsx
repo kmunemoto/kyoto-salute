@@ -175,8 +175,9 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   useEffect(() => {
     if (phase !== "loading") return;
     if (!stats || monsters.length === 0 || maxHp === 0) return;
-    // Initialize first monster HP
-    setMonsterHp(monsters[0].hp);
+    // Initialize first monster HPs (1 or 2 copies)
+    const m0 = monsters[0];
+    setMonsterHps(Array.from({ length: m0.monster_count ?? 1 }, () => m0.hp));
     // Push intro story + appear
     const intro = (story.intro || []).map((s) => formatLine(s));
     pushMessages([...intro, `${monsters[0].monster_name}が あらわれた！`], () => setPhase("command"));
