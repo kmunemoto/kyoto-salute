@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
-import type { Direction, GameMap, MapNPC } from "./maps/rivelVillage";
+import type { Direction, GameMap, MapNPC, MapWarp } from "./maps/rivelVillage";
+import { rivelVillage } from "./maps/rivelVillage";
+import { rivelField } from "./maps/rivelField";
+
+const MAP_REGISTRY: Record<string, GameMap> = {
+  rivel_village: rivelVillage,
+  rivel_field: rivelField,
+};
 
 // === 画像URL (Supabase Storage) ===
 const TILESET_URL = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/rpg/tileset.png";
@@ -59,6 +66,11 @@ interface Props {
 
 const RPGEngine = ({ map, onExit }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const [currentMap, setCurrentMap] = useState<GameMap>(map);
+  const [fadeState, setFadeState] = useState<"none" | "fadeOut" | "fadeIn">("none");
+  const [fadeOpacity, setFadeOpacity] = useState(0);
+  const warpingRef = useRef(false);
 
   const playerRef = useRef<PlayerState>({
     x: map.spawn.x,
@@ -121,11 +133,11 @@ const RPGEngine = ({ map, onExit }: Props) => {
 
   // === 衝突判定 ===
   const isBlocked = useCallback((tx: number, ty: number): boolean => {
-    if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return true;
-    if (map.layers.collision[ty][tx] === 1) return true;
-    if (map.npcs.some((n) => n.x === tx && n.y === ty)) return true;
+    if (tx < 0 || ty < 0 || tx >= currentMap.width || ty >= currentMap.height) return true;
+    if (currentMap.layers.collision[ty][tx] === 1) return true;
+    if (currentMap.npcs.some((n) => n.x === tx && n.y === ty)) return true;
     return false;
-  }, [map]);
+  }, [currentMap]);
 
   const facingTile = useCallback((p: PlayerState): [number, number] => {
     let nx = p.x, ny = p.y;
@@ -138,7 +150,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
 
   const tryMove = useCallback((dir: Direction) => {
     const p = playerRef.current;
-    if (p.isMoving || dialogue || menuOpen) return;
+    if (p.isMoving || dialogue || menuOpen || warpingRef.current) return;
     p.direction = dir;
     let nx = p.x, ny = p.y;
     if (dir === "up") ny -= 1;
@@ -180,7 +192,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
     }
     const p = playerRef.current;
     const [fx, fy] = facingTile(p);
-    const npc = map.npcs.find((n) => n.x === fx && n.y === fy);
+    const npc = currentMap.npcs.find((n) => n.x === fx && n.y === fy);
     if (npc) {
       setDialogue({
         npc,
@@ -190,7 +202,44 @@ const RPGEngine = ({ map, onExit }: Props) => {
         fullyDisplayed: false,
       });
     }
-  }, [dialogue, menuOpen, facingTile, map.npcs]);
+  }, [dialogue, menuOpen, facingTile, currentMap.npcs]);
+
+  // === ワープ処理 ===
+  const doWarp = useCallback(async (warp: MapWarp) => {
+    if (warpingRef.current) return;
+    warpingRef.current = true;
+    heldDirRef.current = null;
+    setFadeState("fadeOut");
+    setFadeOpacity(0);
+    // 次フレームでopacityを1に上げてトランジション開始
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+    setFadeOpacity(1);
+    await new Promise((r) => setTimeout(r, 350));
+    const nextMap = MAP_REGISTRY[warp.targetMap];
+    if (!nextMap) {
+      warpingRef.current = false;
+      setFadeState("none");
+      setFadeOpacity(0);
+      return;
+    }
+    setCurrentMap(nextMap);
+    playerRef.current.x = warp.targetX;
+    playerRef.current.y = warp.targetY;
+    playerRef.current.pxOffsetX = 0;
+    playerRef.current.pxOffsetY = 0;
+    playerRef.current.isMoving = false;
+    moveStepRef.current = 0;
+    setFadeState("fadeIn");
+    setFadeOpacity(0);
+    await new Promise((r) => setTimeout(r, 350));
+    setFadeState("none");
+    warpingRef.current = false;
+  }, []);
+
+  const checkWarp = useCallback((x: number, y: number) => {
+    const w = currentMap.warps.find((wp) => wp.x === x && wp.y === y);
+    if (w) doWarp(w);
+  }, [currentMap, doWarp]);
 
   // === タイプライター ===
   useEffect(() => {
@@ -241,8 +290,9 @@ const RPGEngine = ({ map, onExit }: Props) => {
           p.pxOffsetX = 0; p.pxOffsetY = 0;
           p.isMoving = false;
           walkPhaseRef.current = (walkPhaseRef.current + 1) % 2;
+          checkWarp(p.x, p.y);
           const held = heldDirRef.current;
-          if (held && !dialogue && !menuOpen) {
+          if (held && !dialogue && !menuOpen && !warpingRef.current) {
             p.direction = held;
             let nx = p.x, ny = p.y;
             if (held === "up") ny -= 1;
@@ -262,8 +312,8 @@ const RPGEngine = ({ map, onExit }: Props) => {
       const cssH = canvasHeight;
       const playerWorldPxX = (p.x + p.pxOffsetX) * SCALE + SCALE / 2;
       const playerWorldPxY = (p.y + p.pxOffsetY) * SCALE + SCALE / 2;
-      const mapPxW = map.width * SCALE;
-      const mapPxH = map.height * SCALE;
+      const mapPxW = currentMap.width * SCALE;
+      const mapPxH = currentMap.height * SCALE;
       let camX: number;
       let camY: number;
       if (mapPxW <= cssW) {
@@ -282,8 +332,8 @@ const RPGEngine = ({ map, onExit }: Props) => {
 
       const startTx = Math.max(0, Math.floor(camX / SCALE));
       const startTy = Math.max(0, Math.floor(camY / SCALE));
-      const endTx = Math.min(map.width, startTx + viewCols + 2);
-      const endTy = Math.min(map.height, startTy + viewRows + 2);
+      const endTx = Math.min(currentMap.width, startTx + viewCols + 2);
+      const endTy = Math.min(currentMap.height, startTy + viewRows + 2);
 
       const tileImg = tilesetRef.current;
       const srcTile = tileImg ? Math.floor(tileImg.width / 4) : 32;
@@ -304,8 +354,8 @@ const RPGEngine = ({ map, onExit }: Props) => {
         for (let tx = startTx; tx < endTx; tx++) {
           const sx = tx * SCALE - camX;
           const sy = ty * SCALE - camY;
-          drawTile(map.layers.ground[ty][tx], sx, sy);
-          const o = map.layers.objects[ty][tx];
+          drawTile(currentMap.layers.ground[ty][tx], sx, sy);
+          const o = currentMap.layers.objects[ty][tx];
           if (o) drawTile(o, sx, sy);
         }
       }
@@ -313,7 +363,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
       const npcImg = npcRef.current;
       const npcSrcW = npcImg ? Math.floor(npcImg.width / 4) : 32;
       const npcSrcH = npcImg ? npcImg.height : 32;
-      for (const npc of map.npcs) {
+      for (const npc of currentMap.npcs) {
         if (npc.x < startTx - 1 || npc.x > endTx || npc.y < startTy - 1 || npc.y > endTy) continue;
         const sx = npc.x * SCALE - camX;
         const sy = npc.y * SCALE - camY;
@@ -350,7 +400,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [loaded, map, SCALE, viewCols, viewRows, canvasWidth, canvasHeight, isBlocked, dialogue, menuOpen]);
+  }, [loaded, currentMap, SCALE, viewCols, viewRows, canvasWidth, canvasHeight, isBlocked, dialogue, menuOpen, checkWarp]);
 
   // Canvas DPR
   useEffect(() => {
@@ -441,7 +491,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
 
       {/* 上部バー (Canvas の上に重ねる) */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 bg-gradient-to-b from-black/70 to-transparent">
-        <p className="text-xs text-white/90 font-bold break-all drop-shadow">{map.name}</p>
+        <p className="text-xs text-white/90 font-bold break-all drop-shadow">{currentMap.name}</p>
         <button
           onClick={() => setMenuOpen(true)}
           className="w-9 h-9 rounded-full bg-white/20 backdrop-blur flex items-center justify-center active:bg-white/40"
@@ -466,6 +516,14 @@ const RPGEngine = ({ map, onExit }: Props) => {
             {dialogue.fullyDisplayed && (arrowBlink ? "▶" : " ")}
           </p>
         </div>
+      )}
+
+      {/* フェードオーバーレイ */}
+      {fadeState !== "none" && (
+        <div
+          className="absolute inset-0 bg-black z-40 pointer-events-none transition-opacity duration-300"
+          style={{ opacity: fadeOpacity }}
+        />
       )}
 
       {/* DPad + Aボタン */}

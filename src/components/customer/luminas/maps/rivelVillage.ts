@@ -186,5 +186,9 @@ export const rivelVillage: GameMap = {
       ],
     },
   ],
-  warps: [],
+  warps: [
+    { x: 14, y: 24, targetMap: "rivel_field", targetX: 10, targetY: 1 },
+    { x: 15, y: 24, targetMap: "rivel_field", targetX: 11, targetY: 1 },
+    { x: 16, y: 24, targetMap: "rivel_field", targetX: 12, targetY: 1 },
+  ],
 };
