@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Lock, Check, Loader2, Zap, Swords } from "lucide-react";
+import { ArrowLeft, Lock, Check, Loader2, Zap, Swords, AlertTriangle } from "lucide-react";
 import { useDungeonStages, useStamina, startDungeonRun, type DungeonStage } from "@/hooks/useDungeon";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAvatar } from "@/hooks/useAvatar";
 import { toast } from "sonner";
 import DungeonBattle from "./DungeonBattle";
 
@@ -9,6 +10,8 @@ const CustomerDungeon = ({ onBack }: { onBack: () => void }) => {
   const { user } = useAuth();
   const { stages, clearedKeys, loading, refetch } = useDungeonStages();
   const { stamina, refetch: refetchStamina } = useStamina();
+  const { avatar } = useAvatar(false);
+  const playerLevel = avatar?.level ?? 1;
   const [busy, setBusy] = useState<string | null>(null);
   const [activeRun, setActiveRun] = useState<{ stage: DungeonStage; runId: string } | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -132,6 +135,12 @@ const CustomerDungeon = ({ onBack }: { onBack: () => void }) => {
                   <p className="font-bold text-base leading-tight break-all">
                     {isLocked ? "？？？" : stage.stage_name}
                   </p>
+                  {!isLocked && stage.recommended_level_min != null && stage.recommended_level_max != null && (
+                    <p className={`text-[11px] mt-0.5 font-bold flex items-center gap-1 ${playerLevel < (stage.recommended_level_min ?? 1) ? "text-red-300" : "opacity-90"}`}>
+                      {playerLevel < (stage.recommended_level_min ?? 1) && <AlertTriangle className="w-3 h-3" />}
+                      推奨 Lv.{stage.recommended_level_min}〜{stage.recommended_level_max}
+                    </p>
+                  )}
                   <p className="text-[11px] opacity-80 mt-1">
                     {isLocked
                       ? "前のステージをクリアで解放"

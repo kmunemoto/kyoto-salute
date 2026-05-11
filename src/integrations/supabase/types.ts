@@ -547,7 +547,9 @@ export type Database = {
           icon_name: string | null
           id: string
           is_boss: boolean
+          monster_count: number
           monster_key: string
+          monster_level: number
           monster_name: string
           monster_skills: Json | null
           stage_key: string
@@ -566,7 +568,9 @@ export type Database = {
           icon_name?: string | null
           id?: string
           is_boss?: boolean
+          monster_count?: number
           monster_key: string
+          monster_level?: number
           monster_name: string
           monster_skills?: Json | null
           stage_key: string
@@ -585,7 +589,9 @@ export type Database = {
           icon_name?: string | null
           id?: string
           is_boss?: boolean
+          monster_count?: number
           monster_key?: string
+          monster_level?: number
           monster_name?: string
           monster_skills?: Json | null
           stage_key?: string
@@ -653,6 +659,8 @@ export type Database = {
           created_at: string
           floor_count: number
           id: string
+          recommended_level_max: number | null
+          recommended_level_min: number | null
           stage_key: string
           stage_name: string
           stage_order: number
@@ -663,6 +671,8 @@ export type Database = {
           created_at?: string
           floor_count?: number
           id?: string
+          recommended_level_max?: number | null
+          recommended_level_min?: number | null
           stage_key: string
           stage_name: string
           stage_order: number
@@ -673,6 +683,8 @@ export type Database = {
           created_at?: string
           floor_count?: number
           id?: string
+          recommended_level_max?: number | null
+          recommended_level_min?: number | null
           stage_key?: string
           stage_name?: string
           stage_order?: number
@@ -2700,6 +2712,14 @@ export type Database = {
       }
       apply_raid_damage: {
         Args: { _damage: number; _user_id: string; _workout_date: string }
+        Returns: Json
+      }
+      buy_gacha_ticket: {
+        Args: { p_quantity?: number; p_user_id: string }
+        Returns: Json
+      }
+      buy_shop_item: {
+        Args: { p_item_key: string; p_quantity?: number; p_user_id: string }
         Returns: Json
       }
       check_collection_milestones: { Args: { _user_id: string }; Returns: Json }

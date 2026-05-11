@@ -38,11 +38,27 @@ const ELEMENT_COLOR: Record<string, string> = {
   water: "#60a5fa", fire: "#f97316", earth: "#a16207", wind: "#34d399", neutral: "#cbd5e1",
 };
 
+// Color-variant monsters reuse base images via CSS hue-rotate filter
+const MONSTER_IMAGE_BASE: Record<string, string> = {
+  slime_2: "slime",
+  goblin_3: "goblin",
+  skeleton_4: "skeleton",
+  stone_golem_5: "stone_golem",
+};
+const MONSTER_FILTER: Record<string, string> = {
+  slime_2: "hue-rotate(120deg) saturate(1.5)",
+  goblin_3: "hue-rotate(30deg) brightness(1.2)",
+  skeleton_4: "hue-rotate(-60deg) saturate(2)",
+  stone_golem_5: "hue-rotate(180deg)",
+};
+const getMonsterImageKey = (key: string): string => MONSTER_IMAGE_BASE[key] || key;
+const getMonsterFilter = (key: string): string => MONSTER_FILTER[key] || "none";
+
 const rand = (a: number, b: number) => Math.floor(Math.random() * (b - a + 1)) + a;
 
 type Phase =
   | "loading" | "intro" | "appear" | "command" | "skill_select" | "item_select"
-  | "action" | "boss_intro" | "floor_clear" | "boss_defeat" | "victory" | "defeat" | "revive_prompt";
+  | "action" | "boss_intro" | "floor_clear" | "boss_defeat" | "victory" | "defeat" | "revive_prompt" | "target_select";
 
 interface Buff { type: string; multiplier: number; turnsLeft: number; }
 
@@ -76,7 +92,8 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const [maxHp, setMaxHp] = useState(0);
   const [compHp, setCompHp] = useState(0);
   const [compMaxHp, setCompMaxHp] = useState(0);
-  const [monsterHp, setMonsterHp] = useState(0);
+  const [monsterHps, setMonsterHps] = useState<number[]>([]);
+  const [pendingAction, setPendingAction] = useState<{ kind: "attack" } | { kind: "skill"; skill: PlayerSkill } | null>(null);
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [enemyDebuffs, setEnemyDebuffs] = useState<Buff[]>([]);
   const [defending, setDefending] = useState(false);
@@ -108,9 +125,13 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const compNameRef = useRef("コンパニオン");
 
   const monster = monsters[floorIdx];
+  const monsterCount = monster?.monster_count ?? 1;
+  const aliveIndices = monsterHps.map((h, i) => (h > 0 ? i : -1)).filter((i) => i >= 0);
+  const monsterLabel = (i: number) => monsterCount > 1 ? `${monster!.monster_name} ${["A","B","C","D"][i] || (i+1)}` : monster!.monster_name;
   const BG_BASE = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/dungeon";
   const bgImageUrl = `${BG_BASE}/bg_${stage.stage_key}.png`;
-  const monsterImageUrl = monster ? `${BG_BASE}/monsters/${monster.monster_key}.png` : "";
+  const monsterImageUrl = monster ? `${BG_BASE}/monsters/${getMonsterImageKey(monster.monster_key)}.png` : "";
+  const monsterFilter = monster ? getMonsterFilter(monster.monster_key) : "none";
   const playerName = avatar?.equipped_title ? "あなた" : "あなた";
 
   // ---- Initial load ----
@@ -155,8 +176,9 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   useEffect(() => {
     if (phase !== "loading") return;
     if (!stats || monsters.length === 0 || maxHp === 0) return;
-    // Initialize first monster HP
-    setMonsterHp(monsters[0].hp);
+    // Initialize first monster HPs (1 or 2 copies)
+    const m0 = monsters[0];
+    setMonsterHps(Array.from({ length: m0.monster_count ?? 1 }, () => m0.hp));
     // Push intro story + appear
     const intro = (story.intro || []).map((s) => formatLine(s));
     pushMessages([...intro, `${monsters[0].monster_name}が あらわれた！`], () => setPhase("command"));
@@ -236,7 +258,10 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   };
 
   // ---- Combat actions ----
-  const handleAttack = () => {
+  // Reward rewards based on coin/exp per defeated monster (one per copy)
+  const aliveCount = monsterHps.filter((h) => h > 0).length;
+
+  const performAttack = (targetIdx: number) => {
     if (!monster) return;
     setPhase("action");
     const eAtk = getEffectiveAtk();
@@ -249,17 +274,30 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       setShake(true); setTimeout(() => setShake(false), 300);
       if (isCrit) { setCritFlash(true); setTimeout(() => setCritFlash(false), 250); }
       addFloat(isCrit ? `CRITICAL ${dmg}` : `${dmg}`, isCrit ? "#fbbf24" : "#ffffff", "monster");
-      const nh = Math.max(0, monsterHp - dmg);
-      setMonsterHp(nh);
+      const nh = Math.max(0, (monsterHps[targetIdx] ?? 0) - dmg);
+      const newHps = monsterHps.map((h, i) => (i === targetIdx ? nh : h));
+      setMonsterHps(newHps);
       const msgs = [
         ...(isCrit ? ["会心の一撃！"] : []),
-        `${monster.monster_name}に ${dmg}の ダメージ！`,
+        `${monsterLabel(targetIdx)}に ${dmg}の ダメージ！`,
       ];
-      pushMessages(msgs, () => afterPlayerAction(nh));
+      pushMessages(msgs, () => afterPlayerAction(newHps));
     });
   };
 
-  const handleSkill = (sk: PlayerSkill) => {
+  const handleAttack = () => {
+    if (!monster) return;
+    if (aliveCount > 1) {
+      setPendingAction({ kind: "attack" });
+      setPhase("target_select");
+      return;
+    }
+    const t = monsterHps.findIndex((h) => h > 0);
+    if (t < 0) return;
+    performAttack(t);
+  };
+
+  const performSkill = (sk: PlayerSkill, targetIdx: number) => {
     if (!monster) return;
     if (mp.current < sk.mp_cost) return;
     setPhase("action");
@@ -273,31 +311,53 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const dmg = Math.max(1, Math.floor((eAtk - eDef) * sk.power) + rand(-2, 2));
         setShake(true); setTimeout(() => setShake(false), 300);
         addFloat(`${dmg}`, "#ffffff", "monster");
-        const nh = Math.max(0, monsterHp - dmg);
-        setMonsterHp(nh);
-        pushMessages([`${monster.monster_name}に ${dmg}の ダメージ！`], () => afterPlayerAction(nh));
+        const nh = Math.max(0, (monsterHps[targetIdx] ?? 0) - dmg);
+        const newHps = monsterHps.map((h, i) => (i === targetIdx ? nh : h));
+        setMonsterHps(newHps);
+        pushMessages([`${monsterLabel(targetIdx)}に ${dmg}の ダメージ！`], () => afterPlayerAction(newHps));
       } else if (sk.skill_type === "heal") {
         const heal = sk.heal_amount === 9999 ? maxHp : (sk.heal_amount ?? 0);
         const nh = Math.min(maxHp, playerHp + heal);
         const actual = nh - playerHp;
         setPlayerHp(nh);
         addFloat(`+${actual}`, "#34d399", "player");
-        pushMessages([`HPが ${actual} 回復した！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`HPが ${actual} 回復した！`], () => afterPlayerAction(monsterHps));
       } else if (sk.skill_type === "buff") {
         setBuffs((b) => [...b, { type: sk.buff_type!, multiplier: Number(sk.buff_multiplier), turnsLeft: sk.buff_turns }]);
         const label = sk.buff_type === "player_atk" ? "攻撃力" : "守備力";
-        pushMessages([`あなたの ${label}が 上がった！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`あなたの ${label}が 上がった！`], () => afterPlayerAction(monsterHps));
       } else if (sk.skill_type === "debuff") {
         setEnemyDebuffs((b) => [...b, { type: sk.buff_type!, multiplier: Number(sk.buff_multiplier), turnsLeft: sk.buff_turns }]);
-        pushMessages([`${monster.monster_name}の 守備力が 下がった！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`${monsterLabel(targetIdx)}の 守備力が 下がった！`], () => afterPlayerAction(monsterHps));
       }
     });
+  };
+
+  const handleSkill = (sk: PlayerSkill) => {
+    if (!monster) return;
+    if (mp.current < sk.mp_cost) return;
+    const needsTarget = sk.skill_type === "attack" || sk.skill_type === "debuff";
+    if (needsTarget && aliveCount > 1) {
+      setPendingAction({ kind: "skill", skill: sk });
+      setPhase("target_select");
+      return;
+    }
+    const t = needsTarget ? monsterHps.findIndex((h) => h > 0) : 0;
+    performSkill(sk, Math.max(0, t));
+  };
+
+  const handleSelectTarget = (idx: number) => {
+    if (!pendingAction) return;
+    const act = pendingAction;
+    setPendingAction(null);
+    if (act.kind === "attack") performAttack(idx);
+    else performSkill(act.skill, idx);
   };
 
   const handleDefend = () => {
     setDefending(true);
     setPhase("action");
-    pushMessages([`あなたは 身構えた！`], () => afterPlayerAction(monsterHp));
+    pushMessages([`あなたは 身構えた！`], () => afterPlayerAction(monsterHps));
   };
 
   const handleItem = async (key: string) => {
@@ -313,14 +373,14 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const a = nh - playerHp;
         setPlayerHp(nh);
         addFloat(`+${a}`, "#34d399", "player");
-        pushMessages([`HPが ${a} 回復した！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`HPが ${a} 回復した！`], () => afterPlayerAction(monsterHps));
       } else if (it.effect_type === "heal_mp") {
         const nm = Math.min(mp.max, mp.current + it.effect_amount);
         const a = nm - mp.current;
         setMp({ current: nm, max: mp.max });
-        pushMessages([`MPが ${a} 回復した！`], () => afterPlayerAction(monsterHp));
+        pushMessages([`MPが ${a} 回復した！`], () => afterPlayerAction(monsterHps));
       } else {
-        afterPlayerAction(monsterHp);
+        afterPlayerAction(monsterHps);
       }
     });
   };
@@ -331,36 +391,52 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
     if (Math.random() < 0.5) {
       pushMessages([`あなたは 戦場から撤退した！`], () => finishRun("retreat", floorIdx));
     } else {
-      pushMessages([`しかし 回り込まれてしまった！`], () => enemyTurn(monsterHp));
+      pushMessages([`しかし 回り込まれてしまった！`], () => enemyTurn(monsterHps));
     }
   };
 
   // ---- After player action: companion → enemy → next turn ----
-  const afterPlayerAction = (curMonHp: number) => {
-    if (curMonHp <= 0) { onFloorClear(); return; }
+  const afterPlayerAction = (curHps: number[]) => {
+    if (curHps.every((h) => h <= 0)) { onFloorClear(); return; }
     // Companion attacks
     if (companion && compHp > 0) {
+      // Pick alive target (prefer one player isn't attacking - use last alive index)
+      const aliveT = curHps.map((h, i) => (h > 0 ? i : -1)).filter((i) => i >= 0);
+      const compTarget = aliveT[aliveT.length - 1];
       const cAtk = companion.base_atk + companion.level + (companion.level >= 10 && Math.random() < 0.2 ? Math.floor((companion.base_atk + companion.level) * 0.3) : 0);
       const eDef = getEnemyDef(monster!.def);
       const dmg = Math.max(1, cAtk - eDef + rand(-2, 2));
       pushMessages([`${companion.companion_name}の こうげき！`], () => {
         setShake(true); setTimeout(() => setShake(false), 250);
         addFloat(`${dmg}`, "#a3e635", "monster");
-        const nh = Math.max(0, curMonHp - dmg);
-        setMonsterHp(nh);
-        pushMessages([`${monster!.monster_name}に ${dmg}の ダメージ！`], () => {
-          if (nh <= 0) { onFloorClear(); return; }
-          enemyTurn(nh);
+        const nh = Math.max(0, curHps[compTarget] - dmg);
+        const newHps = curHps.map((h, i) => (i === compTarget ? nh : h));
+        setMonsterHps(newHps);
+        pushMessages([`${monsterLabel(compTarget)}に ${dmg}の ダメージ！`], () => {
+          if (newHps.every((h) => h <= 0)) { onFloorClear(); return; }
+          enemyTurn(newHps);
         });
       });
     } else {
-      enemyTurn(curMonHp);
+      enemyTurn(curHps);
     }
   };
 
-  const enemyTurn = (curMonHp: number) => {
-    if (curMonHp <= 0) { onFloorClear(); return; }
+  const enemyTurn = (curHps: number[]) => {
+    if (curHps.every((h) => h <= 0)) { onFloorClear(); return; }
     const m = monster!;
+    const aliveList = curHps.map((h, i) => (h > 0 ? i : -1)).filter((i) => i >= 0);
+    // Each alive monster acts in sequence
+    const runOne = (queue: number[], hps: number[], curPHp: number) => {
+      if (queue.length === 0) {
+        if (curPHp <= 0) { onPlayerDown(); return; }
+        tickAndContinue();
+        return;
+      }
+      const idx = queue[0];
+      const rest = queue.slice(1);
+      if (hps[idx] <= 0) { runOne(rest, hps, curPHp); return; }
+
     const skillList: MonsterSkill[] = (m as any).monster_skills && Array.isArray((m as any).monster_skills) && (m as any).monster_skills.length > 0
       ? (m as any).monster_skills
       : [{ action: "attack", weight: 100, message: "の こうげき！" }];
@@ -369,18 +445,19 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
     let chosen: MonsterSkill = skillList[0];
     for (const s of skillList) { roll -= s.weight; if (roll <= 0) { chosen = s; break; } }
 
-    pushMessages([`${m.monster_name}${chosen.message}`], () => {
-      if (chosen.action === "defend") { tickAndContinue(); return; }
+      pushMessages([`${monsterLabel(idx)}${chosen.message}`], () => {
+        if (chosen.action === "defend") { runOne(rest, hps, curPHp); return; }
       if (chosen.dispel) {
         setBuffs([]);
-        pushMessages([`強化が 消し去られた！`], () => tickAndContinue());
+          pushMessages([`強化が 消し去られた！`], () => runOne(rest, hps, curPHp));
         return;
       }
       if (chosen.heal && chosen.heal > 0) {
-        const nh = Math.min(m.hp, curMonHp + chosen.heal);
-        setMonsterHp(nh);
+          const nh = Math.min(m.hp, hps[idx] + (chosen.heal ?? 0));
+          const newHps = hps.map((h, i) => (i === idx ? nh : h));
+          setMonsterHps(newHps);
         addFloat(`+${chosen.heal}`, "#34d399", "monster");
-        pushMessages([`${m.monster_name}は ${chosen.heal} 回復した！`], () => tickAndContinue());
+          pushMessages([`${monsterLabel(idx)}は ${chosen.heal} 回復した！`], () => runOne(rest, newHps, curPHp));
         return;
       }
       const power = chosen.power ?? 1;
@@ -394,17 +471,18 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       }
       setHurtFlash(true); setTimeout(() => setHurtFlash(false), 250);
       addFloat(`${totalDmg}`, "#ef4444", "player");
-      const nh = Math.max(0, playerHp - totalDmg);
-      setPlayerHp(nh);
+        const nh = Math.max(0, curPHp - totalDmg);
+        setPlayerHp(nh);
       const msgs: string[] = [];
       if (defending) msgs.push(`しかし あなたは 身構えていた！ ダメージが軽減された！`);
       msgs.push(`あなたは ${totalDmg}の ダメージを 受けた！`);
       pushMessages(msgs, () => {
         if (nh <= 0) { onPlayerDown(); return; }
-        // Companion may also be hit slightly
-        tickAndContinue();
+          runOne(rest, hps, nh);
       });
     });
+    };
+    runOne(aliveList, curHps, playerHp);
   };
 
   const tickAndContinue = () => {
@@ -447,7 +525,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const nextIdx = floorIdx + 1;
         setFloorIdx(nextIdx);
         const next = monsters[nextIdx];
-        setMonsterHp(next.hp);
+        setMonsterHps(Array.from({ length: next.monster_count ?? 1 }, () => next.hp));
         setBuffs([]); setEnemyDebuffs([]); setDefending(false);
         if (next.is_boss) {
           setBossFlash(true); setTimeout(() => setBossFlash(false), 600);
@@ -516,10 +594,12 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
 
   const rank = getRankInfo(avatar.level ?? 1, (avatar.gender as any) ?? "male", avatar.hair_color as any);
   const MIcon = MONSTER_ICON[monster.icon_name] || Bug;
-  const monPct = (monsterHp / monster.hp) * 100;
   const hpPct = (playerHp / Math.max(1, maxHp)) * 100;
   const mpPct = (mp.current / Math.max(1, mp.max)) * 100;
   const compPct = (compHp / Math.max(1, compMaxHp)) * 100;
+  const playerLv = avatar.level ?? 1;
+  const lvColor = monster.monster_level > playerLv ? "#fca5a5" : monster.monster_level < playerLv ? "#86efac" : "#ffffff";
+  const isTargetSelect = phase === "target_select";
 
   const showCommand = phase === "command";
   const showSkillMenu = phase === "skill_select";
@@ -527,7 +607,9 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
 
   const messageContent = currentMsg
     ? shown
-    : (msgQueue.length === 0 && showCommand ? "コマンドを 選んでください" : "");
+    : (msgQueue.length === 0 && showCommand ? "コマンドを 選んでください"
+      : msgQueue.length === 0 && isTargetSelect ? "攻撃する相手を 選んでください"
+      : "");
 
   const tappable = !!currentMsg;
 
@@ -567,49 +649,75 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       {/* Battle field */}
       <div className="relative flex-1 flex flex-col items-center justify-between px-3 py-2 overflow-hidden">
         {/* Monster */}
-        <div className="flex flex-col items-center mt-2 relative">
-          <div className={`relative ${shake ? "animate-[battle-shake_0.3s]" : ""}`}>
-            <div
-              className="w-32 h-32 rounded-3xl flex items-center justify-center bg-white/10 border-2 border-white/20 overflow-hidden"
-              style={{ filter: monster.is_boss ? "drop-shadow(0 0 16px rgba(239,68,68,0.7))" : undefined }}
-            >
-              {!monsterImgError[monster.monster_key] ? (
-                <img
-                  src={monsterImageUrl}
-                  alt={monster.monster_name}
-                  className="w-full h-full object-contain"
-                  style={{ imageRendering: "pixelated" }}
-                  onError={() => setMonsterImgError((s) => ({ ...s, [monster.monster_key]: true }))}
-                />
-              ) : (
-                <MIcon className="w-20 h-20" style={{ color: monster.is_boss ? "#fbbf24" : "#fff" }} />
-              )}
-            </div>
-            {floats.filter((f) => f.target === "monster").map((f) => (
-              <span key={f.id} className="absolute left-1/2 top-0 -translate-x-1/2 text-xl font-extrabold pointer-events-none"
-                style={{ color: f.color, animation: "battle-float 0.9s ease-out forwards", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
-                {f.text}
-              </span>
-            ))}
-            {/* Spell FX overlay */}
-            {spellFx && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="w-32 h-32 rounded-full"
-                  style={{
-                    background: `radial-gradient(circle, ${spellColor(spellFx.kind)} 0%, transparent 70%)`,
-                    animation: "spell-burst 0.7s ease-out forwards",
-                  }} />
-              </div>
-            )}
-          </div>
-          <p className="text-sm font-bold mt-2">{monster.monster_name}{monster.is_boss && "（ボス）"}</p>
-          <div className="w-48 mt-1">
-            <div className="h-2 rounded-full bg-black/50 overflow-hidden border border-white/20">
-              <div className="h-full transition-all duration-300" style={{ width: `${monPct}%`, background: "#ef4444" }} />
-            </div>
-            <p className="text-[10px] text-center opacity-80 mt-0.5">{monsterHp} / {monster.hp}</p>
-          </div>
+        <div className={`flex flex-row items-start justify-center gap-3 mt-2 relative ${shake ? "animate-[battle-shake_0.3s]" : ""}`}>
+          {monsterHps.map((hp, i) => {
+            const pct = (hp / monster.hp) * 100;
+            const dead = hp <= 0;
+            const size = monsterCount > 1 ? "w-24 h-24" : "w-32 h-32";
+            const iconSize = monsterCount > 1 ? "w-16 h-16" : "w-20 h-20";
+            const barW = monsterCount > 1 ? "w-28" : "w-48";
+            const selectable = isTargetSelect && !dead;
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={!selectable}
+                onClick={(e) => { if (selectable) { e.stopPropagation(); handleSelectTarget(i); } }}
+                className="flex flex-col items-center disabled:cursor-default"
+                style={{ opacity: dead ? 0.3 : 1 }}
+              >
+                <div className="relative">
+                  <div
+                    className={`${size} rounded-3xl flex items-center justify-center bg-white/10 border-2 overflow-hidden ${selectable ? "border-white animate-pulse" : "border-white/20"}`}
+                    style={{ filter: monster.is_boss ? "drop-shadow(0 0 16px rgba(239,68,68,0.7))" : undefined }}
+                  >
+                    {!monsterImgError[monster.monster_key] ? (
+                      <img
+                        src={monsterImageUrl}
+                        alt={monster.monster_name}
+                        className="w-full h-full object-contain"
+                        style={{ imageRendering: "pixelated", filter: monsterFilter }}
+                        onError={() => setMonsterImgError((s) => ({ ...s, [monster.monster_key]: true }))}
+                      />
+                    ) : (
+                      <MIcon className={iconSize} style={{ color: monster.is_boss ? "#fbbf24" : "#fff" }} />
+                    )}
+                  </div>
+                  {i === 0 && floats.filter((f) => f.target === "monster").map((f) => (
+                    <span key={f.id} className="absolute left-1/2 top-0 -translate-x-1/2 text-xl font-extrabold pointer-events-none"
+                      style={{ color: f.color, animation: "battle-float 0.9s ease-out forwards", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
+                      {f.text}
+                    </span>
+                  ))}
+                  {i === 0 && spellFx && (
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full"
+                        style={{
+                          background: `radial-gradient(circle, ${spellColor(spellFx.kind)} 0%, transparent 70%)`,
+                          animation: "spell-burst 0.7s ease-out forwards",
+                        }} />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs font-bold mt-1.5 flex items-center gap-1">
+                  <span>{monsterLabel(i)}{monster.is_boss && "（ボス）"}</span>
+                  <span style={{ color: lvColor }} className="text-[10px] font-extrabold">Lv.{monster.monster_level}</span>
+                </p>
+                <div className={`${barW} mt-1`}>
+                  <div className="h-2 rounded-full bg-black/50 overflow-hidden border border-white/20">
+                    <div className="h-full transition-all duration-300" style={{ width: `${pct}%`, background: "#ef4444" }} />
+                  </div>
+                  <p className="text-[10px] text-center opacity-80 mt-0.5">{hp} / {monster.hp}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
+        {isTargetSelect && (
+          <p className="absolute top-12 left-1/2 -translate-x-1/2 text-xs text-white bg-black/70 px-3 py-1 rounded-full font-bold">
+            どちらを攻撃？
+          </p>
+        )}
 
         {/* Player + Companion */}
         <div className="flex items-end justify-center gap-4 py-2">

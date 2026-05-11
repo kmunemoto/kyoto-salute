@@ -10,6 +10,8 @@ export interface DungeonStage {
   floor_count: number;
   unlock_condition: string | null;
   background_css: string;
+  recommended_level_min?: number;
+  recommended_level_max?: number;
 }
 
 export interface DungeonMonster {
@@ -28,6 +30,8 @@ export interface DungeonMonster {
   drop_ticket_rate: number;
   icon_name: string;
   is_boss: boolean;
+  monster_level: number;
+  monster_count: number;
 }
 
 export interface StaminaInfo {

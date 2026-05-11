@@ -9,6 +9,7 @@ import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, 
 import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
+import CoinShop from "./CoinShop";
 import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
 import EquipmentOverlay from "./EquipmentOverlay";
@@ -597,7 +598,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
 
       </DialogContent>
     </Dialog>
-    <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
+    <CoinShop open={shopOpen} onClose={() => setShopOpen(false)} coins={avatar.coins ?? 0} onPurchased={onAvatarChanged} />
     {badgeSheet && (() => {
         const a = ACHIEVEMENTS.find((x) => x.key === badgeSheet);
         if (!a) return null;
