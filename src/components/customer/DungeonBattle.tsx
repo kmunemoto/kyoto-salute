@@ -33,6 +33,7 @@ const ITEM_ICON: Record<string, LucideIcon> = {
   Leaf, Droplet, TreeDeciduous, Pill, Package,
 };
 const COMPANION_ICON: Record<string, LucideIcon> = { Droplet, Cat, Flame, Sparkles, Bug };
+import { AVATAR_CDN_BASE } from "@/lib/avatarSystem";
 
 const ELEMENT_COLOR: Record<string, string> = {
   water: "#60a5fa", fire: "#f97316", earth: "#a16207", wind: "#34d399", neutral: "#cbd5e1",
@@ -736,9 +737,18 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
             <div className="relative" style={{ width: 56 }}>
               {(() => {
                 const CIcon = COMPANION_ICON[companion.icon_name] || Cat;
+                const imgSrc = companion.image_path
+                  ? `${AVATAR_CDN_BASE}/${companion.image_path}`
+                  : `${AVATAR_CDN_BASE}/companions/${companion.companion_key}.png`;
                 return (
                   <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
-                    <CIcon className="w-9 h-9" style={{ color: ELEMENT_COLOR[companion.element] || "#fff" }} />
+                    <img
+                      src={imgSrc}
+                      alt={companion.companion_name}
+                      className="w-12 h-12 object-contain"
+                      style={{ imageRendering: "pixelated" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
                   </div>
                 );
               })()}
