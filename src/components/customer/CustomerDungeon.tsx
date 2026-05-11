@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Lock, Check, Loader2, Zap, Swords } from "lucide-react";
 import { useDungeonStages, useStamina, startDungeonRun, type DungeonStage } from "@/hooks/useDungeon";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,26 @@ const CustomerDungeon = ({ onBack }: { onBack: () => void }) => {
   const { stamina, refetch: refetchStamina } = useStamina();
   const [busy, setBusy] = useState<string | null>(null);
   const [activeRun, setActiveRun] = useState<{ stage: DungeonStage; runId: string } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const isFull = stamina ? stamina.current_stamina >= stamina.max_stamina : false;
+  let countdownText = "";
+  if (stamina && !isFull && stamina.next_recovery_at) {
+    const diff = new Date(stamina.next_recovery_at).getTime() - now;
+    if (diff > 0) {
+      const totalMin = Math.ceil(diff / 60_000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      countdownText = h > 0 ? `${h}時間${m}分` : `${m}分`;
+    } else {
+      countdownText = "まもなく";
+    }
+  }
 
   const handleStart = async (stage: DungeonStage) => {
     if (!user) return;
@@ -65,9 +85,15 @@ const CustomerDungeon = ({ onBack }: { onBack: () => void }) => {
         <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur">
           <Zap className="w-4 h-4 text-amber-300" />
           <span className="text-sm font-bold">
-            {stamina ? `${stamina.current_stamina} / ${stamina.max_stamina}` : "..."}
+            スタミナ {stamina ? `${stamina.current_stamina}/${stamina.max_stamina}` : "..."}
           </span>
-          <span className="text-[10px] opacity-80">4時間で1回復</span>
+          <span className="text-[10px] opacity-80">
+            {stamina
+              ? isFull
+                ? "(スタミナ最大)"
+                : `(次の回復まで: ${countdownText})`
+              : ""}
+          </span>
         </div>
       </div>
 
