@@ -328,9 +328,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
       {/* 4. Raid Boss */}
       <RaidBossCard />
 
-      {/* 王国復興クエスト */}
-      <QuestCard onOpen={() => onNavigate?.("quest")} />
-
       {/* ダンジョン探索 */}
       <DungeonCard onOpen={() => onNavigate?.("dungeon")} />
 
