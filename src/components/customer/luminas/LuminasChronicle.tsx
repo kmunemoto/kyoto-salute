@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { Menu } from "lucide-react";
 import TileMapCanvas from "./TileMapCanvas";
 import { testVillage } from "./maps/testVillage";
 
@@ -8,30 +8,21 @@ interface Props {
 
 const LuminasChronicle = ({ onBack }: Props) => {
   return (
-    <div className="min-h-screen pb-20 bg-background">
-      <div className="px-4 py-4 flex items-center gap-2">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1 text-sm font-bold opacity-80"
-          aria-label="戻る"
-        >
-          <ArrowLeft className="w-4 h-4" /> 戻る
-        </button>
-        <div className="flex-1 text-center">
-          <p className="text-[10px] tracking-[0.2em] opacity-60">LUMINAS CHRONICLE</p>
-          <p className="text-sm font-bold break-all">ルミナス・クロニクル 〜光の年代記〜</p>
-        </div>
-        <div className="w-12" />
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-start pt-3 pb-4 overflow-hidden">
+      <button
+        onClick={onBack}
+        className="absolute top-2 right-2 z-10 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center active:bg-black/90"
+        aria-label="メニュー"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+      <div className="text-center mb-2">
+        <p className="text-[9px] tracking-[0.3em] text-white/50">LUMINAS CHRONICLE</p>
+        <p className="text-[11px] font-bold text-white/80 break-all">{testVillage.name}</p>
       </div>
-      <p className="text-center text-[11px] opacity-60 mb-3 break-all">
-        {testVillage.name}
-      </p>
-      <div className="px-2">
-        <TileMapCanvas map={testVillage} viewTilesX={11} viewTilesY={13} />
+      <div className="px-1">
+        <TileMapCanvas map={testVillage} viewTilesX={11} viewTilesY={11} />
       </div>
-      <p className="text-center text-[10px] opacity-50 mt-3 px-4 break-all">
-        十字キーで移動できます (PCは矢印キー / WASD)
-      </p>
     </div>
   );
 };
