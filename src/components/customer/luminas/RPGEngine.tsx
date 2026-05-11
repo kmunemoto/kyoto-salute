@@ -488,7 +488,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
 
       {/* 上部バー (Canvas の上に重ねる) */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 bg-gradient-to-b from-black/70 to-transparent">
-        <p className="text-xs text-white/90 font-bold break-all drop-shadow">{map.name}</p>
+        <p className="text-xs text-white/90 font-bold break-all drop-shadow">{currentMap.name}</p>
         <button
           onClick={() => setMenuOpen(true)}
           className="w-9 h-9 rounded-full bg-white/20 backdrop-blur flex items-center justify-center active:bg-white/40"
@@ -517,6 +517,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
 
       {/* DPad + Aボタン */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10" style={{ touchAction: "none" }}>
+        {/* (placeholder) */}
         <div className="relative" style={{ width: 168, height: 168 }}>
           <button {...dirHandlers("up")} className={`absolute top-0 left-1/2 -translate-x-1/2 ${dirBtn}`} aria-label="上">
             <ChevronUp className="w-7 h-7 text-white" />
