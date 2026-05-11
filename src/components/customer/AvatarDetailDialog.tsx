@@ -5,7 +5,7 @@ import type { AvatarRow, ExpLogRow } from "@/hooks/useAvatar";
 import { useAvatar } from "@/hooks/useAvatar";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, CheckCircle2, Droplet, Shield as ShieldIcon } from "lucide-react";
+import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, CheckCircle2, Droplet, Shield as ShieldIcon, Cat } from "lucide-react";
 import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
@@ -14,6 +14,7 @@ import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
 import EquipmentOverlay from "./EquipmentOverlay";
 import EquipmentDialog from "./EquipmentDialog";
+import CompanionDialog from "./CompanionDialog";
 import { useEquippedGear } from "@/hooks/useEquippedGear";
 import { getMissionDef } from "@/lib/missionSystem";
 import { TITLES, getTitleDef } from "@/lib/titleSystem";
@@ -69,6 +70,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
   const equipped = avatar.equipped_title || null;
   const [shopOpen, setShopOpen] = useState(false);
   const [equipOpen, setEquipOpen] = useState(false);
+  const [companionOpen, setCompanionOpen] = useState(false);
   const [badgeSheet, setBadgeSheet] = useState<string | null>(null);
   const [replacePicker, setReplacePicker] = useState<string | null>(null);
   const featured = (avatar.featured_badges as string[] | undefined) || [];
@@ -231,6 +233,13 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
           >
             <SwordIcon className="w-4 h-4" />
             <span className="text-sm font-bold">装備変更</span>
+          </button>
+          <button
+            onClick={() => setCompanionOpen(true)}
+            className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-muted/70 border border-border transition"
+          >
+            <Cat className="w-4 h-4" />
+            <span className="text-sm font-bold">おとも</span>
           </button>
         </div>
 
