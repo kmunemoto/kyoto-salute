@@ -19,6 +19,7 @@ import GachaCard from "./GachaCard";
 import SeasonEventCard from "./SeasonEventCard";
 import QuestCard from "./QuestCard";
 import DungeonCard from "./DungeonCard";
+import LuminasChronicleCard from "./LuminasChronicleCard";
 import LoginBonusBanner from "./LoginBonusBanner";
 import LoginBonusDialog from "./LoginBonusDialog";
 import { useLoginBonus } from "@/hooks/useLoginBonus";
@@ -330,6 +331,9 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
 
       {/* ダンジョン探索 */}
       <DungeonCard onOpen={() => onNavigate?.("dungeon")} />
+
+      {/* ルミナス・クロニクル */}
+      <LuminasChronicleCard onOpen={() => onNavigate?.("chronicle")} />
 
       {/* 5. Gacha (only if tickets exist — handled inside) */}
       <GachaCard />
