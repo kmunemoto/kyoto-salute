@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, X, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { toast } from "sonner";
 import { useAnnouncements, type Announcement } from "@/hooks/useAnnouncements";
 import RenderIcon from "@/components/RenderIcon";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,9 @@ interface Props {
 }
 
 const AnnouncementsDialog = ({ open, onClose }: Props) => {
-  const { items, readIds, loading, markRead } = useAnnouncements();
+  const { items, readIds, loading, markRead, markAllRead } = useAnnouncements();
   const [selected, setSelected] = useState<Announcement | null>(null);
+  const unreadCount = items.filter((a) => !readIds.has(a.id)).length;
 
   if (!open) return null;
 
@@ -27,6 +29,11 @@ const AnnouncementsDialog = ({ open, onClose }: Props) => {
     onClose();
   };
 
+  const handleMarkAllRead = async () => {
+    await markAllRead();
+    toast.success("全てのお知らせを既読にしました");
+  };
+
   return (
     <div className="fixed inset-0 z-[60] bg-background flex flex-col w-full max-w-md mx-auto">
       {/* Header */}
@@ -36,9 +43,19 @@ const AnnouncementsDialog = ({ open, onClose }: Props) => {
             <ArrowLeft className="w-4 h-4" /> 戻る
           </button>
         ) : (
-          <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4 text-accent" />
-            <span className="text-base font-bold">お知らせ</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-accent" />
+              <span className="text-base font-bold">お知らせ</span>
+            </div>
+            {items.length > 0 && unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-xs text-accent hover:underline"
+              >
+                全て既読にする
+              </button>
+            )}
           </div>
         )}
         <button onClick={handleClose} className="p-1 text-muted-foreground hover:text-foreground">
