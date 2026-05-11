@@ -525,7 +525,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const nextIdx = floorIdx + 1;
         setFloorIdx(nextIdx);
         const next = monsters[nextIdx];
-        setMonsterHp(next.hp);
+        setMonsterHps(Array.from({ length: next.monster_count ?? 1 }, () => next.hp));
         setBuffs([]); setEnemyDebuffs([]); setDefending(false);
         if (next.is_boss) {
           setBossFlash(true); setTimeout(() => setBossFlash(false), 600);
