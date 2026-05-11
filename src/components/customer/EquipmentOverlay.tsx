@@ -63,21 +63,39 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.shield.rarity]}`,
       )}
       {/* Amulet/accessory intentionally not rendered on avatar overlay */}
-      {gear.weapon && renderItem(
-        gear.weapon,
-        {
-          position: "absolute",
-          bottom: "22%",
-          right: "-12%",
-          height: "65%",
-          width: "65%",
-          zIndex: zBase + 1,
-          transform: "rotate(-30deg)",
-          transformOrigin: "center center",
-          opacity: 0.95,
-        },
-        `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
-      )}
+      {gear.weapon && (() => {
+        // Per-weapon position overrides. Default keeps the existing placement
+        // so previously tuned weapons (e.g. 影の刀系) are not affected.
+        const isWooden = gear.weapon.item_key === "wooden_sword";
+        const style: React.CSSProperties = isWooden
+          ? {
+              position: "absolute",
+              bottom: "25%",
+              right: "-2%",
+              height: "60%",
+              width: "60%",
+              zIndex: zBase + 1,
+              transform: "rotate(-30deg)",
+              transformOrigin: "center center",
+              opacity: 0.95,
+            }
+          : {
+              position: "absolute",
+              bottom: "22%",
+              right: "-12%",
+              height: "65%",
+              width: "65%",
+              zIndex: zBase + 1,
+              transform: "rotate(-30deg)",
+              transformOrigin: "center center",
+              opacity: 0.95,
+            };
+        return renderItem(
+          gear.weapon,
+          style,
+          `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
+        );
+      })()}
       {/* Tops/bottoms intentionally not overlaid on avatar; stat bonuses still apply. */}
     </>
   );
