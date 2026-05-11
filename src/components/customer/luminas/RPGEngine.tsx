@@ -262,16 +262,26 @@ const RPGEngine = ({ map, onExit }: Props) => {
       const cssH = canvasHeight;
       const playerWorldPxX = (p.x + p.pxOffsetX) * SCALE + SCALE / 2;
       const playerWorldPxY = (p.y + p.pxOffsetY) * SCALE + SCALE / 2;
-      const maxCamX = Math.max(0, map.width * SCALE - cssW);
-      const maxCamY = Math.max(0, map.height * SCALE - cssH);
-      const camX = Math.max(0, Math.min(playerWorldPxX - cssW / 2, maxCamX));
-      const camY = Math.max(0, Math.min(playerWorldPxY - cssH / 2, maxCamY));
+      const mapPxW = map.width * SCALE;
+      const mapPxH = map.height * SCALE;
+      let camX: number;
+      let camY: number;
+      if (mapPxW <= cssW) {
+        camX = (mapPxW - cssW) / 2;
+      } else {
+        camX = Math.max(0, Math.min(playerWorldPxX - cssW / 2, mapPxW - cssW));
+      }
+      if (mapPxH <= cssH) {
+        camY = (mapPxH - cssH) / 2;
+      } else {
+        camY = Math.max(0, Math.min(playerWorldPxY - cssH / 2, mapPxH - cssH));
+      }
 
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, cssW, cssH);
 
-      const startTx = Math.floor(camX / SCALE);
-      const startTy = Math.floor(camY / SCALE);
+      const startTx = Math.max(0, Math.floor(camX / SCALE));
+      const startTy = Math.max(0, Math.floor(camY / SCALE));
       const endTx = Math.min(map.width, startTx + viewCols + 2);
       const endTy = Math.min(map.height, startTy + viewRows + 2);
 
