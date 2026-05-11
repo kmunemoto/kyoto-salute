@@ -684,6 +684,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
         );
       })()}
     <EquipmentDialog open={equipOpen} onClose={() => setEquipOpen(false)} />
+    <CompanionDialog open={companionOpen} onClose={() => setCompanionOpen(false)} />
     </>
   );
 };
