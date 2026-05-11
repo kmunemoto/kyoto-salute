@@ -8,12 +8,10 @@ const HERO_URL = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/pub
 const NPC_URL = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/rpg/npc_sprites.png";
 
 const SRC_TILE = 32;
-const TILE_SIZE = 32;
-const VIEWPORT_COLS = 11;
-const VIEWPORT_ROWS = 11;
 const MOVE_FRAMES = 8;
+const TARGET_VIEW_COLS = 11; // 横に表示したいタイル数
+const DPAD_RESERVED_PX = 220; // DPad領域の高さ
 
-// タイルID → スプライトシート (col,row)
 const TILE_POS: Record<number, [number, number]> = {
   0: [0, 0], 1: [1, 0], 2: [2, 0], 3: [3, 0],
   4: [0, 1], 5: [1, 1], 6: [2, 1], 7: [3, 1],
@@ -32,9 +30,18 @@ const DIR_ROW: Record<Direction, number> = { down: 0, left: 1, right: 2, up: 3 }
 
 interface PlayerState {
   x: number; y: number;
+  // タイル単位の補間 (-1..+1)
   pxOffsetX: number; pxOffsetY: number;
   direction: Direction;
   isMoving: boolean;
+}
+
+interface DialogueState {
+  npc: MapNPC;
+  index: number;
+  displayedText: string;
+  charIndex: number;
+  fullyDisplayed: boolean;
 }
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
@@ -71,14 +78,29 @@ const RPGEngine = ({ map, onExit }: Props) => {
   const npcRef = useRef<HTMLImageElement | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [, force] = useState(0);
-  const tick = () => force((v) => v + 1);
+  const tickForce = () => force((v) => v + 1);
 
-  // ダイアログ・メニュー状態
-  const [dialogue, setDialogue] = useState<{ npc: MapNPC; index: number } | null>(null);
+  const [dialogue, setDialogue] = useState<DialogueState | null>(null);
+  const [arrowBlink, setArrowBlink] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const cssW = VIEWPORT_COLS * TILE_SIZE;
-  const cssH = VIEWPORT_ROWS * TILE_SIZE;
+  // === 画面サイズ追従 ===
+  const [screenSize, setScreenSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+  useEffect(() => {
+    const onResize = () => setScreenSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
+
+  const canvasWidth = screenSize.w;
+  const canvasHeight = Math.max(160, screenSize.h - DPAD_RESERVED_PX);
+  const SCALE = Math.max(16, Math.floor(canvasWidth / TARGET_VIEW_COLS));
+  const viewCols = Math.max(1, Math.floor(canvasWidth / SCALE));
+  const viewRows = Math.max(1, Math.floor(canvasHeight / SCALE));
 
   // === 画像プリロード ===
   useEffect(() => {
@@ -106,7 +128,6 @@ const RPGEngine = ({ map, onExit }: Props) => {
     return false;
   }, [map]);
 
-  // === 前方タイル ===
   const facingTile = useCallback((p: PlayerState): [number, number] => {
     let nx = p.x, ny = p.y;
     if (p.direction === "up") ny -= 1;
@@ -116,7 +137,6 @@ const RPGEngine = ({ map, onExit }: Props) => {
     return [nx, ny];
   }, []);
 
-  // === 移動開始 ===
   const tryMove = useCallback((dir: Direction) => {
     const p = playerRef.current;
     if (p.isMoving || dialogue || menuOpen) return;
@@ -127,22 +147,35 @@ const RPGEngine = ({ map, onExit }: Props) => {
     else if (dir === "left") nx -= 1;
     else if (dir === "right") nx += 1;
     if (isBlocked(nx, ny)) {
-      tick();
+      tickForce();
       return;
     }
     p.isMoving = true;
     moveStepRef.current = 0;
   }, [isBlocked, dialogue, menuOpen]);
 
-  // === Aボタン: 話しかける/ダイアログ進行 ===
+  // === Aボタン ===
   const handleAction = useCallback(() => {
     if (menuOpen) return;
     if (dialogue) {
+      // 1. まだ表示中ならテキスト全表示
+      if (!dialogue.fullyDisplayed) {
+        const msg = dialogue.npc.dialogues[dialogue.index];
+        setDialogue({ ...dialogue, displayedText: msg, charIndex: msg.length, fullyDisplayed: true });
+        return;
+      }
+      // 2. 全表示済みなら次へ
       const next = dialogue.index + 1;
       if (next >= dialogue.npc.dialogues.length) {
         setDialogue(null);
       } else {
-        setDialogue({ npc: dialogue.npc, index: next });
+        setDialogue({
+          npc: dialogue.npc,
+          index: next,
+          displayedText: "",
+          charIndex: 0,
+          fullyDisplayed: false,
+        });
       }
       return;
     }
@@ -150,9 +183,40 @@ const RPGEngine = ({ map, onExit }: Props) => {
     const [fx, fy] = facingTile(p);
     const npc = map.npcs.find((n) => n.x === fx && n.y === fy);
     if (npc) {
-      setDialogue({ npc, index: 0 });
+      setDialogue({
+        npc,
+        index: 0,
+        displayedText: "",
+        charIndex: 0,
+        fullyDisplayed: false,
+      });
     }
   }, [dialogue, menuOpen, facingTile, map.npcs]);
+
+  // === タイプライター ===
+  useEffect(() => {
+    if (!dialogue || dialogue.fullyDisplayed) return;
+    const msg = dialogue.npc.dialogues[dialogue.index];
+    if (dialogue.charIndex >= msg.length) {
+      setDialogue((prev) => (prev ? { ...prev, fullyDisplayed: true } : null));
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDialogue((prev) => {
+        if (!prev) return null;
+        const next = prev.charIndex + 1;
+        return { ...prev, displayedText: msg.slice(0, next), charIndex: next };
+      });
+    }, 30);
+    return () => clearTimeout(timer);
+  }, [dialogue]);
+
+  // === ▶ 点滅 ===
+  useEffect(() => {
+    if (!dialogue?.fullyDisplayed) return;
+    const t = setInterval(() => setArrowBlink((v) => !v), 500);
+    return () => clearInterval(t);
+  }, [dialogue?.fullyDisplayed]);
 
   // === 描画ループ ===
   useEffect(() => {
@@ -166,14 +230,13 @@ const RPGEngine = ({ map, onExit }: Props) => {
 
       const p = playerRef.current;
 
-      // 移動アニメ
       if (p.isMoving) {
         moveStepRef.current += 1;
         const t = moveStepRef.current / MOVE_FRAMES;
         const dx = p.direction === "left" ? -1 : p.direction === "right" ? 1 : 0;
         const dy = p.direction === "up" ? -1 : p.direction === "down" ? 1 : 0;
-        p.pxOffsetX = dx * TILE_SIZE * t;
-        p.pxOffsetY = dy * TILE_SIZE * t;
+        p.pxOffsetX = dx * t;
+        p.pxOffsetY = dy * t;
         if (moveStepRef.current >= MOVE_FRAMES) {
           p.x += dx; p.y += dy;
           p.pxOffsetX = 0; p.pxOffsetY = 0;
@@ -181,7 +244,6 @@ const RPGEngine = ({ map, onExit }: Props) => {
           walkPhaseRef.current = (walkPhaseRef.current + 1) % 2;
           const held = heldDirRef.current;
           if (held && !dialogue && !menuOpen) {
-            // 継続移動
             p.direction = held;
             let nx = p.x, ny = p.y;
             if (held === "up") ny -= 1;
@@ -196,65 +258,64 @@ const RPGEngine = ({ map, onExit }: Props) => {
         }
       }
 
-      // カメラ
-      const camCenterX = p.x * TILE_SIZE + p.pxOffsetX + TILE_SIZE / 2;
-      const camCenterY = p.y * TILE_SIZE + p.pxOffsetY + TILE_SIZE / 2;
-      const maxCamX = Math.max(0, map.width * TILE_SIZE - cssW);
-      const maxCamY = Math.max(0, map.height * TILE_SIZE - cssH);
-      const camX = Math.max(0, Math.min(camCenterX - cssW / 2, maxCamX));
-      const camY = Math.max(0, Math.min(camCenterY - cssH / 2, maxCamY));
+      // カメラ (タイル単位)
+      const cssW = canvasWidth;
+      const cssH = canvasHeight;
+      const playerWorldPxX = (p.x + p.pxOffsetX) * SCALE + SCALE / 2;
+      const playerWorldPxY = (p.y + p.pxOffsetY) * SCALE + SCALE / 2;
+      const maxCamX = Math.max(0, map.width * SCALE - cssW);
+      const maxCamY = Math.max(0, map.height * SCALE - cssH);
+      const camX = Math.max(0, Math.min(playerWorldPxX - cssW / 2, maxCamX));
+      const camY = Math.max(0, Math.min(playerWorldPxY - cssH / 2, maxCamY));
 
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, cssW, cssH);
 
-      const startTx = Math.floor(camX / TILE_SIZE);
-      const startTy = Math.floor(camY / TILE_SIZE);
-      const endTx = Math.min(map.width, startTx + VIEWPORT_COLS + 2);
-      const endTy = Math.min(map.height, startTy + VIEWPORT_ROWS + 2);
+      const startTx = Math.floor(camX / SCALE);
+      const startTy = Math.floor(camY / SCALE);
+      const endTx = Math.min(map.width, startTx + viewCols + 2);
+      const endTy = Math.min(map.height, startTy + viewRows + 2);
 
       const tileImg = tilesetRef.current;
       const drawTile = (id: number, sx: number, sy: number) => {
         const pos = TILE_POS[id];
         if (tileImg && pos) {
-          ctx.drawImage(tileImg, pos[0] * SRC_TILE, pos[1] * SRC_TILE, SRC_TILE, SRC_TILE, sx, sy, TILE_SIZE, TILE_SIZE);
+          ctx.drawImage(tileImg, pos[0] * SRC_TILE, pos[1] * SRC_TILE, SRC_TILE, SRC_TILE, sx, sy, SCALE, SCALE);
         } else {
           const c = FALLBACK_TILE_COLOR[id];
           if (c) {
             ctx.fillStyle = c;
-            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillRect(sx, sy, SCALE, SCALE);
           }
         }
       };
 
-      // タイル描画 (ground -> objects)
       for (let ty = startTy; ty < endTy; ty++) {
         for (let tx = startTx; tx < endTx; tx++) {
-          const sx = tx * TILE_SIZE - camX;
-          const sy = ty * TILE_SIZE - camY;
+          const sx = tx * SCALE - camX;
+          const sy = ty * SCALE - camY;
           drawTile(map.layers.ground[ty][tx], sx, sy);
           const o = map.layers.objects[ty][tx];
           if (o) drawTile(o, sx, sy);
         }
       }
 
-      // NPC描画
       const npcImg = npcRef.current;
       for (const npc of map.npcs) {
         if (npc.x < startTx - 1 || npc.x > endTx || npc.y < startTy - 1 || npc.y > endTy) continue;
-        const sx = npc.x * TILE_SIZE - camX;
-        const sy = npc.y * TILE_SIZE - camY;
+        const sx = npc.x * SCALE - camX;
+        const sy = npc.y * SCALE - camY;
         if (npcImg) {
           const row = DIR_ROW[npc.direction];
-          ctx.drawImage(npcImg, npc.spriteIndex * SRC_TILE, row * SRC_TILE, SRC_TILE, SRC_TILE, sx, sy, TILE_SIZE, TILE_SIZE);
+          ctx.drawImage(npcImg, npc.spriteIndex * SRC_TILE, row * SRC_TILE, SRC_TILE, SRC_TILE, sx, sy, SCALE, SCALE);
         } else {
           ctx.fillStyle = npc.color;
-          ctx.fillRect(sx + 8, sy + 4, 16, 24);
+          ctx.fillRect(sx + SCALE * 0.25, sy + SCALE * 0.12, SCALE * 0.5, SCALE * 0.75);
         }
       }
 
-      // プレイヤー描画
-      const px = p.x * TILE_SIZE + p.pxOffsetX - camX;
-      const py = p.y * TILE_SIZE + p.pxOffsetY - camY;
+      const px = (p.x + p.pxOffsetX) * SCALE - camX;
+      const py = (p.y + p.pxOffsetY) * SCALE - camY;
       const heroImg = heroRef.current;
       if (heroImg) {
         let frameCol = 0;
@@ -264,35 +325,35 @@ const RPGEngine = ({ map, onExit }: Props) => {
           if (walkPhaseRef.current === 1) frameCol = frameCol === 1 ? 2 : 1;
         }
         const row = DIR_ROW[p.direction];
-        ctx.drawImage(heroImg, frameCol * SRC_TILE, row * SRC_TILE, SRC_TILE, SRC_TILE, px, py, TILE_SIZE, TILE_SIZE);
+        ctx.drawImage(heroImg, frameCol * SRC_TILE, row * SRC_TILE, SRC_TILE, SRC_TILE, px, py, SCALE, SCALE);
       } else {
         ctx.fillStyle = "#1e3a8a";
-        ctx.fillRect(px + 8, py + 14, 16, 14);
+        ctx.fillRect(px + SCALE * 0.25, py + SCALE * 0.45, SCALE * 0.5, SCALE * 0.45);
         ctx.fillStyle = "#f4c894";
-        ctx.fillRect(px + 10, py + 4, 12, 12);
+        ctx.fillRect(px + SCALE * 0.3, py + SCALE * 0.12, SCALE * 0.4, SCALE * 0.4);
       }
 
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [loaded, map, cssW, cssH, isBlocked, dialogue, menuOpen]);
+  }, [loaded, map, SCALE, viewCols, viewRows, canvasWidth, canvasHeight, isBlocked, dialogue, menuOpen]);
 
   // Canvas DPR
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = cssW * dpr;
-    canvas.height = cssH * dpr;
-    canvas.style.width = `${cssW}px`;
-    canvas.style.height = `${cssH}px`;
+    canvas.width = canvasWidth * dpr;
+    canvas.height = canvasHeight * dpr;
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
     }
-  }, [cssW, cssH]);
+  }, [canvasWidth, canvasHeight]);
 
   // キーボード
   useEffect(() => {
@@ -345,10 +406,29 @@ const RPGEngine = ({ map, onExit }: Props) => {
   });
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center overflow-hidden select-none" style={{ touchAction: "none" }}>
-      {/* 上部バー */}
+    <div className="fixed inset-0 z-[100] bg-black overflow-hidden select-none" style={{ touchAction: "none" }}>
+      {/* Canvas (画面いっぱい・上端に配置) */}
+      <div className="absolute top-0 left-0 right-0" style={{ width: canvasWidth, height: canvasHeight }}>
+        {!loaded ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <p className="text-white/70 text-sm">Loading...</p>
+          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            style={{
+              width: canvasWidth,
+              height: canvasHeight,
+              imageRendering: "pixelated",
+              display: "block",
+            }}
+          />
+        )}
+      </div>
+
+      {/* 上部バー (Canvas の上に重ねる) */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 bg-gradient-to-b from-black/70 to-transparent">
-        <p className="text-xs text-white/80 font-bold break-all">{map.name}</p>
+        <p className="text-xs text-white/90 font-bold break-all drop-shadow">{map.name}</p>
         <button
           onClick={() => setMenuOpen(true)}
           className="w-9 h-9 rounded-full bg-white/20 backdrop-blur flex items-center justify-center active:bg-white/40"
@@ -358,28 +438,20 @@ const RPGEngine = ({ map, onExit }: Props) => {
         </button>
       </div>
 
-      {/* Canvas (中央寄せ・縦中央) */}
-      <div className="flex-1 flex items-center justify-center w-full pt-10 pb-44">
-        {!loaded ? (
-          <p className="text-white/70 text-sm">Loading...</p>
-        ) : (
-          <canvas
-            ref={canvasRef}
-            className="rounded-lg shadow-2xl"
-            style={{ imageRendering: "pixelated" }}
-          />
-        )}
-      </div>
-
       {/* ダイアログ */}
       {dialogue && (
         <div
-          className="absolute left-2 right-2 bottom-44 z-20 bg-black/85 border-2 border-white/40 rounded-lg p-3 cursor-pointer"
+          className="absolute left-2 right-2 z-20 bg-black/85 border-2 border-white/40 rounded-lg p-3 cursor-pointer"
+          style={{ bottom: DPAD_RESERVED_PX - 16 }}
           onClick={handleAction}
         >
           <p className="text-[11px] text-yellow-300 font-bold mb-1 break-all">{dialogue.npc.name}</p>
-          <p className="text-sm text-white leading-relaxed break-all">{dialogue.npc.dialogues[dialogue.index]}</p>
-          <p className="text-[10px] text-white/60 mt-2 text-right">タップで次へ ▼</p>
+          <p className="text-sm text-white leading-relaxed break-all min-h-[3.5rem]">
+            {dialogue.displayedText}
+          </p>
+          <p className="text-[11px] text-white/70 mt-1 text-right h-4">
+            {dialogue.fullyDisplayed && (arrowBlink ? "▶" : " ")}
+          </p>
         </div>
       )}
 
