@@ -123,7 +123,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const onMsgDoneRef = useRef<(() => void) | null>(null);
 
   const finishedRef = useRef(false);
-  const compNameRef = useRef("コンパニオン");
+  const compNameRef = useRef("おとも");
 
   const monster = monsters[floorIdx];
   const monsterCount = monster?.monster_count ?? 1;
@@ -572,6 +572,24 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       window.dispatchEvent(new Event("stamina-updated"));
     } catch (e: any) {
       toast.error("結果の保存に失敗", { description: e?.message });
+    }
+    // Grant 30% of dungeon EXP to active companion
+    if (user && accExp > 0) {
+      const compExp = Math.floor(accExp * 0.3);
+      if (compExp > 0) {
+        try {
+          const { data: cr } = await (supabase as any).rpc("grant_companion_exp", {
+            p_user_id: user.id,
+            p_exp: compExp,
+          });
+          if (cr && cr.exp_gained > 0) {
+            const cname = cr.companion_name || compNameRef.current;
+            toast.success(`おとも（${cname}）も経験値をもらった！`, { description: `+${cr.exp_gained} EXP${cr.evolved ? " ・進化した！" : ""}` });
+          }
+        } catch (e) {
+          // non-fatal
+        }
+      }
     }
     setResult({
       result: res, floorsCleared: floors, totalFloors: monsters.length,
