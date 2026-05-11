@@ -328,12 +328,6 @@ const RPGEngine = ({ map, onExit }: Props) => {
       const px = (p.x + p.pxOffsetX) * SCALE - camX;
       const py = (p.y + p.pxOffsetY) * SCALE - camY;
       const heroImg = heroRef.current;
-
-      // === デバッグ: プレイヤー位置に赤枠 ===
-      ctx.strokeStyle = "red";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px, py, SCALE, SCALE);
-
       if (heroImg) {
         const heroSrcW = Math.floor(heroImg.width / 3);
         const heroSrcH = Math.floor(heroImg.height / 4);
@@ -351,27 +345,6 @@ const RPGEngine = ({ map, onExit }: Props) => {
         ctx.fillStyle = "#f4c894";
         ctx.fillRect(px + SCALE * 0.3, py + SCALE * 0.12, SCALE * 0.4, SCALE * 0.4);
       }
-
-      // === デバッグ表示 ===
-      ctx.fillStyle = "yellow";
-      ctx.font = "12px monospace";
-      ctx.fillText(
-        `hero:${heroImg ? "loaded" : "null"} pos:(${p.x},${p.y}) px:(${Math.round(px)},${Math.round(py)})`,
-        4, 14
-      );
-      if (heroImg) {
-        const heroSrcW = Math.floor(heroImg.width / 3);
-        const heroSrcH = Math.floor(heroImg.height / 4);
-        ctx.fillText(
-          `heroImg: ${heroImg.width}x${heroImg.height} src:${heroSrcW}x${heroSrcH} SCALE:${SCALE} cam:(${Math.round(camX)},${Math.round(camY)})`,
-          4, 28
-        );
-      }
-      ctx.fillStyle = "yellow";
-      ctx.fillText(
-        `cam:(${Math.round(camX)},${Math.round(camY)}) px:(${Math.round(px)},${Math.round(py)}) cssW:${cssW} cssH:${cssH} mapPx:${mapPxW}x${mapPxH}`,
-        4, 42
-      );
 
       raf = requestAnimationFrame(loop);
     };
