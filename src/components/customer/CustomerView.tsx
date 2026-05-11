@@ -12,7 +12,7 @@ import CustomerSettings from "./CustomerSettings";
 import CustomerPosture from "./CustomerPosture";
 import CustomerMonthlyReport from "./CustomerMonthlyReport";
 import CustomerQuest from "./CustomerQuest";
-import CustomerDungeon from "./CustomerDungeon";
+import LuminasChronicle from "./luminas/LuminasChronicle";
 import QuestBattleResultDialog from "./QuestBattleResultDialog";
 import PwaInstallBanner from "./PwaInstallBanner";
 import { Button } from "@/components/ui/button";
@@ -91,7 +91,7 @@ const CustomerView = () => {
         {tab === "posture" && <CustomerPosture />}
         {tab === "report" && <CustomerMonthlyReport onBack={() => setTab("home")} />}
         {tab === "quest" && <CustomerQuest onBack={() => setTab("home")} />}
-        {tab === "dungeon" && <CustomerDungeon onBack={() => setTab("home")} />}
+        {tab === "dungeon" && <LuminasChronicle onBack={() => setTab("home")} />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
       <PwaInstallBanner />
