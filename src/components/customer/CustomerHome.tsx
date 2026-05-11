@@ -352,8 +352,6 @@ const CustomerHome = ({ onNavigate }: { onNavigate?: (tab: CustomerTab) => void 
         />
       )}
 
-      <RivalBattleCard />
-
       {/* Stats Cards */}
       {latest && (latest.weight != null || latest.body_fat != null) && (
         <div className="grid grid-cols-2 gap-3">
