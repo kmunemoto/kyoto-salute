@@ -13,6 +13,7 @@ import CustomerPosture from "./CustomerPosture";
 import CustomerMonthlyReport from "./CustomerMonthlyReport";
 import CustomerQuest from "./CustomerQuest";
 import LuminasChronicle from "./luminas/LuminasChronicle";
+import CustomerDungeon from "./CustomerDungeon";
 import QuestBattleResultDialog from "./QuestBattleResultDialog";
 import PwaInstallBanner from "./PwaInstallBanner";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import { useUnreadCount } from "@/hooks/useMessages";
 import { useAnnouncementUnreadCount } from "@/hooks/useAnnouncements";
 import AnnouncementsDialog from "./AnnouncementsDialog";
 
-export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings" | "posture" | "report" | "quest" | "dungeon";
+export type CustomerTab = "home" | "booking" | "training" | "meals" | "chat" | "settings" | "posture" | "report" | "quest" | "dungeon" | "chronicle";
 
 const CustomerView = () => {
   const [tab, setTab] = useState<CustomerTab>("home");
@@ -91,7 +92,8 @@ const CustomerView = () => {
         {tab === "posture" && <CustomerPosture />}
         {tab === "report" && <CustomerMonthlyReport onBack={() => setTab("home")} />}
         {tab === "quest" && <CustomerQuest onBack={() => setTab("home")} />}
-        {tab === "dungeon" && <LuminasChronicle onBack={() => setTab("home")} />}
+        {tab === "dungeon" && <CustomerDungeon onBack={() => setTab("home")} />}
+        {tab === "chronicle" && <LuminasChronicle onBack={() => setTab("home")} />}
       </div>
       <BottomNav activeTab={tab} onTabChange={setTab} unreadChat={unreadChat} />
       <PwaInstallBanner />
