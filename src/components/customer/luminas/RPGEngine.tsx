@@ -515,9 +515,16 @@ const RPGEngine = ({ map, onExit }: Props) => {
         </div>
       )}
 
+      {/* フェードオーバーレイ */}
+      {fadeState !== "none" && (
+        <div
+          className="absolute inset-0 bg-black z-40 pointer-events-none transition-opacity duration-300"
+          style={{ opacity: fadeOpacity }}
+        />
+      )}
+
       {/* DPad + Aボタン */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10" style={{ touchAction: "none" }}>
-        {/* (placeholder) */}
         <div className="relative" style={{ width: 168, height: 168 }}>
           <button {...dirHandlers("up")} className={`absolute top-0 left-1/2 -translate-x-1/2 ${dirBtn}`} aria-label="上">
             <ChevronUp className="w-7 h-7 text-white" />
