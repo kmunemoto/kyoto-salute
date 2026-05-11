@@ -9,6 +9,7 @@ import { Coins, Trophy, Plus, Star, User as UserIcon, Crown, Heart, X as XIcon, 
 import { Sword as SwordIcon, Sparkles, Image as ImageIcon } from "lucide-react";
 import BadgeIcon from "./BadgeIcon";
 import CoinShopDialog from "./CoinShopDialog";
+import CoinShop from "./CoinShop";
 import EmoteSection from "./EmoteSection";
 import HairColorSection from "./HairColorSection";
 import EquipmentOverlay from "./EquipmentOverlay";
