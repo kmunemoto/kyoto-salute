@@ -607,7 +607,9 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
 
   const messageContent = currentMsg
     ? shown
-    : (msgQueue.length === 0 && showCommand ? "コマンドを 選んでください" : "");
+    : (msgQueue.length === 0 && showCommand ? "コマンドを 選んでください"
+      : msgQueue.length === 0 && isTargetSelect ? "攻撃する相手を 選んでください"
+      : "");
 
   const tappable = !!currentMsg;
 
