@@ -65,7 +65,17 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
       {/* Amulet/accessory intentionally not rendered on avatar overlay */}
       {gear.weapon && renderItem(
         gear.weapon,
-        { position: "absolute", bottom: "22%", right: "8%", height: "55%", width: "55%", zIndex: zBase + 1, transform: "rotate(20deg)", transformOrigin: "center center", opacity: 0.95 },
+        {
+          position: "absolute",
+          top: "42%",
+          left: "38%",
+          height: "62%",
+          width: "62%",
+          zIndex: zBase + 1,
+          transform: "rotate(95deg)",
+          transformOrigin: "20% 50%",
+          opacity: 0.95,
+        },
         `drop-shadow(1px 1px 2px rgba(0,0,0,0.5)) ${RARITY_GLOW[gear.weapon.rarity]}`,
       )}
       {/* Tops/bottoms intentionally not overlaid on avatar; stat bonuses still apply. */}
