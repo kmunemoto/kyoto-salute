@@ -2722,6 +2722,10 @@ export type Database = {
         Args: { p_item_key: string; p_quantity?: number; p_user_id: string }
         Returns: Json
       }
+      buy_stamina: {
+        Args: { p_quantity?: number; p_user_id: string }
+        Returns: Json
+      }
       check_collection_milestones: { Args: { _user_id: string }; Returns: Json }
       check_training_milestones: { Args: { p_user_id: string }; Returns: Json }
       check_weight_milestones: { Args: { p_user_id: string }; Returns: Json }
