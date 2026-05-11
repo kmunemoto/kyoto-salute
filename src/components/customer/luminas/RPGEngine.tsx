@@ -7,7 +7,6 @@ const TILESET_URL = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/
 const HERO_URL = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/rpg/hero_sprite.png";
 const NPC_URL = "https://clsvdhovzqrkojvkvekw.supabase.co/storage/v1/object/public/avatars/rpg/npc_sprites.png";
 
-const SRC_TILE = 32;
 const MOVE_FRAMES = 8;
 const TARGET_VIEW_COLS = 11; // 横に表示したいタイル数
 const DPAD_RESERVED_PX = 220; // DPad領域の高さ
@@ -277,10 +276,11 @@ const RPGEngine = ({ map, onExit }: Props) => {
       const endTy = Math.min(map.height, startTy + viewRows + 2);
 
       const tileImg = tilesetRef.current;
+      const srcTile = tileImg ? Math.floor(tileImg.width / 4) : 32;
       const drawTile = (id: number, sx: number, sy: number) => {
         const pos = TILE_POS[id];
         if (tileImg && pos) {
-          ctx.drawImage(tileImg, pos[0] * SRC_TILE, pos[1] * SRC_TILE, SRC_TILE, SRC_TILE, sx, sy, SCALE, SCALE);
+          ctx.drawImage(tileImg, pos[0] * srcTile, pos[1] * srcTile, srcTile, srcTile, sx, sy, SCALE, SCALE);
         } else {
           const c = FALLBACK_TILE_COLOR[id];
           if (c) {
@@ -301,13 +301,14 @@ const RPGEngine = ({ map, onExit }: Props) => {
       }
 
       const npcImg = npcRef.current;
+      const npcSrcW = npcImg ? Math.floor(npcImg.width / 4) : 32;
+      const npcSrcH = npcImg ? npcImg.height : 32;
       for (const npc of map.npcs) {
         if (npc.x < startTx - 1 || npc.x > endTx || npc.y < startTy - 1 || npc.y > endTy) continue;
         const sx = npc.x * SCALE - camX;
         const sy = npc.y * SCALE - camY;
         if (npcImg) {
-          const row = DIR_ROW[npc.direction];
-          ctx.drawImage(npcImg, npc.spriteIndex * SRC_TILE, row * SRC_TILE, SRC_TILE, SRC_TILE, sx, sy, SCALE, SCALE);
+          ctx.drawImage(npcImg, npc.spriteIndex * npcSrcW, 0, npcSrcW, npcSrcH, sx, sy, SCALE, SCALE);
         } else {
           ctx.fillStyle = npc.color;
           ctx.fillRect(sx + SCALE * 0.25, sy + SCALE * 0.12, SCALE * 0.5, SCALE * 0.75);
@@ -317,6 +318,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
       const px = (p.x + p.pxOffsetX) * SCALE - camX;
       const py = (p.y + p.pxOffsetY) * SCALE - camY;
       const heroImg = heroRef.current;
+      const heroSrcTile = heroImg ? Math.floor(heroImg.width / 3) : 32;
       if (heroImg) {
         let frameCol = 0;
         if (p.isMoving) {
@@ -325,7 +327,7 @@ const RPGEngine = ({ map, onExit }: Props) => {
           if (walkPhaseRef.current === 1) frameCol = frameCol === 1 ? 2 : 1;
         }
         const row = DIR_ROW[p.direction];
-        ctx.drawImage(heroImg, frameCol * SRC_TILE, row * SRC_TILE, SRC_TILE, SRC_TILE, px, py, SCALE, SCALE);
+        ctx.drawImage(heroImg, frameCol * heroSrcTile, row * heroSrcTile, heroSrcTile, heroSrcTile, px, py, SCALE, SCALE);
       } else {
         ctx.fillStyle = "#1e3a8a";
         ctx.fillRect(px + SCALE * 0.25, py + SCALE * 0.45, SCALE * 0.5, SCALE * 0.45);
