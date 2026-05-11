@@ -267,12 +267,12 @@ const RPGEngine = ({ map, onExit }: Props) => {
       let camX: number;
       let camY: number;
       if (mapPxW <= cssW) {
-        camX = (mapPxW - cssW) / 2;
+        camX = -(cssW - mapPxW) / 2;
       } else {
         camX = Math.max(0, Math.min(playerWorldPxX - cssW / 2, mapPxW - cssW));
       }
       if (mapPxH <= cssH) {
-        camY = (mapPxH - cssH) / 2;
+        camY = -(cssH - mapPxH) / 2;
       } else {
         camY = Math.max(0, Math.min(playerWorldPxY - cssH / 2, mapPxH - cssH));
       }
@@ -367,6 +367,11 @@ const RPGEngine = ({ map, onExit }: Props) => {
           4, 28
         );
       }
+      ctx.fillStyle = "yellow";
+      ctx.fillText(
+        `cam:(${Math.round(camX)},${Math.round(camY)}) px:(${Math.round(px)},${Math.round(py)}) cssW:${cssW} cssH:${cssH} mapPx:${mapPxW}x${mapPxH}`,
+        4, 42
+      );
 
       raf = requestAnimationFrame(loop);
     };
