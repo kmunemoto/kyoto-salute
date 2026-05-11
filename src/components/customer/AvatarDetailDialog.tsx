@@ -598,7 +598,7 @@ const AvatarDetailDialog = ({ open, onClose, avatar, logs, achievements, titles 
 
       </DialogContent>
     </Dialog>
-    <CoinShopDialog open={shopOpen} onClose={() => setShopOpen(false)} />
+    <CoinShop open={shopOpen} onClose={() => setShopOpen(false)} coins={avatar.coins ?? 0} onPurchased={onAvatarChanged} />
     {badgeSheet && (() => {
         const a = ACHIEVEMENTS.find((x) => x.key === badgeSheet);
         if (!a) return null;
