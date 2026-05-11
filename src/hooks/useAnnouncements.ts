@@ -58,9 +58,28 @@ export const useAnnouncements = () => {
     });
   };
 
+  const markAllRead = async () => {
+    if (!user) return;
+    const unreadItems = items.filter((a) => !readIds.has(a.id));
+    if (unreadItems.length === 0) return;
+    setReadIds((prev) => {
+      const next = new Set(prev);
+      unreadItems.forEach((a) => next.add(a.id));
+      return next;
+    });
+    const rows = unreadItems.map((a) => ({
+      user_id: user.id,
+      announcement_id: a.id,
+    }));
+    await supabase.from("announcement_reads").upsert(rows, {
+      onConflict: "user_id,announcement_id",
+      ignoreDuplicates: true,
+    });
+  };
+
   const unreadCount = items.filter((a) => !readIds.has(a.id)).length;
 
-  return { items, readIds, unreadCount, loading, refetch: fetchAll, markRead };
+  return { items, readIds, unreadCount, loading, refetch: fetchAll, markRead, markAllRead };
 };
 
 /** Lightweight unread-count hook for header bell badge. */
