@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Star, Dumbbell, TrendingUp, Flame } from "lucide-react";
+import { Star, Dumbbell, TrendingUp, Flame, Heart } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { SessionRewardResult } from "@/lib/raidUtils";
 
@@ -70,6 +70,13 @@ const SessionExpSummaryDialog = ({ open, onClose, result }: Props) => {
             )}
             {result.combo >= 2 && (
               <Row icon={<Flame className="w-4 h-4 text-orange-500" />} label={`コンボ ${result.combo}回`} value={`×${result.multiplier.toFixed(1)}`} />
+            )}
+            {result.companion_exp_gained && result.companion_exp_gained > 0 && (
+              <Row
+                icon={<Heart className="w-4 h-4 text-pink-500" />}
+                label={`おとも${result.companion_name ? `（${result.companion_name}）` : ""}も経験値をもらった！`}
+                value={`+${result.companion_exp_gained}`}
+              />
             )}
           </div>
           <div className="border-t border-border my-3" />
