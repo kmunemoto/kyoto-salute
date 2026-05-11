@@ -15,9 +15,9 @@ interface Props {
 }
 
 const PACKS = [
-  { priceId: "coin_starter_jpy_300", name: "スターター", coins: 50, price: 300, badge: null },
-  { priceId: "coin_value_jpy_800", name: "バリュー", coins: 200, price: 800, badge: "おすすめ" },
-  { priceId: "coin_premium_jpy_1800", name: "プレミアム", coins: 500, price: 1800, badge: "お得" },
+  { priceId: "coin_starter_jpy_300", name: "スターター", coins: 200, price: 300, badge: null },
+  { priceId: "coin_value_jpy_800", name: "バリュー", coins: 800, price: 800, badge: "おすすめ" },
+  { priceId: "coin_premium_jpy_1800", name: "プレミアム", coins: 2000, price: 1800, badge: "お得" },
 ];
 
 const CoinShopDialog = ({ open, onClose }: Props) => {
