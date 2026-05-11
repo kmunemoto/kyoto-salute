@@ -328,8 +328,15 @@ const RPGEngine = ({ map, onExit }: Props) => {
       const px = (p.x + p.pxOffsetX) * SCALE - camX;
       const py = (p.y + p.pxOffsetY) * SCALE - camY;
       const heroImg = heroRef.current;
-      const heroSrcTile = heroImg ? Math.floor(heroImg.width / 3) : 32;
+
+      // === デバッグ: プレイヤー位置に赤枠 ===
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, SCALE, SCALE);
+
       if (heroImg) {
+        const heroSrcW = Math.floor(heroImg.width / 3);
+        const heroSrcH = Math.floor(heroImg.height / 4);
         let frameCol = 0;
         if (p.isMoving) {
           const half = MOVE_FRAMES / 2;
@@ -337,12 +344,28 @@ const RPGEngine = ({ map, onExit }: Props) => {
           if (walkPhaseRef.current === 1) frameCol = frameCol === 1 ? 2 : 1;
         }
         const row = DIR_ROW[p.direction];
-        ctx.drawImage(heroImg, frameCol * heroSrcTile, row * heroSrcTile, heroSrcTile, heroSrcTile, px, py, SCALE, SCALE);
+        ctx.drawImage(heroImg, frameCol * heroSrcW, row * heroSrcH, heroSrcW, heroSrcH, px, py, SCALE, SCALE);
       } else {
         ctx.fillStyle = "#1e3a8a";
         ctx.fillRect(px + SCALE * 0.25, py + SCALE * 0.45, SCALE * 0.5, SCALE * 0.45);
         ctx.fillStyle = "#f4c894";
         ctx.fillRect(px + SCALE * 0.3, py + SCALE * 0.12, SCALE * 0.4, SCALE * 0.4);
+      }
+
+      // === デバッグ表示 ===
+      ctx.fillStyle = "yellow";
+      ctx.font = "12px monospace";
+      ctx.fillText(
+        `hero:${heroImg ? "loaded" : "null"} pos:(${p.x},${p.y}) px:(${Math.round(px)},${Math.round(py)})`,
+        4, 14
+      );
+      if (heroImg) {
+        const heroSrcW = Math.floor(heroImg.width / 3);
+        const heroSrcH = Math.floor(heroImg.height / 4);
+        ctx.fillText(
+          `heroImg: ${heroImg.width}x${heroImg.height} src:${heroSrcW}x${heroSrcH} SCALE:${SCALE} cam:(${Math.round(camX)},${Math.round(camY)})`,
+          4, 28
+        );
       }
 
       raf = requestAnimationFrame(loop);
