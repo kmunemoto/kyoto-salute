@@ -281,7 +281,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         ...(isCrit ? ["会心の一撃！"] : []),
         `${monsterLabel(targetIdx)}に ${dmg}の ダメージ！`,
       ];
-      pushMessages(msgs, () => afterPlayerAction(newHps));
+      pushMessages(msgs, () => afterPlayerAction(newHps, playerHp));
     });
   };
 
@@ -314,21 +314,21 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const nh = Math.max(0, (monsterHps[targetIdx] ?? 0) - dmg);
         const newHps = monsterHps.map((h, i) => (i === targetIdx ? nh : h));
         setMonsterHps(newHps);
-        pushMessages([`${monsterLabel(targetIdx)}に ${dmg}の ダメージ！`], () => afterPlayerAction(newHps));
+        pushMessages([`${monsterLabel(targetIdx)}に ${dmg}の ダメージ！`], () => afterPlayerAction(newHps, playerHp));
       } else if (sk.skill_type === "heal") {
         const heal = sk.heal_amount === 9999 ? maxHp : (sk.heal_amount ?? 0);
         const nh = Math.min(maxHp, playerHp + heal);
         const actual = nh - playerHp;
         setPlayerHp(nh);
         addFloat(`+${actual}`, "#34d399", "player");
-        pushMessages([`HPが ${actual} 回復した！`], () => afterPlayerAction(monsterHps));
+        pushMessages([`HPが ${actual} 回復した！`], () => afterPlayerAction(monsterHps, nh));
       } else if (sk.skill_type === "buff") {
         setBuffs((b) => [...b, { type: sk.buff_type!, multiplier: Number(sk.buff_multiplier), turnsLeft: sk.buff_turns }]);
         const label = sk.buff_type === "player_atk" ? "攻撃力" : "守備力";
-        pushMessages([`あなたの ${label}が 上がった！`], () => afterPlayerAction(monsterHps));
+        pushMessages([`あなたの ${label}が 上がった！`], () => afterPlayerAction(monsterHps, playerHp));
       } else if (sk.skill_type === "debuff") {
         setEnemyDebuffs((b) => [...b, { type: sk.buff_type!, multiplier: Number(sk.buff_multiplier), turnsLeft: sk.buff_turns }]);
-        pushMessages([`${monsterLabel(targetIdx)}の 守備力が 下がった！`], () => afterPlayerAction(monsterHps));
+        pushMessages([`${monsterLabel(targetIdx)}の 守備力が 下がった！`], () => afterPlayerAction(monsterHps, playerHp));
       }
     });
   };
@@ -357,7 +357,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
   const handleDefend = () => {
     setDefending(true);
     setPhase("action");
-    pushMessages([`あなたは 身構えた！`], () => afterPlayerAction(monsterHps));
+    pushMessages([`あなたは 身構えた！`], () => afterPlayerAction(monsterHps, playerHp));
   };
 
   const handleItem = async (key: string) => {
@@ -373,14 +373,14 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         const a = nh - playerHp;
         setPlayerHp(nh);
         addFloat(`+${a}`, "#34d399", "player");
-        pushMessages([`HPが ${a} 回復した！`], () => afterPlayerAction(monsterHps));
+        pushMessages([`HPが ${a} 回復した！`], () => afterPlayerAction(monsterHps, nh));
       } else if (it.effect_type === "heal_mp") {
         const nm = Math.min(mp.max, mp.current + it.effect_amount);
         const a = nm - mp.current;
         setMp({ current: nm, max: mp.max });
-        pushMessages([`MPが ${a} 回復した！`], () => afterPlayerAction(monsterHps));
+        pushMessages([`MPが ${a} 回復した！`], () => afterPlayerAction(monsterHps, playerHp));
       } else {
-        afterPlayerAction(monsterHps);
+        afterPlayerAction(monsterHps, playerHp);
       }
     });
   };
@@ -391,12 +391,12 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
     if (Math.random() < 0.5) {
       pushMessages([`あなたは 戦場から撤退した！`], () => finishRun("retreat", floorIdx));
     } else {
-      pushMessages([`しかし 回り込まれてしまった！`], () => enemyTurn(monsterHps));
+      pushMessages([`しかし 回り込まれてしまった！`], () => enemyTurn(monsterHps, playerHp));
     }
   };
 
   // ---- After player action: companion → enemy → next turn ----
-  const afterPlayerAction = (curHps: number[]) => {
+  const afterPlayerAction = (curHps: number[], currentPlayerHp: number) => {
     if (curHps.every((h) => h <= 0)) { onFloorClear(); return; }
     // Companion attacks
     if (companion && compHp > 0) {
@@ -414,15 +414,15 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
         setMonsterHps(newHps);
         pushMessages([`${monsterLabel(compTarget)}に ${dmg}の ダメージ！`], () => {
           if (newHps.every((h) => h <= 0)) { onFloorClear(); return; }
-          enemyTurn(newHps);
+          enemyTurn(newHps, currentPlayerHp);
         });
       });
     } else {
-      enemyTurn(curHps);
+      enemyTurn(curHps, currentPlayerHp);
     }
   };
 
-  const enemyTurn = (curHps: number[]) => {
+  const enemyTurn = (curHps: number[], currentPlayerHp: number) => {
     if (curHps.every((h) => h <= 0)) { onFloorClear(); return; }
     const m = monster!;
     const aliveList = curHps.map((h, i) => (h > 0 ? i : -1)).filter((i) => i >= 0);
@@ -482,7 +482,7 @@ const DungeonBattle = ({ stage, runId, onClose, onFinish }: Props) => {
       });
     });
     };
-    runOne(aliveList, curHps, playerHp);
+    runOne(aliveList, curHps, currentPlayerHp);
   };
 
   const tickAndContinue = () => {
