@@ -56,7 +56,7 @@ const TrainerEventManager = () => {
   // New event form state
   const [form, setForm] = useState({
     event_name: "", event_description: "", start_date: "", end_date: "",
-    event_icon: "PartyPopper", reward_exp: 500, reward_coins: 50,
+    event_icon: "PartyPopper", reward_exp: 1500, reward_coins: 150,
     reward_badge_key: "", badge_name: "", badge_icon: "Medal",
   });
 
@@ -102,7 +102,7 @@ const TrainerEventManager = () => {
       const { error: rerr } = await supabase.rpc("recalculate_event_progress" as any, { p_event_id: created.id });
       if (!rerr) toast.success("過去の記録を反映しました");
     }
-    setForm({ event_name: "", event_description: "", start_date: "", end_date: "", event_icon: "PartyPopper", reward_exp: 500, reward_coins: 50, reward_badge_key: "", badge_name: "", badge_icon: "Medal" });
+    setForm({ event_name: "", event_description: "", start_date: "", end_date: "", event_icon: "PartyPopper", reward_exp: 1500, reward_coins: 150, reward_badge_key: "", badge_name: "", badge_icon: "Medal" });
     refresh();
   };
 
