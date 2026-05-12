@@ -8,7 +8,8 @@ const LuminasChronicleCard = ({ onOpen }: Props) => {
   return (
     <button
       onClick={onOpen}
-      className="w-full rounded-2xl p-5 text-left text-white shadow-lg transition active:scale-[0.99] relative overflow-hidden"
+      disabled
+      className="w-full rounded-2xl p-5 text-left text-white shadow-lg transition relative overflow-hidden cursor-not-allowed"
       style={{ background: "linear-gradient(135deg, #0a0a3a 0%, #1a1a5e 100%)" }}
     >
       <div className="flex items-center justify-between">
@@ -22,7 +23,10 @@ const LuminasChronicleCard = ({ onOpen }: Props) => {
             <p className="text-[11px] opacity-80 mt-1 break-all">〜光の年代記〜</p>
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 opacity-70 shrink-0" />
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/20 shrink-0">準備中</span>
+      </div>
+      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+        <span className="text-sm font-bold tracking-wider px-3 py-1.5 rounded-lg bg-white/15 backdrop-blur-sm border border-white/30">準備中</span>
       </div>
     </button>
   );
