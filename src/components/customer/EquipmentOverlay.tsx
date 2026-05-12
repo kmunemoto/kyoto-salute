@@ -64,16 +64,16 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
       )}
       {/* Amulet/accessory intentionally not rendered on avatar overlay */}
       {gear.weapon && (() => {
-        // Per-weapon position overrides. Default keeps the existing placement
-        // so previously tuned weapons (e.g. 影の刀系) are not affected.
-        const isWooden = gear.weapon.item_key === "wooden_sword";
-        const style: React.CSSProperties = isWooden
+        // 大型武器（刀・聖剣）は専用の大きめ配置を維持
+        const LARGE_WEAPONS = new Set(["shadow_katana", "divine_sword"]);
+        const isLarge = LARGE_WEAPONS.has(gear.weapon.item_key);
+        const style: React.CSSProperties = isLarge
           ? {
               position: "absolute",
-              bottom: "20%",
-              right: "5%",
-              height: "55%",
-              width: "55%",
+              bottom: "22%",
+              right: "-12%",
+              height: "65%",
+              width: "65%",
               zIndex: zBase + 1,
               transform: "rotate(-30deg)",
               transformOrigin: "center center",
@@ -81,10 +81,10 @@ const EquipmentOverlay = ({ gear, compact = false, zBase = 20 }: Props) => {
             }
           : {
               position: "absolute",
-              bottom: "22%",
-              right: "-12%",
-              height: "65%",
-              width: "65%",
+              bottom: "20%",
+              right: "5%",
+              height: "55%",
+              width: "55%",
               zIndex: zBase + 1,
               transform: "rotate(-30deg)",
               transformOrigin: "center center",
