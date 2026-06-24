@@ -21,6 +21,7 @@ import { getCycleWindow } from "@/lib/courseProgress";
 
 const PLAN_LABELS: Record<string, string> = {
   "初回無料体験": "初回無料体験",
+  "月3回": "月3回プラン",
   "月4回": "月4回プラン",
   "月6回": "月6回プラン",
   "月8回": "月8回プラン",
@@ -28,6 +29,7 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 const PLAN_MAX_SESSIONS: Record<string, number> = {
+  "月3回": 3,
   "月4回": 4,
   "月6回": 6,
   "月8回": 8,
