@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarDays, Clock, Check, Loader2, User, CalendarPlus, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,39 +28,40 @@ const TrialBooking = () => {
   const [completed, setCompleted] = useState(false);
   const [completedInfo, setCompletedInfo] = useState<{ date: string; time: string; rawDate: string; rawStartTime: string; rawEndTime: string } | null>(null);
   const [existingBookings, setExistingBookings] = useState<TrialSlotBooking[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
-  // Fetch all existing bookings via secure RPC (no PII exposed)
-  const fetchExistingSlots = useCallback(async () => {
-    // Fetch slots for upcoming 60 days using the secure RPC
-    const slots: TrialSlotBooking[] = [];
-    const today = getJSTNow();
-    const promises = [];
-    for (let i = 0; i < 60; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const dateStr = format(d, "yyyy-MM-dd");
-      promises.push(
-        supabase.rpc("get_booked_slots", { check_date: dateStr }).then(({ data }: { data: any }) => {
-          data?.forEach((r: { booking_date: string; end_booking_date: string; status: string }) => {
-            if (r.status === "キャンセル済み") return;
-            const dt = toJSTDate(r.booking_date);
-            const endDt = toJSTDate(r.end_booking_date);
-            slots.push({
-              date: format(dt, "yyyy-MM-dd"),
-              startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
-              endTime: `${String(endDt.getHours()).padStart(2, "0")}:${String(endDt.getMinutes()).padStart(2, "0")}`,
-            });
-          });
-        })
-      );
-    }
-    await Promise.all(promises);
-    setExistingBookings(slots);
-  }, []);
-
+  // Fetch booked slots for ONLY the selected date via the secure RPC (no PII exposed).
+  // Previously this prefetched 60 days (= 60 RPC calls) on mount, which slowed the
+  // initial page load. We now fetch a single day on demand when a date is picked.
+  // The cleanup flag ignores stale responses if the user switches dates quickly.
   useEffect(() => {
-    fetchExistingSlots();
-  }, [fetchExistingSlots]);
+    if (!selectedDate) {
+      setExistingBookings([]);
+      return;
+    }
+    let cancelled = false;
+    setSlotsLoading(true);
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    supabase.rpc("get_booked_slots", { check_date: dateStr }).then(({ data }: { data: any }) => {
+      if (cancelled) return;
+      const slots: TrialSlotBooking[] = [];
+      data?.forEach((r: { booking_date: string; end_booking_date: string; status: string }) => {
+        if (r.status === "キャンセル済み") return;
+        const dt = toJSTDate(r.booking_date);
+        const endDt = toJSTDate(r.end_booking_date);
+        slots.push({
+          date: format(dt, "yyyy-MM-dd"),
+          startTime: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`,
+          endTime: `${String(endDt.getHours()).padStart(2, "0")}:${String(endDt.getMinutes()).padStart(2, "0")}`,
+        });
+      });
+      setExistingBookings(slots);
+      setSlotsLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate]);
 
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
 
@@ -464,6 +465,11 @@ const TrialBooking = () => {
                 <Clock className="w-3.5 h-3.5" />
                 {format(selectedDate, "M月d日（E）", { locale: ja })} の空き枠
               </h3>
+              {slotsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                </div>
+              ) : (
               <div className="grid grid-cols-4 gap-1.5">
                 {slots.map((slot) => (
                   <button
@@ -494,6 +500,7 @@ const TrialBooking = () => {
                   </button>
                 ))}
               </div>
+              )}
 
               {selectedSlot && (
                 <div id="trial-confirm-section" className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">

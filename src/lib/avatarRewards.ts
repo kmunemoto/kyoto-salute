@@ -15,6 +15,7 @@ const ymd = (d: string) => d.substring(0, 10);
 const ym = (d: string) => d.substring(0, 7) + "-01";
 
 const planMaxSessions: Record<string, number> = {
+  "月3回": 3,
   "月4回": 4,
   "月6回": 6,
   "月8回": 8,

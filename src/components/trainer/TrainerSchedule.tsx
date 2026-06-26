@@ -543,6 +543,7 @@ const TrainerSchedule = () => {
               >
                 <option value="" disabled>選択してください</option>
                 <option value="初回無料体験">初回無料体験</option>
+                <option value="月3回">月3回</option>
                 <option value="月4回">月4回</option>
                 <option value="月6回">月6回</option>
                 <option value="月8回">月8回</option>

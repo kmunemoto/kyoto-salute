@@ -43,10 +43,11 @@ export interface TimeSlot {
   available: boolean;
 }
 
-export type PlanType = '初回無料体験' | '月4回' | '月6回' | '月8回' | '通い放題';
+export type PlanType = '初回無料体験' | '月3回' | '月4回' | '月6回' | '月8回' | '通い放題';
 
 export const planOptions: PlanType[] = [
   '初回無料体験',
+  '月3回',
   '月4回',
   '月6回',
   '月8回',
@@ -55,6 +56,7 @@ export const planOptions: PlanType[] = [
 
 export const planPrices: Record<PlanType, number> = {
   '初回無料体験': 0,
+  '月3回': 16500,
   '月4回': 20000,
   '月6回': 28500,
   '月8回': 36000,

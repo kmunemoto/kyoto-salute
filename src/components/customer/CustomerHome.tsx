@@ -36,6 +36,7 @@ import { buildSession, type RawWorkout } from "@/lib/workoutShare";
 import { getMuscleGroup, summarizeMuscleGroups } from "@/lib/muscleGroup";
 
 const planMaxSessions: Record<string, number> = {
+  '月3回': 3,
   '月4回': 4,
   '月6回': 6,
   '月8回': 8,
