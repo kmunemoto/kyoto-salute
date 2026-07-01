@@ -40,6 +40,26 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // EMAIL PAUSE SWITCH (Salute is being retired from July 2026)
+  // All customer/trainer notification emails (booking confirmations,
+  // trial confirmations, trainer new-booking notifications, cancellations,
+  // reminders, etc.) are intentionally PAUSED at this single choke point.
+  // Nothing is deleted — templates, queue, logs and config remain intact.
+  // To RESUME sending later, set EMAILS_PAUSED to false and redeploy.
+  // Auth emails use a separate function (auth-email-hook) and are unaffected.
+  // ────────────────────────────────────────────────────────────────
+  const EMAILS_PAUSED = true
+  if (EMAILS_PAUSED) {
+    console.log('Email sending is PAUSED (EMAILS_PAUSED=true) — skipping send', {
+      note: 'Salute retired from July 2026; notifications intentionally disabled',
+    })
+    return new Response(
+      JSON.stringify({ success: false, reason: 'emails_paused' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
